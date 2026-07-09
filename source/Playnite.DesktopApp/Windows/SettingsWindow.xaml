@@ -1,10 +1,10 @@
-﻿<controls:WindowBase x:Class="Playnite.DesktopApp.Windows.SettingsWindow"
+<controls:WindowBase x:Class="Playnite.DesktopApp.Windows.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
-        xmlns:prism="clr-namespace:Prism.Interactivity;assembly=Prism.Wpf"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:prism="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:controls="clr-namespace:Playnite.Controls;assembly=Playnite"
         xmlns:p="clr-namespace:Playnite;assembly=Playnite"
@@ -17,7 +17,7 @@
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing" >
-            <prism:InvokeCommandAction Command="{Binding WindowClosingCommand}" />
+            <prism:InvokeCommandAction Command="{Binding WindowClosingCommand}" PassEventArgsToCommand="True" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
 
@@ -48,7 +48,7 @@
             <TreeView MinWidth="160" BorderThickness="0" ScrollViewer.CanContentScroll="False">
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="SelectedItemChanged" >
-                        <prism:InvokeCommandAction Command="{Binding SettingsTreeSelectedItemChangedCommand}" />
+                        <prism:InvokeCommandAction Command="{Binding SettingsTreeSelectedItemChangedCommand}" PassEventArgsToCommand="True" />
                     </i:EventTrigger>
                 </i:Interaction.Triggers>
                 <TreeViewItem Header="{DynamicResource LOCSettingsGeneralLabel}" IsSelected="True" Tag="{x:Static p:DesktopSettingsPage.General}" />

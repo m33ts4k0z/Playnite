@@ -1,0 +1,14 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Warnings deferred during the .NET 10 modernization; each represents
+         known follow-up work, not a regression introduced by the retarget:
+         SYSLIB0013/SYSLIB0014 - Uri.EscapeUriString/WebClient obsoletions, pending HttpClient migration.
+         CA1416  - platform-compatibility analyzer false positives from WPF temp projects (app is Windows-only).
+         CA2022  - inexact Stream.Read patterns that predate the retarget.
+         CS8073  - pre-existing always-false comparisons surfaced by newer compiler.
+         NU1904  - LiteDB 4 security advisory; cannot bump to LiteDB 5, database format differs. -->
+    <NoWarn>$(NoWarn);SYSLIB0013;SYSLIB0014;CA1416;CA2022;CS8073;NU1904</NoWarn>
+  </PropertyGroup>
+
+</Project>

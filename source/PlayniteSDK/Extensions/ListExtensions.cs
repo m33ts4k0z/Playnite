@@ -454,25 +454,27 @@ namespace System.Collections.Generic
             }
         }
 
+        // ToHashSet was removed: System.Linq provides an identical extension on
+        // modern .NET, which made every call site ambiguous (CS0121). Note the
+        // LINQ version throws on null source where this one returned null.
+
         /// <summary>
-        ///
+        /// Adds items to a collection.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="source"></param>
-        /// <returns></returns>
-        public static HashSet<T> ToHashSet<T>(this IEnumerable<T> source)
+        /// <param name="items"></param>
+        public static void AddRange<T>(this ObservableCollection<T> source, IEnumerable<T> items)
         {
-            if (source == null)
+            if (items == null)
             {
-                return null;
+                return;
             }
 
-            if (!source.HasItems())
+            foreach (var item in items)
             {
-                return new HashSet<T>();
+                source.Add(item);
             }
-
-            return new HashSet<T>(source);
         }
     }
 }

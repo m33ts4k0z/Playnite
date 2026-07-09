@@ -1,4 +1,4 @@
-﻿<controls:WindowBase x:Class="Playnite.DesktopApp.Windows.GoogleImageDownloadWindow"
+<controls:WindowBase x:Class="Playnite.DesktopApp.Windows.GoogleImageDownloadWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -8,8 +8,8 @@
         xmlns:pcon="clr-namespace:Playnite.Converters;assembly=Playnite"
         xmlns:pbeh="clr-namespace:Playnite.Behaviors;assembly=Playnite"
         xmlns:p="clr-namespace:Playnite;assembly=Playnite"
-        xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
-        xmlns:prism="clr-namespace:Prism.Interactivity;assembly=Prism.Wpf"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:prism="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         d:DesignStyle="{StaticResource WindowDesignStyle}"
         Style="{DynamicResource StandardWindowStyle}"
@@ -19,7 +19,7 @@
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing" >
-            <prism:InvokeCommandAction Command="{Binding WindowClosingCommand}" />
+            <prism:InvokeCommandAction Command="{Binding WindowClosingCommand}" PassEventArgsToCommand="True" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
 

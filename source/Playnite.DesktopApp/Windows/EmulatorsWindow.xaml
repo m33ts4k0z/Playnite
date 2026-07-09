@@ -1,4 +1,4 @@
-﻿<controls:WindowBase x:Class="Playnite.DesktopApp.Windows.EmulatorsWindow"
+<controls:WindowBase x:Class="Playnite.DesktopApp.Windows.EmulatorsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -12,8 +12,8 @@
         xmlns:pbeh="clr-namespace:Playnite.Behaviors;assembly=Playnite"
         xmlns:psdkm="clr-namespace:Playnite.SDK.Models;assembly=Playnite.SDK"
         xmlns:mods="clr-namespace:Playnite.SDK.Models;assembly=Playnite.SDK"
-        xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
-        xmlns:prism="clr-namespace:Prism.Interactivity;assembly=Prism.Wpf"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+        xmlns:prism="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         Style="{DynamicResource StandardWindowStyle}"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
@@ -24,7 +24,7 @@
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing" >
-            <prism:InvokeCommandAction Command="{Binding WindowClosingCommand}" />
+            <prism:InvokeCommandAction Command="{Binding WindowClosingCommand}" PassEventArgsToCommand="True" />
         </i:EventTrigger>
     </i:Interaction.Triggers>
     
