@@ -19,6 +19,8 @@
 [Rr]eleases/
 x64/
 x86/
+!references/x64/
+!references/CefSharpRedist/x64/
 bld/
 [Bb]in/
 [Oo]bj/
