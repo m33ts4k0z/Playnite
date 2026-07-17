@@ -2452,6 +2452,15 @@ namespace Playnite.SDK.Models
 
             try
             {
+                // .NET Framework's GetPathRoot threw on paths with invalid characters,
+                // which this method turned into an empty result via the catch below.
+                // Modern .NET accepts such paths, so validate explicitly.
+                if (InstallDirectory.IndexOfAny(new[] { '<', '>', '"', '|', '?', '*' }) >= 0 ||
+                    (InstallDirectory.Length > 2 && InstallDirectory.IndexOf(':', 2) >= 0))
+                {
+                    return string.Empty;
+                }
+
                 return Path.GetPathRoot(InstallDirectory).ToUpperInvariant();
             }
             catch

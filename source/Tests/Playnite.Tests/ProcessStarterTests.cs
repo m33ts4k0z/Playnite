@@ -16,27 +16,30 @@ namespace Playnite.Tests
         [Test]
         public void StartProcessWaitTest()
         {
-            var notepad = ProcessStarter.StartProcess("notepad");
-            Assert.AreEqual(1, Process.GetProcessesByName("notepad").Count());
+            // cmd.exe instead of notepad: on Windows 11 notepad.exe is a Store-app
+            // launcher that exits immediately, breaking pid and process-count based
+            // assertions. Asserting on the returned Process object also avoids
+            // counting unrelated processes already running on the machine.
+            var proc = ProcessStarter.StartProcess("ping", "-t localhost");
+            Assert.IsFalse(proc.HasExited);
 
             var ivalidRes = ProcessStarter.StartProcessWait(CmdLineTools.TaskKill, "/f /pid 999999", null, true);
             Assert.AreEqual(128, ivalidRes);
 
-            var validRes = ProcessStarter.StartProcessWait(CmdLineTools.TaskKill, $"/f /pid {notepad.Id}", null, true);
+            var validRes = ProcessStarter.StartProcessWait(CmdLineTools.TaskKill, $"/f /pid {proc.Id}", null, true);
             Assert.AreEqual(0, validRes);
-            Thread.Sleep(200);
-            Assert.AreEqual(0, Process.GetProcessesByName("notepad").Count());
+            Assert.IsTrue(proc.WaitForExit(3000));
         }
 
         [Test]
         public void ShellExecuteTest()
         {
-            var procid = ProcessStarter.ShellExecute(@"notepad");
+            var procid = ProcessStarter.ShellExecute("cmd.exe");
             Assert.AreNotEqual(0, procid);
-            Assert.AreEqual(1, Process.GetProcessesByName("notepad").Count());
+            var proc = Process.GetProcessById(procid);
+            Assert.IsFalse(proc.HasExited);
             ProcessStarter.ShellExecute($"{CmdLineTools.TaskKill} /f /pid {procid}");
-            Thread.Sleep(200);
-            Assert.AreEqual(0, Process.GetProcessesByName("notepad").Count());
+            Assert.IsTrue(proc.WaitForExit(3000));
         }
 
         [Test]

@@ -64,9 +64,13 @@ namespace Playnite.Tests
         [Test]
         public void CheckSumTests()
         {
-            var testFile = Path.Combine(PlayniteTests.ResourcesPath, "TestIni.ini");
-            StringAssert.AreEqualIgnoringCase("46fcb37aa8e69b4ead0d702fd459299d", FileSystem.GetMD5(testFile));
-            StringAssert.AreEqualIgnoringCase("D8B22F5D", FileSystem.GetCRC32(testFile));
+            // Hash a fixed payload instead of a repo file: git line-ending settings
+            // change TestIni.ini's on-disk bytes, which made the old file-based
+            // expectations machine-dependent.
+            var testFile = Path.Combine(PlayniteTests.TempPath, "checksum.txt");
+            File.WriteAllBytes(testFile, Encoding.ASCII.GetBytes("Playnite checksum test content 12345\n"));
+            StringAssert.AreEqualIgnoringCase("ecb9f3faf079a2004e29fac39b0ed2ac", FileSystem.GetMD5(testFile));
+            StringAssert.AreEqualIgnoringCase("2C22397E", FileSystem.GetCRC32(testFile));
         }
 
         [Test]

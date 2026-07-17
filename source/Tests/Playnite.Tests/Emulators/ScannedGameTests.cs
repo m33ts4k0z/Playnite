@@ -65,7 +65,10 @@ namespace Playnite.Tests.Emulators
                 ImportWithRelativePaths = true
             };
 
-            var programDir = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+            // Must match what the product substitutes as {PlayniteDir}; the old
+            // GetDirectoryName(BaseDirectory) idiom depended on a trailing slash that
+            // modern .NET test hosts do not produce.
+            var programDir = PlaynitePaths.ProgramPath;
             var scannedGame = new ScannedGame
             {
                 Roms = new ObservableCollection<ScannedRom>

@@ -167,9 +167,14 @@ namespace Playnite.Common
             }
         }
 
+        // .NET (Core) removed '"', '<', '>' and '|' from GetInvalidPathChars;
+        // keep rejecting them like .NET Framework did, Windows paths can't contain them.
+        private static readonly char[] invalidPathChars =
+            Path.GetInvalidPathChars().Concat(new[] { '"', '<', '>', '|' }).ToArray();
+
         public static bool ContainsInvalidPathChars(string path)
         {
-            return path.Intersect(Path.GetInvalidPathChars()).Any();
+            return path.IndexOfAny(invalidPathChars) >= 0;
         }
 
         public static string GetSafePathName(string filename)

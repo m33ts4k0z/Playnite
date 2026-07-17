@@ -65,13 +65,23 @@ namespace Playnite.Tests
 
         public static void SetEntryAssembly(Assembly assembly)
         {
-            AppDomainManager manager = new AppDomainManager();
-            FieldInfo entryAssemblyfield = manager.GetType().GetField("m_entryAssembly", BindingFlags.Instance | BindingFlags.NonPublic);
-            entryAssemblyfield.SetValue(manager, assembly);
-
-            AppDomain domain = AppDomain.CurrentDomain;
-            FieldInfo domainManagerField = domain.GetType().GetField("_domainManager", BindingFlags.Instance | BindingFlags.NonPublic);
-            domainManagerField.SetValue(domain, manager);
+            // Formerly a .NET Framework reflection hack that overrode
+            // Assembly.GetEntryAssembly via AppDomainManager private fields, which
+            // WPF consumed when resolving pack://application resource URIs. Those
+            // internals no longer exist on modern .NET; setting
+            // Application.ResourceAssembly is the supported way to get the same result.
+            try
+            {
+                System.Windows.Application.ResourceAssembly = assembly;
+            }
+            catch (InvalidOperationException)
+            {
+                // ResourceAssembly is set-once and something in the test host may
+                // have initialized it already; overwrite the backing field.
+                typeof(System.Windows.Application)
+                    .GetField("_resourceAssembly", BindingFlags.Static | BindingFlags.NonPublic)
+                    ?.SetValue(null, assembly);
+            }
         }
 
         public static Mock<IPlayniteAPI> GetTestingApi()

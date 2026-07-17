@@ -68,7 +68,12 @@ namespace Playnite
 
         static PlaynitePaths()
         {
-            ProgramPath = Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory);
+            // BaseDirectory is the directory the app runs from and IS the program
+            // path; just strip any trailing separator. (The old GetDirectoryName
+            // call relied on BaseDirectory always ending in a separator to act as a
+            // slash-trimmer; some .NET hosts omit it, which wrongly returned the
+            // parent directory.)
+            ProgramPath = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             UninstallerPath = Path.Combine(ProgramPath, "unins000.exe");
             IsPortable = !File.Exists(UninstallerPath);
 
