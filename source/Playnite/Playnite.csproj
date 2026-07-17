@@ -24,6 +24,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Playnite.Core\Playnite.Core.csproj" />
     <ProjectReference Include="..\PlayniteSDK\Playnite.SDK.csproj" />
   </ItemGroup>
 

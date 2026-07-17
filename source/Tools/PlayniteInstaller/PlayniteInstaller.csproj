@@ -18,19 +18,19 @@
     <Compile Include="..\..\PlayniteSDK\Collections\ObservableObject.cs" Link="Shared\ObservableObject.cs" />
     <Compile Include="..\..\PlayniteSDK\ILogger.cs" Link="Shared\ILogger.cs" />
     <Compile Include="..\..\PlayniteSDK\RelayCommand.cs" Link="Shared\RelayCommand.cs" />
-    <Compile Include="..\..\Playnite\Common\Extensions\StringExtensions.cs" Link="Shared\StringExtensions.cs" />
-    <Compile Include="..\..\Playnite\Common\FileSystem.cs" Link="Shared\FileSystem.cs" />
-    <Compile Include="..\..\Playnite\Common\Paths.cs" Link="Shared\Paths.cs" />
+    <Compile Include="..\..\Playnite.Core\Common\Extensions\StringExtensions.cs" Link="Shared\StringExtensions.cs" />
+    <Compile Include="..\..\Playnite.Core\Common\FileSystem.cs" Link="Shared\FileSystem.cs" />
+    <Compile Include="..\..\Playnite.Core\Common\Paths.cs" Link="Shared\Paths.cs" />
     <Compile Include="..\..\Playnite\Common\Resources.cs" Link="Shared\Resources.cs" />
-    <Compile Include="..\..\Playnite\Native\Fileapi.cs" Link="Shared\Native\Fileapi.cs" />
-    <Compile Include="..\..\Playnite\Native\Kernel32.cs" Link="Shared\Native\Kernel32.cs" />
-    <Compile Include="..\..\Playnite\Native\Ntdll.cs" Link="Shared\Native\Ntdll.cs" />
-    <Compile Include="..\..\Playnite\Native\Processthreadsapi.cs" Link="Shared\Native\Processthreadsapi.cs" />
-    <Compile Include="..\..\Playnite\Native\Shlwapi.cs" Link="Shared\Native\Shlwapi.cs" />
-    <Compile Include="..\..\Playnite\Native\Winbase.cs" Link="Shared\Native\Winbase.cs" />
-    <Compile Include="..\..\Playnite\Native\Windef.cs" Link="Shared\Native\Windef.cs" />
-    <Compile Include="..\..\Playnite\Native\Winnt.cs" Link="Shared\Native\Winnt.cs" />
-    <Compile Include="..\..\Playnite\Native\winuser.cs" Link="Shared\Native\winuser.cs" />
+    <Compile Include="..\..\Playnite.Core\Native\Fileapi.cs" Link="Shared\Native\Fileapi.cs" />
+    <Compile Include="..\..\Playnite.Core\Native\Kernel32.cs" Link="Shared\Native\Kernel32.cs" />
+    <Compile Include="..\..\Playnite.Core\Native\Ntdll.cs" Link="Shared\Native\Ntdll.cs" />
+    <Compile Include="..\..\Playnite.Core\Native\Processthreadsapi.cs" Link="Shared\Native\Processthreadsapi.cs" />
+    <Compile Include="..\..\Playnite.Core\Native\Shlwapi.cs" Link="Shared\Native\Shlwapi.cs" />
+    <Compile Include="..\..\Playnite.Core\Native\Winbase.cs" Link="Shared\Native\Winbase.cs" />
+    <Compile Include="..\..\Playnite.Core\Native\Windef.cs" Link="Shared\Native\Windef.cs" />
+    <Compile Include="..\..\Playnite.Core\Native\Winnt.cs" Link="Shared\Native\Winnt.cs" />
+    <Compile Include="..\..\Playnite.Core\Native\winuser.cs" Link="Shared\Native\winuser.cs" />
   </ItemGroup>
 
   <ItemGroup>
