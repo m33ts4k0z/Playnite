@@ -3,8 +3,6 @@ using Playnite.Common;
 using Playnite.Common.Web;
 using Playnite.Plugins;
 using Playnite.SDK;
-using Playnite.ViewModels;
-using Playnite.Windows;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -166,48 +164,6 @@ namespace Playnite
             }
         }
 
-        public bool? CheckAddonLicense()
-        {
-            try
-            {
-                if (UserAgreement != null)
-                {
-                    var acceptState = ExtensionInstaller.GetAddonLicenseAgreed(AddonId);
-                    if (acceptState == null || acceptState < UserAgreement.Updated)
-                    {
-                        var license = HttpDownloader.DownloadString(UserAgreement.AgreementUrl);
-                        var licenseAgree = new LicenseAgreementViewModel(
-                            new LicenseAgreementWindowFactory(),
-                            license,
-                            Name);
-
-                        if (licenseAgree.OpenView() == true)
-                        {
-                            ExtensionInstaller.AgreeAddonLicense(AddonId);
-                            return true;
-                        }
-                        else
-                        {
-                            ExtensionInstaller.RemoveAddonLicenseAgreement(AddonId);
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        return true;
-                    }
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            catch (Exception e) when (!PlayniteEnvironment.ThrowAllErrors)
-            {
-                logger.Error(e, $"Failed to process addon license.");
-                return null;
-            }
-        }
 
         public override string ToString()
         {

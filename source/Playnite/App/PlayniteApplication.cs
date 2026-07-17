@@ -152,6 +152,11 @@ namespace Playnite
             CurrentNative.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             SyncContext = new DispatcherSynchronizationContext(CurrentNative.Dispatcher);
             SynchronizationContext.SetSynchronizationContext(SyncContext);
+            GameDatabase.MainThreadContext = SyncContext;
+            Playnite.Common.ClipboardService.SetText = System.Windows.Clipboard.SetText;
+            Playnite.Common.ImageConverter.TgaToPng = path => System.Drawing.Imaging.BitmapExtensions.TgaToBitmap(path).ToPngArray();
+            GameDatabase.ExpandGameVariables = (game, input, fixSeparators, emulatorDir) => game.ExpandVariables(input, fixSeparators, emulatorDir);
+            GameDatabase.MatchTextFilter = (filter, toMatch, acronymStart) => Playnite.ViewModels.SearchViewModel.MatchTextFilter(filter, toMatch, acronymStart);
             appMutex = new Mutex(true, instanceMuxet);
 
             try

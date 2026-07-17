@@ -23,6 +23,8 @@
 
   <ItemGroup>
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
+    <PackageReference Include="LiteDB" Version="4.1.4" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.6.3" />
     <PackageReference Include="Flurl" Version="2.7.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Nett" Version="0.10.1" />
@@ -51,6 +53,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Emulation\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath Include="..\..\references\sqlite3.x86.dll" Condition="'$(Platform)' == 'x86'" Link="Dependencies\sqlite3.x86.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="sqlite3.x86.dll" />
+    <ContentWithTargetPath Include="..\..\references\x64\sqlite3.x64.dll" Condition="'$(Platform)' == 'x64'" Link="Dependencies\sqlite3.x64.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="sqlite3.x64.dll" />
     <ContentWithTargetPath Include="..\..\references\SDL2.dll" Condition="'$(Platform)' == 'x86'" Link="Dependencies\SDL2.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2.dll" />
     <ContentWithTargetPath Include="..\..\references\SDL3.dll" Condition="'$(Platform)' == 'x86'" Link="Dependencies\SDL3.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL3.dll" />
     <ContentWithTargetPath Include="..\..\references\SDL2_mixer.dll" Condition="'$(Platform)' == 'x86'" Link="Dependencies\SDL2_mixer.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2_mixer.dll" />

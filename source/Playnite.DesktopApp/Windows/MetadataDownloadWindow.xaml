@@ -9,7 +9,7 @@
         xmlns:controls="clr-namespace:Playnite.Controls;assembly=Playnite"
         xmlns:pctrls="clr-namespace:Playnite.DesktopApp.Controls"
         xmlns:pvm="clr-namespace:Playnite.DesktopApp.ViewModels"
-        xmlns:pmp="clr-namespace:Playnite.Metadata;assembly=Playnite"
+        xmlns:pmp="clr-namespace:Playnite.Metadata;assembly=Playnite.Core"
         mc:Ignorable="d"
         d:DesignStyle="{StaticResource WindowDesignStyle}"
         Style="{DynamicResource StandardWindowStyle}"

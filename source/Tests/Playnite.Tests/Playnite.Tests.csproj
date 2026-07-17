@@ -47,6 +47,9 @@
          ReferenceOutputAssembly=false a referenced exe's apphost gets copied into
          this project's output, which breaks tests scanning it for executables. -->
     <MSBuild Projects="..\TestGameLibrary\TestGameLibrary.csproj;..\TestPlugin\TestPlugin.csproj;..\TestApp\TestApp.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+    <!-- Builds from a stale restore graph can deposit the TestApp apphost into
+         the test output root, which breaks tests scanning it for executables. -->
+    <Delete Files="$(TargetDir)TestApp.exe;$(TargetDir)TestApp.dll;$(TargetDir)TestApp.deps.json;$(TargetDir)TestApp.runtimeconfig.json;$(TargetDir)TestApp.pdb" />
     <Exec Command="xcopy &quot;$(MSBuildProjectDirectory)\..\TestGameLibrary\bin\$(Configuration)&quot; &quot;$(TargetDir)Extensions\TestGameLibrary\&quot; /e /y /i /exclude:$(IgnoreList)" />
     <Exec Command="xcopy &quot;$(MSBuildProjectDirectory)\..\TestPlugin\bin\$(Configuration)&quot; &quot;$(TargetDir)Extensions\Tests\&quot; /e /y /i /exclude:$(IgnoreList)" />
     <Exec Command="xcopy &quot;$(MSBuildProjectDirectory)\..\TestApp\bin\$(Configuration)&quot; &quot;$(TargetDir)TestApp\&quot; /e /y /i" />

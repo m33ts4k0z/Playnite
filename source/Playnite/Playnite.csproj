@@ -44,7 +44,6 @@
     <PackageReference Include="Magick.NET-Q8-x86" Version="14.14.0" Condition="'$(Platform)' == 'x86'" />
     <PackageReference Include="Magick.NET-Q8-x64" Version="14.14.0" Condition="'$(Platform)' == 'x64'" />
     <PackageReference Include="Markdig.Signed" Version="0.44.0" />
-    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.6.3" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
     <PackageReference Include="Nett" Version="0.10.1" />
@@ -100,7 +99,6 @@
   <ItemGroup>
     <None Update="Common.config" CopyToOutputDirectory="PreserveNewest" />
     <None Update="crash_reporter.cfg" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="Emulation\**" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Safe Mode.bat" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Resources\playnite_extension.ico" CopyToOutputDirectory="PreserveNewest" />
     <None Update="gamecontrollerdb.txt" CopyToOutputDirectory="PreserveNewest" />
@@ -109,11 +107,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ContentWithTargetPath Include="..\..\references\sqlite3.x86.dll" Condition="'$(Platform)' == 'x86'" Link="Dependencies\sqlite3.x86.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="sqlite3.x86.dll" />
     <ContentWithTargetPath Include="..\..\references\SDL2.dll" Condition="'$(Platform)' == 'x86'" Link="Dependencies\SDL2.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2.dll" />
     <ContentWithTargetPath Include="..\..\references\SDL3.dll" Condition="'$(Platform)' == 'x86'" Link="Dependencies\SDL3.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL3.dll" />
     <ContentWithTargetPath Include="..\..\references\SDL2_mixer.dll" Condition="'$(Platform)' == 'x86'" Link="Dependencies\SDL2_mixer.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2_mixer.dll" />
-    <ContentWithTargetPath Include="..\..\references\x64\sqlite3.x64.dll" Condition="'$(Platform)' == 'x64'" Link="Dependencies\sqlite3.x64.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="sqlite3.x64.dll" />
     <ContentWithTargetPath Include="..\..\references\x64\SDL2.dll" Condition="'$(Platform)' == 'x64'" Link="Dependencies\SDL2.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2.dll" />
     <ContentWithTargetPath Include="..\..\references\x64\SDL3.dll" Condition="'$(Platform)' == 'x64'" Link="Dependencies\SDL3.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL3.dll" />
     <ContentWithTargetPath Include="..\..\references\x64\SDL2_mixer.dll" Condition="'$(Platform)' == 'x64'" Link="Dependencies\SDL2_mixer.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2_mixer.dll" />
