@@ -94,6 +94,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
             selectedGame = value;
             OnPropertyChanged();
+            MetadataDownload?.RefreshTargetSummary();
             RaiseGameCommandStates();
         }
     }
@@ -270,11 +271,13 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
     public string StatusText { get => statusText; private set => SetField(ref statusText, value); }
     public DesktopGameEditorViewModel Editor { get; }
+    public DesktopMetadataDownloadViewModel MetadataDownload { get; }
 
     public ICommand ActivateCommand { get; }
     public ICommand InstallCommand { get; }
     public ICommand UninstallCommand { get; }
     public ICommand EditCommand { get; }
+    public ICommand OpenMetadataDownloadCommand { get; }
     public ICommand SetGridViewCommand { get; }
     public ICommand SetListViewCommand { get; }
     public ICommand ClearSearchCommand { get; }
@@ -308,6 +311,24 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             ? "Phase 5 Desktop runtime ready"
             : $"Library unavailable: {startupError}";
         Editor = new DesktopGameEditorViewModel(database, RefreshGames, SetStatusMessage);
+        MetadataDownload = new DesktopMetadataDownloadViewModel(
+            database,
+            this.settings,
+            ResolveMetadataGames,
+            RefreshGames,
+            (message, error) =>
+            {
+                if (runtimeHost != null)
+                {
+                    runtimeHost.ShowMessage(message, error);
+                }
+                else
+                {
+                    StatusText = message;
+                }
+            });
+        MetadataDownload.SettingsChanged += (_, _) => SettingsChanged?.Invoke(this, EventArgs.Empty);
+        MetadataDownload.PropertyChanged += MetadataDownload_PropertyChanged;
 
         ActivateCommand = new AppRelayCommand(
             () => RunOperation(SelectedGame?.IsInstalled == true ? GameOperationKind.Play : GameOperationKind.Install),
@@ -320,7 +341,11 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             () => SelectedGame?.IsInstalled == true);
         EditCommand = new AppRelayCommand(
             () => OpenGameEditor(SelectedGame.Game.Id),
-            () => SelectedGame != null && database != null && !Editor.IsVisible);
+            () => SelectedGame != null && database != null && !Editor.IsVisible &&
+                !MetadataDownload.IsVisible && !MetadataDownload.IsRunning);
+        OpenMetadataDownloadCommand = new AppRelayCommand(OpenMetadataDownload,
+            () => SelectedGame != null && database != null && runtimeHost != null &&
+                !Editor.IsVisible && !MetadataDownload.IsVisible && !MetadataDownload.IsRunning);
         SetGridViewCommand = new AppRelayCommand(() => SelectedViewMode = "Grid");
         SetListViewCommand = new AppRelayCommand(() => SelectedViewMode = "List");
         ClearSearchCommand = new AppRelayCommand(() => SearchText = string.Empty, () => SearchText.Length > 0);
@@ -351,6 +376,10 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         Notifications.CollectionChanged += Notifications_CollectionChanged;
         OnPropertyChanged(nameof(Notifications));
         OnPropertyChanged(nameof(NotificationCount));
+        MetadataDownload.ConfigureProviders(
+            () => host.Extensions.MetadataPlugins,
+            () => host.Extensions.LibraryPlugins);
+        RaiseGameCommandStates();
     }
 
     public void SelectGame(Guid gameId)
@@ -395,6 +424,12 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
     public bool OpenGameEditor(IReadOnlyList<Guid> gameIds, Action<bool?> completed = null)
     {
+        if (MetadataDownload.IsVisible || MetadataDownload.IsRunning)
+        {
+            StatusText = "Finish or close the metadata download before editing games.";
+            return false;
+        }
+
         CloseOverlays();
         var opened = Editor.Open(gameIds, result =>
         {
@@ -491,6 +526,17 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         }
     }
 
+    private void OpenMetadataDownload()
+    {
+        CloseOverlays();
+        if (!MetadataDownload.Open())
+        {
+            StatusText = "The metadata download view is unavailable.";
+        }
+
+        RaiseGameCommandStates();
+    }
+
     private void ConfirmActionChoice()
     {
         var index = ActionChoices.IndexOf(SelectedActionChoice);
@@ -568,6 +614,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         var previous = SelectedGame;
         Games = materialized;
         SelectedGame = previous != null && Games.Contains(previous) ? previous : Games.FirstOrDefault();
+        MetadataDownload?.RefreshTargetSummary();
     }
 
     private IEnumerable<DesktopGameItemViewModel> SortGames(IEnumerable<DesktopGameItemViewModel> source)
@@ -608,6 +655,26 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)InstallCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)UninstallCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)EditCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenMetadataDownloadCommand).RaiseCanExecuteChanged();
+    }
+
+    private IReadOnlyList<Game> ResolveMetadataGames(Playnite.Metadata.MetadataGamesSource source) => source switch
+    {
+        Playnite.Metadata.MetadataGamesSource.Selected => SelectedGame == null
+            ? Array.Empty<Game>()
+            : new[] { SelectedGame.Game },
+        Playnite.Metadata.MetadataGamesSource.Filtered => Games.Select(game => game.Game).ToList(),
+        Playnite.Metadata.MetadataGamesSource.AllFromDB => allGames.Select(game => game.Game).ToList(),
+        _ => Array.Empty<Game>()
+    };
+
+    private void MetadataDownload_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DesktopMetadataDownloadViewModel.IsVisible) or
+            nameof(DesktopMetadataDownloadViewModel.IsRunning))
+        {
+            RaiseGameCommandStates();
+        }
     }
 
     private void Notifications_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>

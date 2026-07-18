@@ -30,6 +30,12 @@ public sealed class DesktopSettingsStore
                 settings.Language ??= "english";
                 settings.ViewMode = settings.ViewMode is "Grid" or "List" ? settings.ViewMode : "Grid";
                 settings.DisabledPlugins ??= new List<string>();
+                settings.MetadataSourceIds ??= new List<Guid>();
+                settings.MetadataFields ??= DesktopSettings.GetDefaultMetadataFields();
+                if (!Enum.IsDefined(settings.MetadataGamesSource))
+                {
+                    settings.MetadataGamesSource = Playnite.Metadata.MetadataGamesSource.Selected;
+                }
                 return settings;
             }
         }

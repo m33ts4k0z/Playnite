@@ -1,9 +1,14 @@
 using System.Text;
+using System.Net;
+using System.Net.Sockets;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
+using Playnite.SDK;
+using Playnite.SDK.Models;
+using Playnite.SDK.Plugins;
 
 namespace Playnite.DesktopApp.Avalonia;
 
@@ -636,6 +641,105 @@ internal static class DesktopPilotSelfTest
                 ? "nullable install size/date fields cleared while unselected manual, post-script, and added values stayed intact"
                 : throw new InvalidOperationException("Bulk runtime or script fields overwrote unselected metadata."));
 
+        var metadataGame = library.Database.Games
+            .First(game => game.Id != editorGame.Game.Id && !bulkGameIds.Contains(game.Id));
+        var metadataGameCopy = metadataGame.GetCopy();
+        metadataGameCopy.Description = "Existing metadata description";
+        metadataGameCopy.CriticScore = null;
+        metadataGameCopy.CoverImage = null;
+        metadataGameCopy.Icon = null;
+        library.Database.Games.Update(metadataGameCopy);
+        viewModel.RefreshGame(metadataGame.Id);
+        viewModel.SelectGame(metadataGame.Id);
+        var originalMetadataName = metadataGame.Name;
+        await using var metadataServer = new LoopbackImageServer(File.ReadAllBytes(library.SelfTestMediaPath));
+        var metadataPlugin = new PilotMetadataPlugin(window.RuntimeHost.PluginApi, metadataServer.BaseUrl);
+        viewModel.MetadataDownload.ConfigureProvidersForTesting(
+            new MetadataPlugin[] { metadataPlugin },
+            Array.Empty<LibraryPlugin>());
+        viewModel.OpenMetadataDownloadCommand.Execute(null);
+
+        Record(results, "Native metadata workflow exposes provider, field, and scope policy", () =>
+            viewModel.MetadataDownload.IsVisible &&
+            viewModel.MetadataDownload.Sources.Count == 2 &&
+            viewModel.MetadataDownload.Sources.Any(source =>
+                source.Id == metadataPlugin.Id && source.Name == metadataPlugin.Name) &&
+            viewModel.MetadataDownload.Fields.Count == Enum.GetValues<MetadataField>().Length &&
+            !viewModel.MetadataDownload.Fields.Single(field => field.Field == MetadataField.Name).IsSelected &&
+            viewModel.MetadataDownload.SelectedTarget.Source == Playnite.Metadata.MetadataGamesSource.Selected
+                ? $"{viewModel.MetadataDownload.Sources.Count} ordered sources and {viewModel.MetadataDownload.Fields.Count} Core fields are configurable"
+                : throw new InvalidOperationException("Metadata options did not mirror the Core provider contract."));
+
+        SelectOnly(viewModel.MetadataDownload.Sources, metadataPlugin.Id);
+        SelectOnly(
+            viewModel.MetadataDownload.Fields,
+            MetadataField.Description,
+            MetadataField.CriticScore,
+            MetadataField.Genres,
+            MetadataField.CoverImage,
+            MetadataField.Icon);
+        viewModel.MetadataDownload.SkipExistingValues = false;
+        viewModel.MetadataDownload.DownloadBackgroundsImmediately = true;
+        var metadataDownloaded = await viewModel.MetadataDownload.StartDownloadAsync();
+        var downloadedGame = library.Database.Games[metadataGame.Id];
+        var downloadedCoverPath = library.Database.GetFullFilePath(downloadedGame.CoverImage);
+        var downloadedIconPath = library.Database.GetFullFilePath(downloadedGame.Icon);
+
+        Record(results, "Provider metadata and remote cover/icon files persist through Core", () =>
+        {
+            var downloadedGenreNames = (downloadedGame.GenreIds ?? new List<Guid>())
+                .Select(id => library.Database.Genres[id]?.Name)
+                .Where(name => name != null)
+                .ToList();
+            if (metadataDownloaded &&
+                !viewModel.MetadataDownload.IsVisible &&
+                downloadedGame.Name == originalMetadataName &&
+                downloadedGame.Description == PilotMetadataPlugin.DownloadedDescription &&
+                downloadedGame.CriticScore == 93 &&
+                downloadedGenreNames.Contains(PilotMetadataPlugin.DownloadedGenre) &&
+                !downloadedGame.CoverImage.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
+                !downloadedGame.Icon.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
+                File.Exists(downloadedCoverPath) &&
+                File.Exists(downloadedIconPath) &&
+                metadataPlugin.ProviderCreationCount == 1 &&
+                metadataPlugin.ProviderDisposeCount == 1 &&
+                metadataPlugin.LastRequestWasBackground &&
+                metadataServer.RequestCount >= 2 &&
+                viewModel.SelectedGame?.DescriptionText?.Contains(
+                    PilotMetadataPlugin.DownloadedDescription,
+                    StringComparison.Ordinal) == true)
+            {
+                return $"remote artwork became {downloadedGame.CoverImage} and {downloadedGame.Icon}; provider reused and disposed once";
+            }
+
+            throw new InvalidOperationException(
+                $"downloaded={metadataDownloaded}, name={downloadedGame.Name}, description={downloadedGame.Description}, " +
+                $"critic={downloadedGame.CriticScore}, genres={string.Join(",", downloadedGenreNames)}, " +
+                $"cover={downloadedGame.CoverImage}/{File.Exists(downloadedCoverPath)}, " +
+                $"icon={downloadedGame.Icon}/{File.Exists(downloadedIconPath)}, " +
+                $"providers={metadataPlugin.ProviderCreationCount}/{metadataPlugin.ProviderDisposeCount}, " +
+                $"background={metadataPlugin.LastRequestWasBackground}, requests={metadataServer.RequestCount}, " +
+                $"details={viewModel.SelectedGame?.DescriptionText}");
+        });
+
+        metadataPlugin.Description = "This replacement must be skipped";
+        viewModel.OpenMetadataDownloadCommand.Execute(null);
+        SelectOnly(viewModel.MetadataDownload.Sources, metadataPlugin.Id);
+        SelectOnly(viewModel.MetadataDownload.Fields, MetadataField.Description);
+        viewModel.MetadataDownload.SkipExistingValues = true;
+        var skipExistingCompleted = await viewModel.MetadataDownload.StartDownloadAsync();
+        downloadedGame = library.Database.Games[metadataGame.Id];
+        Record(results, "Metadata keep-existing policy avoids unnecessary provider calls", () =>
+            skipExistingCompleted &&
+            downloadedGame.Description == PilotMetadataPlugin.DownloadedDescription &&
+            metadataPlugin.ProviderCreationCount == 1 &&
+            metadataPlugin.ProviderDisposeCount == 1
+                ? "the populated field was preserved without constructing another provider"
+                : throw new InvalidOperationException("Skip-existing metadata policy called or applied the provider unexpectedly."));
+        viewModel.MetadataDownload.ConfigureProviders(
+            () => window.RuntimeHost.Extensions.MetadataPlugins,
+            () => window.RuntimeHost.Extensions.LibraryPlugins);
+
         Record(results, "Desktop settings persist atomically", () =>
         {
             var store = new DesktopSettingsStore(library.ActiveUserDataDirectory);
@@ -645,14 +749,24 @@ internal static class DesktopPilotSelfTest
                 SortOrder = Playnite.SDK.Models.SortOrder.Playtime,
                 SortDirection = Playnite.SDK.Models.SortOrderDirection.Descending,
                 Grouping = Playnite.SDK.Models.GroupableField.Platform,
-                DisabledPlugins = new List<string> { "pilot-plugin" }
+                DisabledPlugins = new List<string> { "pilot-plugin" },
+                MetadataGamesSource = Playnite.Metadata.MetadataGamesSource.Filtered,
+                MetadataSkipExistingValues = false,
+                DownloadBackgroundsImmediately = false,
+                MetadataSourceIds = new List<Guid> { metadataPlugin.Id },
+                MetadataFields = new List<MetadataField> { MetadataField.Description, MetadataField.CoverImage }
             });
             var loaded = store.Load();
             if (loaded.ViewMode != "List" ||
                 loaded.SortOrder != Playnite.SDK.Models.SortOrder.Playtime ||
                 loaded.SortDirection != Playnite.SDK.Models.SortOrderDirection.Descending ||
                 loaded.Grouping != Playnite.SDK.Models.GroupableField.Platform ||
-                loaded.DisabledPlugins.SingleOrDefault() != "pilot-plugin")
+                loaded.DisabledPlugins.SingleOrDefault() != "pilot-plugin" ||
+                loaded.MetadataGamesSource != Playnite.Metadata.MetadataGamesSource.Filtered ||
+                loaded.MetadataSkipExistingValues ||
+                loaded.DownloadBackgroundsImmediately ||
+                !loaded.MetadataSourceIds.SequenceEqual(new[] { metadataPlugin.Id }) ||
+                !loaded.MetadataFields.SequenceEqual(new[] { MetadataField.Description, MetadataField.CoverImage }))
             {
                 throw new InvalidOperationException("The persisted Desktop settings did not round-trip.");
             }
@@ -690,6 +804,183 @@ internal static class DesktopPilotSelfTest
         foreach (var option in options)
         {
             option.IsSelected = selected.Contains(option.Name);
+        }
+    }
+
+    private static void SelectOnly(
+        IEnumerable<DesktopMetadataSourceOption> options,
+        params Guid[] selectedIds)
+    {
+        var selected = selectedIds.ToHashSet();
+        foreach (var option in options)
+        {
+            option.IsSelected = selected.Contains(option.Id);
+        }
+    }
+
+    private static void SelectOnly(
+        IEnumerable<DesktopMetadataFieldOption> options,
+        params MetadataField[] selectedFields)
+    {
+        var selected = selectedFields.ToHashSet();
+        foreach (var option in options)
+        {
+            option.IsSelected = selected.Contains(option.Field);
+        }
+    }
+
+    private sealed class PilotMetadataPlugin : MetadataPlugin
+    {
+        public const string DownloadedDescription = "Downloaded pilot metadata description";
+        public const string DownloadedGenre = "Downloaded Pilot Genre";
+        private static readonly Guid pluginId = Guid.Parse("a565267c-e5e2-4e5e-8528-b3d73d8ce071");
+        private readonly string baseUrl;
+
+        public override Guid Id => pluginId;
+        public override string Name => "Pilot metadata provider";
+        public override List<MetadataField> SupportedFields { get; } = new()
+        {
+            MetadataField.Name,
+            MetadataField.Description,
+            MetadataField.CriticScore,
+            MetadataField.Genres,
+            MetadataField.CoverImage,
+            MetadataField.Icon
+        };
+        public string Description { get; set; } = DownloadedDescription;
+        public int ProviderCreationCount { get; private set; }
+        public int ProviderDisposeCount { get; private set; }
+        public bool LastRequestWasBackground { get; private set; }
+
+        public PilotMetadataPlugin(IPlayniteAPI playniteApi, string baseUrl) : base(playniteApi)
+        {
+            this.baseUrl = baseUrl;
+        }
+
+        public override OnDemandMetadataProvider GetMetadataProvider(MetadataRequestOptions options)
+        {
+            ProviderCreationCount++;
+            LastRequestWasBackground = options.IsBackgroundDownload;
+            return new PilotMetadataProvider(this);
+        }
+
+        private sealed class PilotMetadataProvider : OnDemandMetadataProvider
+        {
+            private readonly PilotMetadataPlugin plugin;
+
+            public override List<MetadataField> AvailableFields => plugin.SupportedFields;
+
+            public PilotMetadataProvider(PilotMetadataPlugin plugin)
+            {
+                this.plugin = plugin;
+            }
+
+            public override string GetName(GetMetadataFieldArgs args) => "Downloaded name must stay unselected";
+            public override string GetDescription(GetMetadataFieldArgs args) => plugin.Description;
+            public override int? GetCriticScore(GetMetadataFieldArgs args) => 93;
+            public override IEnumerable<MetadataProperty> GetGenres(GetMetadataFieldArgs args) =>
+                new[] { new MetadataNameProperty(DownloadedGenre) };
+            public override MetadataFile GetCoverImage(GetMetadataFieldArgs args) =>
+                new MetadataFile(plugin.baseUrl + "cover.png");
+            public override MetadataFile GetIcon(GetMetadataFieldArgs args) =>
+                new MetadataFile(plugin.baseUrl + "icon.png");
+
+            public override void Dispose()
+            {
+                plugin.ProviderDisposeCount++;
+            }
+        }
+    }
+
+    private sealed class LoopbackImageServer : IAsyncDisposable
+    {
+        private readonly byte[] imageData;
+        private readonly TcpListener listener;
+        private readonly CancellationTokenSource cancellation = new();
+        private readonly Task listenerTask;
+        private int requestCount;
+
+        public string BaseUrl { get; }
+        public int RequestCount => Volatile.Read(ref requestCount);
+
+        public LoopbackImageServer(byte[] imageData)
+        {
+            this.imageData = imageData ?? throw new ArgumentNullException(nameof(imageData));
+            listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var endpoint = (IPEndPoint)listener.LocalEndpoint;
+            BaseUrl = $"http://127.0.0.1:{endpoint.Port}/";
+            listenerTask = ListenAsync(cancellation.Token);
+        }
+
+        private async Task ListenAsync(CancellationToken cancelToken)
+        {
+            while (!cancelToken.IsCancellationRequested)
+            {
+                TcpClient client;
+                try
+                {
+                    client = await listener.AcceptTcpClientAsync(cancelToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
+
+                try
+                {
+                    await ServeAsync(client, cancelToken);
+                }
+                catch (IOException) when (!cancelToken.IsCancellationRequested)
+                {
+                }
+            }
+        }
+
+        private async Task ServeAsync(TcpClient client, CancellationToken cancelToken)
+        {
+            using (client)
+            using (var stream = client.GetStream())
+            using (var reader = new StreamReader(stream, Encoding.ASCII, false, 1024, true))
+            {
+                string line;
+                do
+                {
+                    line = await reader.ReadLineAsync(cancelToken);
+                }
+                while (!string.IsNullOrEmpty(line));
+
+                var response = Encoding.ASCII.GetBytes(
+                    "HTTP/1.1 200 OK\r\n" +
+                    "Content-Type: image/png\r\n" +
+                    $"Content-Length: {imageData.Length}\r\n" +
+                    "Connection: close\r\n\r\n");
+                await stream.WriteAsync(response, cancelToken);
+                await stream.WriteAsync(imageData, cancelToken);
+                await stream.FlushAsync(cancelToken);
+                Interlocked.Increment(ref requestCount);
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            cancellation.Cancel();
+            listener.Stop();
+            try
+            {
+                await listenerTask;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                cancellation.Dispose();
+            }
         }
     }
 

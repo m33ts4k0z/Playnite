@@ -266,8 +266,11 @@
                                         <Button Command="{Binding UninstallCommand}"
                                                 Content="{DynamicResource LOCDesktopUninstall}" />
                                     </StackPanel>
-                                    <Button Content="{DynamicResource LOCDesktopEdit}" Command="{Binding EditCommand}"
-                                            HorizontalAlignment="Left" />
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Content="{DynamicResource LOCDesktopEdit}" Command="{Binding EditCommand}" />
+                                        <Button Content="{DynamicResource LOCDesktopDownloadMetadata}"
+                                                Command="{Binding OpenMetadataDownloadCommand}" />
+                                    </StackPanel>
                                 </StackPanel>
                             </ScrollViewer>
                         </Border>
@@ -346,6 +349,91 @@
                                     <Button Command="{Binding CancelDialogCommand}" Content="Cancel" />
                                 </StackPanel>
                             </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding MetadataDownload.IsVisible}"
+                          Background="#E6000000">
+                        <Border Width="860" MaxHeight="790" Padding="30" CornerRadius="14"
+                                Background="{DynamicResource DesktopPanelStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="18">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{DynamicResource LOCDesktopDownloadMetadata}" FontSize="30"
+                                               FontWeight="Bold" Foreground="{DynamicResource DesktopTextBrush}" />
+                                    <TextBlock Text="{Binding MetadataDownload.TargetSummary}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                </StackPanel>
+
+                                <ScrollViewer Grid.Row="1" MaxHeight="610">
+                                    <StackPanel Spacing="16" IsEnabled="{Binding MetadataDownload.CanConfigure}">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{DynamicResource LOCDesktopMetadataScope}" Classes="sectionLabel" />
+                                            <ComboBox ItemsSource="{Binding MetadataDownload.Targets}"
+                                                      SelectedItem="{Binding MetadataDownload.SelectedTarget, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <CheckBox Content="{DynamicResource LOCDesktopMetadataKeepExisting}"
+                                                  IsChecked="{Binding MetadataDownload.SkipExistingValues, Mode=TwoWay}" />
+                                        <CheckBox Content="{DynamicResource LOCDesktopMetadataDownloadBackgrounds}"
+                                                  IsChecked="{Binding MetadataDownload.DownloadBackgroundsImmediately, Mode=TwoWay}" />
+
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="18">
+                                            <StackPanel Spacing="7">
+                                                <TextBlock Text="{DynamicResource LOCDesktopMetadataSources}"
+                                                           Classes="sectionLabel" />
+                                                <ListBox MaxHeight="245" ItemsSource="{Binding MetadataDownload.Sources}">
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="2,4">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource DesktopTextBrush}" />
+                                                                    <TextBlock Text="{Binding Detail}" FontSize="10" TextWrapping="Wrap"
+                                                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                </StackPanel>
+                                                            </CheckBox>
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1" Spacing="7">
+                                                <TextBlock Text="{DynamicResource LOCDesktopMetadataFields}"
+                                                           Classes="sectionLabel" />
+                                                <ListBox MaxHeight="245" ItemsSource="{Binding MetadataDownload.Fields}">
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox Content="{Binding Name}"
+                                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                      Margin="2,3" />
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </ScrollViewer>
+
+                                <StackPanel Grid.Row="2" Spacing="9">
+                                    <ProgressBar Minimum="0" Maximum="{Binding MetadataDownload.ProgressTotal}"
+                                                 Value="{Binding MetadataDownload.ProgressValue}" Height="8" />
+                                    <TextBlock Text="{Binding MetadataDownload.ProgressText}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding MetadataDownload.ErrorText}" TextWrapping="Wrap"
+                                               Foreground="#FF7F7F" />
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Classes="primary" Content="{DynamicResource LOCDesktopMetadataStart}"
+                                                IsVisible="{Binding MetadataDownload.CanConfigure}"
+                                                Command="{Binding MetadataDownload.DownloadCommand}" />
+                                        <Button Content="{DynamicResource LOCDesktopMetadataCancelDownload}"
+                                                IsVisible="{Binding MetadataDownload.IsRunning}"
+                                                Command="{Binding MetadataDownload.CancelCommand}" />
+                                        <Button Content="{DynamicResource LOCDesktopCancel}"
+                                                IsVisible="{Binding MetadataDownload.CanConfigure}"
+                                                Command="{Binding MetadataDownload.CloseCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
 

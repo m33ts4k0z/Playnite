@@ -8,6 +8,14 @@
     <x:String x:Key="LOCDesktopEdit">Edit</x:String>
     <x:String x:Key="LOCDesktopInstall">Install</x:String>
     <x:String x:Key="LOCDesktopUninstall">Uninstall</x:String>
+    <x:String x:Key="LOCDesktopDownloadMetadata">Download metadata</x:String>
+    <x:String x:Key="LOCDesktopMetadataScope">Games</x:String>
+    <x:String x:Key="LOCDesktopMetadataKeepExisting">Keep existing values</x:String>
+    <x:String x:Key="LOCDesktopMetadataDownloadBackgrounds">Download background images immediately</x:String>
+    <x:String x:Key="LOCDesktopMetadataSources">Sources (first available value wins)</x:String>
+    <x:String x:Key="LOCDesktopMetadataFields">Fields</x:String>
+    <x:String x:Key="LOCDesktopMetadataStart">Start download</x:String>
+    <x:String x:Key="LOCDesktopMetadataCancelDownload">Cancel download</x:String>
     <x:String x:Key="LOCDesktopPreset">Filter preset</x:String>
     <x:String x:Key="LOCDesktopView">View</x:String>
     <x:String x:Key="LOCDesktopSort">Sort</x:String>
