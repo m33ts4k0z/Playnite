@@ -40,6 +40,7 @@ public sealed class FullscreenRuntimeHost : IDisposable
                 viewModel.OpenSearchCommand.Execute(null);
                 viewModel.SearchText = term;
             },
+            OpenSearchContext = viewModel.PluginSearch.Open,
             ActiveFullscreenView = () =>
                 viewModel.IsDetailsVisible
                     ? Playnite.SDK.FullscreenView.Details

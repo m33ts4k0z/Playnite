@@ -140,6 +140,7 @@ public sealed class MainWindow : Window
     private void OnClosed(object sender, EventArgs e)
     {
         SaveSettings();
+        viewModel.PluginSearch.Dispose();
         sdlInput.Dispose();
         gamepadBridge.Dispose();
         audioService?.Dispose();

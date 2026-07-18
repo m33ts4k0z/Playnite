@@ -25,7 +25,7 @@
 
   <Target Name="CopySdkV7HostBundle" AfterTargets="Build">
     <MSBuild Projects="..\Playnite.SDK.V7.Host\Playnite.SDK.V7.Host.csproj;..\PlayniteSDK.V7\Playnite.SDK.V7.csproj"
-             Targets="GetTargetPath"
+             Targets="Build"
              Properties="Configuration=$(Configuration);Platform=$(Platform)"
              BuildInParallel="true">
       <Output TaskParameter="TargetOutputs" ItemName="SdkV7HostBundle" />

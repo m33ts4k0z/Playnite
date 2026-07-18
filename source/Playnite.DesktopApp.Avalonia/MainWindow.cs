@@ -229,6 +229,7 @@ public sealed class MainWindow : Window
     {
         hasClosed = true;
         viewModel.SettingsChanged -= ViewModel_SettingsChanged;
+        viewModel.PluginSearch.Dispose();
         trayService.Dispose();
         SaveSettings();
     }

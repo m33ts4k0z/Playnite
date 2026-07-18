@@ -223,6 +223,58 @@
                         </Border>
                     </Grid>
 
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding PluginSearch.IsVisible}"
+                          Background="#E6000000">
+                        <Border Width="860" MaxHeight="760" Padding="38" CornerRadius="16"
+                                Background="{DynamicResource FullscreenSurfaceStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="15">
+                                <TextBlock Text="{Binding PluginSearch.Label, FallbackValue=Plugin search}"
+                                           FontSize="36" FontWeight="Bold"
+                                           Foreground="{DynamicResource FullscreenTextBrush}" />
+                                <TextBlock Grid.Row="1" Text="{Binding PluginSearch.Description}"
+                                           FontSize="17" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource FullscreenMutedTextBrush}" />
+                                <TextBox Grid.Row="2" Name="PART_PluginSearchBox"
+                                         Text="{Binding PluginSearch.SearchText, Mode=TwoWay}"
+                                         Watermark="{Binding PluginSearch.Hint}"
+                                         FontSize="23" Padding="16" />
+                                <ListBox Grid.Row="3" MaxHeight="400"
+                                         ItemsSource="{Binding PluginSearch.Results}"
+                                         SelectedItem="{Binding PluginSearch.SelectedResult, Mode=TwoWay}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="3" Padding="14" CornerRadius="8" Background="#302D3748">
+                                                <StackPanel Spacing="4">
+                                                    <TextBlock Text="{Binding Name}" FontSize="21" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource FullscreenTextBrush}" />
+                                                    <TextBlock Text="{Binding Description}" FontSize="15"
+                                                               TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource FullscreenMutedTextBrush}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="12">
+                                    <Button Classes="primary" Command="{Binding PluginSearch.PrimaryCommand}"
+                                            Content="{Binding PluginSearch.PrimaryActionName}"
+                                            IsVisible="{Binding PluginSearch.HasPrimaryAction}" />
+                                    <Button Command="{Binding PluginSearch.SecondaryCommand}"
+                                            Content="{Binding PluginSearch.SecondaryActionName}"
+                                            IsVisible="{Binding PluginSearch.HasSecondaryAction}" />
+                                    <Button Command="{Binding PluginSearch.MenuCommand}"
+                                            Content="{Binding PluginSearch.MenuActionName}"
+                                            IsVisible="{Binding PluginSearch.HasMenuAction}" />
+                                    <Button Command="{Binding PluginSearch.BackCommand}" Content="Back"
+                                            IsVisible="{Binding PluginSearch.CanGoBack}" />
+                                    <Button Command="{Binding PluginSearch.CloseCommand}"
+                                            Content="{DynamicResource LOCFullscreenReturn}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
                     <Grid Grid.RowSpan="3" IsVisible="{Binding IsFiltersVisible}"
                           Background="#D9000000">
                         <Border Width="600" Padding="38" CornerRadius="16"

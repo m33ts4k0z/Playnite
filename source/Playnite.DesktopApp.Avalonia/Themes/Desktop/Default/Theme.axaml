@@ -380,6 +380,61 @@
                                    Foreground="{DynamicResource DesktopMutedBrush}" />
                     </Border>
 
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding PluginSearch.IsVisible}"
+                          Background="#E6000000">
+                        <Border Width="820" MaxHeight="760" Padding="30" CornerRadius="14"
+                                Background="{DynamicResource DesktopPanelStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="12">
+                                <TextBlock Text="{Binding PluginSearch.Label, FallbackValue=Plugin search}"
+                                           FontSize="30" FontWeight="Bold"
+                                           Foreground="{DynamicResource DesktopTextBrush}" />
+                                <TextBlock Grid.Row="1" Text="{Binding PluginSearch.Description}"
+                                           TextWrapping="Wrap"
+                                           Foreground="{DynamicResource DesktopMutedBrush}" />
+                                <TextBox Grid.Row="2" Name="PART_PluginSearchBox"
+                                         Text="{Binding PluginSearch.SearchText, Mode=TwoWay}"
+                                         Watermark="{Binding PluginSearch.Hint}"
+                                         Padding="12,9" />
+                                <ListBox Grid.Row="3" MaxHeight="470"
+                                         ItemsSource="{Binding PluginSearch.Results}"
+                                         SelectedItem="{Binding PluginSearch.SelectedResult, Mode=TwoWay}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="3" Padding="13" CornerRadius="7" Background="#263140">
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                    <ContentPresenter Content="{Binding Icon}"
+                                                                      Width="26" Height="26" />
+                                                    <StackPanel Grid.Column="1" Spacing="3">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource DesktopTextBrush}" />
+                                                        <TextBlock Text="{Binding Description}" FontSize="11"
+                                                                   TextWrapping="Wrap"
+                                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="10">
+                                    <Button Classes="primary" Command="{Binding PluginSearch.PrimaryCommand}"
+                                            Content="{Binding PluginSearch.PrimaryActionName}"
+                                            IsVisible="{Binding PluginSearch.HasPrimaryAction}" />
+                                    <Button Command="{Binding PluginSearch.SecondaryCommand}"
+                                            Content="{Binding PluginSearch.SecondaryActionName}"
+                                            IsVisible="{Binding PluginSearch.HasSecondaryAction}" />
+                                    <Button Command="{Binding PluginSearch.MenuCommand}"
+                                            Content="{Binding PluginSearch.MenuActionName}"
+                                            IsVisible="{Binding PluginSearch.HasMenuAction}" />
+                                    <Button Command="{Binding PluginSearch.BackCommand}" Content="Back"
+                                            IsVisible="{Binding PluginSearch.CanGoBack}" />
+                                    <Button Command="{Binding PluginSearch.CloseCommand}" Content="Close" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
                     <Grid Grid.RowSpan="3" IsVisible="{Binding IsNotificationsVisible}"
                           Background="#D9000000">
                         <Border Width="760" MaxHeight="680" Padding="30" CornerRadius="14"

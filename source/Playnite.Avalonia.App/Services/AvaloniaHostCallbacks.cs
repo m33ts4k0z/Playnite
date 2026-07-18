@@ -18,6 +18,9 @@ public sealed class AvaloniaHostCallbacks
     public Action<Guid> SelectGame { get; init; } = _ => { };
     public Action<IReadOnlyList<Guid>> SelectGames { get; init; }
     public Action<string> OpenSearch { get; init; } = _ => { };
+    public Action<AvaloniaSearchContext, string> OpenSearchContext { get; init; } = (_, _) =>
+        throw new NotSupportedException(
+            "The current Avalonia application does not expose custom search contexts.");
     public Func<Guid, bool> OpenPluginSettings { get; init; } = _ => false;
     public Func<IReadOnlyList<Guid>, bool?> OpenEditDialog { get; init; } = _ => null;
     public Func<DesktopView> ActiveDesktopView { get; init; } = () => DesktopView.Grid;

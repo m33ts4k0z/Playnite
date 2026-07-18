@@ -19,15 +19,15 @@ public static class V7PluginBridge
     public static object[] LoadAll(
         string pluginAssemblyPath,
         Func<string, string, string> hostCall,
-        Func<string, string, object> hostObjectCall = null)
+        Func<string, string, object> hostObjectCall = null,
+        Func<string, object, object> hostRequest = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(pluginAssemblyPath);
         ArgumentNullException.ThrowIfNull(hostCall);
 
         Serialization.Init(new V7DataSerializer());
         Markup.Init(new HostMarkupConverter(hostCall));
-        SQLite.Init((_, _) => throw new NotSupportedException(
-            "SDK v7 SQLite bridging is not available in this host milestone."));
+        SQLite.Init((path, flags) => new HostSqlite(hostRequest, path, flags));
 
         var context = AssemblyLoadContext.GetLoadContext(typeof(V7PluginBridge).Assembly)
             ?? AssemblyLoadContext.Default;
@@ -46,7 +46,7 @@ public static class V7PluginBridge
                 $"Plugin assembly must reference Playnite.SDK major 7, but references {sdkReference?.Version}." );
         }
 
-        var api = new V7PlayniteApi(hostCall, hostObjectCall);
+        var api = new V7PlayniteApi(hostCall, hostObjectCall, hostRequest);
         API.Instance = api;
         ResourceProvider.SetGlobalProvider(api.Resources);
         var results = new List<object>();
@@ -604,7 +604,8 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
 
     public V7PlayniteApi(
         Func<string, string, string> hostCall,
-        Func<string, string, object> hostObjectCall = null)
+        Func<string, string, object> hostObjectCall = null,
+        Func<string, object, object> hostRequest = null)
     {
         this.hostCall = hostCall;
         Paths = new HostPaths(hostCall);
@@ -612,7 +613,7 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
         Resources = new HostResources(hostObjectCall);
         Notifications = new HostNotifications(hostCall);
         Dialogs = new HostDialogs(hostCall, hostObjectCall);
-        MainView = new HostMainView(hostCall);
+        MainView = new HostMainView(hostCall, hostRequest);
         HostDatabase = new HostGameDatabase(hostCall);
         Database = HostDatabase;
         ApplicationSettings = new HostApplicationSettings(hostCall);
@@ -699,6 +700,7 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
 internal sealed class HostMainView : IMainViewAPI
 {
     private readonly Func<string, string, string> hostCall;
+    private readonly Func<string, object, object> hostRequest;
 
     public DesktopView ActiveDesktopView
     {
@@ -725,8 +727,13 @@ internal sealed class HostMainView : IMainViewAPI
     public IEnumerable<Game> SelectedGames => Read<List<Game>>("MainView.SelectedGames") ?? [];
     public List<Game> FilteredGames => Read<List<Game>>("MainView.FilteredGames") ?? [];
 
-    public HostMainView(Func<string, string, string> hostCall) =>
+    public HostMainView(
+        Func<string, string, string> hostCall,
+        Func<string, object, object> hostRequest)
+    {
         this.hostCall = hostCall ?? throw new ArgumentNullException(nameof(hostCall));
+        this.hostRequest = hostRequest;
+    }
 
     public Task<bool> OpenPluginSettingsAsync(Guid pluginId) => Task.FromResult(
         bool.TryParse(hostCall("OpenPluginSettings", pluginId.ToString()), out var opened) && opened);
@@ -754,13 +761,16 @@ internal sealed class HostMainView : IMainViewAPI
 
     public void OpenSearch(SearchContext context, string searchTerm)
     {
-        if (context != null)
+        if (context == null)
         {
-            throw new NotSupportedException(
-                "SDK v7 custom search contexts cannot cross the isolated Avalonia plugin boundary yet.");
+            OpenSearch(searchTerm);
+            return;
         }
 
-        OpenSearch(searchTerm);
+        (hostRequest ?? throw new NotSupportedException(
+            "The Avalonia host does not expose SDK v7 custom search contexts."))(
+            "MainView.OpenSearchContext",
+            new object[] { new V7SearchContextInstance(context), searchTerm ?? string.Empty });
     }
 
     public Task<bool?> OpenEditDialogAsync(Guid gameId) => OpenEditDialogAsync([gameId]);

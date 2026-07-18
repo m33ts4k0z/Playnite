@@ -10,6 +10,7 @@ using Playnite.Database;
 using Playnite.Emulators;
 using Playnite.Plugins;
 using Playnite.SDK;
+using Playnite.SDK.Data;
 using Playnite.SDK.Events;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
@@ -336,6 +337,8 @@ internal sealed class V7PluginHost : IDisposable
     private readonly List<UiRegistrationPayload> converterRegistrations = [];
     private readonly Dictionary<string, Guid> uriSources = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Guid, V7LoadedPlugin> uriOwners = [];
+    private readonly Dictionary<Guid, Sqlite> sqliteConnections = [];
+    private readonly object sqliteSync = new();
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, IV7ControllerAdapter>
         controllerAdapters = new();
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, JObject>
@@ -480,6 +483,11 @@ internal sealed class V7PluginHost : IDisposable
         var previousConverterRegistrations = converterRegistrations.ToList();
         var previousUriSources = uriSources.ToDictionary(item => item.Key, item => item.Value, StringComparer.OrdinalIgnoreCase);
         var previousUriOwners = uriOwners.ToDictionary(item => item.Key, item => item.Value);
+        HashSet<Guid> previousSqliteHandles;
+        lock (sqliteSync)
+        {
+            previousSqliteHandles = sqliteConnections.Keys.ToHashSet();
+        }
         try
         {
             if (string.IsNullOrWhiteSpace(manifest.Id))
@@ -496,7 +504,10 @@ internal sealed class V7PluginHost : IDisposable
                 ?? throw new MissingMethodException(bridge.FullName, "LoadAll");
             Func<string, string, string> hostCall = HostCall;
             Func<string, string, object> hostObjectCall = HostObjectCall;
-            var instances = (object[])loadAll.Invoke(null, [modulePath, hostCall, hostObjectCall]);
+            Func<string, object, object> hostRequest = HostObjectRequest;
+            var instances = (object[])loadAll.Invoke(
+                null,
+                [modulePath, hostCall, hostObjectCall, hostRequest]);
             constructedPlugins.AddRange(instances.Select(instance => new V7LoadedPlugin(instance, manifest)));
             if (constructedPlugins.Count == 0)
             {
@@ -555,6 +566,7 @@ internal sealed class V7PluginHost : IDisposable
             {
                 uriOwners.Add(owner.Key, owner.Value);
             }
+            DisposeSqliteConnections(handle => !previousSqliteHandles.Contains(handle));
         }
     }
 
@@ -880,6 +892,100 @@ internal sealed class V7PluginHost : IDisposable
             ?? throw new InvalidOperationException("The Avalonia web-view factory is unavailable."),
         _ => throw new NotSupportedException($"SDK v7 object host operation {operation} is not supported.")
     };
+
+    private object HostObjectRequest(string operation, object payload)
+    {
+        switch (operation)
+        {
+            case "MainView.OpenSearchContext":
+                var searchArguments = payload as object[]
+                    ?? throw new InvalidDataException(
+                        "SDK v7 custom-search payload is not an object array.");
+                if (searchArguments.Length != 2 || searchArguments[0] == null ||
+                    searchArguments[1] is not string searchTerm)
+                {
+                    throw new InvalidDataException(
+                        "SDK v7 custom-search payload has an invalid shape.");
+                }
+                callbacks.OpenSearchContext(
+                    V7SearchContextAdapter.Create(searchArguments[0]),
+                    searchTerm);
+                return null;
+            case "SQLite.Open":
+                var openArguments = payload as object[]
+                    ?? throw new InvalidDataException("SDK v7 SQLite open payload is not an object array.");
+                if (openArguments.Length != 2 || openArguments[0] is not string databasePath ||
+                    openArguments[1] is not int openFlags)
+                {
+                    throw new InvalidDataException("SDK v7 SQLite open payload has an invalid shape.");
+                }
+                var handle = Guid.NewGuid();
+                lock (sqliteSync)
+                {
+                    sqliteConnections.Add(handle, new Sqlite(databasePath, (SqliteOpenFlags)openFlags));
+                }
+                return handle;
+            case "SQLite.Query":
+                var queryArguments = payload as object[]
+                    ?? throw new InvalidDataException("SDK v7 SQLite query payload is not an object array.");
+                if (queryArguments.Length != 4 || queryArguments[0] is not Guid queryHandle ||
+                    queryArguments[1] is not string query || queryArguments[2] is not object[] arguments ||
+                    queryArguments[3] is not Type resultType)
+                {
+                    throw new InvalidDataException("SDK v7 SQLite query payload has an invalid shape.");
+                }
+                lock (sqliteSync)
+                {
+                    if (!sqliteConnections.TryGetValue(queryHandle, out var connection))
+                    {
+                        throw new ObjectDisposedException(
+                            nameof(Sqlite),
+                            $"SDK v7 SQLite handle {queryHandle} is not open.");
+                    }
+                    var queryMethod = typeof(Sqlite).GetMethod(nameof(Sqlite.Query))
+                        ?? throw new MissingMethodException(typeof(Sqlite).FullName, nameof(Sqlite.Query));
+                    try
+                    {
+                        return queryMethod.MakeGenericMethod(resultType).Invoke(
+                            connection,
+                            [query, arguments]);
+                    }
+                    catch (TargetInvocationException exception) when (exception.InnerException != null)
+                    {
+                        ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
+                        throw;
+                    }
+                }
+            case "SQLite.Dispose":
+                if (payload is not Guid disposeHandle)
+                {
+                    throw new InvalidDataException("SDK v7 SQLite dispose payload is not a GUID.");
+                }
+                lock (sqliteSync)
+                {
+                    if (sqliteConnections.Remove(disposeHandle, out var disposedConnection))
+                    {
+                        disposedConnection.Dispose();
+                    }
+                }
+                return null;
+            default:
+                throw new NotSupportedException(
+                    $"SDK v7 host request operation {operation} is not supported.");
+        }
+    }
+
+    private void DisposeSqliteConnections(Func<Guid, bool> predicate)
+    {
+        lock (sqliteSync)
+        {
+            foreach (var handle in sqliteConnections.Keys.Where(predicate).ToList())
+            {
+                sqliteConnections.Remove(handle, out var connection);
+                connection.Dispose();
+            }
+        }
+    }
 
     internal Control ResolvePluginElement(string sourceName, string elementName, Game game)
     {
@@ -1374,6 +1480,7 @@ internal sealed class V7PluginHost : IDisposable
         }
 
         handles.Clear();
+        DisposeSqliteConnections(_ => true);
         uriSources.Clear();
         uriOwners.Clear();
         LibraryPlugins.Clear();

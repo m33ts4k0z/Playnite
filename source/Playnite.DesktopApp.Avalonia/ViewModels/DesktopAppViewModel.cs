@@ -362,6 +362,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public DesktopLibrarySyncViewModel LibrarySync { get; }
     public DesktopInstalledGameImportViewModel InstalledGameImport { get; }
     public DesktopPluginSettingsViewModel PluginSettings { get; }
+    public AvaloniaSearchSession PluginSearch { get; }
+    public bool IsPluginSearchVisible => PluginSearch.IsVisible;
 
     public ICommand ActivateCommand { get; }
     public ICommand InstallCommand { get; }
@@ -408,6 +410,21 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         statusText = startupError == null
             ? "Phase 5 Desktop runtime ready"
             : $"Library unavailable: {startupError}";
+        PluginSearch = new AvaloniaSearchSession(
+            () => (true, false),
+            (message, exception) =>
+            {
+                var failure = $"{message} {exception.Message}";
+                runtimeHost?.ShowMessage(failure, true);
+                StatusText = failure;
+            });
+        PluginSearch.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(AvaloniaSearchSession.IsVisible))
+            {
+                OnPropertyChanged(nameof(IsPluginSearchVisible));
+            }
+        };
         Editor = new DesktopGameEditorViewModel(database, RefreshGames, SetStatusMessage);
         MetadataDownload = new DesktopMetadataDownloadViewModel(
             database,
@@ -991,6 +1008,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
     private void CloseOverlays()
     {
+        PluginSearch.Close();
         IsNotificationsVisible = false;
         IsActionPickerVisible = false;
         IsDialogVisible = false;

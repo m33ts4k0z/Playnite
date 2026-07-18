@@ -309,6 +309,8 @@ public class V7PluginHostTests
         var selectedGameId = Guid.Empty;
         var appliedFilterId = Guid.NewGuid();
         var searchText = string.Empty;
+        AvaloniaSearchContext customSearchContext = null;
+        var customSearchTerm = string.Empty;
         var switchedToLibrary = 0;
         var toggledFullscreen = 0;
         var settings = new TestSettings();
@@ -335,6 +337,11 @@ public class V7PluginHostTests
                 selectedGame = database.Games[id];
             },
             OpenSearch = value => searchText = value,
+            OpenSearchContext = (context, term) =>
+            {
+                customSearchContext = context;
+                customSearchTerm = term;
+            },
             OpenPluginSettings = id => id == pluginId,
             OpenEditDialog = ids => ids.Count == 1,
             ActiveDesktopView = () => activeDesktopView,
@@ -377,6 +384,25 @@ public class V7PluginHostTests
         mainCommand.Invoke();
         mainMenu.Single(item => item.DisplayName == "SDK v7 > Tests > SDK v7 API parity probe").Invoke();
         Assert.That(runtime.ProcessUri("playnite://sdk-v7-probe/after"), Is.True);
+        Assert.That(customSearchContext, Is.Not.Null);
+        var searchBatch = customSearchContext.GetSearchResults(new AvaloniaSearchRequest
+        {
+            SearchTerm = customSearchTerm,
+            IncludeUninstalled = true,
+            IncludeHidden = false,
+            CancellationToken = CancellationToken.None
+        });
+        var searchItem = searchBatch.Items.Single();
+        searchItem.PrimaryAction.Invoke();
+        searchItem.SecondaryAction.Invoke();
+        var nestedBatch = searchItem.MenuAction.Context.GetSearchResults(new AvaloniaSearchRequest
+        {
+            SearchTerm = string.Empty,
+            IncludeUninstalled = true,
+            IncludeHidden = false,
+            CancellationToken = CancellationToken.None
+        });
+        nestedBatch.Items.Single().PrimaryAction.Invoke();
         Assert.Multiple(() =>
         {
             Assert.That(activeDesktopView, Is.EqualTo(DesktopView.List));
@@ -385,6 +411,12 @@ public class V7PluginHostTests
             Assert.That(selectedGameId, Is.EqualTo(game.Id));
             Assert.That(appliedFilterId, Is.Not.EqualTo(Guid.Empty));
             Assert.That(searchText, Is.EqualTo("sdk-v7-search"));
+            Assert.That(customSearchTerm, Is.EqualTo("custom-term"));
+            Assert.That(customSearchContext.Label, Is.EqualTo("SDK v7 custom search"));
+            Assert.That(customSearchContext.Delay, Is.EqualTo(25));
+            Assert.That(searchItem.Name, Is.EqualTo("SDK v7 result custom-term"));
+            Assert.That(searchItem.Description, Is.EqualTo("filters:True:False"));
+            Assert.That(nestedBatch.Items.Single().Name, Is.EqualTo("Nested SDK v7 result"));
             Assert.That(switchedToLibrary, Is.EqualTo(1));
             Assert.That(toggledFullscreen, Is.EqualTo(1));
             Assert.That(settings.IsMusicMuted, Is.True);
@@ -480,6 +512,10 @@ public class V7PluginHostTests
         Assert.That(events, Does.Contain(
             $"api-addons:1:0:1:{pluginId}:True:True"));
         Assert.That(events, Does.Contain("api-emulation:True:True:True:True:True:True"));
+        Assert.That(events, Does.Contain("api-sqlite:7:bridge:8:second:True"));
+        Assert.That(events, Does.Contain("search-primary:custom-term"));
+        Assert.That(events, Does.Contain("search-secondary:custom-term"));
+        Assert.That(events, Does.Contain("search-nested"));
         Assert.That(events, Does.Contain("uri:before,encoded argument"));
         Assert.That(events, Does.Contain("uri:after"));
         Assert.That(events, Does.Contain("api-unsupported:multi-select"));

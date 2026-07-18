@@ -25,8 +25,9 @@ internal static class FullscreenPilotSelfTest
                 : throw new InvalidOperationException("The concrete Playnite.Core database is not open."));
 
         Record(results, "Loose Fullscreen theme applies", () =>
-            window.MainView.TemplateAppliedCount > 0 && window.MainView.GameList != null
-                ? "FullscreenMainView resolved PART_GameList from runtime XAML"
+            window.MainView.TemplateAppliedCount > 0 && window.MainView.GameList != null &&
+            window.MainView.PluginSearchBox != null
+                ? "FullscreenMainView resolved its library and plugin-search template contracts"
                 : throw new InvalidOperationException("The runtime theme template contract was not resolved."));
 
         Record(results, "Tile grid virtualization is bounded", () =>

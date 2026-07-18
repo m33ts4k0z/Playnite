@@ -151,6 +151,7 @@ public sealed class TestPlugin : LibraryPlugin
         main.SelectGames([game.Id]);
         main.ApplyFilterPreset(activePreset);
         main.OpenSearch("sdk-v7-search");
+        main.OpenSearch(new ProbeSearchContext(EventPath), "custom-term");
         main.SwitchToLibraryView();
         main.ToggleFullscreenView();
         var settingsOpened = main.OpenPluginSettingsAsync(Id).GetAwaiter().GetResult();
@@ -222,6 +223,24 @@ public sealed class TestPlugin : LibraryPlugin
             PlayniteApi.Emulation.GetEmulator(emulator.Id)?.Id == emulator.Id;
         PlayniteApi.UriHandler.RemoveSource("sdk-v7-probe");
         PlayniteApi.UriHandler.RegisterSource("sdk-v7-probe", HandleUri);
+        var sqlitePath = Path.Combine(GetPluginUserDataPath(), "sdk-v7-probe.sqlite");
+        var sqlite = SQLite.OpenDatabase(
+            sqlitePath,
+            SqliteOpenFlags.ReadWrite | SqliteOpenFlags.Create);
+        var sqliteRow = sqlite.Query<SqliteProbeRow>(
+            "SELECT 7 AS Number, 'bridge' AS Text").Single();
+        var secondSqliteRow = sqlite.Query<SqliteProbeRow>(
+            "SELECT 8 AS Number, 'second' AS Text").Single();
+        sqlite.Dispose();
+        var sqliteDisposed = false;
+        try
+        {
+            sqlite.Query<SqliteProbeRow>("SELECT 9 AS Number, 'closed' AS Text");
+        }
+        catch (ObjectDisposedException)
+        {
+            sqliteDisposed = true;
+        }
 
         var unsupported = new List<string>();
         try
@@ -250,6 +269,8 @@ public sealed class TestPlugin : LibraryPlugin
             $"{ReferenceEquals(loadedPlugins.Single(), this)}",
             $"api-emulation:{platforms.Count > 0}:{regions.Count > 0}:{emulators.Count > 0}:" +
             $"{platformRoundTrip}:{regionRoundTrip}:{emulatorRoundTrip}",
+            $"api-sqlite:{sqliteRow.Number}:{sqliteRow.Text}:" +
+            $"{secondSqliteRow.Number}:{secondSqliteRow.Text}:{sqliteDisposed}",
             $"api-unsupported:{string.Join(',', unsupported)}"
         ]);
     }
@@ -552,6 +573,67 @@ public sealed class TestPlugin : LibraryPlugin
         public TestLibraryClient(string eventPath) => this.eventPath = eventPath;
         public override void Open() => File.AppendAllLines(eventPath, ["library-client-open"]);
         public override void Shutdown() => File.AppendAllLines(eventPath, ["library-client-shutdown"]);
+    }
+
+    public sealed class SqliteProbeRow
+    {
+        public int Number { get; set; }
+        public string? Text { get; set; }
+    }
+
+    private sealed class ProbeSearchContext : SearchContext
+    {
+        private readonly string eventPath;
+
+        public ProbeSearchContext(string eventPath)
+        {
+            this.eventPath = eventPath;
+            Label = "SDK v7 custom search";
+            Description = "Search results supplied across the SDK v7 isolation boundary";
+            Hint = "Type a fixture term";
+            Delay = 25;
+        }
+
+        public override IEnumerable<SearchItem> GetSearchResults(GetSearchResultsArgs args)
+        {
+            yield return new SearchItem(
+                "SDK v7 result " + args.SearchTerm,
+                new SearchItemAction(
+                    "Run",
+                    () => File.AppendAllLines(eventPath, ["search-primary:" + args.SearchTerm])))
+            {
+                Description = $"filters:{args.GameFilterSettings.Uninstalled}:{args.GameFilterSettings.Hidden}",
+                SecondaryAction = new SearchItemAction(
+                    "Inspect",
+                    () => File.AppendAllLines(eventPath, ["search-secondary:" + args.SearchTerm]))
+                {
+                    CloseSearch = false
+                },
+                MenuAction = new ContextSwitchSearchItemAction(
+                    "Details",
+                    new ProbeNestedSearchContext(eventPath))
+            };
+        }
+    }
+
+    private sealed class ProbeNestedSearchContext : SearchContext
+    {
+        private readonly string eventPath;
+
+        public ProbeNestedSearchContext(string eventPath)
+        {
+            this.eventPath = eventPath;
+            Label = "SDK v7 nested search";
+            UseAutoSearch = true;
+        }
+
+        public override IEnumerable<SearchItem> GetSearchResults(GetSearchResultsArgs args)
+        {
+            yield return new SearchItem(
+                "Nested SDK v7 result",
+                "Open",
+                () => File.AppendAllLines(eventPath, ["search-nested"]));
+        }
     }
 
     private sealed class TestGameView : PluginUserControl

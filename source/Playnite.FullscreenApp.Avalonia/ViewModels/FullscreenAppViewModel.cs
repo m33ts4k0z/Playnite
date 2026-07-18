@@ -1,4 +1,5 @@
 using Playnite.Controllers;
+using Playnite.Avalonia.App.Services;
 using Playnite.FullscreenApp.Avalonia.Services;
 using Playnite.SDK;
 using Playnite.SDK.Models;
@@ -68,6 +69,8 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     public string PluginSummary => pluginSummary;
     public int NotificationCount => Notifications.Count;
     public int ActivateCount => activateCount;
+    public AvaloniaSearchSession PluginSearch { get; }
+    public bool IsPluginSearchVisible => PluginSearch.IsVisible;
 
     public GameItemViewModel SelectedGame
     {
@@ -231,6 +234,16 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         statusText = startupError == null
             ? "A Details   X Play   Y Search   Start Menu"
             : $"Library unavailable: {startupError}";
+        PluginSearch = new AvaloniaSearchSession(
+            () => (true, ShowHiddenGames),
+            (message, exception) => StatusText = $"{message} {exception.Message}");
+        PluginSearch.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(AvaloniaSearchSession.IsVisible))
+            {
+                OnPropertyChanged(nameof(IsPluginSearchVisible));
+            }
+        };
 
         ShowDetailsCommand = new RelayCommand(ShowDetails, () => SelectedGame != null);
         ConfirmCommand = new RelayCommand(Confirm);
@@ -429,6 +442,10 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         {
             CloseSearchCommand.Execute(null);
         }
+        else if (PluginSearch.IsVisible)
+        {
+            PluginSearch.PrimaryCommand.Execute(null);
+        }
         else
         {
             ShowDetailsCommand.Execute(null);
@@ -520,6 +537,20 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
 
     private void Back()
     {
+        if (PluginSearch.IsVisible)
+        {
+            if (PluginSearch.CanGoBack)
+            {
+                PluginSearch.BackCommand.Execute(null);
+            }
+            else
+            {
+                PluginSearch.Close();
+                LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
+            }
+            return;
+        }
+
         if (IsDetailsVisible || IsMenuVisible || IsSearchVisible || IsFiltersVisible ||
             IsSettingsVisible || IsNotificationsVisible || IsActionPickerVisible || IsDialogVisible)
         {
@@ -537,6 +568,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
 
     private void CloseOverlays()
     {
+        PluginSearch.Close();
         IsDetailsVisible = false;
         IsMenuVisible = false;
         IsSearchVisible = false;

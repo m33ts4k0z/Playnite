@@ -28,17 +28,17 @@
   <Target Name="CopySdkV7IntegrationFixture" AfterTargets="Build">
     <RemoveDir Directories="$(TargetDir)V7Fixture" />
     <MSBuild Projects="..\TestPluginV7\TestPluginV7.csproj"
-             Targets="GetTargetPath"
+             Targets="Build"
              Properties="Configuration=$(Configuration);Platform=$(Platform)">
       <Output TaskParameter="TargetOutputs" ItemName="V7LibraryPluginFixture" />
     </MSBuild>
     <MSBuild Projects="..\TestMetadataPluginV7\TestMetadataPluginV7.csproj"
-             Targets="GetTargetPath"
+             Targets="Build"
              Properties="Configuration=$(Configuration);Platform=$(Platform)">
       <Output TaskParameter="TargetOutputs" ItemName="V7MetadataPluginFixture" />
     </MSBuild>
     <MSBuild Projects="..\..\Playnite.SDK.V7.Host\Playnite.SDK.V7.Host.csproj;..\..\PlayniteSDK.V7\Playnite.SDK.V7.csproj"
-             Targets="GetTargetPath"
+             Targets="Build"
              Properties="Configuration=$(Configuration);Platform=$(Platform)"
              BuildInParallel="true">
       <Output TaskParameter="TargetOutputs" ItemName="V7HostFixture" />

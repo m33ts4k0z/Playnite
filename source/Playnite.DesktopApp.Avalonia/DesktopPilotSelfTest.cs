@@ -41,8 +41,9 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException("The concrete Core database is not open."));
 
         Record(results, "Loose Desktop theme applies", () =>
-            window.MainView.TemplateAppliedCount > 0 && window.MainView.GameList != null
-                ? "DesktopMainView resolved its runtime template contract"
+            window.MainView.TemplateAppliedCount > 0 && window.MainView.GameList != null &&
+            window.MainView.PluginSearchBox != null
+                ? "DesktopMainView resolved its library and plugin-search template contracts"
                 : throw new InvalidOperationException("The Desktop theme template was not applied."));
 
         Record(results, "Avalonia theme API 3 package contract validates", () =>

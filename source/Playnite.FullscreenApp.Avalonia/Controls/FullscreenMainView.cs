@@ -11,6 +11,7 @@ public sealed class FullscreenMainView : TemplatedControl
 {
     private ListBox gameList;
     private TextBox searchBox;
+    private TextBox pluginSearchBox;
     private ListBox filterList;
     private ListBox notificationsList;
     private ListBox actionList;
@@ -25,6 +26,7 @@ public sealed class FullscreenMainView : TemplatedControl
     public ListBox FilterList => filterList;
     public ListBox NotificationsList => notificationsList;
     public ListBox ActionList => actionList;
+    public TextBox PluginSearchBox => pluginSearchBox;
     public UniformGridVirtualizingPanel TilePanel =>
         gameList?.GetVisualDescendants().OfType<UniformGridVirtualizingPanel>().FirstOrDefault();
 
@@ -34,6 +36,7 @@ public sealed class FullscreenMainView : TemplatedControl
         TemplateAppliedCount++;
         gameList = e.NameScope.Find<ListBox>("PART_GameList");
         searchBox = e.NameScope.Find<TextBox>("PART_SearchBox");
+        pluginSearchBox = e.NameScope.Find<TextBox>("PART_PluginSearchBox");
         filterList = e.NameScope.Find<ListBox>("PART_FilterList");
         notificationsList = e.NameScope.Find<ListBox>("PART_NotificationsList");
         actionList = e.NameScope.Find<ListBox>("PART_ActionList");
@@ -94,6 +97,7 @@ public sealed class FullscreenMainView : TemplatedControl
         Control target = e.PropertyName switch
         {
             nameof(FullscreenAppViewModel.IsSearchVisible) when observedViewModel.IsSearchVisible => searchBox,
+            nameof(FullscreenAppViewModel.IsPluginSearchVisible) when observedViewModel.IsPluginSearchVisible => pluginSearchBox,
             nameof(FullscreenAppViewModel.IsFiltersVisible) when observedViewModel.IsFiltersVisible => filterList,
             nameof(FullscreenAppViewModel.IsSettingsVisible) when observedViewModel.IsSettingsVisible => firstSetting,
             nameof(FullscreenAppViewModel.IsNotificationsVisible) when observedViewModel.IsNotificationsVisible => notificationsList,
