@@ -39,11 +39,17 @@ namespace Playnite.Toolbox
                 with.HelpWriter = null;
             });
 
-            var result = cmdlineParser.ParseArguments<NewCmdLineOptions, PackCmdLineOptions, UpdateCmdLineOptions, VerifyManifestOptions>(args);
+            var result = cmdlineParser.ParseArguments<
+                NewCmdLineOptions,
+                PackCmdLineOptions,
+                UpdateCmdLineOptions,
+                VerifyManifestOptions,
+                MigrationCheckOptions>(args);
             result.WithParsed<NewCmdLineOptions>(ProcessNewOptions)
                 .WithParsed<PackCmdLineOptions>(ProcessPackOptions)
                 .WithParsed<UpdateCmdLineOptions>(ProcessUpdateOptions)
                 .WithParsed<VerifyManifestOptions>(ProcessVerifyOptions)
+                .WithParsed<MigrationCheckOptions>(ProcessMigrationCheckOptions)
                 .WithNotParsed(errs => DisplayHelp(result, errs));
             if (result.Tag == ParserResultType.NotParsed)
             {
@@ -298,6 +304,35 @@ namespace Playnite.Toolbox
             {
                 AppResult = 1;
                 logger.Error(e, "Failed to verify manifest." + Environment.NewLine + e.Message);
+            }
+        }
+
+        public static void ProcessMigrationCheckOptions(MigrationCheckOptions options)
+        {
+            try
+            {
+                var report = SdkV7MigrationAnalyzer.Analyze(options.Directory.Trim('"'));
+                var output = options.Format == MigrationReportFormat.Json
+                    ? report.ToJson()
+                    : report.ToText();
+                Console.WriteLine(output);
+                if (!options.Output.IsNullOrWhiteSpace())
+                {
+                    var outputPath = Path.GetFullPath(options.Output.Trim('"'));
+                    var outputDirectory = Path.GetDirectoryName(outputPath);
+                    if (!outputDirectory.IsNullOrWhiteSpace())
+                    {
+                        Directory.CreateDirectory(outputDirectory);
+                    }
+                    File.WriteAllText(outputPath, output);
+                }
+
+                AppResult = report.IsReady ? 0 : 1;
+            }
+            catch (Exception e) when (!Debugger.IsAttached)
+            {
+                AppResult = 1;
+                logger.Error(e, "Failed to analyze SDK 7 migration readiness." + Environment.NewLine + e.Message);
             }
         }
     }

@@ -36,6 +36,12 @@ namespace Playnite.Toolbox
         Avalonia
     }
 
+    public enum MigrationReportFormat
+    {
+        Text,
+        Json
+    }
+
     [Verb("new", HelpText = "Generate new add-on from template.")]
     public class NewCmdLineOptions
     {
@@ -76,5 +82,18 @@ namespace Playnite.Toolbox
         public ManifestType Type { get; set; }
         [Value(1, Required = true, HelpText = "Full manifest file path.")]
         public string ManifestPath { get; set;}
+    }
+
+    [Verb("migration-check", HelpText = "Analyze a compiled plugin for SDK 7 migration blockers without modifying it.")]
+    public class MigrationCheckOptions
+    {
+        [Value(0, Required = true, HelpText = "Plugin source directory to analyze.")]
+        public string Directory { get; set; }
+
+        [Option("format", Default = MigrationReportFormat.Text, HelpText = "Report format.")]
+        public MigrationReportFormat Format { get; set; }
+
+        [Option("output", HelpText = "Optional report file path. The report is always written to stdout.")]
+        public string Output { get; set; }
     }
 }

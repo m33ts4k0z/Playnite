@@ -45,13 +45,145 @@ namespace Playnite.Toolbox.Tests
         {
             NewCmdLineOptions parsed = null;
             new Parser(settings => settings.HelpWriter = null)
-                .ParseArguments<NewCmdLineOptions, PackCmdLineOptions, UpdateCmdLineOptions, VerifyManifestOptions>(
+                .ParseArguments<
+                    NewCmdLineOptions,
+                    PackCmdLineOptions,
+                    UpdateCmdLineOptions,
+                    VerifyManifestOptions,
+                    MigrationCheckOptions>(
                     new[] { "new", "GenericPlugin", "Pilot" })
                 .WithParsed<NewCmdLineOptions>(options => parsed = options);
 
             Assert.That(parsed, Is.Not.Null);
             Assert.That(parsed.Sdk, Is.EqualTo(SdkGeneration.V7));
             Assert.That(parsed.Framework, Is.EqualTo(ThemeFramework.Avalonia));
+        }
+
+        [Test]
+        public void MigrationCheckCommandParsesMachineReadableOutputOptions()
+        {
+            MigrationCheckOptions parsed = null;
+            new Parser(settings => settings.HelpWriter = null)
+                .ParseArguments<
+                    NewCmdLineOptions,
+                    PackCmdLineOptions,
+                    UpdateCmdLineOptions,
+                    VerifyManifestOptions,
+                    MigrationCheckOptions>(new[]
+                {
+                    "migration-check",
+                    testRoot,
+                    "--format", "Json",
+                    "--output", Path.Combine(testRoot, "report.json")
+                })
+                .WithParsed<MigrationCheckOptions>(options => parsed = options);
+
+            Assert.That(parsed, Is.Not.Null);
+            Assert.That(parsed.Directory, Is.EqualTo(testRoot));
+            Assert.That(parsed.Format, Is.EqualTo(MigrationReportFormat.Json));
+            Assert.That(parsed.Output, Is.EqualTo(Path.Combine(testRoot, "report.json")));
+        }
+
+        [Test]
+        public void MigrationCheckReportsSdkSixAndWpfBlockersWithoutMutatingSources()
+        {
+            var pluginRoot = Path.Combine(testRoot, "LegacyPlugin");
+            Directory.CreateDirectory(pluginRoot);
+            File.WriteAllText(Path.Combine(pluginRoot, "extension.yaml"),
+                "Id: legacy_00000000-0000-0000-0000-000000000001\n" +
+                "Name: Legacy plugin\n" +
+                "Author: Test\n" +
+                "Version: 1.0.0\n" +
+                "Module: LegacyPlugin.dll\n" +
+                "Type: GenericPlugin\n");
+            File.WriteAllText(Path.Combine(pluginRoot, "LegacyPlugin.csproj"),
+                "<Project Sdk=\"Microsoft.NET.Sdk.WindowsDesktop\">" +
+                "<PropertyGroup><TargetFramework>net462</TargetFramework><UseWPF>true</UseWPF></PropertyGroup>" +
+                "<ItemGroup><PackageReference Include=\"PlayniteSDK\" Version=\"6.15.0\" /></ItemGroup>" +
+                "</Project>");
+            File.WriteAllText(Path.Combine(pluginRoot, "LegacyPlugin.cs"),
+                "using System.Windows.Controls;\n" +
+                "PlayniteApi.Dialogs.ShowMessage(\"legacy\");\n" +
+                "webView.NavigateAndWait(\"https://example.test\");\n");
+            File.WriteAllText(Path.Combine(pluginRoot, "SettingsView.xaml"),
+                "<UserControl xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" />");
+            var before = Directory.EnumerateFiles(pluginRoot)
+                .ToDictionary(Path.GetFileName, File.ReadAllText, StringComparer.OrdinalIgnoreCase);
+
+            var report = SdkV7MigrationAnalyzer.Analyze(pluginRoot);
+
+            var codes = report.Diagnostics.Select(item => item.Code).ToHashSet(StringComparer.Ordinal);
+            Assert.That(report.IsReady, Is.False);
+            Assert.That(codes, Does.Contain("SDK7P003"));
+            Assert.That(codes, Does.Contain("SDK7P004"));
+            Assert.That(codes, Does.Contain("SDK7P005"));
+            Assert.That(codes, Does.Contain("SDK7P006"));
+            Assert.That(codes, Does.Contain("SDK7P010"));
+            Assert.That(codes, Does.Contain("SDK7P010A"));
+            Assert.That(codes, Does.Contain("SDK7P011"));
+            Assert.That(codes, Does.Contain("SDK7S001"));
+            Assert.That(codes, Does.Contain("SDK7S010"));
+            Assert.That(codes, Does.Contain("SDK7S020"));
+            Assert.That(codes, Does.Contain("SDK7X001"));
+            Assert.That(report.ToText(), Does.Contain("Ready: NO"));
+            Assert.That(report.ToJson(), Does.Contain("\"Severity\": \"Error\""));
+
+            var after = Directory.EnumerateFiles(pluginRoot)
+                .ToDictionary(Path.GetFileName, File.ReadAllText, StringComparer.OrdinalIgnoreCase);
+            Assert.That(after, Is.EqualTo(before));
+        }
+
+        [Test]
+        public void MigrationCheckAcceptsSdkSevenTemplateContractAndWritesJsonReport()
+        {
+            var pluginRoot = Path.Combine(testRoot, "ReadyPlugin");
+            Directory.CreateDirectory(pluginRoot);
+            File.WriteAllText(Path.Combine(pluginRoot, "extension.yaml"),
+                "Id: ready_00000000-0000-0000-0000-000000000001\n" +
+                "Name: Ready plugin\n" +
+                "Author: Test\n" +
+                "Version: 1.0.0\n" +
+                "Module: ReadyPlugin.dll\n" +
+                "Type: GenericPlugin\n");
+            File.WriteAllText(Path.Combine(pluginRoot, "ReadyPlugin.csproj"),
+                "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup>" +
+                "<TargetFramework>net10.0</TargetFramework>" +
+                "<Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors>" +
+                "<NuGetAudit>true</NuGetAudit></PropertyGroup><ItemGroup>" +
+                "<PackageReference Include=\"PlayniteSDK\" Version=\"7.0.0\">" +
+                "<IncludeAssets>compile;build;buildTransitive;analyzers</IncludeAssets><PrivateAssets>all</PrivateAssets>" +
+                "</PackageReference><PackageReference Include=\"Avalonia\" Version=\"12.1.0\">" +
+                "<IncludeAssets>compile;build;buildTransitive;analyzers</IncludeAssets><PrivateAssets>all</PrivateAssets>" +
+                "</PackageReference></ItemGroup></Project>");
+            File.WriteAllText(Path.Combine(pluginRoot, "ReadyPlugin.cs"),
+                "using Avalonia.Controls;\nnamespace ReadyPlugin;\npublic sealed class SettingsView : UserControl { }\n");
+            File.WriteAllText(Path.Combine(pluginRoot, "SettingsView.axaml"),
+                "<UserControl xmlns=\"https://github.com/avaloniaui\" />");
+            var testsRoot = Path.Combine(pluginRoot, "Tests");
+            Directory.CreateDirectory(testsRoot);
+            File.WriteAllText(Path.Combine(testsRoot, "ReadyPlugin.Tests.csproj"),
+                "<Project Sdk=\"Microsoft.NET.Sdk.WindowsDesktop\"><PropertyGroup>" +
+                "<TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF>" +
+                "</PropertyGroup></Project>");
+            File.WriteAllText(Path.Combine(testsRoot, "LegacyTestView.cs"),
+                "using System.Windows.Controls;\nnamespace ReadyPlugin.Tests;\n");
+            var reportPath = Path.Combine(testRoot, "migration-report.json");
+
+            var report = SdkV7MigrationAnalyzer.Analyze(pluginRoot);
+            Program.AppResult = -1;
+            Program.ProcessMigrationCheckOptions(new MigrationCheckOptions
+            {
+                Directory = pluginRoot,
+                Format = MigrationReportFormat.Json,
+                Output = reportPath
+            });
+
+            Assert.That(report.IsReady, Is.True, report.ToText());
+            Assert.That(report.ErrorCount, Is.Zero);
+            Assert.That(report.WarningCount, Is.Zero);
+            Assert.That(report.Diagnostics.Select(item => item.Code), Is.EqualTo(new[] { "SDK7I001" }));
+            Assert.That(Program.AppResult, Is.Zero);
+            Assert.That(File.ReadAllText(reportPath), Does.Contain("\"IsReady\": true"));
         }
 
         [Test]

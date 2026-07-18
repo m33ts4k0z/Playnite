@@ -20,3 +20,12 @@ Toolbox.exe new DesktopTheme MyLegacyTheme --framework Wpf
 `pack` detects an Avalonia theme from `Framework: Avalonia` in `theme.yaml`, validates its mode and API contract, and creates a `.pthm` package. `update` validates current Avalonia API 3 themes; legacy WPF themes retain the existing changelog-based updater.
 
 Generated SDK 7 projects target .NET 10, enable nullable analysis, treat warnings as errors, keep NuGet auditing enabled, compile settings views as typed Avalonia AXAML, and reference `PlayniteSDK` 7.0.0 plus Avalonia 12.1.0 as host-supplied compile assets.
+
+`migration-check` analyzes an existing compiled-plugin source tree without modifying it. It reports SDK/package targets, host-asset isolation, strict build policy, WPF source/markup dependencies, and legacy synchronous API calls as text or stable JSON diagnostics:
+
+```powershell
+Toolbox.exe migration-check C:\source\MyPlugin
+Toolbox.exe migration-check C:\source\MyPlugin --format Json --output migration-report.json
+```
+
+See [SDK7-MIGRATION.md](SDK7-MIGRATION.md) for the migration map, current native web-view limitations, and the required build/runtime completion gate.
