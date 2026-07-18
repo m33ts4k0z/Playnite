@@ -10,6 +10,48 @@
     <SolidColorBrush x:Key="DesktopTextBrush" Color="#F3F6FA" />
     <SolidColorBrush x:Key="DesktopMutedBrush" Color="#9EABBA" />
 
+    <ControlTheme x:Key="{x:Type local:DesktopWindowChrome}"
+                  TargetType="local:DesktopWindowChrome">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid RowDefinitions="42,*" Background="{DynamicResource DesktopBackgroundBrush}">
+                    <Border Name="PART_TitleBar"
+                            Background="{DynamicResource DesktopPanelStrongBrush}"
+                            BorderBrush="#303A49" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="14,0"
+                                        IsHitTestVisible="False" VerticalAlignment="Center">
+                                <Border Width="24" Height="24" CornerRadius="6"
+                                        Background="{DynamicResource DesktopAccentBrush}">
+                                    <TextBlock Text="P" FontSize="15" FontWeight="Bold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="Playnite — Avalonia Desktop Pilot"
+                                           Foreground="{DynamicResource DesktopTextBrush}"
+                                           FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button Name="PART_MinimizeButton" Classes="windowCaption"
+                                        Content="—" ToolTip.Tip="Minimize" />
+                                <Button Name="PART_MaximizeButton" Classes="windowCaption"
+                                        Content="□" ToolTip.Tip="Maximize or restore" />
+                                <Button Name="PART_CloseButton" Classes="windowCaption windowClose"
+                                        Content="×" ToolTip.Tip="Close" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <ContentPresenter Grid.Row="1"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
     <ControlTheme x:Key="{x:Type local:DesktopMainView}"
                   TargetType="local:DesktopMainView">
         <Setter Property="Template">
@@ -88,6 +130,13 @@
                                                    TextWrapping="Wrap"
                                                    Foreground="{DynamicResource DesktopMutedBrush}" />
                                     </Border>
+                                    <TextBlock Text="{DynamicResource LOCDesktopWindowTray}" Classes="sectionLabel" />
+                                    <CheckBox Content="{DynamicResource LOCDesktopEnableTray}"
+                                              IsChecked="{Binding EnableTray, Mode=TwoWay}" />
+                                    <CheckBox Content="{DynamicResource LOCDesktopMinimizeTray}"
+                                              IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" />
+                                    <CheckBox Content="{DynamicResource LOCDesktopCloseTray}"
+                                              IsChecked="{Binding CloseToTray, Mode=TwoWay}" />
                                     <Button Content="{DynamicResource LOCDesktopUpdateLibraries}"
                                             Command="{Binding OpenLibrarySyncCommand}" />
                                     <Button Content="{DynamicResource LOCDesktopImportInstalled}"

@@ -82,6 +82,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         }
     }
 
+    internal IReadOnlyList<DesktopGameItemViewModel> LibraryGames => allGames;
+
     public DesktopGameItemViewModel SelectedGame
     {
         get => selectedGame;
@@ -235,6 +237,53 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public IReadOnlyList<FilterPreset> FilterPresets { get; }
     public bool IsGridView => SelectedViewMode == "Grid";
     public bool IsListView => SelectedViewMode == "List";
+    public bool EnableTray
+    {
+        get => settings.EnableTray;
+        set
+        {
+            if (settings.EnableTray == value)
+            {
+                return;
+            }
+
+            settings.EnableTray = value;
+            OnPropertyChanged();
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public bool MinimizeToTray
+    {
+        get => settings.MinimizeToTray;
+        set
+        {
+            if (settings.MinimizeToTray == value)
+            {
+                return;
+            }
+
+            settings.MinimizeToTray = value;
+            OnPropertyChanged();
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public bool CloseToTray
+    {
+        get => settings.CloseToTray;
+        set
+        {
+            if (settings.CloseToTray == value)
+            {
+                return;
+            }
+
+            settings.CloseToTray = value;
+            OnPropertyChanged();
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
     public string LibrarySummary => $"{Games.Count:N0} of {allGames.Count:N0} games";
     public string PluginSummary => pluginSummary;
     public ObservableCollection<NotificationMessage> Notifications { get; private set; } = new();
@@ -489,6 +538,15 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         }
 
         SelectedGame = match;
+    }
+
+    internal void ActivateGame(Guid gameId)
+    {
+        SelectGame(gameId);
+        if (ActivateCommand.CanExecute(null))
+        {
+            ActivateCommand.Execute(null);
+        }
     }
 
     public void RefreshGame(Guid gameId)

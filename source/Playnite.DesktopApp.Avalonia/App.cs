@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Themes.Fluent;
 using Playnite.Avalonia.App.Services;
@@ -21,6 +22,7 @@ public sealed class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             var options = Program.Options;
             library = new DesktopLibrary(options.UserDataDirectory, options.LibraryPath);
             string startupError = null;

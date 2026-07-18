@@ -3,7 +3,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Globalization;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.Chrome;
+using Avalonia.Input;
 using Avalonia.Threading;
 using Playnite.Avalonia.Markup;
 using Playnite.DesktopApp.Avalonia.Services;
@@ -36,6 +39,38 @@ internal static class DesktopPilotSelfTest
             window.MainView.TemplateAppliedCount > 0 && window.MainView.GameList != null
                 ? "DesktopMainView resolved its runtime template contract"
                 : throw new InvalidOperationException("The Desktop theme template was not applied."));
+
+        Record(results, "Avalonia 12 native window chrome contract applies", () =>
+            window.WindowDecorations == WindowDecorations.BorderOnly &&
+            window.ExtendClientAreaToDecorationsHint &&
+            window.Chrome.TemplateAppliedCount > 0 &&
+            WindowDecorationProperties.GetElementRole(window.Chrome.TitleBar) ==
+                WindowDecorationsElementRole.TitleBar &&
+            WindowDecorationProperties.GetElementRole(window.Chrome.MinimizeButton) ==
+                WindowDecorationsElementRole.MinimizeButton &&
+            WindowDecorationProperties.GetElementRole(window.Chrome.MaximizeButton) ==
+                WindowDecorationsElementRole.MaximizeButton &&
+            WindowDecorationProperties.GetElementRole(window.Chrome.CloseButton) ==
+                WindowDecorationsElementRole.CloseButton
+                ? "the loose theme supplied drag, minimize, maximize, and close non-client roles"
+                : throw new InvalidOperationException("The custom chrome did not expose every native role."));
+
+        window.TrayService.RefreshMenu();
+        Record(results, "Native tray menu exposes quick launch and lifecycle actions", () =>
+        {
+            var items = window.TrayService.Menu.Items.OfType<NativeMenuItem>().ToList();
+            var favoriteMenu = items.FirstOrDefault(item => item.Header == "Favorites")?.Menu;
+            return window.TrayService.IsEnabled &&
+                window.TrayService.QuickLaunchItemCount == 5 &&
+                window.TrayService.FavoriteItemCount > 0 &&
+                favoriteMenu?.Items.Count == window.TrayService.FavoriteItemCount &&
+                items.Any(item => item.Header == "Open Playnite") &&
+                items.Any(item => item.Header == "Open Fullscreen") &&
+                items.Any(item => item.Header == "Exit Playnite")
+                    ? $"{window.TrayService.QuickLaunchItemCount} recent and " +
+                      $"{window.TrayService.FavoriteItemCount} favorite games are available"
+                    : throw new InvalidOperationException("The tray menu lifecycle contract is incomplete.");
+        });
 
         Record(results, "Grid and list views share the Desktop model", () =>
             window.MainView.GridGameList != null && window.MainView.ListGameList != null
@@ -1425,6 +1460,32 @@ internal static class DesktopPilotSelfTest
             () => window.RuntimeHost.Extensions.LibraryPlugins,
             window.RuntimeHost.Extensions.NotifiyOnLibraryUpdated);
 
+        viewModel.EnableTray = true;
+        viewModel.MinimizeToTray = true;
+        window.Chrome.Minimize();
+        await Task.Delay(100);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var minimizedToTray = !window.IsVisible && !window.ShowInTaskbar && !window.HasClosed;
+        window.RestoreFromTray();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Minimize-to-tray preserves and restores the live Desktop window", () =>
+            minimizedToTray && window.IsVisible && window.ShowInTaskbar &&
+            window.WindowState == WindowState.Normal && !window.HasClosed
+                ? "the caption command hid the live window and tray activation restored it"
+                : throw new InvalidOperationException("Minimize-to-tray did not preserve the window instance."));
+        viewModel.MinimizeToTray = false;
+
+        viewModel.CloseToTray = true;
+        window.Chrome.RequestClose();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var closedToTray = !window.IsVisible && !window.ShowInTaskbar && !window.HasClosed;
+        window.RestoreFromTray();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Close-to-tray cancels destruction and restores the same window", () =>
+            closedToTray && window.IsVisible && window.ShowInTaskbar && !window.HasClosed
+                ? "the close role hid the window while explicit application shutdown remains available"
+                : throw new InvalidOperationException("Close-to-tray destroyed or failed to restore the window."));
+
         Record(results, "Desktop settings persist atomically", () =>
         {
             var store = new DesktopSettingsStore(library.ActiveUserDataDirectory);
@@ -1445,7 +1506,15 @@ internal static class DesktopPilotSelfTest
                 GameScannerIds = new List<Guid> { scannerConfig.Id },
                 GameScannerSelectionConfigured = true,
                 LibraryPlaytimeImportMode = PlaytimeImportMode.Always,
-                DownloadMetadataOnImport = false
+                DownloadMetadataOnImport = false,
+                EnableTray = false,
+                MinimizeToTray = true,
+                CloseToTray = false,
+                WindowWidth = 1280,
+                WindowHeight = 760,
+                WindowX = 120,
+                WindowY = 80,
+                WindowMaximized = true
             });
             var loaded = store.Load();
             if (loaded.ViewMode != "List" ||
@@ -1463,7 +1532,15 @@ internal static class DesktopPilotSelfTest
                 !loaded.GameScannerIds.SequenceEqual(new[] { scannerConfig.Id }) ||
                 !loaded.GameScannerSelectionConfigured ||
                 loaded.LibraryPlaytimeImportMode != PlaytimeImportMode.Always ||
-                loaded.DownloadMetadataOnImport)
+                loaded.DownloadMetadataOnImport ||
+                loaded.EnableTray ||
+                !loaded.MinimizeToTray ||
+                loaded.CloseToTray ||
+                loaded.WindowWidth != 1280 ||
+                loaded.WindowHeight != 760 ||
+                loaded.WindowX != 120 ||
+                loaded.WindowY != 80 ||
+                !loaded.WindowMaximized)
             {
                 throw new InvalidOperationException("The persisted Desktop settings did not round-trip.");
             }

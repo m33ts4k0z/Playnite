@@ -29,6 +29,21 @@
         <Setter Property="Background" Value="#26394A" />
         <Setter Property="Foreground" Value="{DynamicResource DesktopAccentBrush}" />
     </Style>
+    <Style Selector="Button.windowCaption">
+        <Setter Property="Width" Value="48" />
+        <Setter Property="Height" Value="41" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource DesktopTextBrush}" />
+        <Setter Property="FontSize" Value="17" />
+    </Style>
+    <Style Selector="Button.windowCaption:pointerover">
+        <Setter Property="Background" Value="#354153" />
+    </Style>
+    <Style Selector="Button.windowClose:pointerover">
+        <Setter Property="Background" Value="#C42B1C" />
+    </Style>
     <Style Selector="TextBlock.sectionLabel">
         <Setter Property="FontSize" Value="11" />
         <Setter Property="FontWeight" Value="Bold" />

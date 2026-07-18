@@ -25,6 +25,10 @@
     <x:String x:Key="LOCDesktopImportInstalled">Import installed games</x:String>
     <x:String x:Key="LOCDesktopAddManualGame">Add game manually</x:String>
     <x:String x:Key="LOCDesktopPluginSettings">Plugin settings</x:String>
+    <x:String x:Key="LOCDesktopWindowTray">Window and tray</x:String>
+    <x:String x:Key="LOCDesktopEnableTray">Show Playnite in the notification area</x:String>
+    <x:String x:Key="LOCDesktopMinimizeTray">Minimize Playnite to the notification area</x:String>
+    <x:String x:Key="LOCDesktopCloseTray">Close Playnite to the notification area</x:String>
     <x:String x:Key="LOCDesktopPluginSettingsDescription">Choose a loaded plugin. Its existing settings view opens in the Windows compatibility host.</x:String>
     <x:String x:Key="LOCDesktopOpenPluginSettings">Open settings</x:String>
     <x:String x:Key="LOCDesktopDetectInstalled">Detect installed programs</x:String>

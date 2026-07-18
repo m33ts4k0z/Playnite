@@ -34,6 +34,14 @@ public sealed class DesktopSettings : IAvaloniaHostSettings
     public bool GameScannerSelectionConfigured { get; set; }
     public PlaytimeImportMode LibraryPlaytimeImportMode { get; set; } = PlaytimeImportMode.NewImportsOnly;
     public bool DownloadMetadataOnImport { get; set; } = true;
+    public bool EnableTray { get; set; } = true;
+    public bool MinimizeToTray { get; set; }
+    public bool CloseToTray { get; set; } = true;
+    public double WindowWidth { get; set; } = 1440;
+    public double WindowHeight { get; set; } = 900;
+    public int? WindowX { get; set; }
+    public int? WindowY { get; set; }
+    public bool WindowMaximized { get; set; }
 
     public static List<MetadataField> GetDefaultMetadataFields() =>
         Enum.GetValues<MetadataField>().Where(field => field != MetadataField.Name).ToList();
