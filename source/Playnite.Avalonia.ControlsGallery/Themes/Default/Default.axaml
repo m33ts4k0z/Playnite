@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FF2D2D30" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#FF007ACC" />
+    <x:String x:Key="ThemeName">Default</x:String>
+
+    <ControlTheme x:Key="{x:Type GamePanel}" TargetType="GamePanel">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{DynamicResource PanelBackgroundBrush}"
+                        BorderBrush="{DynamicResource AccentBrush}"
+                        BorderThickness="2"
+                        CornerRadius="6"
+                        Padding="12">
+                    <StackPanel Spacing="8">
+                        <TextBlock Name="PART_ThemeMarker" Text="default" IsVisible="False" />
+                        <TextBlock Name="PART_TitleText"
+                                   Text="{TemplateBinding Title}"
+                                   FontSize="18"
+                                   FontWeight="Bold"
+                                   Foreground="White" />
+                        <Button Name="PART_ActionButton" Content="Default theme action" />
+                    </StackPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+</ResourceDictionary>

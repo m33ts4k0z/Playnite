@@ -51,6 +51,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playnite.Core", "Playnite.C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PlayniteSDK", "PlayniteSDK", "{0BE8AA9E-6AF2-C579-3815-6C9012B44798}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playnite.Avalonia", "Playnite.Avalonia\Playnite.Avalonia.csproj", "{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playnite.Avalonia.ControlsGallery", "Playnite.Avalonia.ControlsGallery\Playnite.Avalonia.ControlsGallery.csproj", "{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -229,7 +233,31 @@ Global
 		{94B6E43B-3907-4C1B-A804-AF1D1ADEF286}.Release|x64.Build.0 = Release|Any CPU
 		{94B6E43B-3907-4C1B-A804-AF1D1ADEF286}.Release|x86.ActiveCfg = Release|Any CPU
 		{94B6E43B-3907-4C1B-A804-AF1D1ADEF286}.Release|x86.Build.0 = Release|Any CPU
-																									EndGlobalSection
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Debug|x64.Build.0 = Debug|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Debug|x86.Build.0 = Debug|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Release|x64.ActiveCfg = Release|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Release|x64.Build.0 = Release|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Release|x86.ActiveCfg = Release|Any CPU
+		{18CCBBF7-771F-46E2-A776-5ABC0A974E4E}.Release|x86.Build.0 = Release|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Debug|x64.Build.0 = Debug|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Debug|x86.Build.0 = Debug|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Release|x64.ActiveCfg = Release|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Release|x64.Build.0 = Release|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Release|x86.ActiveCfg = Release|Any CPU
+		{6DDDBECA-4D1F-4F28-B962-F4A06C5FBEF7}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
