@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Playnite.SDK.V7.Host\Playnite.SDK.V7.Host.csproj" />
+    <ProjectReference Include="..\TestMetadataPluginV7\TestMetadataPluginV7.csproj" />
     <ProjectReference Include="..\TestPluginV7\TestPluginV7.csproj" />
   </ItemGroup>
 

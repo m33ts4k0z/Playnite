@@ -511,7 +511,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Notifications));
         OnPropertyChanged(nameof(NotificationCount));
         MetadataDownload.ConfigureProviders(
-            () => host.Extensions.MetadataPlugins,
+            () => host.MetadataPlugins.ToList(),
             () => host.LibraryPlugins.ToList());
         LibrarySync.ConfigureProviders(
             () => host.LibraryPlugins.ToList(),

@@ -1,0 +1,6 @@
+Id: TestMetadataPluginV7_d8d4d9b5-3fa1-44c8-b851-5f87198fc110
+Name: Test SDK v7 metadata provider
+Author: Playnite Tests
+Version: 1.0.0
+Module: TestMetadataPluginV7.dll
+Type: MetadataProvider

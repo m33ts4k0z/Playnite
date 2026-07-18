@@ -3,6 +3,7 @@ using Playnite.API;
 using Playnite.Avalonia.App.Services;
 using Playnite.Controllers;
 using Playnite.Database;
+using Playnite.Metadata;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
@@ -43,6 +44,11 @@ public class V7PluginHostTests
             int cancelIndex = -1) => options.ElementAtOrDefault(defaultIndex) ?? string.Empty;
     }
 
+    private sealed class TestMetadataSettings : IMetadataDownloadSettings
+    {
+        public bool DownloadBackgroundsImmediately => true;
+    }
+
     private string testRoot;
     private string previousUserDataPath;
     private SynchronizationContext previousContext;
@@ -75,7 +81,8 @@ public class V7PluginHostTests
     [Test]
     public void DiscoversAndLoadsSdkSevenPluginWithoutLoadingItAsSdkSix()
     {
-        var fixturePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "V7Fixture");
+        var fixtureRoot = Path.Combine(TestContext.CurrentContext.TestDirectory, "V7Fixture");
+        var fixturePath = Path.Combine(fixtureRoot, "Library");
         var pluginPath = Path.Combine(fixturePath, "TestPluginV7.dll");
         Assert.That(V7PluginHost.IsSdkV7Assembly(pluginPath), Is.True);
         Assert.That(V7PluginHost.IsSdkV7Assembly(typeof(IPlayniteAPI).Assembly.Location), Is.False);
@@ -101,7 +108,7 @@ public class V7PluginHostTests
             notifications,
             () => null,
             () => [],
-            Path.Combine(fixturePath, "Host"));
+            Path.Combine(fixtureRoot, "Host"));
         var manifest = ExtensionManifest.FromFile(Path.Combine(fixturePath, "extension.yaml"));
 
         var claimed = host.Load([manifest], []);
@@ -220,7 +227,8 @@ public class V7PluginHostTests
     [Test]
     public void ClaimsButDoesNotConstructDisabledSdkSevenPlugin()
     {
-        var fixturePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "V7Fixture");
+        var fixtureRoot = Path.Combine(TestContext.CurrentContext.TestDirectory, "V7Fixture");
+        var fixturePath = Path.Combine(fixtureRoot, "Library");
         var manifest = ExtensionManifest.FromFile(Path.Combine(fixturePath, "extension.yaml"));
         using var database = new GameDatabase(Path.Combine(testRoot, "library"));
         using var controllers = new GameControllerFactory(database);
@@ -236,7 +244,7 @@ public class V7PluginHostTests
             new NotificationsAPI(),
             () => null,
             () => [],
-            Path.Combine(fixturePath, "Host"));
+            Path.Combine(fixtureRoot, "Host"));
 
         var claimed = host.Load([manifest], [manifest.Id]);
 
@@ -248,7 +256,8 @@ public class V7PluginHostTests
     [Test]
     public void SharedActionRunnerExecutesSdkSevenControllersAndCancellation()
     {
-        var fixturePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "V7Fixture");
+        var fixtureRoot = Path.Combine(TestContext.CurrentContext.TestDirectory, "V7Fixture");
+        var fixturePath = Path.Combine(fixtureRoot, "Library");
         var extensionPath = Path.Combine(PlaynitePaths.ExtensionsUserDataPath, "TestPluginV7");
         Directory.CreateDirectory(extensionPath);
         var fixtureAssembly = Path.Combine(fixturePath, "TestPluginV7.dll");
@@ -314,4 +323,133 @@ public class V7PluginHostTests
         Assert.That(events, Does.Contain("event-startup-cancelled:SDK v7 cancel game"));
         Assert.That(events, Does.Contain("event-library-updated"));
     }
+
+    [Test]
+    public async Task SharedMetadataDownloaderUsesSdkSevenLibraryAndMetadataProviders()
+    {
+        var fixtureRoot = Path.Combine(TestContext.CurrentContext.TestDirectory, "V7Fixture");
+        InstallFixture(Path.Combine(fixtureRoot, "Library"), "TestPluginV7");
+        InstallFixture(Path.Combine(fixtureRoot, "Metadata"), "TestMetadataPluginV7");
+
+        using var database = new GameDatabase(Path.Combine(testRoot, "library"));
+        database.OpenDatabase();
+        database.Games.Add(new Game("SDK v7 bridge game") { IsInstalled = true });
+        var callbacks = new AvaloniaHostCallbacks
+        {
+            Mode = ApplicationMode.Desktop,
+            Settings = new TestSettings(),
+            Dialogs = new TestDialogs()
+        };
+
+        using var runtime = new AvaloniaRuntimeHost(database, callbacks);
+        runtime.InitializePlugins(true);
+
+        Assert.That(runtime.V7Plugins, Has.Count.EqualTo(2));
+        Assert.That(runtime.V7PluginFailures, Is.Empty);
+        Assert.That(runtime.LibraryPlugins, Has.Count.EqualTo(1));
+        Assert.That(runtime.MetadataPlugins, Has.Count.EqualTo(1));
+        Assert.That(runtime.MetadataPlugins[0].SupportedFields, Is.EquivalentTo(Enum.GetValues<MetadataField>()));
+
+        var imported = database.ImportGames(
+            runtime.LibraryPlugins[0],
+            CancellationToken.None,
+            PlaytimeImportMode.Always).Single();
+        var officialSettings = new MetadataDownloaderSettings { SkipExistingValues = false };
+        officialSettings.ConfigureFields([Guid.Empty], false);
+        officialSettings.Name.Import = true;
+        officialSettings.Genre.Import = true;
+        officialSettings.Description.Import = true;
+        using (var downloader = new MetadataDownloader(
+                   database,
+                   runtime.MetadataPlugins.ToList(),
+                   runtime.LibraryPlugins.ToList()))
+        {
+            await downloader.DownloadMetadataAsync(
+                [imported],
+                officialSettings,
+                new TestMetadataSettings(),
+                null,
+                CancellationToken.None);
+        }
+
+        var officiallyUpdated = database.Games[imported.Id];
+        Assert.That(officiallyUpdated.Name, Is.EqualTo("SDK v7 official metadata"));
+        Assert.That(officiallyUpdated.Description, Does.Contain("library provider"));
+        Assert.That(
+            officiallyUpdated.GenreIds.Select(id => database.Genres[id]?.Name),
+            Does.Contain("SDK v7 official genre"));
+
+        var metadataPlugin = runtime.MetadataPlugins[0];
+        var pluginSettings = new MetadataDownloaderSettings { SkipExistingValues = false };
+        pluginSettings.ConfigureFields([metadataPlugin.Id], true);
+        using (var downloader = new MetadataDownloader(
+                   database,
+                   runtime.MetadataPlugins.ToList(),
+                   runtime.LibraryPlugins.ToList()))
+        {
+            await downloader.DownloadMetadataAsync(
+                [officiallyUpdated],
+                pluginSettings,
+                new TestMetadataSettings(),
+                null,
+                CancellationToken.None);
+        }
+
+        var updated = database.Games[imported.Id];
+        Assert.That(updated.Name, Is.EqualTo("SDK v7 metadata name"));
+        Assert.That(updated.Description, Is.EqualTo("SDK v7 metadata description"));
+        Assert.That(updated.ReleaseDate?.Year, Is.EqualTo(2024));
+        Assert.That(updated.ReleaseDate?.Month, Is.EqualTo(7));
+        Assert.That(updated.ReleaseDate?.Day, Is.EqualTo(18));
+        Assert.That(updated.CriticScore, Is.EqualTo(91));
+        Assert.That(updated.CommunityScore, Is.EqualTo(87));
+        Assert.That(updated.InstallSize, Is.EqualTo(123456789));
+        Assert.That(updated.Links.Single().Url, Is.EqualTo("https://playnite.link/sdk-v7"));
+        Assert.That(database.GetFullFilePath(updated.Icon), Is.Not.Null.And.Not.Empty);
+        Assert.That(File.Exists(database.GetFullFilePath(updated.Icon)), Is.True);
+        Assert.That(File.Exists(database.GetFullFilePath(updated.CoverImage)), Is.True);
+        Assert.That(File.Exists(database.GetFullFilePath(updated.BackgroundImage)), Is.True);
+        AssertMetadataName(database.Genres, updated.GenreIds, "SDK v7 metadata genre");
+        AssertMetadataName(database.Companies, updated.DeveloperIds, "SDK v7 developer");
+        AssertMetadataName(database.Companies, updated.PublisherIds, "SDK v7 publisher");
+        AssertMetadataName(database.Tags, updated.TagIds, "SDK v7 tag");
+        AssertMetadataName(database.Features, updated.FeatureIds, "SDK v7 feature");
+        AssertMetadataName(database.AgeRatings, updated.AgeRatingIds, "SDK v7 age rating");
+        AssertMetadataName(database.Series, updated.SeriesIds, "SDK v7 series");
+        AssertMetadataName(database.Regions, updated.RegionIds, "SDK v7 region");
+        AssertMetadataName(database.Platforms, updated.PlatformIds, "SDK v7 platform");
+
+        var libraryEventPath = Path.Combine(
+            PlaynitePaths.ExtensionsDataPath,
+            runtime.LibraryPlugins[0].Id.ToString(),
+            "events.txt");
+        var metadataEventPath = Path.Combine(
+            PlaynitePaths.ExtensionsDataPath,
+            metadataPlugin.Id.ToString(),
+            "metadata-events.txt");
+        Assert.That(File.ReadAllLines(libraryEventPath), Does.Contain("library-metadata:sdk-v7-library-game"));
+        Assert.That(File.ReadAllLines(libraryEventPath), Does.Contain("library-metadata-disposed"));
+        Assert.That(
+            File.ReadAllLines(metadataEventPath),
+            Does.Contain("provider-created:SDK v7 official metadata:True"));
+        Assert.That(File.ReadAllLines(metadataEventPath), Does.Contain("provider-disposed"));
+    }
+
+    private static void InstallFixture(string fixturePath, string extensionName)
+    {
+        var extensionPath = Path.Combine(PlaynitePaths.ExtensionsUserDataPath, extensionName);
+        Directory.CreateDirectory(extensionPath);
+        var assemblyName = extensionName + ".dll";
+        var fixtureAssembly = Path.Combine(fixturePath, assemblyName);
+        var manifestText = File.ReadAllText(Path.Combine(fixturePath, "extension.yaml"))
+            .Replace($"Module: {assemblyName}", $"Module: '{fixtureAssembly}'", StringComparison.Ordinal);
+        File.WriteAllText(Path.Combine(extensionPath, "extension.yaml"), manifestText);
+    }
+
+    private static void AssertMetadataName<TItem>(
+        IItemCollection<TItem> collection,
+        IEnumerable<Guid> ids,
+        string expectedName)
+        where TItem : DatabaseObject =>
+        Assert.That(ids.Select(id => collection[id]?.Name), Does.Contain(expectedName));
 }

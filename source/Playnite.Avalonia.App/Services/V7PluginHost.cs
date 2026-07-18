@@ -30,6 +30,8 @@ public sealed class V7LoadedPlugin
     private readonly MethodInfo invokeLibraryUpdated;
     private readonly MethodInfo openLibraryClient;
     private readonly MethodInfo shutdownLibraryClient;
+    private readonly MethodInfo createMetadataProvider;
+    private readonly MethodInfo createLibraryMetadataProvider;
     private readonly MethodInfo dispose;
 
     public Guid Id { get; }
@@ -43,6 +45,7 @@ public sealed class V7LoadedPlugin
     public bool HasLibraryClient { get; }
     public bool IsLibraryClientInstalled { get; }
     public string LibraryClientIcon { get; }
+    public string[] SupportedMetadataFields { get; }
     public ExtensionManifest Manifest { get; }
 
     internal V7LoadedPlugin(object instance, ExtensionManifest manifest)
@@ -61,6 +64,7 @@ public sealed class V7LoadedPlugin
         HasLibraryClient = ReadProperty<bool>(type, nameof(HasLibraryClient));
         IsLibraryClientInstalled = ReadProperty<bool>(type, nameof(IsLibraryClientInstalled));
         LibraryClientIcon = ReadProperty<string>(type, nameof(LibraryClientIcon));
+        SupportedMetadataFields = ReadProperty<string[]>(type, nameof(SupportedMetadataFields));
         applicationStarted = GetRequiredMethod(type, "InvokeApplicationStarted");
         applicationStopped = GetRequiredMethod(type, "InvokeApplicationStopped");
         publishDatabaseEvent = GetRequiredMethod(type, "PublishDatabaseEvent");
@@ -71,6 +75,8 @@ public sealed class V7LoadedPlugin
         invokeLibraryUpdated = GetRequiredMethod(type, "InvokeLibraryUpdated");
         openLibraryClient = GetRequiredMethod(type, "OpenLibraryClient");
         shutdownLibraryClient = GetRequiredMethod(type, "ShutdownLibraryClient");
+        createMetadataProvider = GetRequiredMethod(type, "CreateMetadataProvider");
+        createLibraryMetadataProvider = GetRequiredMethod(type, "CreateLibraryMetadataProvider");
         dispose = GetRequiredMethod(type, nameof(IDisposable.Dispose));
     }
 
@@ -92,6 +98,10 @@ public sealed class V7LoadedPlugin
     internal void InvokeLibraryUpdated() => Invoke(invokeLibraryUpdated);
     internal void OpenLibraryClient() => Invoke(openLibraryClient);
     internal void ShutdownLibraryClient() => Invoke(shutdownLibraryClient);
+    internal object CreateMetadataProvider(string gameJson, bool backgroundDownload) =>
+        InvokeWithResult(createMetadataProvider, gameJson, backgroundDownload);
+    internal object CreateLibraryMetadataProvider() =>
+        InvokeWithResult(createLibraryMetadataProvider);
 
     private T ReadProperty<T>(Type type, string name)
     {
@@ -232,6 +242,7 @@ internal sealed class V7PluginHost : IDisposable
     public List<V7LoadedPlugin> Plugins { get; } = [];
     public List<V7PluginLoadFailure> FailedPlugins { get; } = [];
     public List<LibraryPlugin> LibraryPlugins { get; } = [];
+    public List<MetadataPlugin> MetadataPlugins { get; } = [];
 
     public V7PluginHost(
         GameDatabase database,
@@ -288,6 +299,9 @@ internal sealed class V7PluginHost : IDisposable
         LibraryPlugins.AddRange(Plugins
             .Where(plugin => plugin.Kind == "LibraryPlugin")
             .Select(plugin => new V7LibraryPluginAdapter(pluginApi, plugin)));
+        MetadataPlugins.AddRange(Plugins
+            .Where(plugin => plugin.Kind == "MetadataPlugin")
+            .Select(plugin => new V7MetadataPluginAdapter(pluginApi, plugin)));
 
         return claimedManifestIds;
     }
@@ -830,6 +844,7 @@ internal sealed class V7PluginHost : IDisposable
 
         handles.Clear();
         LibraryPlugins.Clear();
+        MetadataPlugins.Clear();
         Plugins.Clear();
     }
 }

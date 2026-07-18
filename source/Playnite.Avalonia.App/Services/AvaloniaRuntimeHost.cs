@@ -36,6 +36,8 @@ public sealed class AvaloniaRuntimeHost : IDisposable
     public IReadOnlyList<V7PluginLoadFailure> V7PluginFailures => v7Plugins.FailedPlugins;
     public IReadOnlyList<LibraryPlugin> LibraryPlugins =>
         extensions.LibraryPlugins.Concat(v7Plugins.LibraryPlugins).ToList();
+    public IReadOnlyList<MetadataPlugin> MetadataPlugins =>
+        extensions.MetadataPlugins.Concat(v7Plugins.MetadataPlugins).ToList();
     public int LoadedPluginCount => extensions.Plugins.Count + v7Plugins.Plugins.Count;
     public int FailedPluginCount => extensions.FailedExtensions.Count + v7Plugins.FailedPlugins.Count;
 

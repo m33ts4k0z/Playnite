@@ -63,6 +63,9 @@ public sealed class TestPlugin : LibraryPlugin
         };
     }
 
+    public override LibraryMetadataProvider GetMetadataDownloader() =>
+        new TestLibraryMetadataProvider(EventPath);
+
     public override void OnLibraryUpdated(OnLibraryUpdatedEventArgs args) =>
         File.AppendAllLines(EventPath, ["event-library-updated"]);
 
@@ -233,6 +236,27 @@ public sealed class TestPlugin : LibraryPlugin
         public TestLibraryClient(string eventPath) => this.eventPath = eventPath;
         public override void Open() => File.AppendAllLines(eventPath, ["library-client-open"]);
         public override void Shutdown() => File.AppendAllLines(eventPath, ["library-client-shutdown"]);
+    }
+
+    private sealed class TestLibraryMetadataProvider : LibraryMetadataProvider
+    {
+        private readonly string eventPath;
+
+        public TestLibraryMetadataProvider(string eventPath) => this.eventPath = eventPath;
+
+        public override GameMetadata GetMetadata(Game game)
+        {
+            File.AppendAllLines(eventPath, ["library-metadata:" + game.GameId]);
+            return new GameMetadata
+            {
+                Name = "SDK v7 official metadata",
+                Genres = [new MetadataNameProperty("SDK v7 official genre")],
+                Description = "Metadata supplied by the SDK v7 library provider"
+            };
+        }
+
+        public override void Dispose() =>
+            File.AppendAllLines(eventPath, ["library-metadata-disposed"]);
     }
 
     public sealed class TestSettings : ObservableObject, ISettings

@@ -127,6 +127,9 @@ public sealed class V7PluginInstance : IDisposable
     public bool HasLibraryClient => (plugin as LibraryPlugin)?.Client != null;
     public bool IsLibraryClientInstalled => (plugin as LibraryPlugin)?.Client?.IsInstalled == true;
     public string LibraryClientIcon => (plugin as LibraryPlugin)?.Client?.Icon;
+    public string[] SupportedMetadataFields => plugin is MetadataPlugin metadata
+        ? metadata.SupportedFields?.Select(metadataField => metadataField.ToString()).ToArray() ?? []
+        : [];
 
     internal V7PluginInstance(
         Plugin plugin,
@@ -196,6 +199,24 @@ public sealed class V7PluginInstance : IDisposable
 
     public void OpenLibraryClient() => (plugin as LibraryPlugin)?.Client?.Open();
     public void ShutdownLibraryClient() => (plugin as LibraryPlugin)?.Client?.Shutdown();
+
+    public object CreateMetadataProvider(string gameJson, bool backgroundDownload)
+    {
+        if (plugin is not MetadataPlugin metadata)
+        {
+            return null;
+        }
+
+        var game = V7RpcJson.Deserialize<Game>(gameJson);
+        var provider = metadata.GetMetadataProvider(new MetadataRequestOptions(game, backgroundDownload));
+        return provider == null ? null : new V7MetadataProviderInstance(provider);
+    }
+
+    public object CreateLibraryMetadataProvider()
+    {
+        var provider = (plugin as LibraryPlugin)?.GetMetadataDownloader();
+        return provider == null ? null : new V7LibraryMetadataProviderInstance(provider);
+    }
 
     public void PublishDatabaseEvent(string collection, string eventName, string payload) =>
         api.HostDatabase.Publish(collection, eventName, payload);
@@ -270,6 +291,66 @@ public sealed class V7PluginInstance : IDisposable
         InvokeApplicationStopped();
         plugin.Dispose();
     }
+}
+
+public sealed class V7MetadataProviderInstance : IDisposable
+{
+    private readonly OnDemandMetadataProvider provider;
+
+    public string[] AvailableFields =>
+        provider.AvailableFields?.Select(metadataField => metadataField.ToString()).ToArray() ?? [];
+
+    public V7MetadataProviderInstance(OnDemandMetadataProvider provider) =>
+        this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
+
+    public string GetField(string fieldName, CancellationToken cancellationToken)
+    {
+        if (!Enum.TryParse<MetadataField>(fieldName, out var field))
+        {
+            throw new ArgumentOutOfRangeException(nameof(fieldName), fieldName, "Unknown metadata field.");
+        }
+
+        var args = new GetMetadataFieldArgs { CancelToken = cancellationToken };
+        object value = field switch
+        {
+            MetadataField.Name => provider.GetName(args),
+            MetadataField.Genres => provider.GetGenres(args)?.ToList(),
+            MetadataField.ReleaseDate => provider.GetReleaseDate(args),
+            MetadataField.Developers => provider.GetDevelopers(args)?.ToList(),
+            MetadataField.Publishers => provider.GetPublishers(args)?.ToList(),
+            MetadataField.Tags => provider.GetTags(args)?.ToList(),
+            MetadataField.Description => provider.GetDescription(args),
+            MetadataField.Links => provider.GetLinks(args)?.ToList(),
+            MetadataField.CriticScore => provider.GetCriticScore(args),
+            MetadataField.CommunityScore => provider.GetCommunityScore(args),
+            MetadataField.Icon => provider.GetIcon(args),
+            MetadataField.CoverImage => provider.GetCoverImage(args),
+            MetadataField.BackgroundImage => provider.GetBackgroundImage(args),
+            MetadataField.Features => provider.GetFeatures(args)?.ToList(),
+            MetadataField.AgeRating => provider.GetAgeRatings(args)?.ToList(),
+            MetadataField.Series => provider.GetSeries(args)?.ToList(),
+            MetadataField.Region => provider.GetRegions(args)?.ToList(),
+            MetadataField.Platform => provider.GetPlatforms(args)?.ToList(),
+            MetadataField.InstallSize => provider.GetInstallSize(args),
+            _ => throw new ArgumentOutOfRangeException(nameof(fieldName), fieldName, "Unknown metadata field.")
+        };
+        return V7RpcJson.Serialize(value);
+    }
+
+    public void Dispose() => provider.Dispose();
+}
+
+public sealed class V7LibraryMetadataProviderInstance : IDisposable
+{
+    private readonly LibraryMetadataProvider provider;
+
+    public V7LibraryMetadataProviderInstance(LibraryMetadataProvider provider) =>
+        this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
+
+    public string GetMetadata(string gameJson) =>
+        V7RpcJson.Serialize(provider.GetMetadata(V7RpcJson.Deserialize<Game>(gameJson)));
+
+    public void Dispose() => provider.Dispose();
 }
 
 internal sealed class V7PlayniteApi : IPlayniteAPI

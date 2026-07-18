@@ -2,6 +2,7 @@ using Newtonsoft.Json;
 using NUnit.Framework;
 using Playnite.SDK.V7.Host;
 using TestPluginV7;
+using TestV7MetadataPlugin = TestMetadataPluginV7.TestMetadataPlugin;
 
 namespace Playnite.SDK.V7.Host.Tests;
 
@@ -79,11 +80,63 @@ public class V7PluginBridgeTests
         Assert.That(imported, Has.Count.EqualTo(1));
         Assert.That(imported[0]["GameId"]?.ToObject<string>(), Is.EqualTo("sdk-v7-customized-game"));
 
+        var libraryMetadata = (V7LibraryMetadataProviderInstance)plugin.CreateLibraryMetadataProvider();
+        var metadata = Newtonsoft.Json.Linq.JObject.Parse(libraryMetadata.GetMetadata(
+            JsonConvert.SerializeObject(new Playnite.SDK.Models.Game("Library game")
+            {
+                GameId = "library-game"
+            })));
+        Assert.That(metadata["Name"]?.ToObject<string>(), Is.EqualTo("SDK v7 official metadata"));
+        libraryMetadata.Dispose();
+
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
         Assert.Throws<OperationCanceledException>(() =>
             plugin.GetLibraryGames(cancellation.Token));
         plugin.Dispose();
+    }
+
+    [Test]
+    public void BridgesOnDemandMetadataFieldsAndCancellation()
+    {
+        var plugin = (V7PluginInstance)V7PluginBridge
+            .LoadAll(typeof(TestV7MetadataPlugin).Assembly.Location, HostCall)
+            .Single();
+
+        Assert.That(plugin.Kind, Is.EqualTo("MetadataPlugin"));
+        Assert.That(plugin.Name, Is.EqualTo("Test SDK v7 metadata provider"));
+        Assert.That(plugin.SupportedMetadataFields, Is.EquivalentTo(
+            Enum.GetNames<Playnite.SDK.Plugins.MetadataField>()));
+        var provider = (V7MetadataProviderInstance)plugin.CreateMetadataProvider(
+            JsonConvert.SerializeObject(new Playnite.SDK.Models.Game("Metadata bridge game")),
+            true);
+        Assert.That(provider.AvailableFields, Is.EquivalentTo(plugin.SupportedMetadataFields));
+        Assert.That(
+            JsonConvert.DeserializeObject<string>(provider.GetField("Name", CancellationToken.None)),
+            Is.EqualTo("SDK v7 metadata name"));
+        var genres = Newtonsoft.Json.Linq.JArray.Parse(
+            provider.GetField("Genres", CancellationToken.None));
+        Assert.That(genres[0]["Kind"]?.ToObject<string>(), Is.EqualTo("Name"));
+        var image = Newtonsoft.Json.Linq.JObject.Parse(
+            provider.GetField("CoverImage", CancellationToken.None));
+        Assert.That(image["FileName"]?.ToObject<string>(), Is.EqualTo("v7-cover.png"));
+
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        Assert.Throws<OperationCanceledException>(() =>
+            provider.GetField("Name", cancellation.Token));
+        provider.Dispose();
+        plugin.Dispose();
+
+        var eventPath = Path.Combine(
+            extensionsDataPath,
+            plugin.Id.ToString(),
+            "metadata-events.txt");
+        Assert.That(File.ReadAllLines(eventPath), Is.EqualTo(new[]
+        {
+            "provider-created:Metadata bridge game:True",
+            "provider-disposed"
+        }));
     }
 
     [Test]
