@@ -178,7 +178,24 @@ internal static class DesktopPilotSelfTest
                 ? viewModel.Editor.ValidationMessage
                 : throw new InvalidOperationException("Invalid metadata reached the Core database."));
 
+        viewModel.Editor.Name = originalEditorName;
+        viewModel.Editor.AddLinkCommand.Execute(null);
+        var invalidLink = viewModel.Editor.Links.Last();
+        invalidLink.Name = "Local file";
+        invalidLink.Url = "file:///unsafe-link";
+        viewModel.Editor.SaveCommand.Execute(null);
+        Record(results, "Desktop link validation rejects unsafe URLs", () =>
+            viewModel.Editor.IsVisible &&
+            viewModel.Editor.HasValidationError &&
+            viewModel.Editor.ValidationMessage.Contains("HTTP", StringComparison.OrdinalIgnoreCase) &&
+            library.Database.Games[editorGame.Game.Id].Links?.Count is null or 0
+                ? viewModel.Editor.ValidationMessage
+                : throw new InvalidOperationException("A non-web link reached the Core database."));
+        viewModel.Editor.Links.Clear();
+
         var editedName = originalEditorName + " — Edited";
+        const string singleBackgroundUrl = "https://example.invalid/desktop-background.jpg";
+        const string singleLinkUrl = "https://example.com/desktop-pilot";
         viewModel.Editor.Name = editedName;
         viewModel.Editor.SortingName = "Edited Pilot";
         viewModel.Editor.ReleaseDate = "2024-7-18";
@@ -194,6 +211,13 @@ internal static class DesktopPilotSelfTest
         SelectOnly(viewModel.Editor.Tags, "Co-op");
         SelectOnly(viewModel.Editor.Developers, "Pilot Studio");
         SelectOnly(viewModel.Editor.Publishers, "Sample Publishing");
+        viewModel.Editor.CoverImage = library.SelfTestMediaPath;
+        viewModel.Editor.BackgroundImage = singleBackgroundUrl;
+        viewModel.Editor.Icon = library.SelfTestMediaPath;
+        viewModel.Editor.AddLinkCommand.Execute(null);
+        var websiteLink = viewModel.Editor.Links.Last();
+        websiteLink.Name = "Website";
+        websiteLink.Url = singleLinkUrl;
         viewModel.Editor.SaveCommand.Execute(null);
         var savedEditorGame = library.Database.Games[editorGame.Game.Id];
         Record(results, "Desktop metadata saves through GameDatabase", () =>
@@ -221,6 +245,35 @@ internal static class DesktopPilotSelfTest
             editorGame.PlatformsText.Contains("Linux", StringComparison.Ordinal)
                 ? $"{editedName} persisted scalar and multi-value metadata"
                 : throw new InvalidOperationException("The edited metadata did not round-trip through Core."));
+
+        var importedCoverPath = savedEditorGame.CoverImage;
+        var importedIconPath = savedEditorGame.Icon;
+        Record(results, "Desktop media and links round-trip through Core", () =>
+            !string.IsNullOrWhiteSpace(importedCoverPath) &&
+            !string.IsNullOrWhiteSpace(importedIconPath) &&
+            File.Exists(library.Database.GetFullFilePath(importedCoverPath)) &&
+            File.Exists(library.Database.GetFullFilePath(importedIconPath)) &&
+            savedEditorGame.BackgroundImage == singleBackgroundUrl &&
+            savedEditorGame.Links.Count == 1 &&
+            savedEditorGame.Links[0].Name == "Website" &&
+            savedEditorGame.Links[0].Url == singleLinkUrl &&
+            File.Exists(editorGame.CoverPath) &&
+            editorGame.LinksText.Contains("Website", StringComparison.Ordinal)
+                ? "local cover/icon files, a remote background, and a web link persisted and refreshed"
+                : throw new InvalidOperationException("Media or links did not round-trip through the Desktop editor."));
+
+        viewModel.SelectedGame = editorGame;
+        viewModel.EditCommand.Execute(null);
+        viewModel.Editor.CoverImage = string.Empty;
+        viewModel.Editor.SaveCommand.Execute(null);
+        var clearedMediaGame = library.Database.Games[editorGame.Game.Id];
+        Record(results, "Replacing Desktop media removes the old database file", () =>
+            !viewModel.Editor.IsVisible &&
+            string.IsNullOrWhiteSpace(clearedMediaGame.CoverImage) &&
+            !File.Exists(library.Database.GetFullFilePath(importedCoverPath)) &&
+            File.Exists(library.Database.GetFullFilePath(importedIconPath))
+                ? "Core removed the replaced cover while preserving unchanged icon media"
+                : throw new InvalidOperationException("The replaced cover file was retained or unrelated media was removed."));
 
         var pluginEditGame = viewModel.Games.First(game => game.Game.Id != editorGame.Game.Id);
         var pluginEditedName = pluginEditGame.Name + " — Plugin edit";
@@ -251,6 +304,9 @@ internal static class DesktopPilotSelfTest
         viewModel.Editor.CancelCommand.Execute(null);
 
         var originalBulkNames = bulkGameIds.ToDictionary(id => id, id => library.Database.Games[id].Name);
+        var originalBulkIcons = bulkGameIds.ToDictionary(id => id, id => library.Database.Games[id].Icon);
+        const string bulkBackgroundUrl = "https://example.invalid/bulk-background.jpg";
+        const string bulkLinkUrl = "https://example.com/shared-pilot-link";
         Dispatcher.UIThread.Post(() =>
         {
             viewModel.Editor.ApplyUserScore = true;
@@ -265,6 +321,16 @@ internal static class DesktopPilotSelfTest
             SelectOnly(viewModel.Editor.Platforms, "Windows");
             viewModel.Editor.ApplyTags = true;
             SelectOnly(viewModel.Editor.Tags, "Controller support", "Co-op");
+            viewModel.Editor.ApplyCoverImage = true;
+            viewModel.Editor.CoverImage = library.SelfTestMediaPath;
+            viewModel.Editor.ApplyBackgroundImage = true;
+            viewModel.Editor.BackgroundImage = bulkBackgroundUrl;
+            viewModel.Editor.ApplyLinks = true;
+            viewModel.Editor.Links.Clear();
+            viewModel.Editor.AddLinkCommand.Execute(null);
+            var sharedLink = viewModel.Editor.Links.Last();
+            sharedLink.Name = "Shared website";
+            sharedLink.Url = bulkLinkUrl;
             viewModel.Editor.SaveCommand.Execute(null);
         }, DispatcherPriority.Background);
         var bulkEditResult = window.RuntimeHost.PluginApi.MainView.OpenEditDialog(bulkGameIds);
@@ -273,6 +339,7 @@ internal static class DesktopPilotSelfTest
             {
                 var game = library.Database.Games[id];
                 return game.Name == originalBulkNames[id] &&
+                    game.Icon == originalBulkIcons[id] &&
                     game.UserScore == 77 &&
                     game.Favorite &&
                     game.CompletionStatusId == viewModel.Editor.CompletionStatuses.Skip(1).Last().Id &&
@@ -284,6 +351,23 @@ internal static class DesktopPilotSelfTest
             })
                 ? "the SDK list overload buffered scalar and multi-value Core updates without overwriting names"
                 : throw new InvalidOperationException("The bulk editor did not preserve or apply the selected fields."));
+
+        Record(results, "Plugin bulk editing imports media and replaces links", () =>
+        {
+            var editedGames = bulkGameIds.Select(id => library.Database.Games[id]).ToList();
+            var coverPaths = editedGames.Select(game => game.CoverImage).ToList();
+            return editedGames.All(game =>
+                    !string.IsNullOrWhiteSpace(game.CoverImage) &&
+                    File.Exists(library.Database.GetFullFilePath(game.CoverImage)) &&
+                    game.BackgroundImage == bulkBackgroundUrl &&
+                    game.Links.Count == 1 &&
+                    game.Links[0].Name == "Shared website" &&
+                    game.Links[0].Url == bulkLinkUrl) &&
+                coverPaths.Distinct(StringComparer.OrdinalIgnoreCase).Count() == editedGames.Count &&
+                !ReferenceEquals(editedGames[0].Links, editedGames[1].Links)
+                    ? "each game received an owned Core media file and an independent copied link collection"
+                    : throw new InvalidOperationException("Bulk media or link metadata was not safely applied.");
+        });
 
         Record(results, "Desktop settings persist atomically", () =>
         {

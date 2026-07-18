@@ -226,6 +226,8 @@
                                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                                         <TextBlock Text="{Binding SelectedGame.PublishersText}" FontSize="11"
                                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedGame.LinksText}" FontSize="11"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="16">
                                         <TextBlock Text="{Binding SelectedGame.PlaytimeText}"
@@ -504,6 +506,78 @@
                                                 </ListBox>
                                             </StackPanel>
                                         </Grid>
+                                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                                            <StackPanel Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopCoverImage}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyCoverImage, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
+                                                <Border Height="100" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                    <foundation:GameCoverImage SourcePath="{Binding Editor.CoverPreviewPath}"
+                                                                                Stretch="UniformToFill" />
+                                                </Border>
+                                                <TextBox Text="{Binding Editor.CoverImage, Mode=TwoWay}"
+                                                         IsEnabled="{Binding Editor.CanEditCoverImage}"
+                                                         Watermark="{DynamicResource LOCDesktopLocalImagePath}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopBackgroundImage}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyBackgroundImage, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
+                                                <Border Height="100" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                    <foundation:GameCoverImage SourcePath="{Binding Editor.BackgroundPreviewPath}"
+                                                                                Stretch="UniformToFill" />
+                                                </Border>
+                                                <TextBox Text="{Binding Editor.BackgroundImage, Mode=TwoWay}"
+                                                         IsEnabled="{Binding Editor.CanEditBackgroundImage}"
+                                                         Watermark="{DynamicResource LOCDesktopLocalOrHttpsImagePath}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopIcon}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyIcon, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
+                                                <Border Height="100" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                    <foundation:GameCoverImage SourcePath="{Binding Editor.IconPreviewPath}"
+                                                                                Stretch="Uniform" />
+                                                </Border>
+                                                <TextBox Text="{Binding Editor.Icon, Mode=TwoWay}"
+                                                         IsEnabled="{Binding Editor.CanEditIcon}"
+                                                         Watermark="{DynamicResource LOCDesktopLocalImagePath}" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <StackPanel Spacing="5">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{DynamicResource LOCDesktopLinks}" Classes="sectionLabel" />
+                                                <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                          IsChecked="{Binding Editor.ApplyLinks, Mode=TwoWay}"
+                                                          Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                            </StackPanel>
+                                            <ListBox ItemsSource="{Binding Editor.Links}" MaxHeight="180"
+                                                     IsEnabled="{Binding Editor.CanEditLinks}">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid ColumnDefinitions="*,2*,Auto" ColumnSpacing="8" Margin="0,2">
+                                                            <TextBox Text="{Binding Name, Mode=TwoWay}"
+                                                                     Watermark="{DynamicResource LOCDesktopLinkName}" />
+                                                            <TextBox Grid.Column="1" Text="{Binding Url, Mode=TwoWay}"
+                                                                     Watermark="{DynamicResource LOCDesktopLinkUrl}" />
+                                                            <Button Grid.Column="2" Command="{Binding RemoveCommand}" Content="×" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                            <Button Command="{Binding Editor.AddLinkCommand}"
+                                                    Content="{DynamicResource LOCDesktopAddLink}"
+                                                    HorizontalAlignment="Left" />
+                                        </StackPanel>
                                         <StackPanel Spacing="5">
                                             <StackPanel Orientation="Horizontal" Spacing="10">
                                                 <TextBlock Text="{DynamicResource LOCDesktopDescription}" Classes="sectionLabel" />

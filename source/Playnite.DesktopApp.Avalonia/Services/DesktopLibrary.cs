@@ -15,6 +15,7 @@ public sealed class DesktopLibrary : IDisposable
         Array.Empty<DesktopGameItemViewModel>();
     public bool IsOpen => Database?.IsOpen == true;
     public string ActiveUserDataDirectory => temporaryRoot ?? userDataDirectory;
+    public string SelfTestMediaPath { get; private set; }
 
     public DesktopLibrary(string userDataDirectory, string libraryPath)
     {
@@ -42,6 +43,11 @@ public sealed class DesktopLibrary : IDisposable
             Guid.NewGuid().ToString("N"));
         PlaynitePaths.UpdateUserDataDir(temporaryRoot);
         Open(Path.Combine(temporaryRoot, "library"));
+        SelfTestMediaPath = Path.Combine(temporaryRoot, "pilot-media.png");
+        File.WriteAllBytes(
+            SelfTestMediaPath,
+            Convert.FromBase64String(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nQAAAABJRU5ErkJggg=="));
         var actionGenre = new Genre("Action");
         var strategyGenre = new Genre("Strategy");
         var windowsPlatform = new Platform("Windows");
@@ -94,6 +100,7 @@ public sealed class DesktopLibrary : IDisposable
             }
 
             temporaryRoot = null;
+            SelfTestMediaPath = null;
         }
     }
 

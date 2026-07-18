@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -40,6 +41,13 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private bool applyTags;
     private bool applyDevelopers;
     private bool applyPublishers;
+    private string coverImage;
+    private string backgroundImage;
+    private string icon;
+    private bool applyCoverImage;
+    private bool applyBackgroundImage;
+    private bool applyIcon;
+    private bool applyLinks;
 
     public event PropertyChangedEventHandler PropertyChanged;
 
@@ -53,6 +61,45 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public string UserScore { get => userScore; set => SetField(ref userScore, value); }
     public string Description { get => description; set => SetField(ref description, value); }
     public string Notes { get => notes; set => SetField(ref notes, value); }
+    public string CoverImage
+    {
+        get => coverImage;
+        set
+        {
+            if (SetField(ref coverImage, value))
+            {
+                OnPropertyChanged(nameof(CoverPreviewPath));
+            }
+        }
+    }
+
+    public string BackgroundImage
+    {
+        get => backgroundImage;
+        set
+        {
+            if (SetField(ref backgroundImage, value))
+            {
+                OnPropertyChanged(nameof(BackgroundPreviewPath));
+            }
+        }
+    }
+
+    public string Icon
+    {
+        get => icon;
+        set
+        {
+            if (SetField(ref icon, value))
+            {
+                OnPropertyChanged(nameof(IconPreviewPath));
+            }
+        }
+    }
+
+    public string CoverPreviewPath => ResolvePreviewPath(CoverImage);
+    public string BackgroundPreviewPath => ResolvePreviewPath(BackgroundImage);
+    public string IconPreviewPath => ResolvePreviewPath(Icon);
     public bool Favorite { get => favorite; set => SetField(ref favorite, value); }
     public bool Hidden { get => hidden; set => SetField(ref hidden, value); }
     public DesktopMetadataOption SelectedSource
@@ -151,6 +198,30 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         set => SetApplyField(ref applyPublishers, value, nameof(CanEditPublishers));
     }
 
+    public bool ApplyCoverImage
+    {
+        get => applyCoverImage;
+        set => SetApplyField(ref applyCoverImage, value, nameof(CanEditCoverImage));
+    }
+
+    public bool ApplyBackgroundImage
+    {
+        get => applyBackgroundImage;
+        set => SetApplyField(ref applyBackgroundImage, value, nameof(CanEditBackgroundImage));
+    }
+
+    public bool ApplyIcon
+    {
+        get => applyIcon;
+        set => SetApplyField(ref applyIcon, value, nameof(CanEditIcon));
+    }
+
+    public bool ApplyLinks
+    {
+        get => applyLinks;
+        set => SetApplyField(ref applyLinks, value, nameof(CanEditLinks));
+    }
+
     public bool CanEditReleaseDate => IsSingleEdit || ApplyReleaseDate;
     public bool CanEditUserScore => IsSingleEdit || ApplyUserScore;
     public bool CanEditDescription => IsSingleEdit || ApplyDescription;
@@ -165,6 +236,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public bool CanEditTags => IsSingleEdit || ApplyTags;
     public bool CanEditDevelopers => IsSingleEdit || ApplyDevelopers;
     public bool CanEditPublishers => IsSingleEdit || ApplyPublishers;
+    public bool CanEditCoverImage => IsSingleEdit || ApplyCoverImage;
+    public bool CanEditBackgroundImage => IsSingleEdit || ApplyBackgroundImage;
+    public bool CanEditIcon => IsSingleEdit || ApplyIcon;
+    public bool CanEditLinks => IsSingleEdit || ApplyLinks;
 
     public string ValidationMessage
     {
@@ -187,8 +262,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public IReadOnlyList<DesktopMetadataOption> Tags { get; }
     public IReadOnlyList<DesktopMetadataOption> Developers { get; }
     public IReadOnlyList<DesktopMetadataOption> Publishers { get; }
+    public ObservableCollection<DesktopLinkEditorItem> Links { get; } = new();
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
+    public ICommand AddLinkCommand { get; }
 
     public DesktopGameEditorViewModel(
         GameDatabase database,
@@ -212,6 +289,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         Publishers = BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(Cancel);
+        AddLinkCommand = new RelayCommand(
+            () => Links.Add(new DesktopLinkEditorItem(null, item => Links.Remove(item))),
+            () => CanEditLinks);
     }
 
     public bool Open(Guid gameId, Action<bool?> onCompleted = null) =>
@@ -266,6 +346,14 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         SetSelected(Tags, CommonIds(games, game => game.TagIds));
         SetSelected(Developers, CommonIds(games, game => game.DeveloperIds));
         SetSelected(Publishers, CommonIds(games, game => game.PublisherIds));
+        CoverImage = CommonValue(games, game => game.CoverImage ?? string.Empty);
+        BackgroundImage = CommonValue(games, game => game.BackgroundImage ?? string.Empty);
+        Icon = CommonValue(games, game => game.Icon ?? string.Empty);
+        Links.Clear();
+        foreach (var link in CommonLinks(games))
+        {
+            Links.Add(new DesktopLinkEditorItem(link, item => Links.Remove(item)));
+        }
     }
 
     private void Save()
@@ -292,10 +380,31 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             return;
         }
 
-        var games = editingGameIds.Select(id => database.Games[id]).ToList();
+        if (!TryBuildLinks(out var preparedLinks))
+        {
+            return;
+        }
+
+        var games = editingGameIds.Select(id => database.Games[id]?.GetCopy()).ToList();
         if (games.Any(game => game == null))
         {
             ValidationMessage = "One or more selected games no longer exist in the library.";
+            return;
+        }
+
+        var addedMedia = new List<string>();
+        try
+        {
+            if (!TryPrepareMedia(games, addedMedia))
+            {
+                RemoveAddedMedia(addedMedia);
+                return;
+            }
+        }
+        catch (Exception exception)
+        {
+            RemoveAddedMedia(addedMedia);
+            ValidationMessage = $"Media could not be prepared: {exception.Message}";
             return;
         }
 
@@ -309,11 +418,11 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
                 {
                     if (IsSingleEdit)
                     {
-                        ApplySingleGameValues(game, parsedReleaseDate, parsedScore);
+                        ApplySingleGameValues(game, parsedReleaseDate, parsedScore, preparedLinks);
                     }
                     else
                     {
-                        ApplyBulkValues(game, parsedReleaseDate, parsedScore);
+                        ApplyBulkValues(game, parsedReleaseDate, parsedScore, preparedLinks);
                     }
 
                     game.Modified = changeDate;
@@ -338,7 +447,11 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         Complete(true);
     }
 
-    private void ApplySingleGameValues(Game game, ReleaseDate? parsedReleaseDate, int? parsedScore)
+    private void ApplySingleGameValues(
+        Game game,
+        ReleaseDate? parsedReleaseDate,
+        int? parsedScore,
+        IReadOnlyList<Link> preparedLinks)
     {
         game.Name = Name.Trim();
         game.SortingName = NullIfWhiteSpace(SortingName);
@@ -356,9 +469,14 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         game.TagIds = SelectedIds(Tags);
         game.DeveloperIds = SelectedIds(Developers);
         game.PublisherIds = SelectedIds(Publishers);
+        game.Links = new ObservableCollection<Link>(preparedLinks.Select(link => link.GetCopy()));
     }
 
-    private void ApplyBulkValues(Game game, ReleaseDate? parsedReleaseDate, int? parsedScore)
+    private void ApplyBulkValues(
+        Game game,
+        ReleaseDate? parsedReleaseDate,
+        int? parsedScore,
+        IReadOnlyList<Link> preparedLinks)
     {
         if (ApplyReleaseDate) game.ReleaseDate = parsedReleaseDate;
         if (ApplyUserScore) game.UserScore = parsedScore;
@@ -374,6 +492,157 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         if (ApplyTags) game.TagIds = SelectedIds(Tags);
         if (ApplyDevelopers) game.DeveloperIds = SelectedIds(Developers);
         if (ApplyPublishers) game.PublisherIds = SelectedIds(Publishers);
+        if (ApplyLinks) game.Links = new ObservableCollection<Link>(preparedLinks.Select(link => link.GetCopy()));
+    }
+
+    private bool TryBuildLinks(out IReadOnlyList<Link> preparedLinks)
+    {
+        var result = new List<Link>();
+        preparedLinks = result;
+        if (IsBulkEdit && !ApplyLinks)
+        {
+            return true;
+        }
+
+        foreach (var item in Links)
+        {
+            var name = item.Name?.Trim();
+            var url = item.Url?.Trim();
+            if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(url))
+            {
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(url))
+            {
+                ValidationMessage = "Every game link requires both a name and URL.";
+                return false;
+            }
+
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                ValidationMessage = $"Link '{name}' must use an HTTP or HTTPS URL.";
+                return false;
+            }
+
+            result.Add(new Link(name, uri.AbsoluteUri));
+        }
+
+        return true;
+    }
+
+    private bool TryPrepareMedia(IReadOnlyList<Game> games, ICollection<string> addedMedia)
+    {
+        foreach (var game in games)
+        {
+            if (IsSingleEdit || ApplyCoverImage)
+            {
+                if (!TryPrepareMediaValue(
+                    CoverImage, game.CoverImage, game.Id, false, "cover image", addedMedia, out var cover))
+                {
+                    return false;
+                }
+
+                game.CoverImage = cover;
+            }
+
+            if (IsSingleEdit || ApplyBackgroundImage)
+            {
+                if (!TryPrepareMediaValue(
+                    BackgroundImage, game.BackgroundImage, game.Id, true, "background image", addedMedia, out var background))
+                {
+                    return false;
+                }
+
+                game.BackgroundImage = background;
+            }
+
+            if (IsSingleEdit || ApplyIcon)
+            {
+                if (!TryPrepareMediaValue(
+                    Icon, game.Icon, game.Id, false, "icon", addedMedia, out var iconValue))
+                {
+                    return false;
+                }
+
+                game.Icon = iconValue;
+            }
+        }
+
+        return true;
+    }
+
+    private bool TryPrepareMediaValue(
+        string input,
+        string existing,
+        Guid gameId,
+        bool allowRemoteReference,
+        string fieldName,
+        ICollection<string> addedMedia,
+        out string prepared)
+    {
+        prepared = null;
+        var value = input?.Trim();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return true;
+        }
+
+        if (string.Equals(value, existing, StringComparison.Ordinal))
+        {
+            prepared = existing;
+            return true;
+        }
+
+        if (Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+        {
+            if (!allowRemoteReference)
+            {
+                ValidationMessage = $"The {fieldName} must be a local file. Remote media downloads are the next metadata tranche.";
+                return false;
+            }
+
+            prepared = uri.AbsoluteUri;
+            return true;
+        }
+
+        if (!Path.IsPathFullyQualified(value))
+        {
+            ValidationMessage = $"The {fieldName} must use a fully qualified local file path.";
+            return false;
+        }
+
+        if (!File.Exists(value))
+        {
+            ValidationMessage = $"The {fieldName} file does not exist: {value}";
+            return false;
+        }
+
+        prepared = database.AddFile(value, gameId, true, CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(prepared))
+        {
+            ValidationMessage = $"The {fieldName} could not be imported into the Playnite database.";
+            return false;
+        }
+
+        addedMedia.Add(prepared);
+        return true;
+    }
+
+    private void RemoveAddedMedia(IEnumerable<string> addedMedia)
+    {
+        foreach (var path in addedMedia)
+        {
+            try
+            {
+                database.RemoveFile(path);
+            }
+            catch
+            {
+            }
+        }
     }
 
     private bool TryParseReleaseDate(out ReleaseDate? parsedReleaseDate)
@@ -416,7 +685,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         ApplyReleaseDate || ApplyUserScore || ApplyDescription || ApplyNotes ||
         ApplyFavorite || ApplyHidden || ApplySource || ApplyCompletionStatus ||
         ApplyGenres || ApplyPlatforms || ApplyCategories || ApplyTags ||
-        ApplyDevelopers || ApplyPublishers;
+        ApplyDevelopers || ApplyPublishers || ApplyCoverImage ||
+        ApplyBackgroundImage || ApplyIcon || ApplyLinks;
 
     private void ResetApplyFlags()
     {
@@ -434,6 +704,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         ApplyTags = false;
         ApplyDevelopers = false;
         ApplyPublishers = false;
+        ApplyCoverImage = false;
+        ApplyBackgroundImage = false;
+        ApplyIcon = false;
+        ApplyLinks = false;
     }
 
     private void Cancel() => Complete(false);
@@ -479,6 +753,18 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             : Array.Empty<Guid>();
     }
 
+    private static IReadOnlyList<Link> CommonLinks(IReadOnlyList<Game> games)
+    {
+        var first = games[0].Links?
+            .Where(link => link != null)
+            .Select(link => link.GetCopy())
+            .ToList() ?? new List<Link>();
+        return games.Skip(1).All(game =>
+            (game.Links?.Where(link => link != null).ToList() ?? new List<Link>()).SequenceEqual(first))
+                ? first
+                : Array.Empty<Link>();
+    }
+
     private static void SetSelected(
         IEnumerable<DesktopMetadataOption> options,
         IReadOnlyCollection<Guid> selectedIds)
@@ -492,6 +778,18 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
 
     private static List<Guid> SelectedIds(IEnumerable<DesktopMetadataOption> options) =>
         options.Where(option => option.IsSelected).Select(option => option.Id).ToList();
+
+    private string ResolvePreviewPath(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) ||
+            (Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+             (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
+        {
+            return value;
+        }
+
+        return Path.IsPathFullyQualified(value) ? value : database?.GetFullFilePath(value);
+    }
 
     private static T CommonValue<T>(IReadOnlyList<Game> games, Func<Game, T> selector)
     {
@@ -509,6 +807,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         if (SetField(ref field, value))
         {
             OnPropertyChanged(editabilityProperty);
+            if (editabilityProperty == nameof(CanEditLinks))
+            {
+                ((RelayCommand)AddLinkCommand).RaiseCanExecuteChanged();
+            }
         }
     }
 
@@ -528,6 +830,11 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanEditTags));
         OnPropertyChanged(nameof(CanEditDevelopers));
         OnPropertyChanged(nameof(CanEditPublishers));
+        OnPropertyChanged(nameof(CanEditCoverImage));
+        OnPropertyChanged(nameof(CanEditBackgroundImage));
+        OnPropertyChanged(nameof(CanEditIcon));
+        OnPropertyChanged(nameof(CanEditLinks));
+        ((RelayCommand)AddLinkCommand).RaiseCanExecuteChanged();
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)

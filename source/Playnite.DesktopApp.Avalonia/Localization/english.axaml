@@ -34,4 +34,13 @@
     <x:String x:Key="LOCDesktopTags">Tags</x:String>
     <x:String x:Key="LOCDesktopDevelopers">Developers</x:String>
     <x:String x:Key="LOCDesktopPublishers">Publishers</x:String>
+    <x:String x:Key="LOCDesktopCoverImage">Cover image</x:String>
+    <x:String x:Key="LOCDesktopBackgroundImage">Background image</x:String>
+    <x:String x:Key="LOCDesktopIcon">Icon</x:String>
+    <x:String x:Key="LOCDesktopLinks">Links</x:String>
+    <x:String x:Key="LOCDesktopLinkName">Link name</x:String>
+    <x:String x:Key="LOCDesktopLinkUrl">https://example.com</x:String>
+    <x:String x:Key="LOCDesktopAddLink">Add link</x:String>
+    <x:String x:Key="LOCDesktopLocalImagePath">Full local image path</x:String>
+    <x:String x:Key="LOCDesktopLocalOrHttpsImagePath">Full local path or HTTPS URL</x:String>
 </ResourceDictionary>

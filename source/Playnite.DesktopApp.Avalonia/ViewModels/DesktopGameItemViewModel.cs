@@ -47,6 +47,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public string TagsText => FormatNames("Tags", Game.TagIds, id => database.Tags[id]?.Name);
     public string DevelopersText => FormatNames("Developers", Game.DeveloperIds, id => database.Companies[id]?.Name);
     public string PublishersText => FormatNames("Publishers", Game.PublisherIds, id => database.Companies[id]?.Name);
+    public string LinksText => FormatLinks(Game.Links);
     public string MetadataLine => BuildMetadataLine(Game, database);
     public string DescriptionText => ToPlainText(Game.Description);
     public string CoverPath => ResolveMediaPath(Game.CoverImage, database);
@@ -98,6 +99,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(TagsText));
         OnPropertyChanged(nameof(DevelopersText));
         OnPropertyChanged(nameof(PublishersText));
+        OnPropertyChanged(nameof(LinksText));
+        OnPropertyChanged(nameof(CoverPath));
     }
 
     private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
@@ -155,5 +158,14 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             .Distinct(StringComparer.CurrentCultureIgnoreCase)
             .ToList();
         return names.Count == 0 ? $"{label}: None" : $"{label}: {string.Join(", ", names)}";
+    }
+
+    private static string FormatLinks(IEnumerable<Link> links)
+    {
+        var names = (links ?? Array.Empty<Link>())
+            .Select(link => link?.Name)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .ToList();
+        return names.Count == 0 ? "Links: None" : $"Links: {string.Join(", ", names)}";
     }
 }
