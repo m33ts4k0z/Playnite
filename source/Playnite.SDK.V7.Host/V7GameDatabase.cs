@@ -197,17 +197,33 @@ internal sealed class HostItemCollection<TItem> : IItemCollection<TItem>, IV7Hos
     {
         if (eventName == "Changed")
         {
-            var data = V7RpcJson.Deserialize<CollectionChangedPayload>(payload);
+            var data = V7RpcJson.Deserialize<CollectionChangedPayload>(payload)
+                ?? throw new InvalidDataException(
+                    $"SDK v7 {CollectionType} change event contained no payload.");
             ItemCollectionChanged?.Invoke(this, new ItemCollectionChangedEventArgs<TItem>(
-                data?.AddedItems ?? [],
-                data?.RemovedItems ?? []));
+                data.AddedItems ?? throw new InvalidDataException(
+                    $"SDK v7 {CollectionType} change event contained no added-items list."),
+                data.RemovedItems ?? throw new InvalidDataException(
+                    $"SDK v7 {CollectionType} change event contained no removed-items list.")));
         }
         else if (eventName == "Updated")
         {
-            var data = V7RpcJson.Deserialize<UpdatedPayload>(payload);
+            var data = V7RpcJson.Deserialize<UpdatedPayload>(payload)
+                ?? throw new InvalidDataException(
+                    $"SDK v7 {CollectionType} update event contained no payload.");
             ItemUpdated?.Invoke(this, new ItemUpdatedEventArgs<TItem>(
-                data?.UpdatedItems?.Select(update =>
-                    new ItemUpdateEvent<TItem>(update.OldData, update.NewData)) ?? []));
+                (data.UpdatedItems ?? throw new InvalidDataException(
+                    $"SDK v7 {CollectionType} update event contained no updated-items list."))
+                .Select(update => new ItemUpdateEvent<TItem>(
+                    update.OldData ?? throw new InvalidDataException(
+                        $"SDK v7 {CollectionType} update event contained no old item."),
+                    update.NewData ?? throw new InvalidDataException(
+                        $"SDK v7 {CollectionType} update event contained no new item.")))));
+        }
+        else
+        {
+            throw new InvalidDataException(
+                $"SDK v7 {CollectionType} collection event '{eventName}' is unknown.");
         }
     }
 
@@ -358,6 +374,11 @@ internal sealed class HostGameDatabase : IGameDatabaseAPI
         else if (collections.TryGetValue(collection, out var target))
         {
             target.Publish(eventName, payload);
+        }
+        else
+        {
+            throw new InvalidDataException(
+                $"SDK v7 database event targets unknown collection '{collection}'.");
         }
     }
 

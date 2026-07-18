@@ -388,15 +388,22 @@ public sealed class TestPlugin : LibraryPlugin
     public override IEnumerable<GameMetadata> GetGames(LibraryGetGamesArgs args)
     {
         args.CancelToken.ThrowIfCancellationRequested();
-        File.AppendAllLines(EventPath, ["library-get-games"]);
-        yield return new GameMetadata
+        if (File.Exists(Path.Combine(GetPluginUserDataPath(), "return-null-library.txt")))
         {
-            Name = "SDK v7 library game",
-            GameId = "sdk-v7-library-game",
-            IsInstalled = true,
-            InstallDirectory = "C:\\SDKv7Library",
-            Playtime = 120,
-            Genres = [new MetadataNameProperty("SDK v7 library genre")]
+            return null!;
+        }
+        File.AppendAllLines(EventPath, ["library-get-games"]);
+        return new[]
+        {
+            new GameMetadata
+            {
+                Name = "SDK v7 library game",
+                GameId = "sdk-v7-library-game",
+                IsInstalled = true,
+                InstallDirectory = "C:\\SDKv7Library",
+                Playtime = 120,
+                Genres = [new MetadataNameProperty("SDK v7 library genre")]
+            }
         };
     }
 

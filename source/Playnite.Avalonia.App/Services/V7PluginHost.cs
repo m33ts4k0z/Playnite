@@ -120,10 +120,14 @@ public sealed class V7LoadedPlugin
         (string)InvokeWithResult(invokeGameEvent, eventName, payload);
     internal List<GameMetadata> GetLibraryGames(CancellationToken cancellationToken) =>
         V7DatabaseTransport.Deserialize<List<GameMetadata>>(
-            (string)InvokeWithResult(getLibraryGames, cancellationToken)) ?? [];
+            (string)InvokeWithResult(getLibraryGames, cancellationToken))
+        ?? throw new InvalidDataException(
+            $"SDK v7 library plugin {Id} returned an invalid game sequence.");
     internal List<Game> ImportLibraryGames(CancellationToken cancellationToken) =>
         V7DatabaseTransport.Deserialize<List<Game>>(
-            (string)InvokeWithResult(importLibraryGames, cancellationToken)) ?? [];
+            (string)InvokeWithResult(importLibraryGames, cancellationToken))
+        ?? throw new InvalidDataException(
+            $"SDK v7 library plugin {Id} returned an invalid custom-import sequence.");
     internal void InvokeLibraryUpdated() => Invoke(invokeLibraryUpdated);
     internal void OpenLibraryClient() => Invoke(openLibraryClient);
     internal void ShutdownLibraryClient() => Invoke(shutdownLibraryClient);

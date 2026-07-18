@@ -138,7 +138,10 @@ public sealed class V7PluginInstance : IDisposable
     public string LibraryClientIcon => (plugin as LibraryPlugin)?.Client?.Icon;
     public Guid UriOwnerToken => api.UriOwnerToken;
     public string[] SupportedMetadataFields => plugin is MetadataPlugin metadata
-        ? metadata.SupportedFields?.Select(metadataField => metadataField.ToString()).ToArray() ?? []
+        ? (metadata.SupportedFields ?? throw new InvalidDataException(
+            $"SDK v7 metadata plugin {plugin.Id} returned no supported-field list."))
+            .Select(metadataField => metadataField.ToString())
+            .ToArray()
         : [];
 
     internal V7PluginInstance(
@@ -247,7 +250,8 @@ public sealed class V7PluginInstance : IDisposable
         var games = library.GetGames(new LibraryGetGamesArgs
         {
             CancelToken = cancellationToken
-        })?.ToList() ?? [];
+        })?.ToList() ?? throw new InvalidDataException(
+            $"SDK v7 library plugin {plugin.Id} returned no game sequence.");
         return V7RpcJson.Serialize(games);
     }
 
@@ -261,15 +265,16 @@ public sealed class V7PluginInstance : IDisposable
         var games = library.ImportGames(new LibraryImportGamesArgs
         {
             CancelToken = cancellationToken
-        })?.ToList() ?? [];
+        })?.ToList() ?? throw new InvalidDataException(
+            $"SDK v7 library plugin {plugin.Id} returned no custom-import sequence.");
         return V7RpcJson.Serialize(games);
     }
 
     public void InvokeLibraryUpdated() =>
         plugin.OnLibraryUpdated(new OnLibraryUpdatedEventArgs());
 
-    public void OpenLibraryClient() => (plugin as LibraryPlugin)?.Client?.Open();
-    public void ShutdownLibraryClient() => (plugin as LibraryPlugin)?.Client?.Shutdown();
+    public void OpenLibraryClient() => GetLibraryClient().Open();
+    public void ShutdownLibraryClient() => GetLibraryClient().Shutdown();
 
     public object CreateMetadataProvider(string gameJson, bool backgroundDownload)
     {
@@ -278,7 +283,8 @@ public sealed class V7PluginInstance : IDisposable
             return null;
         }
 
-        var game = V7RpcJson.Deserialize<Game>(gameJson);
+        var game = V7RpcJson.Deserialize<Game>(gameJson)
+            ?? throw new InvalidDataException("SDK v7 metadata request contained no game.");
         var provider = metadata.GetMetadataProvider(new MetadataRequestOptions(game, backgroundDownload));
         return provider == null ? null : new V7MetadataProviderInstance(provider);
     }
@@ -303,7 +309,8 @@ public sealed class V7PluginInstance : IDisposable
 
         if (string.Equals(kind, "Game", StringComparison.Ordinal))
         {
-            var games = V7RpcJson.Deserialize<List<Game>>(gamesJson) ?? [];
+            var games = V7RpcJson.Deserialize<List<Game>>(gamesJson)
+                ?? throw new InvalidDataException("SDK v7 game-menu request contained no game list.");
             return (plugin.GetGameMenuItems(new GetGameMenuItemsArgs
             {
                 Games = games,
@@ -351,7 +358,8 @@ public sealed class V7PluginInstance : IDisposable
 
     public object[] GetControllers(string kind, string gameJson)
     {
-        var game = V7RpcJson.Deserialize<Game>(gameJson);
+        var game = V7RpcJson.Deserialize<Game>(gameJson)
+            ?? throw new InvalidDataException("SDK v7 controller request contained no game.");
         IEnumerable<ControllerBase> controllers = kind switch
         {
             "Play" => plugin.GetPlayActions(new GetPlayActionsArgs { Game = game }) ?? [],
@@ -366,7 +374,12 @@ public sealed class V7PluginInstance : IDisposable
 
     public string InvokeGameEvent(string eventName, string payload)
     {
-        var data = V7RpcJson.Deserialize<GameEventPayload>(payload) ?? new GameEventPayload();
+        var data = V7RpcJson.Deserialize<GameEventPayload>(payload)
+            ?? throw new InvalidDataException($"SDK v7 {eventName} event contained no payload.");
+        if (data.Game == null)
+        {
+            throw new InvalidDataException($"SDK v7 {eventName} event contained no game.");
+        }
         switch (eventName)
         {
             case "Starting":
@@ -414,6 +427,11 @@ public sealed class V7PluginInstance : IDisposable
         return "null";
     }
 
+    private LibraryClient GetLibraryClient() =>
+        (plugin as LibraryPlugin)?.Client
+        ?? throw new InvalidOperationException(
+            $"SDK v7 plugin {plugin.Id} has no library client.");
+
     public void Dispose()
     {
         CancelSettingsEdit();
@@ -438,7 +456,7 @@ public sealed class V7MenuItemInstance
     public V7MenuItemInstance(GameMenuItem item, List<Game> games)
     {
         gameItem = item ?? throw new ArgumentNullException(nameof(item));
-        this.games = games ?? [];
+        this.games = games ?? throw new ArgumentNullException(nameof(games));
     }
 
     public void Invoke()
@@ -526,7 +544,10 @@ public sealed class V7MetadataProviderInstance : IDisposable
     private readonly OnDemandMetadataProvider provider;
 
     public string[] AvailableFields =>
-        provider.AvailableFields?.Select(metadataField => metadataField.ToString()).ToArray() ?? [];
+        (provider.AvailableFields ?? throw new InvalidDataException(
+            "SDK v7 metadata provider returned no available-field list."))
+        .Select(metadataField => metadataField.ToString())
+        .ToArray();
 
     public V7MetadataProviderInstance(OnDemandMetadataProvider provider) =>
         this.provider = provider ?? throw new ArgumentNullException(nameof(provider));

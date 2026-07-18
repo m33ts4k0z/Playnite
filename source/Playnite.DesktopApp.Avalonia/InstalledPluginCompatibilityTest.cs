@@ -5,6 +5,7 @@ using Playnite.Avalonia.App.Services;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.Plugins;
 using Playnite.SDK;
+using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 
 namespace Playnite.DesktopApp.Avalonia;
@@ -311,7 +312,104 @@ internal static class InstalledPluginCompatibilityTest
             }
         }
 
+        if (string.Equals(plugin.Kind, "LibraryPlugin", StringComparison.Ordinal))
+        {
+            failures += VerifyV7LibraryPlugin(plugin, runtimeHost, library, report);
+        }
+
         return failures;
+    }
+
+    private static int VerifyV7LibraryPlugin(
+        V7LoadedPlugin plugin,
+        AvaloniaRuntimeHost runtimeHost,
+        DesktopLibrary library,
+        StringBuilder report)
+    {
+        try
+        {
+            var libraryPlugin = runtimeHost.LibraryPlugins.Single(item => item.Id == plugin.Id);
+            var importedGames = libraryPlugin.GetGames(new LibraryGetGamesArgs()).ToList();
+            if (importedGames.Any(game => game == null ||
+                string.IsNullOrWhiteSpace(game.GameId) ||
+                string.IsNullOrWhiteSpace(game.Name)))
+            {
+                throw new InvalidDataException(
+                    "The library provider returned a game without a required ID or name.");
+            }
+
+            var sample = importedGames.FirstOrDefault();
+            report.AppendLine(sample == null
+                ? "       Library import: completed successfully with no games in this profile"
+                : $"       Library import: {importedGames.Count:N0} real games; " +
+                  $"sample '{sample.Name}' ({sample.GameId})");
+
+            var existingGame = library.Games.Select(item => item.Game)
+                .FirstOrDefault(game => game.PluginId == plugin.Id);
+            var controllerGame = existingGame ?? (sample == null
+                ? null
+                : new Game(sample.Name)
+                {
+                    PluginId = plugin.Id,
+                    GameId = sample.GameId,
+                    IsInstalled = sample.IsInstalled,
+                    InstallDirectory = sample.InstallDirectory
+                });
+
+            if (controllerGame != null)
+            {
+                var controllerProbe = new Game(controllerGame.Name)
+                {
+                    PluginId = controllerGame.PluginId,
+                    GameId = controllerGame.GameId,
+                    IsInstalled = controllerGame.IsInstalled,
+                    InstallDirectory = controllerGame.InstallDirectory,
+                    IncludeLibraryPluginAction = true
+                };
+                var policy = runtimeHost.Actions.Policy;
+                var controllers = new ControllerBase[][]
+                {
+                    (policy.AdditionalPlayControllers(controllerProbe) ?? []).Cast<ControllerBase>().ToArray(),
+                    (policy.AdditionalInstallControllers(controllerProbe) ?? []).Cast<ControllerBase>().ToArray(),
+                    (policy.AdditionalUninstallControllers(controllerProbe) ?? []).Cast<ControllerBase>().ToArray()
+                };
+                try
+                {
+                    report.AppendLine($"       Controllers: play {controllers[0].Length}, " +
+                        $"install {controllers[1].Length}, uninstall {controllers[2].Length}");
+                }
+                finally
+                {
+                    foreach (var controller in controllers.SelectMany(items => items))
+                    {
+                        controller.Dispose();
+                    }
+                }
+
+                using var metadataProvider = libraryPlugin.GetMetadataDownloader();
+                if (metadataProvider != null)
+                {
+                    var metadata = metadataProvider.GetMetadata(controllerGame);
+                    report.AppendLine(metadata == null
+                        ? "       Library metadata: provider returned no metadata for the sample game"
+                        : $"       Library metadata: sample resolved to '{metadata.Name ?? controllerGame.Name}'");
+                }
+                else
+                {
+                    report.AppendLine("       Library metadata: not advertised");
+                }
+            }
+
+            report.AppendLine(plugin.HasLibraryClient
+                ? $"       Library client: available; installed={plugin.IsLibraryClientInstalled}"
+                : "       Library client: not advertised");
+            return 0;
+        }
+        catch (Exception exception)
+        {
+            report.AppendLine($"       Library contract FAIL: {exception}");
+            return 1;
+        }
     }
 
     private static int VerifyV7MetadataProvider(

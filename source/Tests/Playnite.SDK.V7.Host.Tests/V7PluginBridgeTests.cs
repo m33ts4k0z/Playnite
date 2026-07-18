@@ -116,6 +116,42 @@ public class V7PluginBridgeTests
     }
 
     [Test]
+    public void RejectsNullLibraryGameSequences()
+    {
+        var pluginDataPath = Path.Combine(
+            extensionsDataPath,
+            "8134f4eb-556e-4e01-936f-1bf5a808cb10");
+        Directory.CreateDirectory(pluginDataPath);
+        File.WriteAllText(Path.Combine(pluginDataPath, "return-null-library.txt"), string.Empty);
+        var plugin = (V7PluginInstance)V7PluginBridge
+            .LoadAll(typeof(TestPlugin).Assembly.Location, HostCall)
+            .Single();
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            plugin.GetLibraryGames(CancellationToken.None));
+        Assert.That(exception.Message, Does.Contain("returned no game sequence"));
+        plugin.Dispose();
+    }
+
+    [Test]
+    public void RejectsMalformedRequiredBridgePayloads()
+    {
+        var plugin = (V7PluginInstance)V7PluginBridge
+            .LoadAll(typeof(TestPlugin).Assembly.Location, HostCall)
+            .Single();
+
+        Assert.Throws<InvalidDataException>(() => plugin.GetControllers("Play", "null"));
+        Assert.Throws<InvalidDataException>(() => plugin.InvokeGameEvent("Started", "null"));
+        Assert.Throws<InvalidDataException>(() =>
+            plugin.PublishDatabaseEvent("Unknown", "Updated", "{}"));
+        Assert.Throws<InvalidDataException>(() =>
+            plugin.PublishDatabaseEvent("Games", "Unknown", "{}"));
+        Assert.Throws<InvalidDataException>(() =>
+            plugin.PublishDatabaseEvent("Games", "Changed", "null"));
+        plugin.Dispose();
+    }
+
+    [Test]
     public void BridgesOnDemandMetadataFieldsAndCancellation()
     {
         var plugin = (V7PluginInstance)V7PluginBridge
