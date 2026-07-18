@@ -244,21 +244,15 @@ public sealed class DesktopMetadataDownloadViewModel : INotifyPropertyChanged
 
         try
         {
-            using var downloader = new MetadataDownloader(
-                database,
-                (metadataPlugins() ?? new List<MetadataPlugin>()).Where(plugin => plugin != null).ToList(),
-                (libraryPlugins() ?? new List<LibraryPlugin>()).Where(plugin => plugin != null).ToList());
-            await downloader.DownloadMetadataAsync(
+            await DownloadGamesAsync(
                 games,
                 fieldSettings,
-                new MetadataRuntimeSettings(DownloadBackgroundsImmediately),
                 (game, index, total) => Dispatcher.UIThread.Post(() =>
                 {
                     ProgressValue = Math.Min(index + 1, total);
                     ProgressTotal = total;
                     ProgressText = $"Downloading metadata [{ProgressValue}/{ProgressTotal}]";
-                }),
-                token);
+                }), token);
 
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
@@ -296,6 +290,53 @@ public sealed class DesktopMetadataDownloadViewModel : INotifyPropertyChanged
 
     private IReadOnlyList<Game> ResolveTargetGames() =>
         resolveGames(settings.MetadataGamesSource) ?? Array.Empty<Game>();
+
+    internal async Task<bool> DownloadConfiguredGamesAsync(
+        IReadOnlyList<Game> games,
+        Action<Game, int, int> progressCallback,
+        CancellationToken cancelToken)
+    {
+        var selectedFields = settings.MetadataFields ?? new List<MetadataField>();
+        if (selectedFields.Count == 0)
+        {
+            return false;
+        }
+
+        var sourceIds = settings.MetadataSourceIds?.Count > 0
+            ? settings.MetadataSourceIds.ToList()
+            : new[] { Guid.Empty }
+                .Concat((metadataPlugins() ?? new List<MetadataPlugin>())
+                    .Where(plugin => plugin != null)
+                    .Select(plugin => plugin.Id))
+                .Distinct()
+                .ToList();
+        if (sourceIds.Count == 0)
+        {
+            return false;
+        }
+
+        var fieldSettings = BuildSettings(sourceIds, selectedFields);
+        await DownloadGamesAsync(games, fieldSettings, progressCallback, cancelToken);
+        return true;
+    }
+
+    private async Task DownloadGamesAsync(
+        IReadOnlyList<Game> games,
+        MetadataDownloaderSettings fieldSettings,
+        Action<Game, int, int> progressCallback,
+        CancellationToken cancelToken)
+    {
+        using var downloader = new MetadataDownloader(
+            database,
+            (metadataPlugins() ?? new List<MetadataPlugin>()).Where(plugin => plugin != null).ToList(),
+            (libraryPlugins() ?? new List<LibraryPlugin>()).Where(plugin => plugin != null).ToList());
+        await downloader.DownloadMetadataAsync(
+            games?.ToList() ?? new List<Game>(),
+            fieldSettings,
+            new MetadataRuntimeSettings(DownloadBackgroundsImmediately),
+            progressCallback,
+            cancelToken);
+    }
 
     private void RefreshSources()
     {

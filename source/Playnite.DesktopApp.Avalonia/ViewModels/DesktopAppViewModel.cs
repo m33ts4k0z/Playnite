@@ -41,7 +41,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         GroupableField.PlayTime
     };
 
-    private readonly IReadOnlyList<DesktopGameItemViewModel> allGames;
+    private readonly List<DesktopGameItemViewModel> allGames;
     private readonly GameDatabase database;
     private readonly DesktopSettings settings;
     private IReadOnlyList<DesktopGameItemViewModel> games;
@@ -272,12 +272,14 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public string StatusText { get => statusText; private set => SetField(ref statusText, value); }
     public DesktopGameEditorViewModel Editor { get; }
     public DesktopMetadataDownloadViewModel MetadataDownload { get; }
+    public DesktopLibrarySyncViewModel LibrarySync { get; }
 
     public ICommand ActivateCommand { get; }
     public ICommand InstallCommand { get; }
     public ICommand UninstallCommand { get; }
     public ICommand EditCommand { get; }
     public ICommand OpenMetadataDownloadCommand { get; }
+    public ICommand OpenLibrarySyncCommand { get; }
     public ICommand SetGridViewCommand { get; }
     public ICommand SetListViewCommand { get; }
     public ICommand ClearSearchCommand { get; }
@@ -294,7 +296,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         DesktopSettings settings,
         string startupError)
     {
-        allGames = games ?? Array.Empty<DesktopGameItemViewModel>();
+        allGames = games?.ToList() ?? new List<DesktopGameItemViewModel>();
         this.database = database;
         this.settings = settings ?? new DesktopSettings();
         this.games = allGames;
@@ -329,6 +331,24 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             });
         MetadataDownload.SettingsChanged += (_, _) => SettingsChanged?.Invoke(this, EventArgs.Empty);
         MetadataDownload.PropertyChanged += MetadataDownload_PropertyChanged;
+        LibrarySync = new DesktopLibrarySyncViewModel(
+            database,
+            this.settings,
+            MetadataDownload,
+            SynchronizeLibrary,
+            (message, error) =>
+            {
+                if (runtimeHost != null)
+                {
+                    runtimeHost.ShowMessage(message, error);
+                }
+                else
+                {
+                    StatusText = message;
+                }
+            });
+        LibrarySync.SettingsChanged += (_, _) => SettingsChanged?.Invoke(this, EventArgs.Empty);
+        LibrarySync.PropertyChanged += LibrarySync_PropertyChanged;
 
         ActivateCommand = new AppRelayCommand(
             () => RunOperation(SelectedGame?.IsInstalled == true ? GameOperationKind.Play : GameOperationKind.Install),
@@ -342,10 +362,16 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         EditCommand = new AppRelayCommand(
             () => OpenGameEditor(SelectedGame.Game.Id),
             () => SelectedGame != null && database != null && !Editor.IsVisible &&
-                !MetadataDownload.IsVisible && !MetadataDownload.IsRunning);
+                !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning);
         OpenMetadataDownloadCommand = new AppRelayCommand(OpenMetadataDownload,
             () => SelectedGame != null && database != null && runtimeHost != null &&
-                !Editor.IsVisible && !MetadataDownload.IsVisible && !MetadataDownload.IsRunning);
+                !Editor.IsVisible && !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning);
+        OpenLibrarySyncCommand = new AppRelayCommand(OpenLibrarySync,
+            () => database != null && runtimeHost != null && !Editor.IsVisible &&
+                !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning);
         SetGridViewCommand = new AppRelayCommand(() => SelectedViewMode = "Grid");
         SetListViewCommand = new AppRelayCommand(() => SelectedViewMode = "List");
         ClearSearchCommand = new AppRelayCommand(() => SearchText = string.Empty, () => SearchText.Length > 0);
@@ -379,6 +405,9 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         MetadataDownload.ConfigureProviders(
             () => host.Extensions.MetadataPlugins,
             () => host.Extensions.LibraryPlugins);
+        LibrarySync.ConfigureProviders(
+            () => host.Extensions.LibraryPlugins,
+            host.Extensions.NotifiyOnLibraryUpdated);
         RaiseGameCommandStates();
     }
 
@@ -424,9 +453,10 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
     public bool OpenGameEditor(IReadOnlyList<Guid> gameIds, Action<bool?> completed = null)
     {
-        if (MetadataDownload.IsVisible || MetadataDownload.IsRunning)
+        if (MetadataDownload.IsVisible || MetadataDownload.IsRunning ||
+            LibrarySync.IsVisible || LibrarySync.IsRunning)
         {
-            StatusText = "Finish or close the metadata download before editing games.";
+            StatusText = "Finish or close the active library task before editing games.";
             return false;
         }
 
@@ -532,6 +562,17 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         if (!MetadataDownload.Open())
         {
             StatusText = "The metadata download view is unavailable.";
+        }
+
+        RaiseGameCommandStates();
+    }
+
+    private void OpenLibrarySync()
+    {
+        CloseOverlays();
+        if (!LibrarySync.Open())
+        {
+            StatusText = "The library update view is unavailable.";
         }
 
         RaiseGameCommandStates();
@@ -656,6 +697,31 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)UninstallCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)EditCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenMetadataDownloadCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenLibrarySyncCommand).RaiseCanExecuteChanged();
+    }
+
+    private void SynchronizeLibrary()
+    {
+        if (database == null)
+        {
+            return;
+        }
+
+        var databaseGames = database.Games.ToList();
+        var databaseIds = databaseGames.Select(game => game.Id).ToHashSet();
+        allGames.RemoveAll(game => !databaseIds.Contains(game.Game.Id));
+        var existingIds = allGames.Select(game => game.Game.Id).ToHashSet();
+        foreach (var game in databaseGames.Where(game => !existingIds.Contains(game.Id)))
+        {
+            allGames.Add(new DesktopGameItemViewModel(game, database));
+        }
+
+        foreach (var game in allGames)
+        {
+            game.Refresh();
+        }
+
+        ApplyFilters();
     }
 
     private IReadOnlyList<Game> ResolveMetadataGames(Playnite.Metadata.MetadataGamesSource source) => source switch
@@ -672,6 +738,15 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     {
         if (e.PropertyName is nameof(DesktopMetadataDownloadViewModel.IsVisible) or
             nameof(DesktopMetadataDownloadViewModel.IsRunning))
+        {
+            RaiseGameCommandStates();
+        }
+    }
+
+    private void LibrarySync_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DesktopLibrarySyncViewModel.IsVisible) or
+            nameof(DesktopLibrarySyncViewModel.IsRunning))
         {
             RaiseGameCommandStates();
         }

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using Avalonia.Threading;
 using Playnite.Database;
 using Playnite.SDK.Models;
 
@@ -95,7 +96,18 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
 
     private void Game_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
-        OnPropertyChanged(e.PropertyName);
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => RaiseGamePropertiesChanged(e.PropertyName));
+            return;
+        }
+
+        RaiseGamePropertiesChanged(e.PropertyName);
+    }
+
+    private void RaiseGamePropertiesChanged(string propertyName)
+    {
+        OnPropertyChanged(propertyName);
         OnPropertyChanged(nameof(StateText));
         OnPropertyChanged(nameof(PlaytimeText));
         OnPropertyChanged(nameof(LastPlayedText));

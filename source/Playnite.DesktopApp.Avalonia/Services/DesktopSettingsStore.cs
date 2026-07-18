@@ -32,9 +32,14 @@ public sealed class DesktopSettingsStore
                 settings.DisabledPlugins ??= new List<string>();
                 settings.MetadataSourceIds ??= new List<Guid>();
                 settings.MetadataFields ??= DesktopSettings.GetDefaultMetadataFields();
+                settings.LibraryPluginIds ??= new List<Guid>();
                 if (!Enum.IsDefined(settings.MetadataGamesSource))
                 {
                     settings.MetadataGamesSource = Playnite.Metadata.MetadataGamesSource.Selected;
+                }
+                if (!Enum.IsDefined(settings.LibraryPlaytimeImportMode))
+                {
+                    settings.LibraryPlaytimeImportMode = Playnite.SDK.PlaytimeImportMode.NewImportsOnly;
                 }
                 return settings;
             }

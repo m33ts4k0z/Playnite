@@ -1,5 +1,6 @@
 using Playnite.Avalonia.App.Services;
 using Playnite.Metadata;
+using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 
@@ -27,6 +28,9 @@ public sealed class DesktopSettings : IAvaloniaHostSettings
     public bool DownloadBackgroundsImmediately { get; set; } = true;
     public List<Guid> MetadataSourceIds { get; set; } = new();
     public List<MetadataField> MetadataFields { get; set; } = GetDefaultMetadataFields();
+    public List<Guid> LibraryPluginIds { get; set; } = new();
+    public PlaytimeImportMode LibraryPlaytimeImportMode { get; set; } = PlaytimeImportMode.NewImportsOnly;
+    public bool DownloadMetadataOnImport { get; set; } = true;
 
     public static List<MetadataField> GetDefaultMetadataFields() =>
         Enum.GetValues<MetadataField>().Where(field => field != MetadataField.Name).ToList();

@@ -736,9 +736,94 @@ internal static class DesktopPilotSelfTest
             metadataPlugin.ProviderDisposeCount == 1
                 ? "the populated field was preserved without constructing another provider"
                 : throw new InvalidOperationException("Skip-existing metadata policy called or applied the provider unexpectedly."));
+
+        metadataPlugin.Description = PilotMetadataPlugin.DownloadedDescription;
+        viewModel.MetadataDownload.ConfigureProvidersForTesting(
+            new MetadataPlugin[] { metadataPlugin },
+            Array.Empty<LibraryPlugin>());
+        SelectOnly(
+            viewModel.MetadataDownload.Fields,
+            MetadataField.Description,
+            MetadataField.CoverImage,
+            MetadataField.Icon);
+        viewModel.MetadataDownload.SkipExistingValues = false;
+        var libraryPlugin = new PilotLibraryPlugin(window.RuntimeHost.PluginApi);
+        var libraryUpdatedCount = 0;
+        viewModel.LibrarySync.ConfigureProvidersForTesting(
+            new LibraryPlugin[] { libraryPlugin },
+            () => libraryUpdatedCount++);
+        viewModel.SearchText = string.Empty;
+        viewModel.InstalledOnly = false;
+        viewModel.FavoritesOnly = false;
+        viewModel.SelectedFilterPreset = viewModel.FilterPresets.FirstOrDefault(preset => preset.Name == "All");
+        viewModel.OpenLibrarySyncCommand.Execute(null);
+        SelectOnly(viewModel.LibrarySync.Libraries, libraryPlugin.Id);
+
+        Record(results, "Native library update exposes loaded integrations and import policy", () =>
+            viewModel.LibrarySync.IsVisible &&
+            viewModel.LibrarySync.Libraries.Count == 1 &&
+            viewModel.LibrarySync.Libraries[0].Id == libraryPlugin.Id &&
+            viewModel.LibrarySync.Libraries[0].IsSelected &&
+            viewModel.LibrarySync.PlaytimeModes.Count == Enum.GetValues<PlaytimeImportMode>().Length &&
+            viewModel.LibrarySync.PlaytimeMode == PlaytimeImportMode.NewImportsOnly &&
+            viewModel.LibrarySync.DownloadMetadataOnImport
+                ? "the loaded library plugin, playtime modes, and metadata-on-import policy are configurable"
+                : throw new InvalidOperationException("Library update options did not mirror the SDK/Core import contract."));
+
+        var gamesBeforeLibraryImport = library.Database.Games.Count;
+        var metadataProvidersBeforeImport = metadataPlugin.ProviderCreationCount;
+        var imageRequestsBeforeImport = metadataServer.RequestCount;
+        var firstLibrarySync = await viewModel.LibrarySync.StartSyncAsync();
+        var importedLibraryGame = library.Database.Games
+            .FirstOrDefault(game => game.PluginId == libraryPlugin.Id && game.GameId == PilotLibraryPlugin.ImportedGameId);
+
+        Record(results, "Library update imports games, metadata, and live Desktop wrappers", () =>
+            firstLibrarySync &&
+            importedLibraryGame != null &&
+            library.Database.Games.Count == gamesBeforeLibraryImport + 1 &&
+            importedLibraryGame.Name == PilotLibraryPlugin.ImportedGameName &&
+            importedLibraryGame.Playtime == PilotLibraryPlugin.FirstPlaytime &&
+            importedLibraryGame.IsInstalled &&
+            importedLibraryGame.Description == PilotMetadataPlugin.DownloadedDescription &&
+            File.Exists(library.Database.GetFullFilePath(importedLibraryGame.CoverImage)) &&
+            File.Exists(library.Database.GetFullFilePath(importedLibraryGame.Icon)) &&
+            viewModel.Games.Any(game => game.Game.Id == importedLibraryGame.Id) &&
+            metadataPlugin.ProviderCreationCount == metadataProvidersBeforeImport + 1 &&
+            metadataServer.RequestCount >= imageRequestsBeforeImport + 2 &&
+            libraryPlugin.GetGamesCallCount == 1 &&
+            libraryUpdatedCount == 1
+                ? $"{importedLibraryGame.Name} joined the live library with owned artwork and metadata"
+                : throw new InvalidOperationException("The library import did not reach Core, metadata, wrappers, and update callbacks."));
+
+        libraryPlugin.Revision = 2;
+        viewModel.OpenLibrarySyncCommand.Execute(null);
+        viewModel.LibrarySync.PlaytimeMode = PlaytimeImportMode.Always;
+        var gamesBeforeLibraryRefresh = library.Database.Games.Count;
+        var metadataProvidersBeforeRefresh = metadataPlugin.ProviderCreationCount;
+        var secondLibrarySync = await viewModel.LibrarySync.StartSyncAsync();
+        importedLibraryGame = library.Database.Games[importedLibraryGame.Id];
+        var importedWrapper = viewModel.Games.FirstOrDefault(game => game.Game.Id == importedLibraryGame.Id);
+
+        Record(results, "Library refresh updates existing state without duplicating or redownloading", () =>
+            secondLibrarySync &&
+            library.Database.Games.Count == gamesBeforeLibraryRefresh &&
+            importedLibraryGame.Playtime == PilotLibraryPlugin.SecondPlaytime &&
+            !importedLibraryGame.IsInstalled &&
+            importedLibraryGame.InstallDirectory == PilotLibraryPlugin.SecondInstallDirectory &&
+            importedWrapper != null &&
+            !importedWrapper.IsInstalled &&
+            metadataPlugin.ProviderCreationCount == metadataProvidersBeforeRefresh &&
+            libraryPlugin.GetGamesCallCount == 2 &&
+            libraryUpdatedCount == 2
+                ? "the existing plugin game refreshed playtime/install state with no duplicate or metadata request"
+                : throw new InvalidOperationException("Existing library state was duplicated, stale, or redownloaded unexpectedly."));
+
         viewModel.MetadataDownload.ConfigureProviders(
             () => window.RuntimeHost.Extensions.MetadataPlugins,
             () => window.RuntimeHost.Extensions.LibraryPlugins);
+        viewModel.LibrarySync.ConfigureProviders(
+            () => window.RuntimeHost.Extensions.LibraryPlugins,
+            window.RuntimeHost.Extensions.NotifiyOnLibraryUpdated);
 
         Record(results, "Desktop settings persist atomically", () =>
         {
@@ -754,7 +839,10 @@ internal static class DesktopPilotSelfTest
                 MetadataSkipExistingValues = false,
                 DownloadBackgroundsImmediately = false,
                 MetadataSourceIds = new List<Guid> { metadataPlugin.Id },
-                MetadataFields = new List<MetadataField> { MetadataField.Description, MetadataField.CoverImage }
+                MetadataFields = new List<MetadataField> { MetadataField.Description, MetadataField.CoverImage },
+                LibraryPluginIds = new List<Guid> { libraryPlugin.Id },
+                LibraryPlaytimeImportMode = PlaytimeImportMode.Always,
+                DownloadMetadataOnImport = false
             });
             var loaded = store.Load();
             if (loaded.ViewMode != "List" ||
@@ -766,7 +854,10 @@ internal static class DesktopPilotSelfTest
                 loaded.MetadataSkipExistingValues ||
                 loaded.DownloadBackgroundsImmediately ||
                 !loaded.MetadataSourceIds.SequenceEqual(new[] { metadataPlugin.Id }) ||
-                !loaded.MetadataFields.SequenceEqual(new[] { MetadataField.Description, MetadataField.CoverImage }))
+                !loaded.MetadataFields.SequenceEqual(new[] { MetadataField.Description, MetadataField.CoverImage }) ||
+                !loaded.LibraryPluginIds.SequenceEqual(new[] { libraryPlugin.Id }) ||
+                loaded.LibraryPlaytimeImportMode != PlaytimeImportMode.Always ||
+                loaded.DownloadMetadataOnImport)
             {
                 throw new InvalidOperationException("The persisted Desktop settings did not round-trip.");
             }
@@ -826,6 +917,56 @@ internal static class DesktopPilotSelfTest
         foreach (var option in options)
         {
             option.IsSelected = selected.Contains(option.Field);
+        }
+    }
+
+    private static void SelectOnly(
+        IEnumerable<DesktopLibraryPluginOption> options,
+        params Guid[] selectedIds)
+    {
+        var selected = selectedIds.ToHashSet();
+        foreach (var option in options)
+        {
+            option.IsSelected = selected.Contains(option.Id);
+        }
+    }
+
+    private sealed class PilotLibraryPlugin : LibraryPlugin
+    {
+        public const string ImportedGameId = "pilot-library-game-001";
+        public const string ImportedGameName = "Imported Pilot Library Game";
+        public const string SecondInstallDirectory = @"C:\PilotLibrary\Revision2";
+        public const ulong FirstPlaytime = 420;
+        public const ulong SecondPlaytime = 840;
+        private static readonly Guid pluginId = Guid.Parse("e2848b20-5dcd-43fa-8b89-e10a31d448a4");
+
+        public override Guid Id => pluginId;
+        public override string Name => "Pilot library integration";
+        public int Revision { get; set; } = 1;
+        public int GetGamesCallCount { get; private set; }
+
+        public PilotLibraryPlugin(IPlayniteAPI playniteApi) : base(playniteApi)
+        {
+            Properties = new LibraryPluginProperties();
+        }
+
+        public override IEnumerable<GameMetadata> GetGames(LibraryGetGamesArgs args)
+        {
+            args.CancelToken.ThrowIfCancellationRequested();
+            GetGamesCallCount++;
+            var secondRevision = Revision >= 2;
+            return new[]
+            {
+                new GameMetadata
+                {
+                    Name = ImportedGameName,
+                    GameId = ImportedGameId,
+                    IsInstalled = !secondRevision,
+                    InstallDirectory = secondRevision ? SecondInstallDirectory : @"C:\PilotLibrary\Revision1",
+                    Playtime = secondRevision ? SecondPlaytime : FirstPlaytime,
+                    LastActivity = secondRevision ? new DateTime(2026, 7, 18) : new DateTime(2026, 7, 17)
+                }
+            };
         }
     }
 

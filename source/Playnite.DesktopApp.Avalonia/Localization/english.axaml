@@ -16,6 +16,12 @@
     <x:String x:Key="LOCDesktopMetadataFields">Fields</x:String>
     <x:String x:Key="LOCDesktopMetadataStart">Start download</x:String>
     <x:String x:Key="LOCDesktopMetadataCancelDownload">Cancel download</x:String>
+    <x:String x:Key="LOCDesktopUpdateLibraries">Update libraries</x:String>
+    <x:String x:Key="LOCDesktopLibraries">Library integrations</x:String>
+    <x:String x:Key="LOCDesktopPlaytimeImportMode">Playtime import mode</x:String>
+    <x:String x:Key="LOCDesktopMetadataOnImport">Download metadata for newly imported games</x:String>
+    <x:String x:Key="LOCDesktopUpdateStart">Start update</x:String>
+    <x:String x:Key="LOCDesktopUpdateCancel">Cancel update</x:String>
     <x:String x:Key="LOCDesktopPreset">Filter preset</x:String>
     <x:String x:Key="LOCDesktopView">View</x:String>
     <x:String x:Key="LOCDesktopSort">Sort</x:String>

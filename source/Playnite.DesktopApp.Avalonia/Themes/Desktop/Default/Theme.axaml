@@ -88,6 +88,8 @@
                                                    TextWrapping="Wrap"
                                                    Foreground="{DynamicResource DesktopMutedBrush}" />
                                     </Border>
+                                    <Button Content="{DynamicResource LOCDesktopUpdateLibraries}"
+                                            Command="{Binding OpenLibrarySyncCommand}" />
                                 </StackPanel>
                             </ScrollViewer>
                         </Border>
@@ -328,6 +330,64 @@
                                     <Button Command="{Binding CloseOverlayCommand}" Content="Cancel" />
                                 </StackPanel>
                             </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding LibrarySync.IsVisible}"
+                          Background="#E6000000">
+                        <Border Width="720" MaxHeight="720" Padding="30" CornerRadius="14"
+                                Background="{DynamicResource DesktopPanelStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="18">
+                                <TextBlock Text="{DynamicResource LOCDesktopUpdateLibraries}" FontSize="30"
+                                           FontWeight="Bold" Foreground="{DynamicResource DesktopTextBrush}" />
+
+                                <ScrollViewer Grid.Row="1" MaxHeight="520">
+                                    <StackPanel Spacing="15" IsEnabled="{Binding LibrarySync.CanConfigure}">
+                                        <TextBlock Text="{DynamicResource LOCDesktopLibraries}" Classes="sectionLabel" />
+                                        <ListBox MaxHeight="270" ItemsSource="{Binding LibrarySync.Libraries}">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="2,4">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource DesktopTextBrush}" />
+                                                            <TextBlock Text="{Binding Detail}" FontSize="10" TextWrapping="Wrap"
+                                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                        </StackPanel>
+                                                    </CheckBox>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                        <TextBlock Text="{DynamicResource LOCDesktopPlaytimeImportMode}"
+                                                   Classes="sectionLabel" />
+                                        <ComboBox ItemsSource="{Binding LibrarySync.PlaytimeModes}"
+                                                  SelectedItem="{Binding LibrarySync.PlaytimeMode, Mode=TwoWay}" />
+                                        <CheckBox Content="{DynamicResource LOCDesktopMetadataOnImport}"
+                                                  IsChecked="{Binding LibrarySync.DownloadMetadataOnImport, Mode=TwoWay}" />
+                                    </StackPanel>
+                                </ScrollViewer>
+
+                                <StackPanel Grid.Row="2" Spacing="9">
+                                    <ProgressBar Minimum="0" Maximum="{Binding LibrarySync.ProgressTotal}"
+                                                 Value="{Binding LibrarySync.ProgressValue}" Height="8" />
+                                    <TextBlock Text="{Binding LibrarySync.ProgressText}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding LibrarySync.ErrorText}" TextWrapping="Wrap"
+                                               Foreground="#FF7F7F" />
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Classes="primary" Content="{DynamicResource LOCDesktopUpdateStart}"
+                                                IsVisible="{Binding LibrarySync.CanConfigure}"
+                                                Command="{Binding LibrarySync.StartCommand}" />
+                                        <Button Content="{DynamicResource LOCDesktopUpdateCancel}"
+                                                IsVisible="{Binding LibrarySync.IsRunning}"
+                                                Command="{Binding LibrarySync.CancelCommand}" />
+                                        <Button Content="{DynamicResource LOCDesktopCancel}"
+                                                IsVisible="{Binding LibrarySync.CanConfigure}"
+                                                Command="{Binding LibrarySync.CloseCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
 
