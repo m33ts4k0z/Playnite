@@ -127,10 +127,27 @@ internal static class FullscreenPilotSelfTest
             {
                 ActiveFilter = "Favorites",
                 AudioEnabled = false,
-                InterfaceVolume = 42
+                InterfaceVolume = 42,
+                GlobalPreScript = "global-pre",
+                GlobalGameStartedScript = "global-started",
+                GlobalPostScript = "global-post",
+                ShutdownLibraryClients = true,
+                ClientShutdownGraceSeconds = 45,
+                ClientShutdownMinimumSessionSeconds = 90,
+                ClientShutdownPluginIds = new List<Guid> { Guid.Parse("f4737f44-2dde-4c06-99f0-0a0569f1bcfd") }
             });
             var loaded = store.Load();
-            if (loaded.ActiveFilter != "Favorites" || loaded.AudioEnabled || loaded.InterfaceVolume != 42)
+            if (loaded.ActiveFilter != "Favorites" ||
+                loaded.AudioEnabled ||
+                loaded.InterfaceVolume != 42 ||
+                loaded.GlobalPreScript != "global-pre" ||
+                loaded.GlobalGameStartedScript != "global-started" ||
+                loaded.GlobalPostScript != "global-post" ||
+                !loaded.ShutdownLibraryClients ||
+                loaded.ClientShutdownGraceSeconds != 45 ||
+                loaded.ClientShutdownMinimumSessionSeconds != 90 ||
+                loaded.ClientShutdownPluginIds.SingleOrDefault() !=
+                    Guid.Parse("f4737f44-2dde-4c06-99f0-0a0569f1bcfd"))
             {
                 throw new InvalidOperationException("The persisted settings did not round-trip.");
             }

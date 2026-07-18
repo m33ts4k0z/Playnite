@@ -16,6 +16,13 @@ public sealed class FullscreenSettings : IAvaloniaHostSettings
     public string ThemePath { get; set; }
     public string Language { get; set; } = "english";
     public List<string> DisabledPlugins { get; set; } = new();
+    public string GlobalPreScript { get; set; }
+    public string GlobalGameStartedScript { get; set; }
+    public string GlobalPostScript { get; set; }
+    public bool ShutdownLibraryClients { get; set; }
+    public uint ClientShutdownGraceSeconds { get; set; } = 60;
+    public uint ClientShutdownMinimumSessionSeconds { get; set; } = 120;
+    public List<Guid> ClientShutdownPluginIds { get; set; } = new();
     public string DesktopTheme => string.Empty;
     public string FullscreenTheme => ThemePath ?? string.Empty;
     public bool IsMusicMuted

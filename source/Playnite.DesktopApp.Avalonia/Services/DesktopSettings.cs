@@ -16,6 +16,13 @@ public sealed class DesktopSettings : IAvaloniaHostSettings
     public bool SwapConfirmCancelButtons => false;
     public bool SwapStartDetailsAction => false;
     public bool GuideButtonFocus => false;
+    public string GlobalPreScript { get; set; }
+    public string GlobalGameStartedScript { get; set; }
+    public string GlobalPostScript { get; set; }
+    public bool ShutdownLibraryClients { get; set; }
+    public uint ClientShutdownGraceSeconds { get; set; } = 60;
+    public uint ClientShutdownMinimumSessionSeconds { get; set; } = 120;
+    public List<Guid> ClientShutdownPluginIds { get; set; } = new();
     public string DesktopTheme => ThemePath ?? string.Empty;
     public string FullscreenTheme => string.Empty;
     public string ViewMode { get; set; } = "Grid";

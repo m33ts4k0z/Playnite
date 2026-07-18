@@ -81,7 +81,23 @@ public sealed class AvaloniaRuntimeHost : IDisposable
             controllers,
             _ => CreateApi(),
             WpfPluginSupportRuntime.LoadPluginResources);
-        actionRunner = runner = new GameActionRunner(database, controllers, extensions, () => globalApi);
+        var actionPolicy = new GameActionRunnerPolicy
+        {
+            GlobalPreScript = () => callbacks.Settings.GlobalPreScript,
+            GlobalGameStartedScript = () => callbacks.Settings.GlobalGameStartedScript,
+            GlobalPostScript = () => callbacks.Settings.GlobalPostScript,
+            ShutdownClients = () => callbacks.Settings.ShutdownLibraryClients,
+            ClientShutdownGraceSeconds = () => callbacks.Settings.ClientShutdownGraceSeconds,
+            ClientShutdownMinimumSessionSeconds = () =>
+                callbacks.Settings.ClientShutdownMinimumSessionSeconds,
+            ClientShutdownPluginIds = () => callbacks.Settings.ClientShutdownPluginIds
+        };
+        actionRunner = runner = new GameActionRunner(
+            database,
+            controllers,
+            extensions,
+            () => globalApi,
+            actionPolicy);
         globalApi = CreateApi();
         previousResourceProvider = ResourceProvider.SetGlobalProvider(globalApi.Resources);
         pluginConverterResolver = (pluginSource, converterName) =>

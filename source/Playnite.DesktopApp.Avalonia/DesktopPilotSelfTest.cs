@@ -2,6 +2,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.Globalization;
+using System.Management.Automation;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -10,12 +11,14 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Playnite.Avalonia.Markup;
 using Playnite.Avalonia.Theming;
+using Playnite.Controllers;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
 using Playnite.Plugins;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
+using Playnite.Scripting.PowerShell;
 using Playnite.WpfPluginSupport;
 using InstalledProgram = Playnite.Common.Program;
 
@@ -1502,6 +1505,140 @@ internal static class DesktopPilotSelfTest
                 ? "the close role hid the window while explicit application shutdown remains available"
                 : throw new InvalidOperationException("Close-to-tray destroyed or failed to restore the window."));
 
+        var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
+        window.RuntimeHost.Extensions.Plugins.Add(
+            policyPlugin.Id,
+            new LoadedPlugin(policyPlugin, new ExtensionManifest
+            {
+                Id = policyPlugin.Id.ToString(),
+                Name = policyPlugin.Name,
+                Version = "1.0.0",
+                Type = ExtensionType.GameLibrary,
+                DescriptionPath = Path.Combine(
+                    library.ActiveUserDataDirectory,
+                    "pilot-action-policy",
+                    "extension.yaml")
+            }));
+        var policyGame = new Game("Avalonia runner policy game")
+        {
+            PluginId = policyPlugin.Id,
+            GameId = "avalonia-runner-policy-game",
+            IsInstalled = true,
+            IncludeLibraryPluginAction = true,
+            InstallDirectory = library.ActiveUserDataDirectory,
+            EnableSystemHdr = true,
+            PreScript = "game-pre",
+            GameStartedScript = "game-started",
+            PostScript = "game-post",
+            UseGlobalPreScript = true,
+            UseGlobalGameStartedScript = true,
+            UseGlobalPostScript = true
+        };
+        library.Database.Games.Add(policyGame);
+        var recordingRuntime = new RecordingPowerShellRuntime();
+        var hdrTransitions = new List<bool>();
+        var runnerPolicy = window.RuntimeHost.Actions.Policy;
+        runnerPolicy.CreateScriptRuntime = _ => recordingRuntime;
+        runnerPolicy.GlobalPreScript = () => "global-pre";
+        runnerPolicy.GlobalGameStartedScript = () => "global-started";
+        runnerPolicy.GlobalPostScript = () => "global-post";
+        runnerPolicy.IsHdrEnabled = () => false;
+        runnerPolicy.SetHdrEnabled = hdrTransitions.Add;
+        runnerPolicy.ShutdownClients = () => true;
+        runnerPolicy.ClientShutdownMinimumSessionSeconds = () => 0;
+        runnerPolicy.ClientShutdownGraceSeconds = () => 0;
+        runnerPolicy.ClientShutdownPluginIds = () => new[] { policyPlugin.Id };
+
+        var policyResult = window.RuntimeHost.Play(policyGame);
+        Record(results, "Shared runner executes scripts and restores HDR in legacy order", () =>
+        {
+            var scripts = recordingRuntime.Executions.Select(execution => execution.Script).ToList();
+            var startedVariables = recordingRuntime.Executions
+                .Single(execution => execution.Script == "game-started")
+                .Variables;
+            return policyResult.Success &&
+                   scripts.SequenceEqual(new[]
+                   {
+                       "global-pre",
+                       "game-pre",
+                       "game-started",
+                       "global-started",
+                       "game-post",
+                       "global-post"
+                   }) &&
+                   hdrTransitions.SequenceEqual(new[] { true, false }) &&
+                   startedVariables["StartedProcessId"] is int processId && processId == 4242 &&
+                   startedVariables["PlayniteApi"] != null &&
+                   startedVariables["Game"] is Game scriptGame && scriptGame.Id == policyGame.Id &&
+                   recordingRuntime.IsDisposed
+                ? "global/per-game pre, started, and post scripts ran; HDR returned to its original state"
+                : throw new InvalidOperationException("Script order, variables, lifetime, or HDR restoration diverged.");
+        });
+
+        var shutdownDeadline = DateTime.UtcNow.AddSeconds(2);
+        while (policyPlugin.ClientShutdownCount == 0 && DateTime.UtcNow < shutdownDeadline)
+        {
+            await Task.Delay(10);
+        }
+
+        Record(results, "Shared runner notifies plugins and closes eligible library clients", () =>
+            policyPlugin.GameStoppedCount == 1 &&
+            policyPlugin.LastStoppedSeconds == PilotActionPolicyPlugin.SessionSeconds &&
+            policyPlugin.ClientShutdownCount == 1
+                ? "the stop callback ran and the selected client closed after the configured grace period"
+                : throw new InvalidOperationException("Stop notification or client shutdown policy did not run."));
+
+        var failingGame = new Game("Avalonia failing pre-script game")
+        {
+            PluginId = policyPlugin.Id,
+            GameId = "avalonia-failing-pre-script-game",
+            IsInstalled = true,
+            IncludeLibraryPluginAction = true,
+            EnableSystemHdr = true,
+            PreScript = "fail-pre",
+            UseGlobalPreScript = false
+        };
+        library.Database.Games.Add(failingGame);
+        var failingRuntime = new RecordingPowerShellRuntime("fail-pre");
+        hdrTransitions.Clear();
+        runnerPolicy.CreateScriptRuntime = _ => failingRuntime;
+        var playCountBeforeFailure = policyPlugin.PlayCount;
+        var failingResult = window.RuntimeHost.Play(failingGame);
+        Record(results, "Pre-script failures cancel launch and roll back runtime policy", () =>
+            !failingResult.Success &&
+            !failingGame.IsLaunching &&
+            !failingGame.IsRunning &&
+            policyPlugin.PlayCount == playCountBeforeFailure &&
+            hdrTransitions.SequenceEqual(new[] { true, false }) &&
+            failingRuntime.IsDisposed
+                ? "the controller never launched and HDR/runtime state was restored without suppression"
+                : throw new InvalidOperationException("A failed pre-script leaked launch, HDR, or runtime state."));
+
+        var extensionCancelledGame = new Game("Extension-cancelled HDR game")
+        {
+            PluginId = policyPlugin.Id,
+            GameId = "extension-cancelled-hdr-game",
+            IsInstalled = true,
+            IncludeLibraryPluginAction = true,
+            EnableSystemHdr = true
+        };
+        library.Database.Games.Add(extensionCancelledGame);
+        var cancelledRuntime = new RecordingPowerShellRuntime();
+        runnerPolicy.CreateScriptRuntime = _ => cancelledRuntime;
+        policyPlugin.CancelNextStartup = true;
+        hdrTransitions.Clear();
+        var extensionCancelledResult = window.RuntimeHost.Play(extensionCancelledGame);
+        Record(results, "Extension cancellation leaves pre-existing HDR state untouched", () =>
+            !extensionCancelledResult.Success &&
+            hdrTransitions.Count == 0 &&
+            cancelledRuntime.IsDisposed
+                ? "startup stopped before HDR policy was applied and disposed its script runtime"
+                : throw new InvalidOperationException("Extension cancellation changed HDR or leaked runtime state."));
+        library.Database.Games.Remove(extensionCancelledGame);
+        library.Database.Games.Remove(failingGame);
+        library.Database.Games.Remove(policyGame);
+        window.RuntimeHost.Extensions.Plugins.Remove(policyPlugin.Id);
+
         Record(results, "Desktop settings persist atomically", () =>
         {
             var store = new DesktopSettingsStore(library.ActiveUserDataDirectory);
@@ -1531,7 +1668,14 @@ internal static class DesktopPilotSelfTest
                 WindowX = 120,
                 WindowY = 80,
                 WindowMaximized = true,
-                ThemePath = @"C:\Themes\Pilot"
+                ThemePath = @"C:\Themes\Pilot",
+                GlobalPreScript = "global-pre",
+                GlobalGameStartedScript = "global-started",
+                GlobalPostScript = "global-post",
+                ShutdownLibraryClients = true,
+                ClientShutdownGraceSeconds = 45,
+                ClientShutdownMinimumSessionSeconds = 90,
+                ClientShutdownPluginIds = new List<Guid> { policyPlugin.Id }
             });
             var loaded = store.Load();
             if (loaded.ViewMode != "List" ||
@@ -1558,7 +1702,14 @@ internal static class DesktopPilotSelfTest
                 loaded.WindowX != 120 ||
                 loaded.WindowY != 80 ||
                 !loaded.WindowMaximized ||
-                loaded.ThemePath != @"C:\Themes\Pilot")
+                loaded.ThemePath != @"C:\Themes\Pilot" ||
+                loaded.GlobalPreScript != "global-pre" ||
+                loaded.GlobalGameStartedScript != "global-started" ||
+                loaded.GlobalPostScript != "global-post" ||
+                !loaded.ShutdownLibraryClients ||
+                loaded.ClientShutdownGraceSeconds != 45 ||
+                loaded.ClientShutdownMinimumSessionSeconds != 90 ||
+                !loaded.ClientShutdownPluginIds.SequenceEqual(new[] { policyPlugin.Id }))
             {
                 throw new InvalidOperationException("The persisted Desktop settings did not round-trip.");
             }
@@ -1654,6 +1805,132 @@ internal static class DesktopPilotSelfTest
         foreach (var option in options)
         {
             option.IsSelected = selected.Contains(option.Id);
+        }
+    }
+
+    private sealed class PilotActionPolicyPlugin : LibraryPlugin
+    {
+        public const ulong SessionSeconds = 180;
+        private static readonly Guid pluginId =
+            Guid.Parse("b6e750bb-3b17-4056-a85d-bfa92654ee32");
+        private readonly PilotLibraryClient client = new();
+
+        public override Guid Id => pluginId;
+        public override string Name => "Pilot action policy library";
+        public override LibraryClient Client => client;
+        public int PlayCount { get; private set; }
+        public int GameStoppedCount { get; private set; }
+        public ulong LastStoppedSeconds { get; private set; }
+        public int ClientShutdownCount => client.ShutdownCount;
+        public bool CancelNextStartup { get; set; }
+
+        public PilotActionPolicyPlugin(IPlayniteAPI playniteApi) : base(playniteApi)
+        {
+            Properties = new LibraryPluginProperties { CanShutdownClient = true };
+        }
+
+        public override IEnumerable<PlayController> GetPlayActions(GetPlayActionsArgs args)
+        {
+            yield return new PilotPlayController(args.Game, this) { Name = "Pilot policy action" };
+        }
+
+        public override void OnGameStarting(Playnite.SDK.Events.OnGameStartingEventArgs args)
+        {
+            if (CancelNextStartup)
+            {
+                CancelNextStartup = false;
+                args.CancelStartup = true;
+            }
+        }
+
+        public override void OnGameStopped(Playnite.SDK.Events.OnGameStoppedEventArgs args)
+        {
+            GameStoppedCount++;
+            LastStoppedSeconds = args.ElapsedSeconds;
+        }
+
+        private sealed class PilotPlayController : PlayController
+        {
+            private readonly PilotActionPolicyPlugin plugin;
+
+            public PilotPlayController(Game game, PilotActionPolicyPlugin plugin) : base(game)
+            {
+                this.plugin = plugin;
+            }
+
+            public override void Play(PlayActionArgs args)
+            {
+                plugin.PlayCount++;
+                InvokeOnStarted(new GameStartedEventArgs { StartedProcessId = 4242 });
+                InvokeOnStopped(new GameStoppedEventArgs(SessionSeconds));
+            }
+        }
+
+        private sealed class PilotLibraryClient : LibraryClient
+        {
+            public override bool IsInstalled => true;
+            public int ShutdownCount { get; private set; }
+            public override void Open()
+            {
+            }
+
+            public override void Shutdown()
+            {
+                ShutdownCount++;
+            }
+        }
+    }
+
+    private sealed class RecordingPowerShellRuntime : IPowerShellRuntime
+    {
+        private readonly string failingScript;
+        public List<(string Script, string WorkingDirectory, Dictionary<string, object> Variables)> Executions
+            { get; } = new();
+        public bool IsDisposed { get; private set; }
+
+        public RecordingPowerShellRuntime(string failingScript = null)
+        {
+            this.failingScript = failingScript;
+        }
+
+        public object Execute(
+            string script,
+            string workDir = null,
+            Dictionary<string, object> variables = null)
+        {
+            Executions.Add((
+                script,
+                workDir,
+                variables == null
+                    ? new Dictionary<string, object>()
+                    : new Dictionary<string, object>(variables)));
+            if (string.Equals(script, failingScript, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Deterministic pre-script failure.");
+            }
+
+            return null;
+        }
+
+        public object ExecuteFile(string path, string workDir = null) => null;
+        public object ExecuteFile(
+            string path,
+            string workDir = null,
+            Dictionary<string, object> variables = null) => null;
+        public void SetVariable(string name, object value)
+        {
+        }
+
+        public object GetVariable(string name) => null;
+        public CommandInfo GetFunction(string name) => null;
+        public void ImportModule(string path)
+        {
+        }
+
+        public object InvokeFunction(string name, List<object> arguments) => null;
+        public void Dispose()
+        {
+            IsDisposed = true;
         }
     }
 

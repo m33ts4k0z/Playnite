@@ -5,12 +5,17 @@ using Playnite.Plugins;
 using Playnite.Scripting.PowerShell;
 using Playnite.SDK;
 using Playnite.SDK.Events;
+using Playnite.SDK.Exceptions;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Playnite.Controllers
 {
@@ -54,6 +59,22 @@ namespace Playnite.Controllers
         }
     }
 
+    public sealed class GameActionRunnerPolicy
+    {
+        public Func<string, IPowerShellRuntime> CreateScriptRuntime { get; set; } =
+            name => new PowerShellRuntime(name);
+        public Func<string> GlobalPreScript { get; set; } = () => null;
+        public Func<string> GlobalGameStartedScript { get; set; } = () => null;
+        public Func<string> GlobalPostScript { get; set; } = () => null;
+        public Func<bool> IsHdrEnabled { get; set; } = HdrUtilities.IsHdrEnabled;
+        public Action<bool> SetHdrEnabled { get; set; } = HdrUtilities.SetHdrEnabled;
+        public Func<bool> ShutdownClients { get; set; } = () => false;
+        public Func<uint> ClientShutdownGraceSeconds { get; set; } = () => 60;
+        public Func<uint> ClientShutdownMinimumSessionSeconds { get; set; } = () => 120;
+        public Func<IReadOnlyCollection<Guid>> ClientShutdownPluginIds { get; set; } =
+            () => Array.Empty<Guid>();
+    }
+
     /// <summary>
     /// UI-independent game action orchestration shared by Avalonia hosts. It
     /// discovers actions from loaded plugins and the database, manages controller
@@ -73,8 +94,13 @@ namespace Playnite.Controllers
         private readonly GameControllerFactory controllers;
         private readonly ExtensionFactory extensions;
         private readonly Func<IPlayniteAPI> apiProvider;
-        private readonly Dictionary<Guid, IPowerShellRuntime> scriptRuntimes =
-            new Dictionary<Guid, IPowerShellRuntime>();
+        private readonly ConcurrentDictionary<Guid, IPowerShellRuntime> scriptRuntimes =
+            new ConcurrentDictionary<Guid, IPowerShellRuntime>();
+        private readonly ConcurrentDictionary<Guid, CancellationTokenSource> clientShutdownJobs =
+            new ConcurrentDictionary<Guid, CancellationTokenSource>();
+        private readonly object hdrStateLock = new object();
+        private readonly HashSet<Guid> hdrManagedGames = new HashSet<Guid>();
+        private bool previousHdrEnabled;
 
         public event EventHandler<string> StatusChanged;
         public event EventHandler<string> OperationFailed;
@@ -82,17 +108,20 @@ namespace Playnite.Controllers
 
         public GameControllerFactory Controllers { get { return controllers; } }
         public ExtensionFactory Extensions { get { return extensions; } }
+        public GameActionRunnerPolicy Policy { get; }
 
         public GameActionRunner(
             GameDatabase database,
             GameControllerFactory controllers,
             ExtensionFactory extensions,
-            Func<IPlayniteAPI> apiProvider)
+            Func<IPlayniteAPI> apiProvider,
+            GameActionRunnerPolicy policy = null)
         {
             this.database = database ?? throw new ArgumentNullException(nameof(database));
             this.controllers = controllers ?? throw new ArgumentNullException(nameof(controllers));
             this.extensions = extensions ?? throw new ArgumentNullException(nameof(extensions));
             this.apiProvider = apiProvider ?? throw new ArgumentNullException(nameof(apiProvider));
+            Policy = policy ?? new GameActionRunnerPolicy();
 
             controllers.Started += Controllers_Started;
             controllers.Stopped += Controllers_Stopped;
@@ -137,21 +166,10 @@ namespace Playnite.Controllers
                 }
 
                 var selected = choices[choiceIndex >= 0 ? choiceIndex : 0].Action;
-                IPowerShellRuntime scriptRuntime = null;
+                var scriptRuntime = CreateScriptRuntime(game);
                 if (selected is AutomaticPlayController || selected is GameAction)
                 {
-                    try
-                    {
-                        scriptRuntime = new PowerShellRuntime($"{game.Name} {game.Id} runtime");
-                    }
-                    catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
-                    {
-                        logger.Error(exception, "Failed to create PowerShell runtime; using the no-op runtime.");
-                        scriptRuntime = new DummyPowerShellRuntime();
-                    }
-
                     selectedController = new GenericPlayController(database, game, scriptRuntime, apiProvider());
-                    scriptRuntimes[game.Id] = scriptRuntime;
                 }
                 else
                 {
@@ -180,6 +198,61 @@ namespace Playnite.Controllers
                 {
                     CancelStartup(game, "Game startup was cancelled by an extension.");
                     return GameOperationResult.Failed($"Startup of {game.Name} was cancelled by an extension.");
+                }
+
+                CancelClientShutdown(game);
+                var scriptVariables = new Dictionary<string, object>
+                {
+                    { "StartingArgs", startingArgs },
+                    { "SourceAction", startingArgs.SourceAction },
+                    { "SelectedRomFile", startingArgs.SelectedRomFile }
+                };
+
+                if (game.EnableSystemHdr)
+                {
+                    ApplyHdr(game);
+                }
+
+                if (!ExecuteScript(
+                    scriptRuntime,
+                    Policy.GlobalPreScript(),
+                    game,
+                    game.UseGlobalPreScript,
+                    true,
+                    "Game starting script failed.",
+                    scriptVariables))
+                {
+                    CancelStartup(game, "Game startup was cancelled because the global pre-script failed.");
+                    return GameOperationResult.Failed(
+                        $"Startup of {game.Name} was cancelled because the global pre-script failed.");
+                }
+
+                if (startingArgs.CancelStartup)
+                {
+                    CancelStartup(game, "Game startup was cancelled by the global pre-script.");
+                    return GameOperationResult.Failed(
+                        $"Startup of {game.Name} was cancelled by the global pre-script.");
+                }
+
+                if (!ExecuteScript(
+                    scriptRuntime,
+                    game.PreScript,
+                    game,
+                    true,
+                    false,
+                    "Game starting script failed.",
+                    scriptVariables))
+                {
+                    CancelStartup(game, "Game startup was cancelled because the game pre-script failed.");
+                    return GameOperationResult.Failed(
+                        $"Startup of {game.Name} was cancelled because the game pre-script failed.");
+                }
+
+                if (startingArgs.CancelStartup)
+                {
+                    CancelStartup(game, "Game startup was cancelled by the game pre-script.");
+                    return GameOperationResult.Failed(
+                        $"Startup of {game.Name} was cancelled by the game pre-script.");
                 }
 
                 if (selectedController is GenericPlayController genericController)
@@ -220,6 +293,7 @@ namespace Playnite.Controllers
 
                 DisposePlayChoices(choices, selectedController);
                 DisposeScriptRuntime(game.Id);
+                RestoreHdr(game);
                 SetGameState(game, launching: false, running: false);
                 return Fail($"Cannot start {game.Name}: {exception.Message}");
             }
@@ -334,6 +408,12 @@ namespace Playnite.Controllers
             }
 
             scriptRuntimes.Clear();
+            foreach (var shutdownJob in clientShutdownJobs.Values.ToList())
+            {
+                shutdownJob.Cancel();
+            }
+
+            clientShutdownJobs.Clear();
         }
 
         private List<OperationChoice> GetPlayChoices(Game game)
@@ -524,6 +604,32 @@ namespace Playnite.Controllers
             }
 
             SetGameState(game, launching: false, running: true);
+            var variables = new Dictionary<string, object>
+            {
+                { "SourceAction", (args.Source as GenericPlayController)?.StartingArgs?.SourceAction?.GetClone() },
+                { "SelectedRomFile", (args.Source as GenericPlayController)?.StartingArgs?.SelectedRomFile },
+                { "StartedProcessId", args.StartedProcessId }
+            };
+            if (scriptRuntimes.TryGetValue(game.Id, out var runtime))
+            {
+                ExecuteScript(
+                    runtime,
+                    game.GameStartedScript,
+                    game,
+                    true,
+                    false,
+                    "Game started script failed.",
+                    variables);
+                ExecuteScript(
+                    runtime,
+                    Policy.GlobalGameStartedScript(),
+                    game,
+                    game.UseGlobalGameStartedScript,
+                    true,
+                    "Game started script failed.",
+                    variables);
+            }
+
             RaiseStatus($"{game.Name} is running.");
         }
 
@@ -541,9 +647,38 @@ namespace Playnite.Controllers
             game.Playtime += args.SessionLength;
             game.PlayCount++;
             database.Games.Update(game);
+            controllers.RemovePlayController(game.Id);
+            RestoreHdr(game);
+
+            var variables = new Dictionary<string, object>
+            {
+                { "SourceAction", (args.Source as GenericPlayController)?.StartingArgs?.SourceAction?.GetClone() },
+                { "SelectedRomFile", (args.Source as GenericPlayController)?.StartingArgs?.SelectedRomFile }
+            };
+            if (scriptRuntimes.TryGetValue(game.Id, out var runtime))
+            {
+                ExecuteScript(
+                    runtime,
+                    game.PostScript,
+                    game,
+                    true,
+                    false,
+                    "Game stopped script failed.",
+                    variables);
+                ExecuteScript(
+                    runtime,
+                    Policy.GlobalPostScript(),
+                    game,
+                    game.UseGlobalPostScript,
+                    true,
+                    "Game stopped script failed.",
+                    variables);
+            }
+
+            extensions.InvokeOnGameStopped(game, args.SessionLength, false);
+            ScheduleClientShutdown(game, args.SessionLength);
             GameStateChanged?.Invoke(this, game);
             RaiseStatus($"{game.Name} stopped after {TimeSpan.FromSeconds(args.SessionLength):g}.");
-            controllers.RemovePlayController(game.Id);
             DisposeScriptRuntime(game.Id);
         }
 
@@ -606,8 +741,185 @@ namespace Playnite.Controllers
             controllers.InvokeOnGameStartupCancelled(this, game.GetCopy());
             controllers.RemovePlayController(game.Id);
             DisposeScriptRuntime(game.Id);
+            RestoreHdr(game);
             SetGameState(game, launching: false, running: false);
             RaiseStatus(reason);
+        }
+
+        private IPowerShellRuntime CreateScriptRuntime(Game game)
+        {
+            IPowerShellRuntime runtime;
+            try
+            {
+                runtime = Policy.CreateScriptRuntime($"{game.Name} {game.Id} runtime");
+                if (runtime == null)
+                {
+                    throw new InvalidOperationException("The script runtime factory returned null.");
+                }
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                logger.Error(exception, "Failed to create PowerShell runtime; using the no-op runtime.");
+                OperationFailed?.Invoke(
+                    this,
+                    $"PowerShell runtime creation failed; game scripts will not run: {exception.Message}");
+                runtime = new DummyPowerShellRuntime();
+            }
+
+            DisposeScriptRuntime(game.Id);
+            scriptRuntimes[game.Id] = runtime;
+            return runtime;
+        }
+
+        private bool ExecuteScript(
+            IPowerShellRuntime runtime,
+            string script,
+            Game game,
+            bool execute,
+            bool global,
+            string phase,
+            Dictionary<string, object> variables)
+        {
+            if (!execute || string.IsNullOrWhiteSpace(script))
+            {
+                return true;
+            }
+
+            try
+            {
+                var scriptVariables = new Dictionary<string, object>
+                {
+                    { "PlayniteApi", apiProvider() },
+                    { "Game", game.GetCopy() }
+                };
+                if (variables != null)
+                {
+                    foreach (var variable in variables)
+                    {
+                        scriptVariables[variable.Key] = variable.Value;
+                    }
+                }
+
+                var expandedScript = game.ExpandVariables(script);
+                var workingDirectory = game.ExpandVariables(game.InstallDirectory, true);
+                runtime.Execute(
+                    expandedScript,
+                    !string.IsNullOrEmpty(workingDirectory) && Directory.Exists(workingDirectory)
+                        ? workingDirectory
+                        : PlaynitePaths.ProgramPath,
+                    scriptVariables);
+                return true;
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                logger.Error(exception, global
+                    ? "Failed to execute global game script."
+                    : "Failed to execute per-game script.");
+                var details = exception is ScriptRuntimeException scriptException &&
+                    !string.IsNullOrWhiteSpace(scriptException.ScriptStackTrace)
+                        ? $"{exception.Message}{Environment.NewLine}{scriptException.ScriptStackTrace}"
+                        : exception.Message;
+                OperationFailed?.Invoke(this, $"{phase} {details}");
+                return false;
+            }
+        }
+
+        private void ApplyHdr(Game game)
+        {
+            lock (hdrStateLock)
+            {
+                if (hdrManagedGames.Count == 0)
+                {
+                    previousHdrEnabled = Policy.IsHdrEnabled();
+                }
+
+                hdrManagedGames.Add(game.Id);
+                Policy.SetHdrEnabled(true);
+            }
+        }
+
+        private void RestoreHdr(Game game)
+        {
+            lock (hdrStateLock)
+            {
+                if (hdrManagedGames.Remove(game.Id) && hdrManagedGames.Count == 0)
+                {
+                    Policy.SetHdrEnabled(previousHdrEnabled);
+                }
+            }
+        }
+
+        private void CancelClientShutdown(Game game)
+        {
+            if (game.IsCustomGame ||
+                !clientShutdownJobs.TryRemove(game.PluginId, out var cancellation))
+            {
+                return;
+            }
+
+            cancellation.Cancel();
+            logger.Debug($"Cancelled pending client shutdown for plugin {game.PluginId}.");
+        }
+
+        private void ScheduleClientShutdown(Game game, ulong sessionLength)
+        {
+            if (!Policy.ShutdownClients() || game.IsCustomGame ||
+                sessionLength <= Policy.ClientShutdownMinimumSessionSeconds())
+            {
+                return;
+            }
+
+            if (database.Games.Any(candidate =>
+                candidate.PluginId == game.PluginId &&
+                (candidate.IsRunning || candidate.IsInstalling || candidate.IsUninstalling)))
+            {
+                logger.Debug("Client shutdown skipped because another game from the library is active.");
+                return;
+            }
+
+            var plugin = extensions.GetLibraryPlugin(game.PluginId);
+            var selectedPlugins = Policy.ClientShutdownPluginIds() ?? Array.Empty<Guid>();
+            if (plugin?.Properties?.CanShutdownClient != true ||
+                plugin.Client == null ||
+                !selectedPlugins.Contains(plugin.Id))
+            {
+                return;
+            }
+
+            CancelClientShutdown(game);
+            var cancellation = new CancellationTokenSource();
+            clientShutdownJobs[plugin.Id] = cancellation;
+            _ = RunClientShutdown(plugin, Policy.ClientShutdownGraceSeconds(), cancellation);
+        }
+
+        private async Task RunClientShutdown(
+            LibraryPlugin plugin,
+            uint graceSeconds,
+            CancellationTokenSource cancellation)
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(graceSeconds), cancellation.Token).ConfigureAwait(false);
+                if (!cancellation.IsCancellationRequested)
+                {
+                    plugin.Client.Shutdown();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                logger.Debug($"Client shutdown for {plugin.Name} was cancelled.");
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                logger.Error(exception, $"Failed to shut down {plugin.Name} client.");
+                OperationFailed?.Invoke(this, $"Failed to shut down {plugin.Name}: {exception.Message}");
+            }
+            finally
+            {
+                ((ICollection<KeyValuePair<Guid, CancellationTokenSource>>)clientShutdownJobs)
+                    .Remove(new KeyValuePair<Guid, CancellationTokenSource>(plugin.Id, cancellation));
+                cancellation.Dispose();
+            }
         }
 
         private void SetGameState(
@@ -655,9 +967,8 @@ namespace Playnite.Controllers
 
         private void DisposeScriptRuntime(Guid gameId)
         {
-            if (scriptRuntimes.TryGetValue(gameId, out var runtime))
+            if (scriptRuntimes.TryRemove(gameId, out var runtime))
             {
-                scriptRuntimes.Remove(gameId);
                 runtime.Dispose();
             }
         }
