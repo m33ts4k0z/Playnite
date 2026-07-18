@@ -16,6 +16,7 @@ public sealed class AvaloniaRuntimeHost : IDisposable
     private readonly GameControllerFactory controllers;
     private readonly ExtensionFactory extensions;
     private readonly GameActionRunner actionRunner;
+    private readonly V7PluginHost v7Plugins;
     private readonly NotificationsAPI notifications;
     private readonly AvaloniaWebViewFactory webViews;
     private readonly IPlayniteAPI globalApi;
@@ -30,8 +31,10 @@ public sealed class AvaloniaRuntimeHost : IDisposable
     public NotificationsAPI Notifications => notifications;
     public IAvaloniaDialogService Dialogs => callbacks.Dialogs;
     public IPlayniteAPI PluginApi => globalApi;
-    public int LoadedPluginCount => extensions.Plugins.Count;
-    public int FailedPluginCount => extensions.FailedExtensions.Count;
+    public IReadOnlyList<V7LoadedPlugin> V7Plugins => v7Plugins.Plugins;
+    public IReadOnlyList<V7PluginLoadFailure> V7PluginFailures => v7Plugins.FailedPlugins;
+    public int LoadedPluginCount => extensions.Plugins.Count + v7Plugins.Plugins.Count;
+    public int FailedPluginCount => extensions.FailedExtensions.Count + v7Plugins.FailedPlugins.Count;
 
     public AvaloniaRuntimeHost(GameDatabase database, AvaloniaHostCallbacks callbacks)
     {
@@ -99,6 +102,13 @@ public sealed class AvaloniaRuntimeHost : IDisposable
             () => globalApi,
             actionPolicy);
         globalApi = CreateApi();
+        v7Plugins = new V7PluginHost(
+            database,
+            callbacks,
+            notifications,
+            () => actionRunner,
+            () => extensions.Plugins.Keys.Select(id => id.ToString())
+                .Concat(v7Plugins?.Plugins.Select(plugin => plugin.Id.ToString()) ?? []));
         previousResourceProvider = ResourceProvider.SetGlobalProvider(globalApi.Resources);
         pluginConverterResolver = (pluginSource, converterName) =>
             WpfPluginSupportRuntime.ResolveConverter(extensions, pluginSource, converterName);
@@ -146,7 +156,10 @@ public sealed class AvaloniaRuntimeHost : IDisposable
 
         ExtensionFactory.CreatePluginFolders();
         var disabled = callbacks.Settings.DisabledPlugins ?? new List<string>();
-        extensions.LoadPlugins(disabled, false, new List<string>());
+        var manifests = ExtensionFactory.GetInstalledManifests();
+        var v7ManifestIds = v7Plugins.Load(manifests, disabled);
+        var v6IgnoreList = disabled.Concat(v7ManifestIds).Distinct().ToList();
+        extensions.LoadPlugins(v6IgnoreList, false, new List<string>());
         extensions.LoadScripts(disabled, false, new List<string>());
         callbacks.SetPluginSummary(
             $"{LoadedPluginCount} plugins loaded" +
@@ -180,6 +193,7 @@ public sealed class AvaloniaRuntimeHost : IDisposable
         }
 
         GameControllerDialogs.ShowError = (_, _) => { };
+        v7Plugins.Dispose();
         actionRunner.Dispose();
         extensions.Dispose();
         controllers.Dispose();

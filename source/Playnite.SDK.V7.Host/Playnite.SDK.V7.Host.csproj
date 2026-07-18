@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Playnite.SDK.V7.Host</RootNamespace>
+    <AssemblyName>Playnite.SDK.V7.Host</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PlayniteSDK.V7\Playnite.SDK.V7.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nett" Version="0.10.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="YamlDotNet" Version="5.4.0" />
+  </ItemGroup>
+
+</Project>

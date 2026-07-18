@@ -1,6 +1,8 @@
 # Shared Avalonia application host
 
-`Playnite.Avalonia.App` contains application-level services shared by the side-by-side Avalonia Fullscreen and Desktop pilots. It adapts `Playnite.Core` game actions, extensions, notifications, dialogs, settings, and the legacy plugin API without depending on either shell's view models or theme.
+`Playnite.Avalonia.App` contains application-level services shared by the side-by-side Avalonia Fullscreen and Desktop pilots. It adapts `Playnite.Core` game actions, extensions, notifications, dialogs, settings, and plugin APIs without depending on either shell's view models or theme.
+
+Compiled SDK v6/WPF extensions continue through Core's existing collectible load context. Compiled SDK v7/Avalonia extensions are identified from assembly metadata before Core loading and are hosted side by side through `Playnite.SDK.V7.Host`, with a separate collectible load context and SDK v7 assembly instance for each extension. The first SDK v7 host contract covers construction, settings serialization, paths and application information, resources, notifications, dialogs, game-operation dispatch, and application start/stop lifecycle. Additional database, action, metadata, web-view, and custom-UI parity is implemented in subsequent Phase 6 milestones.
 
 Shell-specific behavior is supplied through `AvaloniaHostCallbacks`, `IAvaloniaHostSettings`, and `IAvaloniaDialogService`. Desktop supplies an Avalonia-native single- and multi-game editor to the shared plugin API callback. The WPF applications remain the production paths while these adapters are hardened.
 
