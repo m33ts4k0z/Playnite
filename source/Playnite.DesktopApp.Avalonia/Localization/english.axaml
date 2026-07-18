@@ -22,6 +22,15 @@
     <x:String x:Key="LOCDesktopMetadataOnImport">Download metadata for newly imported games</x:String>
     <x:String x:Key="LOCDesktopUpdateStart">Start update</x:String>
     <x:String x:Key="LOCDesktopUpdateCancel">Cancel update</x:String>
+    <x:String x:Key="LOCDesktopImportInstalled">Import installed games</x:String>
+    <x:String x:Key="LOCDesktopDetectInstalled">Detect installed programs</x:String>
+    <x:String x:Key="LOCDesktopScanFolder">Scan folder</x:String>
+    <x:String x:Key="LOCDesktopAddExecutable">Add executable</x:String>
+    <x:String x:Key="LOCDesktopBrowse">Browse…</x:String>
+    <x:String x:Key="LOCDesktopHideImported">Hide games already in the library</x:String>
+    <x:String x:Key="LOCDesktopSelectAll">Select all visible programs</x:String>
+    <x:String x:Key="LOCDesktopImportSelected">Import selected games</x:String>
+    <x:String x:Key="LOCDesktopImportCancel">Cancel import</x:String>
     <x:String x:Key="LOCDesktopPreset">Filter preset</x:String>
     <x:String x:Key="LOCDesktopView">View</x:String>
     <x:String x:Key="LOCDesktopSort">Sort</x:String>

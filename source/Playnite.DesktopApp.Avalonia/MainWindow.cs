@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Playnite.Avalonia.Theming;
 using Playnite.Avalonia.App.Services;
@@ -52,6 +53,7 @@ public sealed class MainWindow : Window
 
         mainView = new DesktopMainView();
         Content = mainView;
+        viewModel.InstalledGameImport.ConfigureFilePickers(PickImportFolderAsync, PickExecutableAsync);
         viewModel.SettingsChanged += (_, _) => SaveSettings();
         Opened += OnOpened;
         Closed += (_, _) => SaveSettings();
@@ -81,6 +83,33 @@ public sealed class MainWindow : Window
         {
             await DesktopPilotSelfTest.Run(this, viewModel, library);
         }
+    }
+
+    private async Task<string> PickImportFolderAsync()
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Choose a folder to scan for games",
+            AllowMultiple = false
+        });
+        return folders.FirstOrDefault()?.TryGetLocalPath();
+    }
+
+    private async Task<string> PickExecutableAsync()
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Choose a game executable or shortcut",
+            AllowMultiple = false,
+            FileTypeFilter = new[]
+            {
+                new FilePickerFileType("Executable files")
+                {
+                    Patterns = new[] { "*.exe", "*.bat", "*.lnk" }
+                }
+            }
+        });
+        return files.FirstOrDefault()?.TryGetLocalPath();
     }
 
     private static string ContentPath(params string[] parts) =>

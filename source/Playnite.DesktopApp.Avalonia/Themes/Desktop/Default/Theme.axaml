@@ -90,6 +90,8 @@
                                     </Border>
                                     <Button Content="{DynamicResource LOCDesktopUpdateLibraries}"
                                             Command="{Binding OpenLibrarySyncCommand}" />
+                                    <Button Content="{DynamicResource LOCDesktopImportInstalled}"
+                                            Command="{Binding OpenInstalledGameImportCommand}" />
                                 </StackPanel>
                             </ScrollViewer>
                         </Border>
@@ -330,6 +332,104 @@
                                     <Button Command="{Binding CloseOverlayCommand}" Content="Cancel" />
                                 </StackPanel>
                             </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding InstalledGameImport.IsVisible}"
+                          Background="#E6000000">
+                        <Border Width="900" MaxHeight="800" Padding="30" CornerRadius="14"
+                                Background="{DynamicResource DesktopPanelStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="18">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{DynamicResource LOCDesktopImportInstalled}" FontSize="30"
+                                               FontWeight="Bold" Foreground="{DynamicResource DesktopTextBrush}" />
+                                    <TextBlock Text="{Binding InstalledGameImport.ProgramSummary}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                </StackPanel>
+
+                                <ScrollViewer Grid.Row="1" MaxHeight="620">
+                                    <StackPanel Spacing="15" IsEnabled="{Binding InstalledGameImport.CanConfigure}">
+                                        <Button Classes="primary"
+                                                HorizontalAlignment="Left"
+                                                Content="{DynamicResource LOCDesktopDetectInstalled}"
+                                                Command="{Binding InstalledGameImport.DetectInstalledCommand}" />
+
+                                        <TextBlock Text="{DynamicResource LOCDesktopScanFolder}" Classes="sectionLabel" />
+                                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                            <TextBox Text="{Binding InstalledGameImport.FolderPath, Mode=TwoWay}"
+                                                     Watermark="C:\Games" />
+                                            <Button Grid.Column="1" Content="{DynamicResource LOCDesktopBrowse}"
+                                                    Command="{Binding InstalledGameImport.BrowseFolderCommand}" />
+                                            <Button Grid.Column="2" Content="{DynamicResource LOCDesktopScanFolder}"
+                                                    Command="{Binding InstalledGameImport.ScanFolderCommand}" />
+                                        </Grid>
+
+                                        <TextBlock Text="{DynamicResource LOCDesktopAddExecutable}" Classes="sectionLabel" />
+                                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                            <TextBox Text="{Binding InstalledGameImport.ExecutablePath, Mode=TwoWay}"
+                                                     Watermark="C:\Games\Game.exe" />
+                                            <Button Grid.Column="1" Content="{DynamicResource LOCDesktopBrowse}"
+                                                    Command="{Binding InstalledGameImport.BrowseExecutableCommand}" />
+                                            <Button Grid.Column="2" Content="{DynamicResource LOCDesktopAddExecutable}"
+                                                    Command="{Binding InstalledGameImport.AddExecutableCommand}" />
+                                        </Grid>
+
+                                        <StackPanel Orientation="Horizontal" Spacing="18">
+                                            <CheckBox Content="{DynamicResource LOCDesktopHideImported}"
+                                                      IsChecked="{Binding InstalledGameImport.HideImported, Mode=TwoWay}" />
+                                            <CheckBox Content="{DynamicResource LOCDesktopSelectAll}"
+                                                      IsChecked="{Binding InstalledGameImport.SelectAll, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <CheckBox Content="{DynamicResource LOCDesktopMetadataOnImport}"
+                                                  IsChecked="{Binding InstalledGameImport.DownloadMetadataOnImport, Mode=TwoWay}" />
+
+                                        <ListBox MaxHeight="330" ItemsSource="{Binding InstalledGameImport.Programs}">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="2,5">
+                                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                                                            <StackPanel>
+                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource DesktopTextBrush}" />
+                                                                <TextBlock Text="{Binding DisplayPath}" FontSize="10"
+                                                                           TextTrimming="CharacterEllipsis"
+                                                                           Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                                                <TextBlock Text="{Binding TypeName}" FontSize="10"
+                                                                           Foreground="{DynamicResource DesktopAccentBrush}" />
+                                                                <TextBlock Text="{Binding ImportState}" FontSize="10"
+                                                                           Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </CheckBox>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </StackPanel>
+                                </ScrollViewer>
+
+                                <StackPanel Grid.Row="2" Spacing="9">
+                                    <ProgressBar Minimum="0" Maximum="{Binding InstalledGameImport.ProgressTotal}"
+                                                 Value="{Binding InstalledGameImport.ProgressValue}" Height="8" />
+                                    <TextBlock Text="{Binding InstalledGameImport.ProgressText}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding InstalledGameImport.ErrorText}" TextWrapping="Wrap"
+                                               Foreground="#FF7F7F" />
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Classes="primary" Content="{DynamicResource LOCDesktopImportSelected}"
+                                                IsVisible="{Binding InstalledGameImport.CanConfigure}"
+                                                Command="{Binding InstalledGameImport.ImportCommand}" />
+                                        <Button Content="{DynamicResource LOCDesktopImportCancel}"
+                                                IsVisible="{Binding InstalledGameImport.IsRunning}"
+                                                Command="{Binding InstalledGameImport.CancelCommand}" />
+                                        <Button Content="{DynamicResource LOCDesktopCancel}"
+                                                IsVisible="{Binding InstalledGameImport.CanConfigure}"
+                                                Command="{Binding InstalledGameImport.CloseCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
 

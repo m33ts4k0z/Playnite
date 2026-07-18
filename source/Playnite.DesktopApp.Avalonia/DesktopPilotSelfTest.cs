@@ -9,6 +9,7 @@ using Playnite.DesktopApp.Avalonia.ViewModels;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
+using InstalledProgram = Playnite.Common.Program;
 
 namespace Playnite.DesktopApp.Avalonia;
 
@@ -905,6 +906,200 @@ internal static class DesktopPilotSelfTest
             libraryUpdatedCount == libraryUpdatesBeforeScannerRescan + 1
                 ? "the saved scanner completed again without a duplicate game or metadata request"
                 : throw new InvalidOperationException("The scanner rescan duplicated or redownloaded an imported ROM."));
+
+        var installedFixtureDirectory = Path.Combine(library.ActiveUserDataDirectory, "installed-import-fixtures");
+        Directory.CreateDirectory(installedFixtureDirectory);
+        var systemExecutable = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System),
+            "cmd.exe");
+        if (!File.Exists(systemExecutable))
+        {
+            throw new FileNotFoundException("The installed-game fixture executable is unavailable.", systemExecutable);
+        }
+
+        var detectedExecutablePath = Path.Combine(installedFixtureDirectory, "Pilot Detected.exe");
+        var scannedExecutablePath = Path.Combine(installedFixtureDirectory, "Pilot Scanned.exe");
+        var directExecutablePath = Path.Combine(installedFixtureDirectory, "Pilot Direct.exe");
+        File.Copy(systemExecutable, detectedExecutablePath, true);
+        File.Copy(systemExecutable, scannedExecutablePath, true);
+        File.Copy(systemExecutable, directExecutablePath, true);
+        var detectedProgram = new InstalledProgram
+        {
+            Name = "Pilot Detected™ Game",
+            Path = detectedExecutablePath,
+            Arguments = "--detected",
+            WorkDir = installedFixtureDirectory,
+            Icon = detectedExecutablePath,
+            AppId = "pilot-installed-win32"
+        };
+        var storeProgram = new InstalledProgram
+        {
+            Name = "Pilot Store Game",
+            Path = "explorer.exe",
+            Arguments = "shell:AppsFolder\\Pilot.Store_123!App",
+            WorkDir = installedFixtureDirectory,
+            Icon = library.SelfTestMediaPath,
+            AppId = "Pilot.Store_123"
+        };
+        var scannedProgram = new InstalledProgram
+        {
+            Name = "Pilot Scanned Game",
+            Path = scannedExecutablePath,
+            WorkDir = installedFixtureDirectory,
+            Icon = $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "shell32.dll")},0",
+            AppId = "pilot-installed-scanned"
+        };
+        var directProgram = new InstalledProgram
+        {
+            Name = "Pilot Direct Game",
+            Path = directExecutablePath,
+            Arguments = "--direct",
+            WorkDir = installedFixtureDirectory,
+            Icon = directExecutablePath,
+            AppId = "pilot-installed-direct"
+        };
+        var installedLibraryUpdates = 0;
+        string scannedDirectory = null;
+        viewModel.InstalledGameImport.ConfigureProvidersForTesting(
+            token =>
+            {
+                token.ThrowIfCancellationRequested();
+                return Task.FromResult<IReadOnlyList<DesktopDetectedProgram>>(new[]
+                {
+                    new DesktopDetectedProgram(detectedProgram, DesktopInstalledProgramType.Win32),
+                    new DesktopDetectedProgram(storeProgram, DesktopInstalledProgramType.MicrosoftStore)
+                });
+            },
+            (path, token) =>
+            {
+                token.ThrowIfCancellationRequested();
+                scannedDirectory = path;
+                return Task.FromResult<IReadOnlyList<InstalledProgram>>(new[] { scannedProgram });
+            },
+            path => string.Equals(path, directExecutablePath, StringComparison.OrdinalIgnoreCase)
+                ? directProgram
+                : throw new InvalidOperationException($"Unexpected executable fixture path: {path}"),
+            () => installedLibraryUpdates++);
+
+        viewModel.OpenInstalledGameImportCommand.Execute(null);
+        var detectedInstalledPrograms = await viewModel.InstalledGameImport.DetectInstalledAsync();
+        Record(results, "Installed-game import exposes desktop and Store discovery", () =>
+            detectedInstalledPrograms &&
+            viewModel.InstalledGameImport.IsVisible &&
+            viewModel.InstalledGameImport.Programs.Count == 2 &&
+            viewModel.InstalledGameImport.Programs.Any(program =>
+                program.Program.AppId == detectedProgram.AppId &&
+                program.Type == DesktopInstalledProgramType.Win32 &&
+                !program.IsImported) &&
+            viewModel.InstalledGameImport.Programs.Any(program =>
+                program.Program.AppId == storeProgram.AppId &&
+                program.Type == DesktopInstalledProgramType.MicrosoftStore &&
+                !program.IsImported) &&
+            !viewModel.OpenLibrarySyncCommand.CanExecute(null)
+                ? "Win32 and Microsoft Store candidates share the native cancellable import surface"
+                : throw new InvalidOperationException("Installed-program discovery did not expose both source types."));
+
+        viewModel.InstalledGameImport.SelectAll = true;
+        var gamesBeforeInstalledImport = library.Database.Games.Count;
+        var providersBeforeInstalledImport = metadataPlugin.ProviderCreationCount;
+        var requestsBeforeInstalledImport = metadataServer.RequestCount;
+        var importedDetectedPrograms = await viewModel.InstalledGameImport.ImportSelectedAsync();
+        var detectedGame = library.Database.Games.FirstOrDefault(game => game.GameId == detectedProgram.AppId);
+        var storeGame = library.Database.Games.FirstOrDefault(game => game.GameId == storeProgram.AppId);
+        var detectedAction = detectedGame?.GameActions?.SingleOrDefault();
+        var storeAction = storeGame?.GameActions?.SingleOrDefault();
+        var storeSource = storeGame == null ? null : library.Database.Sources[storeGame.SourceId];
+        var windowsSpecificationApplied = new[] { detectedGame, storeGame }
+            .Where(game => game != null)
+            .All(game => game.PlatformIds?.Any(id =>
+                library.Database.Platforms[id]?.SpecificationId == "pc_windows") == true);
+
+        Record(results, "Installed discovery imports Core games, metadata, actions, and live wrappers", () =>
+        {
+            var expectedDetectedPath = Path.Combine(
+                ExpandableVariables.InstallationDirectory,
+                Path.GetFileName(detectedExecutablePath));
+            if (importedDetectedPrograms &&
+                !viewModel.InstalledGameImport.IsVisible &&
+                detectedGame != null &&
+                storeGame != null &&
+                library.Database.Games.Count == gamesBeforeInstalledImport + 2 &&
+                detectedGame.Name == "Pilot Detected Game" &&
+                detectedGame.IsInstalled &&
+                detectedGame.CompletionStatusId == defaultCompletionStatusId &&
+                detectedAction?.Path == expectedDetectedPath &&
+                detectedAction.Arguments == detectedProgram.Arguments &&
+                detectedAction.WorkingDir == ExpandableVariables.InstallationDirectory &&
+                detectedAction.IsPlayAction &&
+                storeSource?.Name == "Microsoft Store" &&
+                storeAction?.Path == storeProgram.Path &&
+                storeAction.Arguments == storeProgram.Arguments &&
+                storeAction.WorkingDir == string.Empty &&
+                windowsSpecificationApplied &&
+                detectedGame.Description == PilotMetadataPlugin.DownloadedDescription &&
+                storeGame.Description == PilotMetadataPlugin.DownloadedDescription &&
+                File.Exists(library.Database.GetFullFilePath(detectedGame.CoverImage)) &&
+                File.Exists(library.Database.GetFullFilePath(storeGame.Icon)) &&
+                viewModel.Games.Any(game => game.Game.Id == detectedGame.Id) &&
+                viewModel.Games.Any(game => game.Game.Id == storeGame.Id) &&
+                metadataPlugin.ProviderCreationCount == providersBeforeInstalledImport + 2 &&
+                metadataServer.RequestCount >= requestsBeforeInstalledImport + 4 &&
+                installedLibraryUpdates == 1)
+            {
+                return "legacy import metadata became owned Core records for both Win32 and Store candidates";
+            }
+
+            throw new InvalidOperationException(
+                $"import={importedDetectedPrograms}, games={library.Database.Games.Count}/{gamesBeforeInstalledImport + 2}, " +
+                $"detected={detectedGame?.Name}/{detectedAction?.Path}, store={storeSource?.Name}/{storeAction?.Path}, " +
+                $"platforms={windowsSpecificationApplied}, providers={metadataPlugin.ProviderCreationCount}/{providersBeforeInstalledImport + 2}, " +
+                $"requests={metadataServer.RequestCount}/{requestsBeforeInstalledImport + 4}, updates={installedLibraryUpdates}.");
+        });
+
+        viewModel.OpenInstalledGameImportCommand.Execute(null);
+        var detectedImportedPrograms = await viewModel.InstalledGameImport.DetectInstalledAsync();
+        var hiddenImportedCount = viewModel.InstalledGameImport.Programs.Count;
+        viewModel.InstalledGameImport.HideImported = false;
+        Record(results, "Installed-game discovery filters existing executable identities", () =>
+            detectedImportedPrograms &&
+            hiddenImportedCount == 0 &&
+            viewModel.InstalledGameImport.Programs.Count == 2 &&
+            viewModel.InstalledGameImport.Programs.All(program => program.IsImported)
+                ? "both absolute launch identities were recognized without offering duplicate imports"
+                : throw new InvalidOperationException("Previously imported executables were not detected or filtered."));
+        viewModel.InstalledGameImport.Close();
+
+        viewModel.OpenInstalledGameImportCommand.Execute(null);
+        viewModel.InstalledGameImport.DownloadMetadataOnImport = false;
+        var scannedPrograms = await viewModel.InstalledGameImport.ScanFolderAsync(installedFixtureDirectory);
+        var addedDirectExecutable = viewModel.InstalledGameImport.AddExecutable(directExecutablePath);
+        viewModel.InstalledGameImport.SelectAll = true;
+        var providersBeforeExecutableImport = metadataPlugin.ProviderCreationCount;
+        var gamesBeforeExecutableImport = library.Database.Games.Count;
+        var importedExecutablePrograms = await viewModel.InstalledGameImport.ImportSelectedAsync();
+        var installedScannedGame = library.Database.Games.FirstOrDefault(game => game.GameId == scannedProgram.AppId);
+        var directGame = library.Database.Games.FirstOrDefault(game => game.GameId == directProgram.AppId);
+
+        Record(results, "Folder scan and direct executable import preserve local icons without metadata", () =>
+            scannedPrograms &&
+            addedDirectExecutable &&
+            string.Equals(scannedDirectory, installedFixtureDirectory, StringComparison.OrdinalIgnoreCase) &&
+            importedExecutablePrograms &&
+            library.Database.Games.Count == gamesBeforeExecutableImport + 2 &&
+            installedScannedGame != null &&
+            directGame != null &&
+            File.Exists(library.Database.GetFullFilePath(installedScannedGame.Icon)) &&
+            File.Exists(library.Database.GetFullFilePath(directGame.Icon)) &&
+            Path.GetExtension(installedScannedGame.Icon).Equals(".ico", StringComparison.OrdinalIgnoreCase) &&
+            installedScannedGame.CoverImage == null &&
+            directGame.CoverImage == null &&
+            metadataPlugin.ProviderCreationCount == providersBeforeExecutableImport &&
+            installedLibraryUpdates == 2 &&
+            viewModel.Games.Any(game => game.Game.Id == installedScannedGame.Id) &&
+            viewModel.Games.Any(game => game.Game.Id == directGame.Id)
+                ? "recursive-scan and single-file candidates imported with executable/resource icons converted into owned ICO files"
+                : throw new InvalidOperationException("Folder/direct executable imports lost icon, database, or update state."));
+        viewModel.InstalledGameImport.DownloadMetadataOnImport = true;
 
         viewModel.MetadataDownload.ConfigureProviders(
             () => window.RuntimeHost.Extensions.MetadataPlugins,

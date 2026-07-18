@@ -273,6 +273,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public DesktopGameEditorViewModel Editor { get; }
     public DesktopMetadataDownloadViewModel MetadataDownload { get; }
     public DesktopLibrarySyncViewModel LibrarySync { get; }
+    public DesktopInstalledGameImportViewModel InstalledGameImport { get; }
 
     public ICommand ActivateCommand { get; }
     public ICommand InstallCommand { get; }
@@ -280,6 +281,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand EditCommand { get; }
     public ICommand OpenMetadataDownloadCommand { get; }
     public ICommand OpenLibrarySyncCommand { get; }
+    public ICommand OpenInstalledGameImportCommand { get; }
     public ICommand SetGridViewCommand { get; }
     public ICommand SetListViewCommand { get; }
     public ICommand ClearSearchCommand { get; }
@@ -349,6 +351,24 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             });
         LibrarySync.SettingsChanged += (_, _) => SettingsChanged?.Invoke(this, EventArgs.Empty);
         LibrarySync.PropertyChanged += LibrarySync_PropertyChanged;
+        InstalledGameImport = new DesktopInstalledGameImportViewModel(
+            database,
+            this.settings,
+            MetadataDownload,
+            SynchronizeLibrary,
+            (message, error) =>
+            {
+                if (runtimeHost != null)
+                {
+                    runtimeHost.ShowMessage(message, error);
+                }
+                else
+                {
+                    StatusText = message;
+                }
+            });
+        InstalledGameImport.SettingsChanged += (_, _) => SettingsChanged?.Invoke(this, EventArgs.Empty);
+        InstalledGameImport.PropertyChanged += InstalledGameImport_PropertyChanged;
 
         ActivateCommand = new AppRelayCommand(
             () => RunOperation(SelectedGame?.IsInstalled == true ? GameOperationKind.Play : GameOperationKind.Install),
@@ -363,15 +383,23 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             () => OpenGameEditor(SelectedGame.Game.Id),
             () => SelectedGame != null && database != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
-                !LibrarySync.IsVisible && !LibrarySync.IsRunning);
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
         OpenMetadataDownloadCommand = new AppRelayCommand(OpenMetadataDownload,
             () => SelectedGame != null && database != null && runtimeHost != null &&
                 !Editor.IsVisible && !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
-                !LibrarySync.IsVisible && !LibrarySync.IsRunning);
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
         OpenLibrarySyncCommand = new AppRelayCommand(OpenLibrarySync,
             () => database != null && runtimeHost != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
-                !LibrarySync.IsVisible && !LibrarySync.IsRunning);
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
+        OpenInstalledGameImportCommand = new AppRelayCommand(OpenInstalledGameImport,
+            () => database != null && runtimeHost != null && !Editor.IsVisible &&
+                !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
         SetGridViewCommand = new AppRelayCommand(() => SelectedViewMode = "Grid");
         SetListViewCommand = new AppRelayCommand(() => SelectedViewMode = "List");
         ClearSearchCommand = new AppRelayCommand(() => SearchText = string.Empty, () => SearchText.Length > 0);
@@ -408,6 +436,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         LibrarySync.ConfigureProviders(
             () => host.Extensions.LibraryPlugins,
             host.Extensions.NotifiyOnLibraryUpdated);
+        InstalledGameImport.ConfigureLibraryUpdated(host.Extensions.NotifiyOnLibraryUpdated);
         RaiseGameCommandStates();
     }
 
@@ -454,7 +483,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public bool OpenGameEditor(IReadOnlyList<Guid> gameIds, Action<bool?> completed = null)
     {
         if (MetadataDownload.IsVisible || MetadataDownload.IsRunning ||
-            LibrarySync.IsVisible || LibrarySync.IsRunning)
+            LibrarySync.IsVisible || LibrarySync.IsRunning ||
+            InstalledGameImport.IsVisible || InstalledGameImport.IsRunning)
         {
             StatusText = "Finish or close the active library task before editing games.";
             return false;
@@ -573,6 +603,17 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         if (!LibrarySync.Open())
         {
             StatusText = "The library update view is unavailable.";
+        }
+
+        RaiseGameCommandStates();
+    }
+
+    private void OpenInstalledGameImport()
+    {
+        CloseOverlays();
+        if (!InstalledGameImport.Open())
+        {
+            StatusText = "The installed-game import view is unavailable.";
         }
 
         RaiseGameCommandStates();
@@ -698,6 +739,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)EditCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenMetadataDownloadCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenLibrarySyncCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenInstalledGameImportCommand).RaiseCanExecuteChanged();
     }
 
     private void SynchronizeLibrary()
@@ -747,6 +789,15 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     {
         if (e.PropertyName is nameof(DesktopLibrarySyncViewModel.IsVisible) or
             nameof(DesktopLibrarySyncViewModel.IsRunning))
+        {
+            RaiseGameCommandStates();
+        }
+    }
+
+    private void InstalledGameImport_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DesktopInstalledGameImportViewModel.IsVisible) or
+            nameof(DesktopInstalledGameImportViewModel.IsRunning))
         {
             RaiseGameCommandStates();
         }
