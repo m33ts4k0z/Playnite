@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Playnite.Avalonia.Input;
 using Playnite.Avalonia.Theming;
 using Playnite.FullscreenApp.Avalonia.Controls;
@@ -15,23 +16,37 @@ public sealed class MainWindow : Window
 {
     private readonly FullscreenAppViewModel viewModel;
     private readonly PlayniteLibrary library;
+    private readonly FullscreenRuntimeHost runtimeHost;
+    private readonly FullscreenSettings settings;
+    private readonly FullscreenSettingsStore settingsStore;
     private readonly StartupOptions options;
     private readonly RuntimeThemeManager themeManager;
     private readonly FullscreenMainView mainView;
     private readonly GamepadInputBridge gamepadBridge;
     private readonly SdlGamepadInputSource sdlInput;
+    private FullscreenAudioService audioService;
+    private AvaloniaFullscreenThemePackage activeThemePackage;
+    private readonly System.Windows.Input.ICommand focusedActivationCommand;
 
     internal GamepadInputBridge GamepadBridge => gamepadBridge;
     internal SdlGamepadInputSource SdlInput => sdlInput;
     internal FullscreenMainView MainView => mainView;
+    internal FullscreenRuntimeHost RuntimeHost => runtimeHost;
+    internal FullscreenAudioService AudioService => audioService;
 
     internal MainWindow(
         FullscreenAppViewModel viewModel,
         PlayniteLibrary library,
+        FullscreenRuntimeHost runtimeHost,
+        FullscreenSettings settings,
+        FullscreenSettingsStore settingsStore,
         StartupOptions options)
     {
         this.viewModel = viewModel;
         this.library = library;
+        this.runtimeHost = runtimeHost;
+        this.settings = settings;
+        this.settingsStore = settingsStore;
         this.options = options;
 
         Title = "Playnite — Avalonia Fullscreen Pilot";
@@ -50,18 +65,25 @@ public sealed class MainWindow : Window
         Content = mainView;
 
         gamepadBridge = new GamepadInputBridge(this);
-        gamepadBridge.MapCommand(GamepadButton.Confirm, viewModel.ShowDetailsCommand);
-        gamepadBridge.MapCommand(GamepadButton.Cancel, viewModel.BackCommand);
+        focusedActivationCommand = new RelayCommand(ActivateFocusedControl);
+        UpdateConfirmCancelBindings();
         gamepadBridge.MapCommand(GamepadButton.Start, viewModel.ToggleMenuCommand);
         gamepadBridge.MapCommand(GamepadButton.Back, viewModel.ToggleMenuCommand);
         gamepadBridge.MapCommand(GamepadButton.X, viewModel.ActivateCommand);
-        gamepadBridge.MapCommand(GamepadButton.Y, viewModel.ShowDetailsCommand);
+        gamepadBridge.MapCommand(GamepadButton.Y, viewModel.OpenSearchCommand);
         gamepadBridge.MapCommand(GamepadButton.LeftShoulder, viewModel.SelectPreviousCommand);
         gamepadBridge.MapCommand(GamepadButton.RightShoulder, viewModel.SelectNextCommand);
+        gamepadBridge.MapCommand(GamepadButton.RightStick, viewModel.ToggleFiltersCommand);
+        gamepadBridge.MapCommand(GamepadButton.LeftStick, viewModel.ToggleNotificationsCommand);
         sdlInput = new SdlGamepadInputSource(gamepadBridge);
 
         viewModel.LibraryFocusRequested += (_, _) =>
             Dispatcher.UIThread.Post(mainView.FocusSelectedGame, DispatcherPriority.Input);
+        viewModel.SettingsChanged += (_, _) => SaveSettings();
+        viewModel.SettingsChanged += (_, _) => UpdateConfirmCancelBindings();
+        viewModel.SettingsChanged += (_, _) => audioService?.ApplySettings();
+        viewModel.NavigationRequested += (_, _) => audioService?.PlayNavigation();
+        viewModel.ActivationRequested += (_, _) => audioService?.PlayActivation();
         KeyDown += OnKeyDown;
         Opened += OnOpened;
         Closed += OnClosed;
@@ -73,19 +95,24 @@ public sealed class MainWindow : Window
         var styles = ContentPath("Themes", "Fullscreen", "Default", "Styles.axaml");
         themeManager.ApplyTheme(new[] { defaultTheme }, selectorStyles: new[] { styles });
 
-        if (!string.IsNullOrWhiteSpace(options.CustomThemePath))
+        var customThemePath = options.CustomThemePath ?? settings.ThemePath;
+        if (!string.IsNullOrWhiteSpace(customThemePath))
         {
             try
             {
+                activeThemePackage = AvaloniaFullscreenThemePackage.Load(customThemePath);
                 themeManager.ApplyTheme(
                     new[] { defaultTheme },
-                    new[] { options.CustomThemePath },
-                    new[] { styles });
+                    activeThemePackage.ResourceDictionaries,
+                    new[] { styles }.Concat(activeThemePackage.SelectorStyles));
+                viewModel.SetStatusMessage($"Theme '{activeThemePackage.Name}' loaded.");
             }
-            catch (LooseXamlLoadException exception)
+            catch (Exception exception) when (
+                exception is LooseXamlLoadException or InvalidDataException or FileNotFoundException or ArgumentException)
             {
                 viewModel.SetStatusMessage(
-                    $"Custom theme failed to load; the default theme is active. {exception.InnerException?.Message}");
+                    $"Custom theme failed to load; the default theme is active. " +
+                    (exception.InnerException?.Message ?? exception.Message));
                 System.Diagnostics.Trace.WriteLine(exception);
             }
         }
@@ -95,6 +122,8 @@ public sealed class MainWindow : Window
     {
         mainView.FocusSelectedGame();
         sdlInput.Start();
+        audioService = new FullscreenAudioService(settings, GetThemeRoot());
+        viewModel.SetStatusMessage(audioService.Status);
         if (options.SelfTest)
         {
             await FullscreenPilotSelfTest.Run(this, viewModel, library);
@@ -103,8 +132,76 @@ public sealed class MainWindow : Window
 
     private void OnClosed(object sender, EventArgs e)
     {
+        SaveSettings();
         sdlInput.Dispose();
         gamepadBridge.Dispose();
+        audioService?.Dispose();
+    }
+
+    private void SaveSettings()
+    {
+        if (settingsStore == null)
+        {
+            return;
+        }
+
+        try
+        {
+            settingsStore.Save(settings);
+        }
+        catch (Exception exception)
+        {
+            viewModel.SetStatusMessage($"Settings could not be saved: {exception.Message}");
+        }
+    }
+
+    private void UpdateConfirmCancelBindings()
+    {
+        gamepadBridge.MapCommand(
+            GamepadButton.Confirm,
+            settings.SwapConfirmCancelButtons ? viewModel.BackCommand : focusedActivationCommand);
+        gamepadBridge.MapCommand(
+            GamepadButton.Cancel,
+            settings.SwapConfirmCancelButtons ? focusedActivationCommand : viewModel.BackCommand);
+    }
+
+    private void ActivateFocusedControl()
+    {
+        var focused = FocusManager?.GetFocusedElement();
+        if (focused is Button button && button.Command?.CanExecute(button.CommandParameter) == true)
+        {
+            button.Command.Execute(button.CommandParameter);
+            return;
+        }
+
+        if (focused is CheckBox checkBox)
+        {
+            checkBox.IsChecked = !(checkBox.IsChecked ?? false);
+            return;
+        }
+
+        if (mainView.NotificationsList?.SelectedItem is Playnite.SDK.NotificationMessage notification &&
+            focused is Control notificationControl &&
+            notificationControl.GetVisualAncestors().Contains(mainView.NotificationsList))
+        {
+            if (notification.ActivationAction != null)
+            {
+                notification.ActivateCommand.Execute(null);
+            }
+            else
+            {
+                viewModel.DismissNotificationCommand.Execute(notification);
+            }
+
+            return;
+        }
+
+        viewModel.ConfirmCommand.Execute(null);
+    }
+
+    private string GetThemeRoot()
+    {
+        return activeThemePackage?.RootDirectory ?? ContentPath("Themes", "Fullscreen", "Default");
     }
 
     private void OnKeyDown(object sender, KeyEventArgs e)

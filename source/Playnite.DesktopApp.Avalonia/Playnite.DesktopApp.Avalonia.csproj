@@ -3,8 +3,8 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
-    <RootNamespace>Playnite.FullscreenApp.Avalonia</RootNamespace>
-    <AssemblyName>Playnite.FullscreenApp.Avalonia</AssemblyName>
+    <RootNamespace>Playnite.DesktopApp.Avalonia</RootNamespace>
+    <AssemblyName>Playnite.DesktopApp.Avalonia</AssemblyName>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -31,11 +31,7 @@
     <AvaloniaResource Remove="Themes\**\*.axaml;Localization\**\*.axaml" />
     <AvaloniaXaml Remove="Themes\**\*.axaml;Localization\**\*.axaml" />
     <Content Include="Themes\**\*.axaml" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="Themes\**\*.yaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Localization\**\*.axaml" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="..\Playnite\gamecontrollerdb.txt" Link="gamecontrollerdb.txt" CopyToOutputDirectory="PreserveNewest" />
-    <ContentWithTargetPath Include="..\..\references\x64\SDL2.dll" Link="Dependencies\SDL2.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2.dll" />
-    <ContentWithTargetPath Include="..\..\references\x64\SDL2_mixer.dll" Link="Dependencies\SDL2_mixer.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2_mixer.dll" />
   </ItemGroup>
 
 </Project>

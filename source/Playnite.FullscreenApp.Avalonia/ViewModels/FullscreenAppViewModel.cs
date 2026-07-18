@@ -1,3 +1,9 @@
+using Playnite.Controllers;
+using Playnite.FullscreenApp.Avalonia.Services;
+using Playnite.SDK;
+using Playnite.SDK.Models;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -6,19 +12,61 @@ namespace Playnite.FullscreenApp.Avalonia.ViewModels;
 
 public sealed class FullscreenAppViewModel : INotifyPropertyChanged
 {
+    private static readonly IReadOnlyList<string> filterOptions =
+        new[] { "All", "Installed", "Favorites", "Recent", "Unplayed", "Hidden" };
+
+    private readonly List<GameItemViewModel> allGames;
+    private readonly FullscreenSettings settings;
+    private FullscreenRuntimeHost runtimeHost;
     private GameItemViewModel selectedGame;
+    private IReadOnlyList<GameItemViewModel> games;
     private bool isDetailsVisible;
     private bool isMenuVisible;
+    private bool isSearchVisible;
+    private bool isFiltersVisible;
+    private bool isSettingsVisible;
+    private bool isNotificationsVisible;
+    private bool isActionPickerVisible;
+    private bool isDialogVisible;
     private string statusText;
+    private string searchText = string.Empty;
+    private string selectedFilterOption;
+    private string selectedActionChoice;
+    private string dialogCaption;
+    private string dialogMessage;
+    private string selectedDialogOption;
+    private Action<string> dialogCompleted;
+    private int dialogCancelIndex;
+    private string pluginSummary = "Plugins have not been initialized";
+    private GameOperationKind pendingOperation;
     private int activateCount;
 
     public event PropertyChangedEventHandler PropertyChanged;
     public event EventHandler ExitRequested;
     public event EventHandler ToggleFullscreenRequested;
     public event EventHandler LibraryFocusRequested;
+    public event EventHandler SettingsChanged;
+    public event EventHandler NavigationRequested;
+    public event EventHandler ActivationRequested;
 
-    public IReadOnlyList<GameItemViewModel> Games { get; }
-    public string LibrarySummary => $"{Games.Count:N0} games";
+    public IReadOnlyList<GameItemViewModel> Games
+    {
+        get => games;
+        private set
+        {
+            games = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(LibrarySummary));
+        }
+    }
+
+    public IReadOnlyList<string> FilterOptions => filterOptions;
+    public ObservableCollection<string> ActionChoices { get; } = new();
+    public ObservableCollection<string> DialogOptions { get; } = new();
+    public ObservableCollection<NotificationMessage> Notifications { get; private set; } = new();
+    public string LibrarySummary => $"{Games.Count:N0} of {allGames.Count:N0} games";
+    public string PluginSummary => pluginSummary;
+    public int NotificationCount => Notifications.Count;
     public int ActivateCount => activateCount;
 
     public GameItemViewModel SelectedGame
@@ -33,22 +81,112 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
 
             selectedGame = value;
             OnPropertyChanged();
+            if (selectedGame != null)
+            {
+                NavigationRequested?.Invoke(this, EventArgs.Empty);
+            }
             ((RelayCommand)ShowDetailsCommand).RaiseCanExecuteChanged();
             ((RelayCommand)ActivateCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)InstallCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)UninstallCommand).RaiseCanExecuteChanged();
         }
     }
 
-    public bool IsDetailsVisible
+    public string SearchText
     {
-        get => isDetailsVisible;
-        private set => SetField(ref isDetailsVisible, value);
+        get => searchText;
+        set
+        {
+            if (SetField(ref searchText, value ?? string.Empty))
+            {
+                ApplyFilters();
+            }
+        }
     }
 
-    public bool IsMenuVisible
+    public string SelectedFilterOption
     {
-        get => isMenuVisible;
-        private set => SetField(ref isMenuVisible, value);
+        get => selectedFilterOption;
+        set => SetField(ref selectedFilterOption, value);
     }
+
+    public string SelectedActionChoice
+    {
+        get => selectedActionChoice;
+        set => SetField(ref selectedActionChoice, value);
+    }
+
+    public string DialogCaption { get => dialogCaption; private set => SetField(ref dialogCaption, value); }
+    public string DialogMessage { get => dialogMessage; private set => SetField(ref dialogMessage, value); }
+    public string SelectedDialogOption
+    {
+        get => selectedDialogOption;
+        set
+        {
+            if (SetField(ref selectedDialogOption, value))
+            {
+                ((RelayCommand)ConfirmDialogCommand).RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public bool ShowHiddenGames
+    {
+        get => settings.ShowHiddenGames;
+        set
+        {
+            if (settings.ShowHiddenGames == value)
+            {
+                return;
+            }
+
+            settings.ShowHiddenGames = value;
+            OnPropertyChanged();
+            ApplyFilters();
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public bool SwapConfirmCancelButtons
+    {
+        get => settings.SwapConfirmCancelButtons;
+        set
+        {
+            if (settings.SwapConfirmCancelButtons == value)
+            {
+                return;
+            }
+
+            settings.SwapConfirmCancelButtons = value;
+            OnPropertyChanged();
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public bool AudioEnabled
+    {
+        get => settings.AudioEnabled;
+        set
+        {
+            if (settings.AudioEnabled == value)
+            {
+                return;
+            }
+
+            settings.AudioEnabled = value;
+            OnPropertyChanged();
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    public bool IsDetailsVisible { get => isDetailsVisible; private set => SetField(ref isDetailsVisible, value); }
+    public bool IsMenuVisible { get => isMenuVisible; private set => SetField(ref isMenuVisible, value); }
+    public bool IsSearchVisible { get => isSearchVisible; private set => SetField(ref isSearchVisible, value); }
+    public bool IsFiltersVisible { get => isFiltersVisible; private set => SetField(ref isFiltersVisible, value); }
+    public bool IsSettingsVisible { get => isSettingsVisible; private set => SetField(ref isSettingsVisible, value); }
+    public bool IsNotificationsVisible { get => isNotificationsVisible; private set => SetField(ref isNotificationsVisible, value); }
+    public bool IsActionPickerVisible { get => isActionPickerVisible; private set => SetField(ref isActionPickerVisible, value); }
+    public bool IsDialogVisible { get => isDialogVisible; private set => SetField(ref isDialogVisible, value); }
 
     public string StatusText
     {
@@ -57,68 +195,350 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     }
 
     public ICommand ShowDetailsCommand { get; }
+    public ICommand ConfirmCommand { get; }
     public ICommand ActivateCommand { get; }
+    public ICommand InstallCommand { get; }
+    public ICommand UninstallCommand { get; }
     public ICommand ToggleMenuCommand { get; }
     public ICommand BackCommand { get; }
     public ICommand ExitCommand { get; }
     public ICommand ToggleFullscreenCommand { get; }
     public ICommand SelectPreviousCommand { get; }
     public ICommand SelectNextCommand { get; }
+    public ICommand OpenSearchCommand { get; }
+    public ICommand CloseSearchCommand { get; }
+    public ICommand ToggleFiltersCommand { get; }
+    public ICommand ApplyFilterCommand { get; }
+    public ICommand OpenSettingsCommand { get; }
+    public ICommand ToggleNotificationsCommand { get; }
+    public ICommand ConfirmActionChoiceCommand { get; }
+    public ICommand DismissNotificationCommand { get; }
+    public ICommand ConfirmDialogCommand { get; }
+    public ICommand CancelDialogCommand { get; }
 
-    public FullscreenAppViewModel(IReadOnlyList<GameItemViewModel> games, string startupError)
+    public FullscreenAppViewModel(
+        IReadOnlyList<GameItemViewModel> sourceGames,
+        FullscreenSettings settings,
+        string startupError)
     {
-        Games = games ?? Array.Empty<GameItemViewModel>();
-        selectedGame = Games.FirstOrDefault();
+        this.settings = settings ?? new FullscreenSettings();
+        allGames = sourceGames?.ToList() ?? new List<GameItemViewModel>();
+        selectedFilterOption = filterOptions.Contains(this.settings.ActiveFilter)
+            ? this.settings.ActiveFilter
+            : "All";
+        games = allGames;
+        selectedGame = games.FirstOrDefault();
         statusText = startupError == null
-            ? "A Details   X Play   Start Menu"
+            ? "A Details   X Play   Y Search   Start Menu"
             : $"Library unavailable: {startupError}";
 
         ShowDetailsCommand = new RelayCommand(ShowDetails, () => SelectedGame != null);
+        ConfirmCommand = new RelayCommand(Confirm);
         ActivateCommand = new RelayCommand(ActivateSelected, () => SelectedGame != null);
+        InstallCommand = new RelayCommand(
+            () => RunOperation(GameOperationKind.Install),
+            () => SelectedGame != null && !SelectedGame.IsInstalled);
+        UninstallCommand = new RelayCommand(
+            () => RunOperation(GameOperationKind.Uninstall),
+            () => SelectedGame?.IsInstalled == true);
         ToggleMenuCommand = new RelayCommand(ToggleMenu);
         BackCommand = new RelayCommand(Back);
         ExitCommand = new RelayCommand(() => ExitRequested?.Invoke(this, EventArgs.Empty));
         ToggleFullscreenCommand = new RelayCommand(() => ToggleFullscreenRequested?.Invoke(this, EventArgs.Empty));
         SelectPreviousCommand = new RelayCommand(() => SelectOffset(-1), () => Games.Count > 0);
         SelectNextCommand = new RelayCommand(() => SelectOffset(1), () => Games.Count > 0);
+        OpenSearchCommand = new RelayCommand(OpenSearch);
+        CloseSearchCommand = new RelayCommand(CloseSearch);
+        ToggleFiltersCommand = new RelayCommand(() =>
+        {
+            CloseOverlays();
+            IsFiltersVisible = true;
+        });
+        ApplyFilterCommand = new RelayCommand(ApplySelectedFilter);
+        OpenSettingsCommand = new RelayCommand(() =>
+        {
+            CloseOverlays();
+            IsSettingsVisible = true;
+        });
+        ToggleNotificationsCommand = new RelayCommand(() =>
+        {
+            CloseOverlays();
+            IsNotificationsVisible = true;
+        });
+        ConfirmActionChoiceCommand = new RelayCommand(ConfirmActionChoice, () => SelectedActionChoice != null);
+        ConfirmDialogCommand = new RelayCommand(
+            () => CompleteDialog(SelectedDialogOption),
+            () => SelectedDialogOption != null);
+        CancelDialogCommand = new RelayCommand(() => CompleteDialog(
+            DialogOptions.Count == 0 ? null : DialogOptions[Math.Clamp(dialogCancelIndex, 0, DialogOptions.Count - 1)]));
+        DismissNotificationCommand = new RelayCommand(parameter =>
+        {
+            if (parameter is NotificationMessage message)
+            {
+                runtimeHost?.Notifications.Remove(message.Id);
+            }
+        });
+
+        ApplyFilters();
     }
 
-    private void ShowDetails()
+    public void AttachRuntime(FullscreenRuntimeHost host)
     {
-        IsMenuVisible = false;
-        IsDetailsVisible = true;
+        runtimeHost = host;
+        Notifications.CollectionChanged -= Notifications_CollectionChanged;
+        Notifications = host.Notifications.Messages;
+        Notifications.CollectionChanged += Notifications_CollectionChanged;
+        OnPropertyChanged(nameof(Notifications));
+        OnPropertyChanged(nameof(NotificationCount));
     }
 
-    private void ActivateSelected()
+    public void SelectGame(Guid gameId)
     {
-        activateCount++;
-        StatusText = $"Play requested for {SelectedGame.Name}. Game launching is the next parity slice.";
+        var match = allGames.FirstOrDefault(item => item.Game.Id == gameId);
+        if (match == null)
+        {
+            return;
+        }
+
+        if (!Games.Contains(match))
+        {
+            SearchText = string.Empty;
+            SelectedFilterOption = "All";
+            ApplySelectedFilter();
+        }
+
+        SelectedGame = match;
+        LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void RefreshGame(Guid gameId)
+    {
+        allGames.FirstOrDefault(item => item.Game.Id == gameId)?.Refresh();
+        ApplyFilters();
+    }
+
+    public void SetPluginSummary(string summary)
+    {
+        pluginSummary = summary;
+        OnPropertyChanged(nameof(PluginSummary));
     }
 
     internal void SetStatusMessage(string message) => StatusText = message;
 
+    internal void OpenDialog(
+        string caption,
+        string message,
+        IReadOnlyList<string> options,
+        int defaultIndex,
+        int cancelIndex,
+        Action<string> completed)
+    {
+        CloseOverlays();
+        DialogCaption = caption;
+        DialogMessage = message;
+        DialogOptions.Clear();
+        foreach (var option in options)
+        {
+            DialogOptions.Add(option);
+        }
+
+        dialogCancelIndex = cancelIndex;
+        dialogCompleted = completed;
+        SelectedDialogOption = DialogOptions.Count == 0
+            ? null
+            : DialogOptions[Math.Clamp(defaultIndex, 0, DialogOptions.Count - 1)];
+        IsDialogVisible = true;
+    }
+
+    private void ActivateSelected()
+    {
+        ActivationRequested?.Invoke(this, EventArgs.Empty);
+        activateCount++;
+        RunOperation(SelectedGame?.IsInstalled == true ? GameOperationKind.Play : GameOperationKind.Install);
+    }
+
+    private void RunOperation(GameOperationKind kind, int choiceIndex = -1)
+    {
+        if (runtimeHost == null || SelectedGame == null)
+        {
+            StatusText = "The game-operation host is unavailable.";
+            return;
+        }
+
+        var result = kind switch
+        {
+            GameOperationKind.Play => runtimeHost.Play(SelectedGame.Game, choiceIndex),
+            GameOperationKind.Install => runtimeHost.Install(SelectedGame.Game, choiceIndex),
+            GameOperationKind.Uninstall => runtimeHost.Uninstall(SelectedGame.Game, choiceIndex),
+            _ => throw new NotSupportedException()
+        };
+
+        if (result.SelectionRequired)
+        {
+            pendingOperation = kind;
+            ActionChoices.Clear();
+            foreach (var choice in result.Choices)
+            {
+                ActionChoices.Add(choice);
+            }
+
+            SelectedActionChoice = ActionChoices.FirstOrDefault();
+            CloseOverlays();
+            IsActionPickerVisible = true;
+        }
+        else
+        {
+            StatusText = result.Message;
+        }
+    }
+
+    private void ConfirmActionChoice()
+    {
+        var index = ActionChoices.IndexOf(SelectedActionChoice);
+        if (index < 0)
+        {
+            return;
+        }
+
+        IsActionPickerVisible = false;
+        ActivationRequested?.Invoke(this, EventArgs.Empty);
+        RunOperation(pendingOperation, index);
+    }
+
+    private void Confirm()
+    {
+        if (IsDialogVisible)
+        {
+            ConfirmDialogCommand.Execute(null);
+        }
+        else if (IsActionPickerVisible)
+        {
+            ConfirmActionChoiceCommand.Execute(null);
+        }
+        else if (IsFiltersVisible)
+        {
+            ApplyFilterCommand.Execute(null);
+        }
+        else if (IsSearchVisible)
+        {
+            CloseSearchCommand.Execute(null);
+        }
+        else
+        {
+            ShowDetailsCommand.Execute(null);
+        }
+    }
+
+    private void CompleteDialog(string result)
+    {
+        if (!IsDialogVisible)
+        {
+            return;
+        }
+
+        IsDialogVisible = false;
+        var completed = dialogCompleted;
+        dialogCompleted = null;
+        completed?.Invoke(result);
+        LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ShowDetails()
+    {
+        ActivationRequested?.Invoke(this, EventArgs.Empty);
+        CloseOverlays();
+        IsDetailsVisible = true;
+    }
+
     private void ToggleMenu()
     {
-        IsDetailsVisible = false;
-        IsMenuVisible = !IsMenuVisible;
-        if (!IsMenuVisible)
+        var open = !IsMenuVisible;
+        CloseOverlays();
+        IsMenuVisible = open;
+        if (!open)
         {
             LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 
+    private void OpenSearch()
+    {
+        CloseOverlays();
+        IsSearchVisible = true;
+    }
+
+    private void CloseSearch()
+    {
+        IsSearchVisible = false;
+        LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ApplySelectedFilter()
+    {
+        settings.ActiveFilter = SelectedFilterOption ?? "All";
+        IsFiltersVisible = false;
+        ApplyFilters();
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
+        LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<GameItemViewModel> filtered = allGames;
+        if (!settings.ShowHiddenGames && SelectedFilterOption != "Hidden")
+        {
+            filtered = filtered.Where(item => !item.Game.Hidden);
+        }
+
+        filtered = (SelectedFilterOption ?? settings.ActiveFilter) switch
+        {
+            "Installed" => filtered.Where(item => item.IsInstalled),
+            "Favorites" => filtered.Where(item => item.Favorite),
+            "Recent" => filtered.Where(item => item.Game.LastActivity >= DateTime.Now.AddDays(-30)),
+            "Unplayed" => filtered.Where(item => item.Game.Playtime == 0),
+            "Hidden" => allGames.Where(item => item.Game.Hidden),
+            _ => filtered
+        };
+
+        if (!string.IsNullOrWhiteSpace(SearchText))
+        {
+            filtered = filtered.Where(item =>
+                item.Name.Contains(SearchText, StringComparison.CurrentCultureIgnoreCase) ||
+                item.MetadataLine.Contains(SearchText, StringComparison.CurrentCultureIgnoreCase));
+        }
+
+        var previous = SelectedGame;
+        Games = filtered.ToList();
+        SelectedGame = previous != null && Games.Contains(previous) ? previous : Games.FirstOrDefault();
+    }
+
     private void Back()
     {
-        if (IsDetailsVisible)
+        if (IsDetailsVisible || IsMenuVisible || IsSearchVisible || IsFiltersVisible ||
+            IsSettingsVisible || IsNotificationsVisible || IsActionPickerVisible || IsDialogVisible)
         {
-            IsDetailsVisible = false;
-            LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
+            if (IsDialogVisible)
+            {
+                CancelDialogCommand.Execute(null);
+            }
+            else
+            {
+                CloseOverlays();
+                LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
+            }
         }
-        else if (IsMenuVisible)
-        {
-            IsMenuVisible = false;
-            LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
-        }
+    }
+
+    private void CloseOverlays()
+    {
+        IsDetailsVisible = false;
+        IsMenuVisible = false;
+        IsSearchVisible = false;
+        IsFiltersVisible = false;
+        IsSettingsVisible = false;
+        IsNotificationsVisible = false;
+        IsActionPickerVisible = false;
+        IsDialogVisible = false;
     }
 
     private void SelectOffset(int offset)
@@ -134,15 +554,21 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    private void SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+    private void Notifications_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(NotificationCount));
+    }
+
+    private bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))
         {
-            return;
+            return false;
         }
 
         field = value;
         OnPropertyChanged(propertyName);
+        return true;
     }
 
     private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>

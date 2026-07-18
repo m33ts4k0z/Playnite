@@ -1,0 +1,9 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:String x:Key="LOCDesktopLibrary">Library</x:String>
+    <x:String x:Key="LOCDesktopSearch">Search games</x:String>
+    <x:String x:Key="LOCDesktopInstalled">Installed only</x:String>
+    <x:String x:Key="LOCDesktopFavorites">Favorites only</x:String>
+    <x:String x:Key="LOCDesktopPlay">Play</x:String>
+    <x:String x:Key="LOCDesktopEdit">Edit</x:String>
+</ResourceDictionary>

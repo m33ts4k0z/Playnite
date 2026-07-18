@@ -3,8 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 
-namespace Playnite.FullscreenApp.Avalonia.Controls;
+namespace Playnite.Avalonia.Controls;
 
+/// <summary>
+/// Asynchronously loads local or HTTP image paths without blocking the UI thread.
+/// The owned bitmap is replaced and disposed when a virtualized container is reused.
+/// </summary>
 public sealed class GameCoverImage : Image
 {
     public static readonly StyledProperty<string> SourcePathProperty =

@@ -7,4 +7,18 @@
     <x:String x:Key="LOCFullscreenReturn">Return to library</x:String>
     <x:String x:Key="LOCFullscreenToggleFullscreen">Toggle fullscreen</x:String>
     <x:String x:Key="LOCFullscreenExit">Exit</x:String>
+    <x:String x:Key="LOCFullscreenSearch">Search library</x:String>
+    <x:String x:Key="LOCFullscreenFilters">Filters</x:String>
+    <x:String x:Key="LOCFullscreenApply">Apply</x:String>
+    <x:String x:Key="LOCFullscreenSettings">Settings</x:String>
+    <x:String x:Key="LOCFullscreenNotifications">Notifications</x:String>
+    <x:String x:Key="LOCFullscreenNoNotifications">No notifications</x:String>
+    <x:String x:Key="LOCFullscreenShowHidden">Show hidden games</x:String>
+    <x:String x:Key="LOCFullscreenSwapButtons">Swap confirm and cancel buttons</x:String>
+    <x:String x:Key="LOCFullscreenAudio">Enable interface audio</x:String>
+    <x:String x:Key="LOCFullscreenChooseAction">Choose action</x:String>
+    <x:String x:Key="LOCFullscreenInstall">Install</x:String>
+    <x:String x:Key="LOCFullscreenUninstall">Uninstall</x:String>
+    <x:String x:Key="LOCFullscreenConfirm">Confirm</x:String>
+    <x:String x:Key="LOCFullscreenCancel">Cancel</x:String>
 </ResourceDictionary>

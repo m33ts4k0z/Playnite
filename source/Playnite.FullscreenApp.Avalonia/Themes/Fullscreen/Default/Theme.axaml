@@ -81,7 +81,7 @@
                                                            Foreground="#526173"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center" />
-                                                <local:GameCoverImage SourcePath="{Binding CoverPath}"
+                                                <foundation:GameCoverImage SourcePath="{Binding CoverPath}"
                                                                       Stretch="UniformToFill" />
                                                 <Border IsVisible="{Binding Favorite}"
                                                         Background="#D900A8E8"
@@ -99,7 +99,7 @@
                                                        FontWeight="SemiBold"
                                                        TextTrimming="CharacterEllipsis"
                                                        Foreground="{DynamicResource FullscreenTextBrush}" />
-                                            <TextBlock Text="{Binding InstallationText}"
+                                            <TextBlock Text="{Binding ActivityText}"
                                                        FontSize="13"
                                                        Foreground="{DynamicResource FullscreenMutedTextBrush}" />
                                         </StackPanel>
@@ -143,7 +143,7 @@
                           Background="#F20B0E13">
                         <Grid Margin="70" ColumnDefinitions="360,*" ColumnSpacing="54">
                             <Border CornerRadius="12" Background="#151A22" ClipToBounds="True">
-                                <local:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
+                                <foundation:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
                                                       Stretch="UniformToFill" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="18">
@@ -164,8 +164,10 @@
                                            TextWrapping="Wrap" TextTrimming="WordEllipsis"
                                            Foreground="{DynamicResource FullscreenTextBrush}" />
                                 <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,12,0,0">
-                                    <Button Classes="primary" Command="{Binding ActivateCommand}"
-                                            Content="{DynamicResource LOCFullscreenPlay}" />
+                                    <Button Name="PART_DetailsPrimaryButton" Classes="primary" Command="{Binding ActivateCommand}"
+                                            Content="Play / Install" />
+                                    <Button Command="{Binding UninstallCommand}"
+                                            Content="{DynamicResource LOCFullscreenUninstall}" />
                                     <Button Command="{Binding BackCommand}"
                                             Content="{DynamicResource LOCFullscreenReturn}" />
                                 </StackPanel>
@@ -182,12 +184,168 @@
                                 <TextBlock Text="Playnite" FontSize="36" FontWeight="Bold"
                                            Margin="0,0,0,12"
                                            Foreground="{DynamicResource FullscreenTextBrush}" />
-                                <Button Classes="primary" Command="{Binding BackCommand}"
+                                <Button Name="PART_MenuFirstButton" Classes="primary" Command="{Binding BackCommand}"
                                         Content="{DynamicResource LOCFullscreenReturn}" />
+                                <Button Command="{Binding OpenSearchCommand}"
+                                        Content="{DynamicResource LOCFullscreenSearch}" />
+                                <Button Command="{Binding ToggleFiltersCommand}"
+                                        Content="{DynamicResource LOCFullscreenFilters}" />
+                                <Button Command="{Binding ToggleNotificationsCommand}"
+                                        Content="{DynamicResource LOCFullscreenNotifications}" />
+                                <Button Command="{Binding OpenSettingsCommand}"
+                                        Content="{DynamicResource LOCFullscreenSettings}" />
                                 <Button Command="{Binding ToggleFullscreenCommand}"
                                         Content="{DynamicResource LOCFullscreenToggleFullscreen}" />
                                 <Button Command="{Binding ExitCommand}"
                                         Content="{DynamicResource LOCFullscreenExit}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsSearchVisible}"
+                          Background="#D9000000">
+                        <Border Width="760" Padding="38" CornerRadius="16"
+                                Background="{DynamicResource FullscreenSurfaceStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Spacing="18">
+                                <TextBlock Text="{DynamicResource LOCFullscreenSearch}"
+                                           FontSize="36" FontWeight="Bold"
+                                           Foreground="{DynamicResource FullscreenTextBrush}" />
+                                <TextBox Name="PART_SearchBox"
+                                         Text="{Binding SearchText, Mode=TwoWay}"
+                                         Watermark="Type a game name, platform, or genre"
+                                         FontSize="24" Padding="16" />
+                                <TextBlock Text="{Binding LibrarySummary}"
+                                           Foreground="{DynamicResource FullscreenMutedTextBrush}" />
+                                <Button Command="{Binding CloseSearchCommand}"
+                                        Content="{DynamicResource LOCFullscreenReturn}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsFiltersVisible}"
+                          Background="#D9000000">
+                        <Border Width="600" Padding="38" CornerRadius="16"
+                                Background="{DynamicResource FullscreenSurfaceStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Spacing="18">
+                                <TextBlock Text="{DynamicResource LOCFullscreenFilters}"
+                                           FontSize="36" FontWeight="Bold"
+                                           Foreground="{DynamicResource FullscreenTextBrush}" />
+                                <ListBox Name="PART_FilterList"
+                                         MaxHeight="420"
+                                         ItemsSource="{Binding FilterOptions}"
+                                         SelectedItem="{Binding SelectedFilterOption, Mode=TwoWay}" />
+                                <Button Classes="primary" Command="{Binding ApplyFilterCommand}"
+                                        Content="{DynamicResource LOCFullscreenApply}" />
+                                <Button Command="{Binding BackCommand}"
+                                        Content="{DynamicResource LOCFullscreenReturn}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsSettingsVisible}"
+                          Background="#D9000000">
+                        <Border Width="720" Padding="38" CornerRadius="16"
+                                Background="{DynamicResource FullscreenSurfaceStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Spacing="18">
+                                <TextBlock Text="{DynamicResource LOCFullscreenSettings}"
+                                           FontSize="36" FontWeight="Bold"
+                                           Foreground="{DynamicResource FullscreenTextBrush}" />
+                                <CheckBox Name="PART_FirstSetting"
+                                          Content="{DynamicResource LOCFullscreenShowHidden}"
+                                          IsChecked="{Binding ShowHiddenGames, Mode=TwoWay}" />
+                                <CheckBox Content="{DynamicResource LOCFullscreenSwapButtons}"
+                                          IsChecked="{Binding SwapConfirmCancelButtons, Mode=TwoWay}" />
+                                <CheckBox Content="{DynamicResource LOCFullscreenAudio}"
+                                          IsChecked="{Binding AudioEnabled, Mode=TwoWay}" />
+                                <Border Background="#301F2937" CornerRadius="8" Padding="14">
+                                    <TextBlock Text="{Binding PluginSummary}"
+                                               Foreground="{DynamicResource FullscreenMutedTextBrush}" />
+                                </Border>
+                                <Button Command="{Binding BackCommand}"
+                                        Content="{DynamicResource LOCFullscreenReturn}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsNotificationsVisible}"
+                          Background="#D9000000">
+                        <Border Width="780" MaxHeight="720" Padding="38" CornerRadius="16"
+                                Background="{DynamicResource FullscreenSurfaceStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Spacing="18">
+                                <TextBlock Text="{DynamicResource LOCFullscreenNotifications}"
+                                           FontSize="36" FontWeight="Bold"
+                                           Foreground="{DynamicResource FullscreenTextBrush}" />
+                                <TextBlock Text="{Binding NotificationCount, StringFormat='{}{0} messages'}"
+                                           Foreground="{DynamicResource FullscreenMutedTextBrush}" />
+                                <ListBox Name="PART_NotificationsList"
+                                         MaxHeight="450"
+                                         ItemsSource="{Binding Notifications}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="3" Padding="14" CornerRadius="8" Background="#302D3748">
+                                                <StackPanel Spacing="5">
+                                                    <TextBlock Text="{Binding Type}" FontWeight="Bold"
+                                                               Foreground="{DynamicResource FullscreenAccentBrush}" />
+                                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
+                                                               Foreground="{DynamicResource FullscreenTextBrush}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <Button Command="{Binding BackCommand}"
+                                        Content="{DynamicResource LOCFullscreenReturn}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsActionPickerVisible}"
+                          Background="#D9000000">
+                        <Border Width="650" Padding="38" CornerRadius="16"
+                                Background="{DynamicResource FullscreenSurfaceStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Spacing="18">
+                                <TextBlock Text="{DynamicResource LOCFullscreenChooseAction}"
+                                           FontSize="36" FontWeight="Bold"
+                                           Foreground="{DynamicResource FullscreenTextBrush}" />
+                                <ListBox Name="PART_ActionList"
+                                         MaxHeight="420"
+                                         ItemsSource="{Binding ActionChoices}"
+                                         SelectedItem="{Binding SelectedActionChoice, Mode=TwoWay}" />
+                                <Button Classes="primary" Command="{Binding ConfirmActionChoiceCommand}"
+                                        Content="{DynamicResource LOCFullscreenPlay}" />
+                                <Button Command="{Binding BackCommand}"
+                                        Content="{DynamicResource LOCFullscreenReturn}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsDialogVisible}"
+                          Background="#E6000000">
+                        <Border Width="700" Padding="38" CornerRadius="16"
+                                Background="{DynamicResource FullscreenSurfaceStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Spacing="18">
+                                <TextBlock Text="{Binding DialogCaption}"
+                                           FontSize="34" FontWeight="Bold" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource FullscreenTextBrush}" />
+                                <TextBlock Text="{Binding DialogMessage}"
+                                           FontSize="20" LineHeight="29" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource FullscreenTextBrush}" />
+                                <ListBox Name="PART_DialogOptions"
+                                         MaxHeight="320"
+                                         ItemsSource="{Binding DialogOptions}"
+                                         SelectedItem="{Binding SelectedDialogOption, Mode=TwoWay}" />
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <Button Classes="primary" Command="{Binding ConfirmDialogCommand}"
+                                            Content="{DynamicResource LOCFullscreenConfirm}" />
+                                    <Button Command="{Binding CancelDialogCommand}"
+                                            Content="{DynamicResource LOCFullscreenCancel}" />
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </Grid>

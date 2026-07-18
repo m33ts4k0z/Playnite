@@ -1,19 +1,31 @@
 using System.Net;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Playnite.Database;
 using Playnite.SDK.Models;
 
 namespace Playnite.FullscreenApp.Avalonia.ViewModels;
 
-public sealed class GameItemViewModel
+public sealed class GameItemViewModel : INotifyPropertyChanged
 {
     private static readonly Regex htmlTags = new("<[^>]+>", RegexOptions.Compiled);
 
     public Game Game { get; }
+    public event PropertyChangedEventHandler PropertyChanged;
     public string Name => Game.Name ?? string.Empty;
     public bool Favorite => Game.Favorite;
     public bool IsInstalled => Game.IsInstalled;
     public string InstallationText => IsInstalled ? "Installed" : "Not installed";
+    public string ActivityText => Game.IsLaunching
+        ? "Launching"
+        : Game.IsRunning
+            ? "Running"
+            : Game.IsInstalling
+                ? "Installing"
+                : Game.IsUninstalling
+                    ? "Uninstalling"
+                    : InstallationText;
     public string PlaytimeText => Game.Playtime == 0
         ? "Not played"
         : $"{TimeSpan.FromSeconds(Game.Playtime).TotalHours:0.#} hours played";
@@ -32,7 +44,29 @@ public sealed class GameItemViewModel
         DescriptionText = ToPlainText(game.Description);
         CoverPath = ResolveMediaPath(game.CoverImage, database);
         BackgroundPath = ResolveMediaPath(game.BackgroundImage, database);
+        Game.PropertyChanged += Game_PropertyChanged;
     }
+
+    private void Game_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        OnPropertyChanged(e.PropertyName);
+        OnPropertyChanged(nameof(InstallationText));
+        OnPropertyChanged(nameof(ActivityText));
+        OnPropertyChanged(nameof(PlaytimeText));
+        OnPropertyChanged(nameof(LastPlayedText));
+    }
+
+    internal void Refresh()
+    {
+        OnPropertyChanged(string.Empty);
+        OnPropertyChanged(nameof(InstallationText));
+        OnPropertyChanged(nameof(ActivityText));
+        OnPropertyChanged(nameof(PlaytimeText));
+        OnPropertyChanged(nameof(LastPlayedText));
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     private static string BuildMetadataLine(Game game, GameDatabase database)
     {

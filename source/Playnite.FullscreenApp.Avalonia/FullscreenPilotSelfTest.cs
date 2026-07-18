@@ -64,17 +64,123 @@ internal static class FullscreenPilotSelfTest
                 ? "details closed and library focus requested"
                 : throw new InvalidOperationException("Details remained open."));
 
+        viewModel.ToggleMenuCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        window.GamepadBridge.ButtonDown(GamepadButton.Confirm);
+        window.GamepadBridge.ButtonUp(GamepadButton.Confirm);
+        Record(results, "Controller activates focused menu commands", () =>
+            !viewModel.IsMenuVisible
+                ? "A invoked the focused Return to library button"
+                : throw new InvalidOperationException("The focused menu command did not run."));
+
+        var hiddenBefore = viewModel.ShowHiddenGames;
+        viewModel.OpenSettingsCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        window.GamepadBridge.ButtonDown(GamepadButton.Confirm);
+        window.GamepadBridge.ButtonUp(GamepadButton.Confirm);
+        Record(results, "Controller toggles focused settings", () =>
+            viewModel.ShowHiddenGames != hiddenBefore
+                ? "A toggled the focused Avalonia CheckBox"
+                : throw new InvalidOperationException("The focused setting did not change."));
+        viewModel.ShowHiddenGames = hiddenBefore;
+        viewModel.BackCommand.Execute(null);
+
         window.GamepadBridge.ButtonDown(GamepadButton.X);
         window.GamepadBridge.ButtonUp(GamepadButton.X);
-        Record(results, "Explicit play action mapping dispatches", () =>
+        Record(results, "Core game action mapping dispatches", () =>
             viewModel.ActivateCount == 1
-                ? "X dispatched the pilot play command once"
+                ? "X dispatched the selected game through GameActionRunner"
                 : throw new InvalidOperationException($"Dispatch count was {viewModel.ActivateCount}."));
 
         Record(results, "SDL input source initializes", () =>
             window.SdlInput.IsAvailable
                 ? window.SdlInput.Status
                 : throw new InvalidOperationException(window.SdlInput.Status));
+
+        Record(results, "Plugin and game-operation host initializes", () =>
+            window.RuntimeHost?.Actions != null && window.RuntimeHost.LoadedPluginCount == 0
+                ? $"{viewModel.PluginSummary}; real Core action orchestration is attached"
+                : throw new InvalidOperationException("The Fullscreen runtime host is unavailable."));
+
+        var unfilteredCount = viewModel.Games.Count;
+        viewModel.SearchText = "Pilot Game 99";
+        Record(results, "Search filters the live library", () =>
+            viewModel.Games.Count > 0 && viewModel.Games.Count < unfilteredCount
+                ? $"search reduced {unfilteredCount:N0} games to {viewModel.Games.Count:N0}"
+                : throw new InvalidOperationException($"Search returned {viewModel.Games.Count:N0} games."));
+        viewModel.SearchText = string.Empty;
+
+        viewModel.SelectedFilterOption = "Installed";
+        viewModel.ApplyFilterCommand.Execute(null);
+        Record(results, "Controller filter model applies", () =>
+            viewModel.Games.Count > 0 && viewModel.Games.All(game => game.IsInstalled)
+                ? $"Installed filter selected {viewModel.Games.Count:N0} games"
+                : throw new InvalidOperationException("The Installed filter included an uninstalled game."));
+        viewModel.SelectedFilterOption = "All";
+        viewModel.ApplyFilterCommand.Execute(null);
+
+        Record(results, "Settings persist atomically", () =>
+        {
+            var store = new FullscreenSettingsStore(library.ActiveUserDataDirectory);
+            store.Save(new FullscreenSettings
+            {
+                ActiveFilter = "Favorites",
+                AudioEnabled = false,
+                InterfaceVolume = 42
+            });
+            var loaded = store.Load();
+            if (loaded.ActiveFilter != "Favorites" || loaded.AudioEnabled || loaded.InterfaceVolume != 42)
+            {
+                throw new InvalidOperationException("The persisted settings did not round-trip.");
+            }
+
+            return $"settings round-tripped at {store.SettingsPath}";
+        });
+
+        window.RuntimeHost.Notifications.RemoveAll();
+        var notificationId = $"pilot-{Guid.NewGuid():N}";
+        window.RuntimeHost.Notifications.Add(notificationId, "Pilot notification", Playnite.SDK.NotificationType.Info);
+        Record(results, "Notifications reach the Fullscreen surface", () =>
+            viewModel.Notifications.Any(message => message.Id == notificationId) && viewModel.NotificationCount > 0
+                ? $"notification collection contains {viewModel.NotificationCount} messages"
+                : throw new InvalidOperationException("The notification was not surfaced."));
+        viewModel.ToggleNotificationsCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        window.GamepadBridge.ButtonDown(GamepadButton.Confirm);
+        window.GamepadBridge.ButtonUp(GamepadButton.Confirm);
+        Record(results, "Controller dismisses focused notifications", () =>
+            viewModel.Notifications.All(message => message.Id != notificationId)
+                ? "A dismissed the focused notification without an activation action"
+                : throw new InvalidOperationException("The notification remained visible."));
+        viewModel.BackCommand.Execute(null);
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            window.GamepadBridge.ButtonDown(GamepadButton.Confirm);
+            window.GamepadBridge.ButtonUp(GamepadButton.Confirm);
+        }, DispatcherPriority.Background);
+        var dialogResult = window.RuntimeHost.Dialogs.ShowMessage(
+            "Controller-operated dialog check",
+            "Pilot dialog",
+            new[] { "Yes", "No" });
+        Record(results, "Native Avalonia dialogs complete synchronously", () =>
+            dialogResult == "Yes" && !viewModel.IsDialogVisible
+                ? "nested Avalonia dispatcher returned the gamepad-selected option"
+                : throw new InvalidOperationException($"Dialog returned '{dialogResult}'."));
+
+        Record(results, "Fullscreen audio host initializes safely", () =>
+            !string.IsNullOrWhiteSpace(window.AudioService?.Status)
+                ? window.AudioService.Status
+                : throw new InvalidOperationException("The audio host did not report status."));
+
+        Record(results, "Avalonia theme package contract validates", () =>
+        {
+            var package = AvaloniaFullscreenThemePackage.Load(
+                Path.Combine(AppContext.BaseDirectory, "Themes", "Fullscreen", "Default"));
+            return package.ResourceDictionaries.Count == 1 && package.SelectorStyles.Count == 1
+                ? $"{package.Name} targets theme API {AvaloniaFullscreenThemePackage.CurrentApiVersion}"
+                : throw new InvalidOperationException("The default package manifest was incomplete.");
+        });
 
         var report = BuildReport(results);
         var reportPath = Path.Combine(AppContext.BaseDirectory, "fullscreen-pilot-results.txt");

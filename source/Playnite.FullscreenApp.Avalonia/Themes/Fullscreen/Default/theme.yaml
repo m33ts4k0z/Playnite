@@ -1,0 +1,10 @@
+Id: Playnite_builtin_AvaloniaDefaultFullscreen
+Name: Default Avalonia Fullscreen
+Author: Playnite
+Version: 1.0.0
+Mode: Fullscreen
+ThemeApiVersion: 3.0.0
+Framework: Avalonia
+EntryPoint: Theme.axaml
+Styles:
+  - Styles.axaml

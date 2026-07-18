@@ -9,10 +9,13 @@ public sealed class PlayniteLibrary : IDisposable
     private readonly string userDataDirectory;
     private readonly string configuredLibraryPath;
     private string temporaryRoot;
+    private string activeUserDataDirectory;
     private GameDatabase database;
 
     public IReadOnlyList<GameItemViewModel> Games { get; private set; } = Array.Empty<GameItemViewModel>();
     public GameDatabase Database => database;
+    public string UserDataDirectory => userDataDirectory;
+    public string ActiveUserDataDirectory => activeUserDataDirectory ?? userDataDirectory;
     public string ActiveLibraryPath => database?.DatabasePath ?? configuredLibraryPath;
     public bool IsOpen => database?.IsOpen == true;
     public bool IsTemporary => temporaryRoot != null;
@@ -25,6 +28,7 @@ public sealed class PlayniteLibrary : IDisposable
 
     public void OpenExistingLibrary()
     {
+        activeUserDataDirectory = userDataDirectory;
         PlaynitePaths.UpdateUserDataDir(userDataDirectory);
         var settingsPath = Path.Combine(configuredLibraryPath, "database.json");
         if (!File.Exists(settingsPath))
@@ -44,6 +48,7 @@ public sealed class PlayniteLibrary : IDisposable
             "Playnite-Avalonia-Pilot",
             Guid.NewGuid().ToString("N"));
         var libraryPath = Path.Combine(temporaryRoot, "library");
+        activeUserDataDirectory = temporaryRoot;
         PlaynitePaths.UpdateUserDataDir(temporaryRoot);
         Open(libraryPath);
 

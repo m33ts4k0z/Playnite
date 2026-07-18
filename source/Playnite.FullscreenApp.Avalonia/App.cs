@@ -9,6 +9,7 @@ namespace Playnite.FullscreenApp.Avalonia;
 public sealed class App : Application
 {
     private PlayniteLibrary library;
+    private FullscreenRuntimeHost runtimeHost;
 
     public override void Initialize()
     {
@@ -39,8 +40,23 @@ public sealed class App : Application
                 startupError = exception.Message;
             }
 
-            var viewModel = new FullscreenAppViewModel(library.Games, startupError);
-            var window = new MainWindow(viewModel, library, options);
+            var settingsStore = new FullscreenSettingsStore(library.ActiveUserDataDirectory);
+            var settings = options.SelfTest ? new FullscreenSettings() : settingsStore.Load();
+            var viewModel = new FullscreenAppViewModel(library.Games, settings, startupError);
+            if (library.IsOpen)
+            {
+                runtimeHost = new FullscreenRuntimeHost(library, viewModel, settings);
+                viewModel.AttachRuntime(runtimeHost);
+                runtimeHost.InitializePlugins(!options.SelfTest);
+            }
+
+            var window = new MainWindow(
+                viewModel,
+                library,
+                runtimeHost,
+                settings,
+                options.SelfTest ? null : settingsStore,
+                options);
             viewModel.ExitRequested += (_, _) => window.Close();
             viewModel.ToggleFullscreenRequested += (_, _) =>
                 window.WindowState = window.WindowState == global::Avalonia.Controls.WindowState.FullScreen
@@ -48,7 +64,11 @@ public sealed class App : Application
                     : global::Avalonia.Controls.WindowState.FullScreen;
 
             desktop.MainWindow = window;
-            desktop.Exit += (_, _) => library.Dispose();
+            desktop.Exit += (_, _) =>
+            {
+                runtimeHost?.Dispose();
+                library.Dispose();
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
