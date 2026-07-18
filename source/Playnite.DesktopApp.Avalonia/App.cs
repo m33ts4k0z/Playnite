@@ -74,7 +74,6 @@ public sealed class App : Application
                     RefreshGame = viewModel.RefreshGame
                 });
                 viewModel.AttachRuntime(runtimeHost);
-                runtimeHost.InitializePlugins(!options.SelfTest);
             }
 
             desktop.MainWindow = new MainWindow(
@@ -84,6 +83,9 @@ public sealed class App : Application
                 settings,
                 options.SelfTest ? null : settingsStore,
                 options);
+            // Parse the loose theme before third-party assemblies enter the process. A plugin
+            // with an incompatible dependency must not interfere with Avalonia's XAML discovery.
+            runtimeHost?.InitializePlugins(!options.SelfTest);
             desktop.Exit += (_, _) =>
             {
                 runtimeHost?.Dispose();

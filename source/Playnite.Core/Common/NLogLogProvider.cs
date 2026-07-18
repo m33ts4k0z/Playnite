@@ -80,7 +80,7 @@ namespace Playnite.Common
 
     public class NLogLogProvider : ILogProvider
     {
-        public NLogLogProvider()
+        public NLogLogProvider(string logFilePath = null)
         {
             if (NLog.LogManager.Configuration != null)
             {
@@ -100,13 +100,23 @@ namespace Playnite.Common
             config.LoggingRules.Add(rule1);
 #endif
 
-            var loggerDir = Path.GetDirectoryName(Assembly.GetCallingAssembly().Location);
+            if (string.IsNullOrWhiteSpace(logFilePath))
+            {
+                var callerDirectory = Path.GetDirectoryName(Assembly.GetCallingAssembly().Location) ??
+                    AppContext.BaseDirectory;
+                logFilePath = Path.Combine(callerDirectory, "nlog.log");
+            }
+
+            logFilePath = Path.GetFullPath(logFilePath);
+            var loggerDir = Path.GetDirectoryName(logFilePath);
+            Directory.CreateDirectory(loggerDir);
+            var archiveName = Path.GetFileNameWithoutExtension(logFilePath) + ".{#####}.log";
             var fileTarget = new FileTarget()
             {
-                FileName = Path.Combine(loggerDir, "nlog.log"),
+                FileName = logFilePath,
                 Layout = "${longdate}|${level:uppercase=true}:${message}${exception:format=toString}",
                 KeepFileOpen = false,
-                ArchiveFileName = Path.Combine(loggerDir, "nlog.{#####}.log"),
+                ArchiveFileName = Path.Combine(loggerDir, archiveName),
                 ArchiveAboveSize = 4096000,
                 ArchiveNumbering = ArchiveNumberingMode.Sequence,
                 MaxArchiveFiles = 2,

@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
 using Playnite.Common;
@@ -48,6 +49,7 @@ namespace Playnite.Plugins
         private readonly GameControllerFactory controllers;
         private readonly Func<ExtensionManifest, IPlayniteAPI> apiGenerator;
         private readonly Action<string> addonLocalizationLoader;
+        private readonly List<AssemblyLoadContext> pluginLoadContexts = new List<AssemblyLoadContext>();
 
         public List<(ExtensionManifest manifest, AddonLoadError error)> FailedExtensions { get; } = new List<(ExtensionManifest manifest, AddonLoadError error)>();
 
@@ -86,6 +88,9 @@ namespace Playnite.Plugins
             this.controllers = controllers;
             this.apiGenerator = apiGenerator;
             this.addonLocalizationLoader = addonLocalizationLoader;
+            SDK.Data.Markup.Init(new MarkupConverter());
+            SDK.Data.Serialization.Init(new DataSerializer());
+            SDK.Data.SQLite.Init((path, flags) => new Sqlite(path, flags));
             controllers.Installed += Controllers_Installed;
             controllers.InstallationCancelled += Controllers_InstallationCancelled;
             controllers.Starting += Controllers_Starting;
@@ -146,6 +151,12 @@ namespace Playnite.Plugins
             }
 
             Plugins = new Dictionary<Guid, LoadedPlugin>();
+            foreach (var loadContext in pluginLoadContexts)
+            {
+                loadContext.Unload();
+            }
+
+            pluginLoadContexts.Clear();
         }
 
         public static void CreatePluginFolders()
@@ -382,6 +393,8 @@ namespace Playnite.Plugins
             var manifests = GetInstalledManifests(externals).Where(a => a.Type != ExtensionType.Script && ignoreList?.Contains(a.Id) != true).ToList();
             foreach (var desc in manifests)
             {
+                AssemblyLoadContext loadContext = null;
+                var loadedAny = false;
                 if (desc.Id.IsNullOrEmpty())
                 {
                     logger.Error($"Extension {desc.Name}, doesn't have ID.");
@@ -403,9 +416,10 @@ namespace Playnite.Plugins
                 try
                 {
                     addonLocalizationLoader?.Invoke(desc.DirectoryPath);
-                    var plugins = LoadPlugins(desc, apiGenerator);
-                    foreach (var plugin in plugins)
+                    var pluginTypes = LoadPluginTypes(desc, out loadContext);
+                    foreach (var pluginType in pluginTypes)
                     {
+                        var plugin = (Plugin)Activator.CreateInstance(pluginType, new object[] { apiGenerator(desc) });
                         if (plugin.Id == default)
                         {
                             logger.Error($"Plugin {plugin.GetType()} doesn't have plugin ID specified.");
@@ -419,6 +433,7 @@ namespace Playnite.Plugins
                         }
 
                         Plugins.Add(plugin.Id, new LoadedPlugin(plugin, desc));
+                        loadedAny = true;
                         logger.Info($"Loaded plugin: {desc.Name}, version {desc.Version}");
                     }
                 }
@@ -440,14 +455,29 @@ namespace Playnite.Plugins
 
                     FailedExtensions.Add((desc, AddonLoadError.Uknown));
                 }
+                finally
+                {
+                    if (loadedAny)
+                    {
+                        pluginLoadContexts.Add(loadContext);
+                    }
+                    else
+                    {
+                        UnloadFailedContext(loadContext);
+                    }
+                }
             }
         }
 
-        private IEnumerable<Plugin> LoadPlugins(ExtensionManifest descriptor, Func<ExtensionManifest, IPlayniteAPI> apiGenerator)
+        private List<Type> LoadPluginTypes(
+            ExtensionManifest descriptor,
+            out AssemblyLoadContext loadContext)
         {
             var asmPath = Path.Combine(Path.GetDirectoryName(descriptor.DescriptionPath), descriptor.Module);
-            var asmName = AssemblyName.GetAssemblyName(asmPath);
-            var assembly = Assembly.Load(asmName);
+            var extensionContext = new ExtensionAssemblyLoadContext(asmPath);
+            loadContext = extensionContext;
+            var assembly = extensionContext.LoadFromAssemblyPath(Path.GetFullPath(asmPath));
+            var pluginTypes = new List<Type>();
             if (VerifyAssemblyReferences(assembly, descriptor))
             {
                 foreach (Type type in assembly.GetTypes())
@@ -464,7 +494,7 @@ namespace Playnite.Plugins
                             var load = Attribute.IsDefined(type, typeof(LoadPluginAttribute));
                             if ((ignore && load) || !ignore)
                             {
-                                yield return (Plugin)Activator.CreateInstance(type, new object[] { apiGenerator(descriptor) });
+                                pluginTypes.Add(type);
                             }
                         }
                     }
@@ -474,7 +504,50 @@ namespace Playnite.Plugins
             {
                 logger.Error($"Plugin dependencices are not compatible: {descriptor.Name}");
                 FailedExtensions.Add((descriptor, AddonLoadError.SDKVersion));
-                // TODO: Unload assembly once Playnite switches to .NET Core
+            }
+
+            return pluginTypes;
+        }
+
+        private static void UnloadFailedContext(AssemblyLoadContext loadContext)
+        {
+            loadContext?.Unload();
+        }
+
+        private sealed class ExtensionAssemblyLoadContext : AssemblyLoadContext
+        {
+            private readonly AssemblyDependencyResolver dependencyResolver;
+            private readonly string extensionDirectory;
+
+            public ExtensionAssemblyLoadContext(string assemblyPath) : base(isCollectible: true)
+            {
+                assemblyPath = Path.GetFullPath(assemblyPath);
+                dependencyResolver = new AssemblyDependencyResolver(assemblyPath);
+                extensionDirectory = Path.GetDirectoryName(assemblyPath);
+            }
+
+            protected override Assembly Load(AssemblyName assemblyName)
+            {
+                if (string.Equals(assemblyName.Name, "Playnite.SDK", StringComparison.OrdinalIgnoreCase))
+                {
+                    return typeof(Plugin).Assembly;
+                }
+
+                var assemblyPath = dependencyResolver.ResolveAssemblyToPath(assemblyName) ??
+                    Path.Combine(extensionDirectory, assemblyName.Name + ".dll");
+                return File.Exists(assemblyPath) ? LoadFromAssemblyPath(assemblyPath) : null;
+            }
+
+            protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
+            {
+                var libraryPath = dependencyResolver.ResolveUnmanagedDllToPath(unmanagedDllName) ??
+                    Path.Combine(extensionDirectory, unmanagedDllName);
+                if (!File.Exists(libraryPath) && !Path.HasExtension(unmanagedDllName))
+                {
+                    libraryPath += ".dll";
+                }
+
+                return File.Exists(libraryPath) ? LoadUnmanagedDllFromPath(libraryPath) : IntPtr.Zero;
             }
         }
 

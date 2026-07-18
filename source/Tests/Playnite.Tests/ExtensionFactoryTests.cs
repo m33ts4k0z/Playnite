@@ -2,11 +2,18 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Loader;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Moq;
 using NUnit.Framework;
 using Playnite.Common;
+using Playnite.Controllers;
+using Playnite.Database;
 using Playnite.Plugins;
+using Playnite.SDK;
+using Playnite.SDK.Plugins;
 
 namespace Playnite.Tests
 {
@@ -31,6 +38,75 @@ namespace Playnite.Tests
             Assert.AreEqual("3.0", list[0].Version);
             Assert.AreEqual("5.0.1.2", list[1].Version);
             Assert.AreEqual("1.0.1", list[2].Version);
+        }
+
+        [Test]
+        public void LoadPluginFromExtensionDirectoryTest()
+        {
+            var extensionDirectory = Path.Combine(
+                TestContext.CurrentContext.TestDirectory,
+                "Extensions",
+                "TestGameLibrary");
+            var controllers = new GameControllerFactory();
+            using (var factory = new ExtensionFactory(
+                Mock.Of<IGameDatabase>(),
+                controllers,
+                _ => Mock.Of<IPlayniteAPI>()))
+            {
+                factory.LoadPlugins(
+                    new List<string> { "Test_Generic_Plugin" },
+                    false,
+                    new List<string> { extensionDirectory });
+
+                Assert.IsEmpty(factory.FailedExtensions);
+                Assert.AreEqual(1, factory.LibraryPlugins.Count);
+                var plugin = factory.LibraryPlugins.Single();
+                Assert.AreEqual("Test Library", plugin.Name);
+
+                var loadContext = AssemblyLoadContext.GetLoadContext(plugin.GetType().Assembly);
+                Assert.IsNotNull(loadContext);
+                Assert.AreNotSame(AssemblyLoadContext.Default, loadContext);
+                Assert.IsTrue(loadContext.IsCollectible);
+                Assert.AreSame(typeof(Plugin).Assembly, plugin.GetType().BaseType.Assembly);
+            }
+        }
+
+        [Test]
+        [Apartment(ApartmentState.STA)]
+        public void IsolatedPluginLoadsWpfResourcesTest()
+        {
+            using (var tempDirectory = TempDirectory.Create())
+            {
+                var paths = new Mock<IPlaynitePathsAPI>();
+                paths.SetupGet(item => item.ExtensionsDataPath).Returns(tempDirectory.TempPath);
+                var api = new Mock<IPlayniteAPI>();
+                api.SetupGet(item => item.Paths).Returns(paths.Object);
+                api.SetupGet(item => item.Notifications).Returns(Mock.Of<INotificationsAPI>());
+
+                var extensionDirectory = Path.Combine(
+                    TestContext.CurrentContext.TestDirectory,
+                    "Extensions",
+                    "Tests");
+                var controllers = new GameControllerFactory();
+                using (var factory = new ExtensionFactory(
+                    Mock.Of<IGameDatabase>(),
+                    controllers,
+                    _ => api.Object))
+                {
+                    factory.LoadPlugins(
+                        new List<string> { "Test_GameLibrary" },
+                        false,
+                        new List<string> { extensionDirectory });
+
+                    Assert.IsEmpty(factory.FailedExtensions);
+                    Assert.AreEqual(1, factory.GenericPlugins.Count);
+                    var plugin = factory.GenericPlugins.Single();
+                    var settingsView = plugin.GetSettingsView(false);
+                    Assert.IsNotNull(settingsView);
+                    Assert.AreEqual("TestPluginSettingsView", settingsView.GetType().Name);
+                    Assert.AreSame(plugin.GetType().Assembly, settingsView.GetType().Assembly);
+                }
+            }
         }
     }
 }

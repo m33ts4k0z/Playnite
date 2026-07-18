@@ -85,6 +85,18 @@ namespace Playnite.SDK
     {
         private static ILogProvider logManager;
 
+        private static bool IsCoreAssembly(string assemblyName)
+        {
+            return assemblyName == "Playnite" ||
+                assemblyName == "Playnite.Core" ||
+                assemblyName == "Playnite.DesktopApp" ||
+                assemblyName == "Playnite.FullscreenApp" ||
+                assemblyName == "Playnite.Avalonia" ||
+                assemblyName == "Playnite.Avalonia.App" ||
+                assemblyName == "Playnite.DesktopApp.Avalonia" ||
+                assemblyName == "Playnite.FullscreenApp.Avalonia";
+        }
+
         /// <summary>
         /// Initializes log manager using specific log provider.
         /// </summary>
@@ -104,9 +116,8 @@ namespace Playnite.SDK
             if (logManager != null)
             {
                 var asmName = Assembly.GetCallingAssembly().GetName().Name;
-                var isCore = asmName == "Playnite.DesktopApp" || asmName == "Playnite.FullscreenApp" || asmName == "Playnite";
                 var className = (new StackFrame(1)).GetMethod().DeclaringType.Name;
-                if (isCore)
+                if (IsCoreAssembly(asmName))
                 {
                     return logManager.GetLogger(className);
                 }
@@ -137,8 +148,7 @@ namespace Playnite.SDK
             if (logManager != null)
             {
                 var asmName = Assembly.GetCallingAssembly().GetName().Name;
-                var isCore = asmName == "Playnite.DesktopApp" || asmName == "Playnite.FullscreenApp" || asmName == "Playnite";
-                if (isCore || loggerName.Contains("#"))
+                if (IsCoreAssembly(asmName) || loggerName.Contains("#"))
                 {
                     return logManager.GetLogger(loggerName);
                 }

@@ -47,7 +47,6 @@ public sealed class App : Application
             {
                 runtimeHost = new FullscreenRuntimeHost(library, viewModel, settings);
                 viewModel.AttachRuntime(runtimeHost);
-                runtimeHost.InitializePlugins(!options.SelfTest);
             }
 
             var window = new MainWindow(
@@ -64,6 +63,9 @@ public sealed class App : Application
                     : global::Avalonia.Controls.WindowState.FullScreen;
 
             desktop.MainWindow = window;
+            // Parse the loose theme before third-party assemblies enter the process. A plugin
+            // with an incompatible dependency must not interfere with Avalonia's XAML discovery.
+            runtimeHost?.InitializePlugins(!options.SelfTest);
             desktop.Exit += (_, _) =>
             {
                 runtimeHost?.Dispose();
