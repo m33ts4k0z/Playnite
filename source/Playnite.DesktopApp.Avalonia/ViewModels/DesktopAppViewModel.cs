@@ -282,6 +282,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand OpenMetadataDownloadCommand { get; }
     public ICommand OpenLibrarySyncCommand { get; }
     public ICommand OpenInstalledGameImportCommand { get; }
+    public ICommand AddManualGameCommand { get; }
     public ICommand SetGridViewCommand { get; }
     public ICommand SetListViewCommand { get; }
     public ICommand ClearSearchCommand { get; }
@@ -397,6 +398,11 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
         OpenInstalledGameImportCommand = new AppRelayCommand(OpenInstalledGameImport,
             () => database != null && runtimeHost != null && !Editor.IsVisible &&
+                !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
+        AddManualGameCommand = new AppRelayCommand(AddManualGame,
+            () => database != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
@@ -619,6 +625,35 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         RaiseGameCommandStates();
     }
 
+    private void AddManualGame()
+    {
+        var game = new Game
+        {
+            Name = "New Game",
+            CompletionStatusId = database.GetCompletionStatusSettings().DefaultStatus
+        };
+        database.Games.Add(game);
+        var opened = OpenGameEditor(game.Id, result =>
+        {
+            if (result == true)
+            {
+                SynchronizeLibrary();
+                SelectGame(game.Id);
+            }
+            else
+            {
+                database.Games.Remove(game);
+                SynchronizeLibrary();
+                StatusText = "Manual game creation cancelled.";
+            }
+        });
+        if (!opened)
+        {
+            database.Games.Remove(game);
+            SynchronizeLibrary();
+        }
+    }
+
     private void ConfirmActionChoice()
     {
         var index = ActionChoices.IndexOf(SelectedActionChoice);
@@ -740,6 +775,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)OpenMetadataDownloadCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenLibrarySyncCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenInstalledGameImportCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)AddManualGameCommand).RaiseCanExecuteChanged();
     }
 
     private void SynchronizeLibrary()

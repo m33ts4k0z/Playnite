@@ -92,6 +92,8 @@
                                             Command="{Binding OpenLibrarySyncCommand}" />
                                     <Button Content="{DynamicResource LOCDesktopImportInstalled}"
                                             Command="{Binding OpenInstalledGameImportCommand}" />
+                                    <Button Content="{DynamicResource LOCDesktopAddManualGame}"
+                                            Command="{Binding AddManualGameCommand}" />
                                 </StackPanel>
                             </ScrollViewer>
                         </Border>

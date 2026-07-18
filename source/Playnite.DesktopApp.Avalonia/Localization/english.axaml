@@ -23,6 +23,7 @@
     <x:String x:Key="LOCDesktopUpdateStart">Start update</x:String>
     <x:String x:Key="LOCDesktopUpdateCancel">Cancel update</x:String>
     <x:String x:Key="LOCDesktopImportInstalled">Import installed games</x:String>
+    <x:String x:Key="LOCDesktopAddManualGame">Add game manually</x:String>
     <x:String x:Key="LOCDesktopDetectInstalled">Detect installed programs</x:String>
     <x:String x:Key="LOCDesktopScanFolder">Scan folder</x:String>
     <x:String x:Key="LOCDesktopAddExecutable">Add executable</x:String>

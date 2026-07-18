@@ -1101,6 +1101,62 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException("Folder/direct executable imports lost icon, database, or update state."));
         viewModel.InstalledGameImport.DownloadMetadataOnImport = true;
 
+        var gameIdsBeforeManualAdd = library.Database.Games.Select(game => game.Id).ToHashSet();
+        var gamesBeforeManualAdd = library.Database.Games.Count;
+        viewModel.AddManualGameCommand.Execute(null);
+        var stagedManualGame = library.Database.Games.SingleOrDefault(game =>
+            !gameIdsBeforeManualAdd.Contains(game.Id));
+        Record(results, "Manual add stages a default Core game in the full editor", () =>
+            stagedManualGame != null &&
+            library.Database.Games.Count == gamesBeforeManualAdd + 1 &&
+            stagedManualGame.Name == "New Game" &&
+            stagedManualGame.CompletionStatusId == defaultCompletionStatusId &&
+            viewModel.Editor.IsVisible &&
+            viewModel.Editor.IsSingleEdit &&
+            viewModel.Editor.Name == "New Game" &&
+            !viewModel.AddManualGameCommand.CanExecute(null) &&
+            viewModel.Games.All(game => game.Game.Id != stagedManualGame.Id)
+                ? "the provisional record is isolated from live wrappers until its editor is saved"
+                : throw new InvalidOperationException("Manual game staging did not match the legacy editor contract."));
+
+        viewModel.Editor.Name = "Pilot Manual Game";
+        viewModel.Editor.Description = "Created through the native Avalonia manual-add flow.";
+        viewModel.Editor.IsInstalled = true;
+        viewModel.Editor.SaveCommand.Execute(null);
+        var savedManualGame = stagedManualGame == null
+            ? null
+            : library.Database.Games[stagedManualGame.Id];
+        Record(results, "Manual add keeps, refreshes, and selects a saved game", () =>
+            savedManualGame != null &&
+            !viewModel.Editor.IsVisible &&
+            library.Database.Games.Count == gamesBeforeManualAdd + 1 &&
+            savedManualGame.Name == "Pilot Manual Game" &&
+            savedManualGame.Description == "Created through the native Avalonia manual-add flow." &&
+            savedManualGame.IsInstalled &&
+            savedManualGame.CompletionStatusId == defaultCompletionStatusId &&
+            viewModel.SelectedGame?.Game.Id == savedManualGame.Id &&
+            viewModel.Games.Any(game => game.Game.Id == savedManualGame.Id) &&
+            viewModel.AddManualGameCommand.CanExecute(null)
+                ? "the saved Core record joined the live library and became the selected game"
+                : throw new InvalidOperationException("A saved manual game was not retained, refreshed, or selected."));
+
+        var gamesBeforeManualCancel = library.Database.Games.Count;
+        var manualIdsBeforeCancel = library.Database.Games.Select(game => game.Id).ToHashSet();
+        viewModel.AddManualGameCommand.Execute(null);
+        var cancelledManualGame = library.Database.Games.SingleOrDefault(game =>
+            !manualIdsBeforeCancel.Contains(game.Id));
+        viewModel.Editor.CancelCommand.Execute(null);
+        Record(results, "Manual add removes a provisional game on cancel", () =>
+            cancelledManualGame != null &&
+            !viewModel.Editor.IsVisible &&
+            library.Database.Games.Count == gamesBeforeManualCancel &&
+            library.Database.Games[cancelledManualGame.Id] == null &&
+            viewModel.Games.All(game => game.Game.Id != cancelledManualGame.Id) &&
+            viewModel.StatusText == "Manual game creation cancelled." &&
+            viewModel.AddManualGameCommand.CanExecute(null)
+                ? "cancel left no database or live-wrapper residue"
+                : throw new InvalidOperationException("A cancelled manual game remained in the library."));
+
         viewModel.MetadataDownload.ConfigureProviders(
             () => window.RuntimeHost.Extensions.MetadataPlugins,
             () => window.RuntimeHost.Extensions.LibraryPlugins);
