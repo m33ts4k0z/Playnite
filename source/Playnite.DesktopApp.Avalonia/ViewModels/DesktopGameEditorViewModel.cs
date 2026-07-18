@@ -21,6 +21,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private string sortingName;
     private string releaseDate;
     private string userScore;
+    private string criticScore;
+    private string communityScore;
     private string description;
     private string notes;
     private bool favorite;
@@ -30,6 +32,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private string validationMessage;
     private bool applyReleaseDate;
     private bool applyUserScore;
+    private bool applyCriticScore;
+    private bool applyCommunityScore;
     private bool applyDescription;
     private bool applyNotes;
     private bool applyFavorite;
@@ -42,6 +46,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private bool applyTags;
     private bool applyDevelopers;
     private bool applyPublishers;
+    private bool applyFeatures;
+    private bool applySeries;
+    private bool applyAgeRatings;
+    private bool applyRegions;
     private string coverImage;
     private string backgroundImage;
     private string icon;
@@ -89,6 +97,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private bool applyUseGlobalGameStartedScript;
 
     private readonly record struct RuntimeValues(ulong Playtime, ulong PlayCount, ulong? InstallSize);
+    private readonly record struct ScoreValues(int? UserScore, int? CriticScore, int? CommunityScore);
 
     public event PropertyChangedEventHandler PropertyChanged;
 
@@ -100,6 +109,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public string SortingName { get => sortingName; set => SetField(ref sortingName, value); }
     public string ReleaseDate { get => releaseDate; set => SetField(ref releaseDate, value); }
     public string UserScore { get => userScore; set => SetField(ref userScore, value); }
+    public string CriticScore { get => criticScore; set => SetField(ref criticScore, value); }
+    public string CommunityScore { get => communityScore; set => SetField(ref communityScore, value); }
     public string Description { get => description; set => SetField(ref description, value); }
     public string Notes { get => notes; set => SetField(ref notes, value); }
     public string InstallDirectory { get => installDirectory; set => SetField(ref installDirectory, value); }
@@ -188,6 +199,18 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         set => SetApplyField(ref applyUserScore, value, nameof(CanEditUserScore));
     }
 
+    public bool ApplyCriticScore
+    {
+        get => applyCriticScore;
+        set => SetApplyField(ref applyCriticScore, value, nameof(CanEditCriticScore));
+    }
+
+    public bool ApplyCommunityScore
+    {
+        get => applyCommunityScore;
+        set => SetApplyField(ref applyCommunityScore, value, nameof(CanEditCommunityScore));
+    }
+
     public bool ApplyDescription
     {
         get => applyDescription;
@@ -258,6 +281,30 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     {
         get => applyPublishers;
         set => SetApplyField(ref applyPublishers, value, nameof(CanEditPublishers));
+    }
+
+    public bool ApplyFeatures
+    {
+        get => applyFeatures;
+        set => SetApplyField(ref applyFeatures, value, nameof(CanEditFeatures));
+    }
+
+    public bool ApplySeries
+    {
+        get => applySeries;
+        set => SetApplyField(ref applySeries, value, nameof(CanEditSeries));
+    }
+
+    public bool ApplyAgeRatings
+    {
+        get => applyAgeRatings;
+        set => SetApplyField(ref applyAgeRatings, value, nameof(CanEditAgeRatings));
+    }
+
+    public bool ApplyRegions
+    {
+        get => applyRegions;
+        set => SetApplyField(ref applyRegions, value, nameof(CanEditRegions));
     }
 
     public bool ApplyCoverImage
@@ -418,6 +465,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
 
     public bool CanEditReleaseDate => IsSingleEdit || ApplyReleaseDate;
     public bool CanEditUserScore => IsSingleEdit || ApplyUserScore;
+    public bool CanEditCriticScore => IsSingleEdit || ApplyCriticScore;
+    public bool CanEditCommunityScore => IsSingleEdit || ApplyCommunityScore;
     public bool CanEditDescription => IsSingleEdit || ApplyDescription;
     public bool CanEditNotes => IsSingleEdit || ApplyNotes;
     public bool CanEditFavorite => IsSingleEdit || ApplyFavorite;
@@ -430,6 +479,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public bool CanEditTags => IsSingleEdit || ApplyTags;
     public bool CanEditDevelopers => IsSingleEdit || ApplyDevelopers;
     public bool CanEditPublishers => IsSingleEdit || ApplyPublishers;
+    public bool CanEditFeatures => IsSingleEdit || ApplyFeatures;
+    public bool CanEditSeries => IsSingleEdit || ApplySeries;
+    public bool CanEditAgeRatings => IsSingleEdit || ApplyAgeRatings;
+    public bool CanEditRegions => IsSingleEdit || ApplyRegions;
     public bool CanEditCoverImage => IsSingleEdit || ApplyCoverImage;
     public bool CanEditBackgroundImage => IsSingleEdit || ApplyBackgroundImage;
     public bool CanEditIcon => IsSingleEdit || ApplyIcon;
@@ -476,6 +529,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public IReadOnlyList<DesktopMetadataOption> Tags { get; }
     public IReadOnlyList<DesktopMetadataOption> Developers { get; }
     public IReadOnlyList<DesktopMetadataOption> Publishers { get; }
+    public IReadOnlyList<DesktopMetadataOption> Features { get; }
+    public IReadOnlyList<DesktopMetadataOption> Series { get; }
+    public IReadOnlyList<DesktopMetadataOption> AgeRatings { get; }
+    public IReadOnlyList<DesktopMetadataOption> Regions { get; }
     public IReadOnlyList<DesktopEmulatorOption> Emulators { get; }
     public ObservableCollection<DesktopLinkEditorItem> Links { get; } = new();
     public ObservableCollection<DesktopGameActionEditorItem> GameActions { get; } = new();
@@ -506,6 +563,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         Tags = BuildMultiOptions(database?.Tags?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
         Developers = BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
         Publishers = BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        Features = BuildMultiOptions(database?.Features?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        Series = BuildMultiOptions(database?.Series?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        AgeRatings = BuildMultiOptions(database?.AgeRatings?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        Regions = BuildMultiOptions(database?.Regions?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
         Emulators = BuildEmulatorOptions(database?.Emulators);
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(Cancel);
@@ -557,6 +618,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         SortingName = IsSingleEdit ? first.SortingName ?? string.Empty : string.Empty;
         ReleaseDate = CommonValue(games, game => game.ReleaseDate?.Serialize() ?? string.Empty);
         UserScore = CommonValue(games, game => game.UserScore?.ToString() ?? string.Empty);
+        CriticScore = CommonValue(games, game => game.CriticScore?.ToString() ?? string.Empty);
+        CommunityScore = CommonValue(games, game => game.CommunityScore?.ToString() ?? string.Empty);
         Description = CommonValue(games, game => game.Description ?? string.Empty);
         Notes = CommonValue(games, game => game.Notes ?? string.Empty);
         InstallDirectory = CommonValue(games, game => game.InstallDirectory ?? string.Empty);
@@ -589,6 +652,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         SetSelected(Tags, CommonIds(games, game => game.TagIds));
         SetSelected(Developers, CommonIds(games, game => game.DeveloperIds));
         SetSelected(Publishers, CommonIds(games, game => game.PublisherIds));
+        SetSelected(Features, CommonIds(games, game => game.FeatureIds));
+        SetSelected(Series, CommonIds(games, game => game.SeriesIds));
+        SetSelected(AgeRatings, CommonIds(games, game => game.AgeRatingIds));
+        SetSelected(Regions, CommonIds(games, game => game.RegionIds));
         CoverImage = CommonValue(games, game => game.CoverImage ?? string.Empty);
         BackgroundImage = CommonValue(games, game => game.BackgroundImage ?? string.Empty);
         Icon = CommonValue(games, game => game.Icon ?? string.Empty);
@@ -631,7 +698,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             return;
         }
 
-        if (!TryParseReleaseDate(out var parsedReleaseDate) || !TryParseUserScore(out var parsedScore))
+        if (!TryParseReleaseDate(out var parsedReleaseDate) || !TryParseScores(out var scores))
         {
             return;
         }
@@ -687,7 +754,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
                         ApplySingleGameValues(
                             game,
                             parsedReleaseDate,
-                            parsedScore,
+                            scores,
                             runtimeValues,
                             preparedLinks,
                             preparedGameActions,
@@ -698,7 +765,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
                         ApplyBulkValues(
                             game,
                             parsedReleaseDate,
-                            parsedScore,
+                            scores,
                             runtimeValues,
                             preparedLinks,
                             preparedGameActions,
@@ -730,7 +797,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private void ApplySingleGameValues(
         Game game,
         ReleaseDate? parsedReleaseDate,
-        int? parsedScore,
+        ScoreValues scores,
         RuntimeValues runtimeValues,
         IReadOnlyList<Link> preparedLinks,
         IReadOnlyList<GameAction> preparedGameActions,
@@ -739,7 +806,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         game.Name = Name.Trim();
         game.SortingName = NullIfWhiteSpace(SortingName);
         game.ReleaseDate = parsedReleaseDate;
-        game.UserScore = parsedScore;
+        game.UserScore = scores.UserScore;
+        game.CriticScore = scores.CriticScore;
+        game.CommunityScore = scores.CommunityScore;
         game.Description = Description ?? string.Empty;
         game.Notes = Notes ?? string.Empty;
         game.InstallDirectory = NullIfWhiteSpace(InstallDirectory);
@@ -774,6 +843,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         game.TagIds = SelectedIds(Tags);
         game.DeveloperIds = SelectedIds(Developers);
         game.PublisherIds = SelectedIds(Publishers);
+        game.FeatureIds = SelectedIds(Features);
+        game.SeriesIds = SelectedIds(Series);
+        game.AgeRatingIds = SelectedIds(AgeRatings);
+        game.RegionIds = SelectedIds(Regions);
         game.Links = new ObservableCollection<Link>(preparedLinks.Select(link => link.GetCopy()));
         game.IncludeLibraryPluginAction = IncludeLibraryPluginAction;
         game.GameActions = new ObservableCollection<GameAction>(
@@ -784,14 +857,16 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private void ApplyBulkValues(
         Game game,
         ReleaseDate? parsedReleaseDate,
-        int? parsedScore,
+        ScoreValues scores,
         RuntimeValues runtimeValues,
         IReadOnlyList<Link> preparedLinks,
         IReadOnlyList<GameAction> preparedGameActions,
         IReadOnlyList<GameRom> preparedRoms)
     {
         if (ApplyReleaseDate) game.ReleaseDate = parsedReleaseDate;
-        if (ApplyUserScore) game.UserScore = parsedScore;
+        if (ApplyUserScore) game.UserScore = scores.UserScore;
+        if (ApplyCriticScore) game.CriticScore = scores.CriticScore;
+        if (ApplyCommunityScore) game.CommunityScore = scores.CommunityScore;
         if (ApplyDescription) game.Description = Description ?? string.Empty;
         if (ApplyNotes) game.Notes = Notes ?? string.Empty;
         if (ApplyInstallDirectory) game.InstallDirectory = NullIfWhiteSpace(InstallDirectory);
@@ -830,6 +905,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         if (ApplyTags) game.TagIds = SelectedIds(Tags);
         if (ApplyDevelopers) game.DeveloperIds = SelectedIds(Developers);
         if (ApplyPublishers) game.PublisherIds = SelectedIds(Publishers);
+        if (ApplyFeatures) game.FeatureIds = SelectedIds(Features);
+        if (ApplySeries) game.SeriesIds = SelectedIds(Series);
+        if (ApplyAgeRatings) game.AgeRatingIds = SelectedIds(AgeRatings);
+        if (ApplyRegions) game.RegionIds = SelectedIds(Regions);
         if (ApplyLinks) game.Links = new ObservableCollection<Link>(preparedLinks.Select(link => link.GetCopy()));
         if (ApplyIncludeLibraryPluginAction) game.IncludeLibraryPluginAction = IncludeLibraryPluginAction;
         if (ApplyGameActions)
@@ -1051,21 +1130,39 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         return true;
     }
 
-    private bool TryParseUserScore(out int? parsedScore)
+    private bool TryParseScores(out ScoreValues scores)
     {
-        parsedScore = null;
-        if (IsBulkEdit && !ApplyUserScore || string.IsNullOrWhiteSpace(UserScore))
+        scores = default;
+        if (!TryParseScore(UserScore, IsSingleEdit || ApplyUserScore, "User score", out var user) ||
+            !TryParseScore(CriticScore, IsSingleEdit || ApplyCriticScore, "Critic score", out var critic) ||
+            !TryParseScore(
+                CommunityScore,
+                IsSingleEdit || ApplyCommunityScore,
+                "Community score",
+                out var community))
+        {
+            return false;
+        }
+
+        scores = new ScoreValues(user, critic, community);
+        return true;
+    }
+
+    private bool TryParseScore(string input, bool shouldParse, string fieldName, out int? value)
+    {
+        value = null;
+        if (!shouldParse || string.IsNullOrWhiteSpace(input))
         {
             return true;
         }
 
-        if (!int.TryParse(UserScore.Trim(), out var score) || score is < 0 or > 100)
+        if (!int.TryParse(input.Trim(), out var parsed) || parsed is < 0 or > 100)
         {
-            ValidationMessage = "User score must be a whole number from 0 to 100.";
+            ValidationMessage = $"{fieldName} must be a whole number from 0 to 100.";
             return false;
         }
 
-        parsedScore = score;
+        value = parsed;
         return true;
     }
 
@@ -1128,10 +1225,12 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     }
 
     private bool HasBulkChanges() =>
-        ApplyReleaseDate || ApplyUserScore || ApplyDescription || ApplyNotes ||
+        ApplyReleaseDate || ApplyUserScore || ApplyCriticScore || ApplyCommunityScore ||
+        ApplyDescription || ApplyNotes ||
         ApplyFavorite || ApplyHidden || ApplySource || ApplyCompletionStatus ||
         ApplyGenres || ApplyPlatforms || ApplyCategories || ApplyTags ||
-        ApplyDevelopers || ApplyPublishers || ApplyCoverImage ||
+        ApplyDevelopers || ApplyPublishers || ApplyFeatures || ApplySeries ||
+        ApplyAgeRatings || ApplyRegions || ApplyCoverImage ||
         ApplyBackgroundImage || ApplyIcon || ApplyLinks ||
         ApplyIncludeLibraryPluginAction || ApplyGameActions || ApplyRoms ||
         ApplyInstallDirectory || ApplyIsInstalled || ApplyOverrideInstallState ||
@@ -1144,6 +1243,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     {
         ApplyReleaseDate = false;
         ApplyUserScore = false;
+        ApplyCriticScore = false;
+        ApplyCommunityScore = false;
         ApplyDescription = false;
         ApplyNotes = false;
         ApplyFavorite = false;
@@ -1156,6 +1257,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         ApplyTags = false;
         ApplyDevelopers = false;
         ApplyPublishers = false;
+        ApplyFeatures = false;
+        ApplySeries = false;
+        ApplyAgeRatings = false;
+        ApplyRegions = false;
         ApplyCoverImage = false;
         ApplyBackgroundImage = false;
         ApplyIcon = false;
@@ -1352,6 +1457,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     {
         OnPropertyChanged(nameof(CanEditReleaseDate));
         OnPropertyChanged(nameof(CanEditUserScore));
+        OnPropertyChanged(nameof(CanEditCriticScore));
+        OnPropertyChanged(nameof(CanEditCommunityScore));
         OnPropertyChanged(nameof(CanEditDescription));
         OnPropertyChanged(nameof(CanEditNotes));
         OnPropertyChanged(nameof(CanEditFavorite));
@@ -1364,6 +1471,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanEditTags));
         OnPropertyChanged(nameof(CanEditDevelopers));
         OnPropertyChanged(nameof(CanEditPublishers));
+        OnPropertyChanged(nameof(CanEditFeatures));
+        OnPropertyChanged(nameof(CanEditSeries));
+        OnPropertyChanged(nameof(CanEditAgeRatings));
+        OnPropertyChanged(nameof(CanEditRegions));
         OnPropertyChanged(nameof(CanEditCoverImage));
         OnPropertyChanged(nameof(CanEditBackgroundImage));
         OnPropertyChanged(nameof(CanEditIcon));

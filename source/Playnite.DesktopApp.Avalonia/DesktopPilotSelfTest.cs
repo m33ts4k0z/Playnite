@@ -161,12 +161,19 @@ internal static class DesktopPilotSelfTest
             viewModel.Editor.Tags.Count == 2 &&
             viewModel.Editor.Developers.Count == 2 &&
             viewModel.Editor.Publishers.Count == 2 &&
+            viewModel.Editor.Features.Count == 2 &&
+            viewModel.Editor.Series.Count == 2 &&
+            viewModel.Editor.AgeRatings.Count == 2 &&
+            viewModel.Editor.Regions.Any(option => option.Name == "Worldwide") &&
+            viewModel.Editor.Regions.Any(option => option.Name == "Europe") &&
             viewModel.Editor.Platforms.Count(option => option.IsSelected) == 1
-                ? "genres, platforms, categories, tags, developers, and publishers loaded from Core"
+                ? "all ten multi-value metadata collections loaded from Core"
                 : throw new InvalidOperationException(
                     $"Counts were G{viewModel.Editor.Genres.Count}/P{viewModel.Editor.Platforms.Count}/" +
                     $"C{viewModel.Editor.Categories.Count}/T{viewModel.Editor.Tags.Count}/" +
-                    $"D{viewModel.Editor.Developers.Count}/P{viewModel.Editor.Publishers.Count}; " +
+                    $"D{viewModel.Editor.Developers.Count}/P{viewModel.Editor.Publishers.Count}/" +
+                    $"F{viewModel.Editor.Features.Count}/S{viewModel.Editor.Series.Count}/" +
+                    $"A{viewModel.Editor.AgeRatings.Count}/R{viewModel.Editor.Regions.Count}; " +
                     $"selected platforms {viewModel.Editor.Platforms.Count(option => option.IsSelected)}."));
 
         viewModel.Editor.Name = string.Empty;
@@ -247,6 +254,16 @@ internal static class DesktopPilotSelfTest
             library.Database.Games[editorGame.Game.Id].InstallSize == null
                 ? viewModel.Editor.ValidationMessage
                 : throw new InvalidOperationException("An invalid install size reached the Core database."));
+        viewModel.Editor.InstallSize = string.Empty;
+        viewModel.Editor.CriticScore = "101";
+        viewModel.Editor.SaveCommand.Execute(null);
+        Record(results, "Desktop score validation covers critic and community fields", () =>
+            viewModel.Editor.IsVisible &&
+            viewModel.Editor.HasValidationError &&
+            viewModel.Editor.ValidationMessage.Contains("Critic score", StringComparison.OrdinalIgnoreCase) &&
+            library.Database.Games[editorGame.Game.Id].CriticScore == null
+                ? viewModel.Editor.ValidationMessage
+                : throw new InvalidOperationException("An out-of-range critic score reached the Core database."));
 
         var editedName = originalEditorName + " — Edited";
         const string singleBackgroundUrl = "https://example.invalid/desktop-background.jpg";
@@ -258,6 +275,8 @@ internal static class DesktopPilotSelfTest
         viewModel.Editor.SortingName = "Edited Pilot";
         viewModel.Editor.ReleaseDate = "2024-7-18";
         viewModel.Editor.UserScore = "88";
+        viewModel.Editor.CriticScore = "74";
+        viewModel.Editor.CommunityScore = "83";
         viewModel.Editor.Description = "Metadata saved by the Avalonia Desktop editor.";
         viewModel.Editor.Notes = "Phase 5 editor contract";
         viewModel.Editor.Favorite = true;
@@ -269,6 +288,10 @@ internal static class DesktopPilotSelfTest
         SelectOnly(viewModel.Editor.Tags, "Co-op");
         SelectOnly(viewModel.Editor.Developers, "Pilot Studio");
         SelectOnly(viewModel.Editor.Publishers, "Sample Publishing");
+        SelectOnly(viewModel.Editor.Features, "Achievements");
+        SelectOnly(viewModel.Editor.Series, "Pilot Saga");
+        SelectOnly(viewModel.Editor.AgeRatings, "Mature");
+        SelectOnly(viewModel.Editor.Regions, "Europe");
         viewModel.Editor.CoverImage = library.SelfTestMediaPath;
         viewModel.Editor.BackgroundImage = singleBackgroundUrl;
         viewModel.Editor.Icon = library.SelfTestMediaPath;
@@ -301,6 +324,8 @@ internal static class DesktopPilotSelfTest
             savedEditorGame.SortingName == "Edited Pilot" &&
             savedEditorGame.ReleaseDate?.Serialize() == "2024-7-18" &&
             savedEditorGame.UserScore == 88 &&
+            savedEditorGame.CriticScore == 74 &&
+            savedEditorGame.CommunityScore == 83 &&
             savedEditorGame.Favorite &&
             savedEditorGame.Modified.HasValue &&
             savedEditorGame.GenreIds.SequenceEqual(
@@ -315,11 +340,29 @@ internal static class DesktopPilotSelfTest
                 viewModel.Editor.Developers.Where(option => option.Name == "Pilot Studio").Select(option => option.Id)) &&
             savedEditorGame.PublisherIds.SequenceEqual(
                 viewModel.Editor.Publishers.Where(option => option.Name == "Sample Publishing").Select(option => option.Id)) &&
+            savedEditorGame.FeatureIds.SequenceEqual(
+                viewModel.Editor.Features.Where(option => option.Name == "Achievements").Select(option => option.Id)) &&
+            savedEditorGame.SeriesIds.SequenceEqual(
+                viewModel.Editor.Series.Where(option => option.Name == "Pilot Saga").Select(option => option.Id)) &&
+            savedEditorGame.AgeRatingIds.SequenceEqual(
+                viewModel.Editor.AgeRatings.Where(option => option.Name == "Mature").Select(option => option.Id)) &&
+            savedEditorGame.RegionIds.SequenceEqual(
+                viewModel.Editor.Regions.Where(option => option.Name == "Europe").Select(option => option.Id)) &&
             editorGame.Name == editedName &&
             editorGame.GenresText.Contains("Action", StringComparison.Ordinal) &&
             editorGame.PlatformsText.Contains("Linux", StringComparison.Ordinal)
                 ? $"{editedName} persisted scalar and multi-value metadata"
                 : throw new InvalidOperationException("The edited metadata did not round-trip through Core."));
+
+        Record(results, "Remaining scores and multi-value metadata refresh Desktop details", () =>
+            editorGame.CriticScoreText.Contains("74/100", StringComparison.Ordinal) &&
+            editorGame.CommunityScoreText.Contains("83/100", StringComparison.Ordinal) &&
+            editorGame.FeaturesText.Contains("Achievements", StringComparison.Ordinal) &&
+            editorGame.SeriesText.Contains("Pilot Saga", StringComparison.Ordinal) &&
+            editorGame.AgeRatingsText.Contains("Mature", StringComparison.Ordinal) &&
+            editorGame.RegionsText.Contains("Europe", StringComparison.Ordinal)
+                ? "critic/community scores and feature, series, rating, and region sets refreshed"
+                : throw new InvalidOperationException("The remaining metadata did not refresh Desktop details."));
 
         var importedCoverPath = savedEditorGame.CoverImage;
         var importedIconPath = savedEditorGame.Icon;
@@ -434,6 +477,10 @@ internal static class DesktopPilotSelfTest
         {
             viewModel.Editor.ApplyUserScore = true;
             viewModel.Editor.UserScore = "77";
+            viewModel.Editor.ApplyCriticScore = true;
+            viewModel.Editor.CriticScore = string.Empty;
+            viewModel.Editor.ApplyCommunityScore = true;
+            viewModel.Editor.CommunityScore = "66";
             viewModel.Editor.ApplyFavorite = true;
             viewModel.Editor.Favorite = true;
             viewModel.Editor.ApplyCompletionStatus = true;
@@ -444,6 +491,14 @@ internal static class DesktopPilotSelfTest
             SelectOnly(viewModel.Editor.Platforms, "Windows");
             viewModel.Editor.ApplyTags = true;
             SelectOnly(viewModel.Editor.Tags, "Controller support", "Co-op");
+            viewModel.Editor.ApplyFeatures = true;
+            SelectOnly(viewModel.Editor.Features, "Cloud saves");
+            viewModel.Editor.ApplySeries = true;
+            SelectOnly(viewModel.Editor.Series, "Standalone Stories");
+            viewModel.Editor.ApplyAgeRatings = true;
+            SelectOnly(viewModel.Editor.AgeRatings, "Teen");
+            viewModel.Editor.ApplyRegions = true;
+            SelectOnly(viewModel.Editor.Regions, "Worldwide");
             viewModel.Editor.ApplyCoverImage = true;
             viewModel.Editor.CoverImage = library.SelfTestMediaPath;
             viewModel.Editor.ApplyBackgroundImage = true;
@@ -506,6 +561,24 @@ internal static class DesktopPilotSelfTest
             })
                 ? "the SDK list overload buffered scalar and multi-value Core updates without overwriting names"
                 : throw new InvalidOperationException("The bulk editor did not preserve or apply the selected fields."));
+
+        Record(results, "Plugin bulk editing replaces remaining score and metadata fields", () =>
+            bulkGameIds.All(id =>
+            {
+                var game = library.Database.Games[id];
+                return game.CriticScore == null &&
+                    game.CommunityScore == 66 &&
+                    game.FeatureIds.SequenceEqual(
+                        viewModel.Editor.Features.Where(option => option.Name == "Cloud saves").Select(option => option.Id)) &&
+                    game.SeriesIds.SequenceEqual(
+                        viewModel.Editor.Series.Where(option => option.Name == "Standalone Stories").Select(option => option.Id)) &&
+                    game.AgeRatingIds.SequenceEqual(
+                        viewModel.Editor.AgeRatings.Where(option => option.Name == "Teen").Select(option => option.Id)) &&
+                    game.RegionIds.SequenceEqual(
+                        viewModel.Editor.Regions.Where(option => option.Name == "Worldwide").Select(option => option.Id));
+            })
+                ? "nullable critic scores cleared and four Core ID collections were replaced explicitly"
+                : throw new InvalidOperationException("Bulk score or remaining multi-value metadata did not persist."));
 
         Record(results, "Plugin bulk editing imports media and replaces links", () =>
         {

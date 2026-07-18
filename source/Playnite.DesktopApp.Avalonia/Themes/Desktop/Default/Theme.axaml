@@ -213,6 +213,10 @@
                                                Foreground="{DynamicResource DesktopMutedBrush}" />
                                     <TextBlock Text="{Binding SelectedGame.UserScoreText}"
                                                Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.CriticScoreText}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.CommunityScoreText}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
                                     <StackPanel Spacing="3">
                                         <TextBlock Text="{Binding SelectedGame.GenresText}" FontSize="11"
                                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
@@ -225,6 +229,14 @@
                                         <TextBlock Text="{Binding SelectedGame.DevelopersText}" FontSize="11"
                                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                                         <TextBlock Text="{Binding SelectedGame.PublishersText}" FontSize="11"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedGame.FeaturesText}" FontSize="11"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedGame.SeriesText}" FontSize="11"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedGame.AgeRatingsText}" FontSize="11"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedGame.RegionsText}" FontSize="11"
                                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                                         <TextBlock Text="{Binding SelectedGame.LinksText}" FontSize="11"
                                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
@@ -409,6 +421,28 @@
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
                                             <StackPanel Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopCriticScore}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyCriticScore, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
+                                                <TextBox Text="{Binding Editor.CriticScore, Mode=TwoWay}"
+                                                         IsEnabled="{Binding Editor.CanEditCriticScore}" Watermark="0–100" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopCommunityScore}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyCommunityScore, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
+                                                <TextBox Text="{Binding Editor.CommunityScore, Mode=TwoWay}"
+                                                         IsEnabled="{Binding Editor.CanEditCommunityScore}" Watermark="0–100" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                            <StackPanel Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopGenres}" Classes="sectionLabel" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyGenres, Mode=TwoWay}"
@@ -505,6 +539,78 @@
                                                 </StackPanel>
                                                 <ListBox ItemsSource="{Binding Editor.Publishers}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditPublishers}">
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox Content="{Binding Name}"
+                                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                            </StackPanel>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                            <StackPanel Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopFeatures}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyFeatures, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
+                                                <ListBox ItemsSource="{Binding Editor.Features}" MaxHeight="110"
+                                                         IsEnabled="{Binding Editor.CanEditFeatures}">
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox Content="{Binding Name}"
+                                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopSeries}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplySeries, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
+                                                <ListBox ItemsSource="{Binding Editor.Series}" MaxHeight="110"
+                                                         IsEnabled="{Binding Editor.CanEditSeries}">
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox Content="{Binding Name}"
+                                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                            </StackPanel>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                            <StackPanel Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopAgeRatings}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyAgeRatings, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
+                                                <ListBox ItemsSource="{Binding Editor.AgeRatings}" MaxHeight="110"
+                                                         IsEnabled="{Binding Editor.CanEditAgeRatings}">
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox Content="{Binding Name}"
+                                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopRegions}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyRegions, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
+                                                <ListBox ItemsSource="{Binding Editor.Regions}" MaxHeight="110"
+                                                         IsEnabled="{Binding Editor.CanEditRegions}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}"

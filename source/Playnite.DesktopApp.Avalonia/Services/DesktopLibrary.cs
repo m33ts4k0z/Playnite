@@ -59,6 +59,14 @@ public sealed class DesktopLibrary : IDisposable
         var cooperativeTag = new Tag("Co-op");
         var pilotDeveloper = new Company("Pilot Studio");
         var samplePublisher = new Company("Sample Publishing");
+        var achievementsFeature = new GameFeature("Achievements");
+        var cloudSavesFeature = new GameFeature("Cloud saves");
+        var pilotSeries = new Series("Pilot Saga");
+        var standaloneSeries = new Series("Standalone Stories");
+        var teenRating = new AgeRating("Teen");
+        var matureRating = new AgeRating("Mature");
+        var worldwideRegion = new Region("Worldwide");
+        var europeRegion = new Region("Europe");
         var pilotEmulator = new Emulator("Pilot Emulator")
         {
             CustomProfiles = new ObservableCollection<CustomEmulatorProfile>
@@ -77,6 +85,10 @@ public sealed class DesktopLibrary : IDisposable
         Database.Categories.Add(new List<Category> { backlogCategory, showcaseCategory });
         Database.Tags.Add(new List<Tag> { controllerTag, cooperativeTag });
         Database.Companies.Add(new List<Company> { pilotDeveloper, samplePublisher });
+        Database.Features.Add(new List<GameFeature> { achievementsFeature, cloudSavesFeature });
+        Database.Series.Add(new List<Series> { pilotSeries, standaloneSeries });
+        Database.AgeRatings.Add(new List<AgeRating> { teenRating, matureRating });
+        Database.Regions.Add(new List<Region> { worldwideRegion, europeRegion });
         Database.Emulators.Add(pilotEmulator);
         Database.Games.Add(Enumerable.Range(1, gameCount).Select(index => new Game($"Desktop Pilot {index:N0}")
         {
@@ -95,7 +107,11 @@ public sealed class DesktopLibrary : IDisposable
                 index % 7 == 0 ? cooperativeTag.Id : controllerTag.Id
             }.Distinct().ToList(),
             DeveloperIds = new List<Guid> { pilotDeveloper.Id },
-            PublisherIds = new List<Guid> { samplePublisher.Id }
+            PublisherIds = new List<Guid> { samplePublisher.Id },
+            FeatureIds = new List<Guid> { index % 2 == 0 ? achievementsFeature.Id : cloudSavesFeature.Id },
+            SeriesIds = new List<Guid> { index % 3 == 0 ? pilotSeries.Id : standaloneSeries.Id },
+            AgeRatingIds = new List<Guid> { index % 4 == 0 ? matureRating.Id : teenRating.Id },
+            RegionIds = new List<Guid> { index % 5 == 0 ? europeRegion.Id : worldwideRegion.Id }
         }).ToList());
         LoadGames();
     }

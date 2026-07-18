@@ -41,12 +41,20 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? "No platform";
     public string CompletionStatusName => database.CompletionStatuses[Game.CompletionStatusId]?.Name ?? "No status";
     public string UserScoreText => Game.UserScore.HasValue ? $"User score {Game.UserScore}/100" : "Not rated";
+    public string CriticScoreText => Game.CriticScore.HasValue ? $"Critic score {Game.CriticScore}/100" : "No critic score";
+    public string CommunityScoreText => Game.CommunityScore.HasValue
+        ? $"Community score {Game.CommunityScore}/100"
+        : "No community score";
     public string GenresText => FormatNames("Genres", Game.GenreIds, id => database.Genres[id]?.Name);
     public string PlatformsText => FormatNames("Platforms", Game.PlatformIds, id => database.Platforms[id]?.Name);
     public string CategoriesText => FormatNames("Categories", Game.CategoryIds, id => database.Categories[id]?.Name);
     public string TagsText => FormatNames("Tags", Game.TagIds, id => database.Tags[id]?.Name);
     public string DevelopersText => FormatNames("Developers", Game.DeveloperIds, id => database.Companies[id]?.Name);
     public string PublishersText => FormatNames("Publishers", Game.PublisherIds, id => database.Companies[id]?.Name);
+    public string FeaturesText => FormatNames("Features", Game.FeatureIds, id => database.Features[id]?.Name);
+    public string SeriesText => FormatNames("Series", Game.SeriesIds, id => database.Series[id]?.Name);
+    public string AgeRatingsText => FormatNames("Age ratings", Game.AgeRatingIds, id => database.AgeRatings[id]?.Name);
+    public string RegionsText => FormatNames("Regions", Game.RegionIds, id => database.Regions[id]?.Name);
     public string LinksText => FormatLinks(Game.Links);
     public string GameActionsText => FormatGameActions(Game);
     public string RomsText => FormatRoms(Game.Roms);
@@ -96,6 +104,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CompletionStatusName));
         OnPropertyChanged(nameof(ReleaseYearText));
         OnPropertyChanged(nameof(UserScoreText));
+        OnPropertyChanged(nameof(CriticScoreText));
+        OnPropertyChanged(nameof(CommunityScoreText));
         OnPropertyChanged(nameof(DescriptionText));
         OnPropertyChanged(nameof(GenresText));
         OnPropertyChanged(nameof(PlatformsText));
@@ -103,6 +113,10 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(TagsText));
         OnPropertyChanged(nameof(DevelopersText));
         OnPropertyChanged(nameof(PublishersText));
+        OnPropertyChanged(nameof(FeaturesText));
+        OnPropertyChanged(nameof(SeriesText));
+        OnPropertyChanged(nameof(AgeRatingsText));
+        OnPropertyChanged(nameof(RegionsText));
         OnPropertyChanged(nameof(LinksText));
         OnPropertyChanged(nameof(GameActionsText));
         OnPropertyChanged(nameof(RomsText));

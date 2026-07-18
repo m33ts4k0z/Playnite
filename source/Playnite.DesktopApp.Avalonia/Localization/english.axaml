@@ -19,6 +19,8 @@
     <x:String x:Key="LOCDesktopSortingName">Sorting name</x:String>
     <x:String x:Key="LOCDesktopReleaseDate">Release date</x:String>
     <x:String x:Key="LOCDesktopUserScore">User score</x:String>
+    <x:String x:Key="LOCDesktopCriticScore">Critic score</x:String>
+    <x:String x:Key="LOCDesktopCommunityScore">Community score</x:String>
     <x:String x:Key="LOCDesktopSource">Source</x:String>
     <x:String x:Key="LOCDesktopCompletionStatus">Completion status</x:String>
     <x:String x:Key="LOCDesktopDescription">Description</x:String>
@@ -34,6 +36,10 @@
     <x:String x:Key="LOCDesktopTags">Tags</x:String>
     <x:String x:Key="LOCDesktopDevelopers">Developers</x:String>
     <x:String x:Key="LOCDesktopPublishers">Publishers</x:String>
+    <x:String x:Key="LOCDesktopFeatures">Features</x:String>
+    <x:String x:Key="LOCDesktopSeries">Series</x:String>
+    <x:String x:Key="LOCDesktopAgeRatings">Age ratings</x:String>
+    <x:String x:Key="LOCDesktopRegions">Regions</x:String>
     <x:String x:Key="LOCDesktopCoverImage">Cover image</x:String>
     <x:String x:Key="LOCDesktopBackgroundImage">Background image</x:String>
     <x:String x:Key="LOCDesktopIcon">Icon</x:String>
