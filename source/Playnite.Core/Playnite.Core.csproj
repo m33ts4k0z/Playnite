@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngleSharp" Version="0.9.9" />
+    <PackageReference Include="AngleSharp" Version="1.5.2" />
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
     <PackageReference Include="LiteDB" Version="4.1.4" />
