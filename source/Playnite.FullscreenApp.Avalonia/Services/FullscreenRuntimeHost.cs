@@ -1,4 +1,5 @@
 using Playnite.Avalonia.App.Services;
+using Avalonia.Controls;
 using Playnite.Controllers;
 using Playnite.Plugins;
 using Playnite.SDK.Models;
@@ -21,14 +22,16 @@ public sealed class FullscreenRuntimeHost : IDisposable
     public FullscreenRuntimeHost(
         PlayniteLibrary library,
         FullscreenAppViewModel viewModel,
-        FullscreenSettings settings)
+        FullscreenSettings settings,
+        Func<Window> currentWindow)
     {
-        dialogs = new FullscreenDialogService(viewModel);
+        dialogs = new FullscreenDialogService(viewModel, currentWindow);
         host = new AvaloniaRuntimeHost(library.Database, new AvaloniaHostCallbacks
         {
             Mode = Playnite.SDK.ApplicationMode.Fullscreen,
             Settings = settings,
             Dialogs = dialogs,
+            CurrentWindow = currentWindow,
             FilteredGames = () => viewModel.Games.Select(item => item.Game).ToList(),
             SelectedGame = () => viewModel.SelectedGame?.Game,
             SelectGame = viewModel.SelectGame,

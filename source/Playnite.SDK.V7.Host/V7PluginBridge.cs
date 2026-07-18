@@ -48,6 +48,7 @@ public static class V7PluginBridge
 
         var api = new V7PlayniteApi(hostCall, hostObjectCall);
         API.Instance = api;
+        ResourceProvider.SetGlobalProvider(api.Resources);
         var results = new List<object>();
         foreach (var type in assembly.GetTypes())
         {
@@ -70,6 +71,7 @@ public static class V7PluginBridge
                 throw new InvalidDataException($"SDK v7 plugin type {type.FullName} has no plugin ID.");
             }
 
+            api.RegisterPlugin(plugin);
             results.Add(new V7PluginInstance(plugin, api, hostCall));
         }
 
@@ -85,7 +87,8 @@ public static class V7PluginBridge
             this.hostCall = hostCall;
         }
 
-        public string MarkdownToHtml(string markdown) => hostCall("MarkdownToHtml", markdown) ?? markdown;
+        public string MarkdownToHtml(string markdown) => hostCall("MarkdownToHtml", markdown)
+            ?? throw new InvalidDataException("Avalonia host returned no Markdown conversion result.");
     }
 }
 
@@ -602,16 +605,16 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
         this.hostCall = hostCall;
         Paths = new HostPaths(hostCall);
         ApplicationInfo = new HostApplicationInfo(hostCall);
-        Resources = new HostResources(hostCall);
+        Resources = new HostResources(hostObjectCall);
         Notifications = new HostNotifications(hostCall);
-        Dialogs = new HostDialogs(hostCall);
+        Dialogs = new HostDialogs(hostCall, hostObjectCall);
         MainView = new HostMainView(hostCall);
         HostDatabase = new HostGameDatabase(hostCall);
         Database = HostDatabase;
         ApplicationSettings = new HostApplicationSettings(hostCall);
         WebViews = new HostWebViewFactory(hostObjectCall);
         UriHandler = new UnsupportedUriHandler();
-        Addons = new HostAddons(hostCall);
+        Addons = new HostAddons(hostCall, this);
         Emulation = new UnsupportedEmulationApi();
     }
 
@@ -673,6 +676,8 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
         return registration?.Converters.FirstOrDefault(converter =>
             string.Equals(converter.GetType().Name, converterName, StringComparison.Ordinal));
     }
+
+    internal void RegisterPlugin(Plugin plugin) => ((HostAddons)Addons).Register(plugin);
 
     public List<GamepadController> GetConnectedControllers() =>
         V7RpcJson.Deserialize<List<GamepadController>>(
@@ -824,9 +829,13 @@ internal sealed class HostApplicationSettings : IPlayniteSettingsAPI
             throw new ArgumentException("A library ID must be specified.", nameof(libraryId));
         }
 
-        return bool.TryParse(hostCall(
+        var value = hostCall(
             "Settings.GameExcludedFromImport",
-            V7RpcJson.Serialize(new { GameId = gameId, LibraryId = libraryId })), out var excluded) && excluded;
+            V7RpcJson.Serialize(new { GameId = gameId, LibraryId = libraryId }));
+        return bool.TryParse(value, out var excluded)
+            ? excluded
+            : throw new InvalidDataException(
+                $"Avalonia host returned invalid Boolean value '{value}' for import exclusion.");
     }
 
     private bool ReadBoolean(string operation)
@@ -915,37 +924,88 @@ internal sealed class UnsupportedEmulationApi : IEmulationAPI
 internal sealed class HostPaths : IPlaynitePathsAPI
 {
     private readonly Func<string, string, string> hostCall;
-    public bool IsPortable => bool.TryParse(hostCall("IsPortable", string.Empty), out var value) && value;
-    public string ApplicationPath => hostCall("ApplicationPath", string.Empty);
-    public string ConfigurationPath => hostCall("ConfigurationPath", string.Empty);
-    public string ExtensionsDataPath => hostCall("ExtensionsDataPath", string.Empty);
+    public bool IsPortable => ReadBoolean("IsPortable");
+    public string ApplicationPath => ReadPath("ApplicationPath");
+    public string ConfigurationPath => ReadPath("ConfigurationPath");
+    public string ExtensionsDataPath => ReadPath("ExtensionsDataPath");
 
-    public HostPaths(Func<string, string, string> hostCall) => this.hostCall = hostCall;
+    public HostPaths(Func<string, string, string> hostCall) =>
+        this.hostCall = hostCall ?? throw new ArgumentNullException(nameof(hostCall));
+
+    private bool ReadBoolean(string operation)
+    {
+        var value = hostCall(operation, string.Empty);
+        return bool.TryParse(value, out var parsed)
+            ? parsed
+            : throw new InvalidDataException(
+                $"Avalonia host returned invalid Boolean value '{value}' for {operation}.");
+    }
+
+    private string ReadPath(string operation)
+    {
+        var value = hostCall(operation, string.Empty);
+        return string.IsNullOrWhiteSpace(value)
+            ? throw new InvalidDataException($"Avalonia host returned no path for {operation}.")
+            : value;
+    }
 }
 
 internal sealed class HostApplicationInfo : IPlayniteInfoAPI
 {
     private readonly Func<string, string, string> hostCall;
-    public Version ApplicationVersion => Version.TryParse(
-        hostCall("ApplicationVersion", string.Empty), out var version) ? version : new Version(0, 0);
-    public ApplicationMode Mode => Enum.TryParse<ApplicationMode>(
-        hostCall("ApplicationMode", string.Empty), true, out var mode) ? mode : ApplicationMode.Desktop;
+    public Version ApplicationVersion
+    {
+        get
+        {
+            var value = hostCall("ApplicationVersion", string.Empty);
+            return Version.TryParse(value, out var version)
+                ? version
+                : throw new InvalidDataException(
+                    $"Avalonia host returned invalid application version '{value}'.");
+        }
+    }
+    public ApplicationMode Mode
+    {
+        get
+        {
+            var value = hostCall("ApplicationMode", string.Empty);
+            return Enum.TryParse<ApplicationMode>(value, true, out var mode)
+                ? mode
+                : throw new InvalidDataException(
+                    $"Avalonia host returned invalid application mode '{value}'.");
+        }
+    }
     public bool IsPortable => ReadBoolean("IsPortable");
     public bool InOfflineMode => ReadBoolean("InOfflineMode");
     public bool IsDebugBuild => ReadBoolean("IsDebugBuild");
     public bool ThrowAllErrors => ReadBoolean("ThrowAllErrors");
 
-    public HostApplicationInfo(Func<string, string, string> hostCall) => this.hostCall = hostCall;
-    private bool ReadBoolean(string operation) =>
-        bool.TryParse(hostCall(operation, string.Empty), out var value) && value;
+    public HostApplicationInfo(Func<string, string, string> hostCall) =>
+        this.hostCall = hostCall ?? throw new ArgumentNullException(nameof(hostCall));
+    private bool ReadBoolean(string operation)
+    {
+        var value = hostCall(operation, string.Empty);
+        return bool.TryParse(value, out var parsed)
+            ? parsed
+            : throw new InvalidDataException(
+                $"Avalonia host returned invalid Boolean value '{value}' for {operation}.");
+    }
 }
 
 internal sealed class HostResources : IResourceProvider
 {
-    private readonly Func<string, string, string> hostCall;
-    public HostResources(Func<string, string, string> hostCall) => this.hostCall = hostCall;
-    public string GetString(string key) => hostCall("ResourceString", key) ?? key;
-    public object GetResource(string key) => GetString(key);
+    private readonly Func<string, string, object> hostObjectCall;
+
+    public HostResources(Func<string, string, object> hostObjectCall) =>
+        this.hostObjectCall = hostObjectCall ?? ((operation, _) => throw new NotSupportedException(
+            $"SDK v7 object host operation {operation} is not available."));
+
+    public string GetString(string key) => GetResource(key) as string ?? $"<!{key}!>";
+    public object GetResource(string key)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        return hostObjectCall("Resource", key);
+    }
 }
 
 internal sealed class HostNotifications : INotificationsAPI
@@ -991,7 +1051,16 @@ internal sealed class HostNotifications : INotificationsAPI
 internal sealed class HostDialogs : IDialogsFactory
 {
     private readonly Func<string, string, string> hostCall;
-    public HostDialogs(Func<string, string, string> hostCall) => this.hostCall = hostCall;
+    private readonly Func<string, string, object> hostObjectCall;
+
+    public HostDialogs(
+        Func<string, string, string> hostCall,
+        Func<string, string, object> hostObjectCall)
+    {
+        this.hostCall = hostCall ?? throw new ArgumentNullException(nameof(hostCall));
+        this.hostObjectCall = hostObjectCall ?? ((operation, _) => throw new NotSupportedException(
+            $"SDK v7 object host operation {operation} is not available."));
+    }
     public Task ShowErrorMessageAsync(string message, string caption = null)
     {
         hostCall("ShowError", Newtonsoft.Json.JsonConvert.SerializeObject(new { message, caption }));
@@ -1012,18 +1081,57 @@ internal sealed class HostDialogs : IDialogsFactory
         }));
         return Task.FromResult(Enum.TryParse<MessageBoxResult>(response, true, out var result)
             ? result
-            : MessageBoxResult.OK);
+            : throw new InvalidDataException(
+                $"Avalonia host returned invalid message result '{response}'."));
     }
     public Task<string> ShowChoiceAsync(
         string message,
         string caption,
         IReadOnlyList<string> choices,
         int defaultChoice = 0,
-        int cancelChoice = -1) => Task.FromResult(choices.ElementAtOrDefault(defaultChoice));
-    public Task<string> SelectFileAsync(string filter = null) => Task.FromResult<string>(null);
+        int cancelChoice = -1)
+    {
+        ArgumentNullException.ThrowIfNull(choices);
+        if (choices.Count == 0)
+        {
+            throw new ArgumentException("At least one dialog choice is required.", nameof(choices));
+        }
+
+        if (defaultChoice < 0 || defaultChoice >= choices.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(defaultChoice));
+        }
+
+        if (cancelChoice < -1 || cancelChoice >= choices.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(cancelChoice));
+        }
+
+        var selected = hostCall("ShowChoice", V7RpcJson.Serialize(new
+        {
+            Message = message,
+            Caption = caption,
+            Choices = choices,
+            DefaultChoice = defaultChoice,
+            CancelChoice = cancelChoice
+        }));
+        if (selected != null && !choices.Contains(selected, StringComparer.Ordinal))
+        {
+            throw new InvalidDataException(
+                $"Avalonia host returned unknown dialog choice '{selected}'.");
+        }
+
+        return Task.FromResult(selected);
+    }
+
+    public async Task<string> SelectFileAsync(string filter = null) =>
+        (await SelectFiles(filter, false)).FirstOrDefault();
+
     public Task<IReadOnlyList<string>> SelectFilesAsync(string filter = null) =>
-        Task.FromResult<IReadOnlyList<string>>([]);
-    public Task<string> SelectFolderAsync() => Task.FromResult<string>(null);
+        SelectFiles(filter, true);
+
+    public Task<string> SelectFolderAsync() =>
+        Task.FromResult(hostCall("SelectFolder", string.Empty));
     public Window CreateWindow(WindowCreationOptions options) => new()
     {
         Title = options?.Title,
@@ -1032,16 +1140,147 @@ internal sealed class HostDialogs : IDialogsFactory
         ShowInTaskbar = options?.ShowInTaskbar ?? true,
         CanResize = options?.CanResize ?? true
     };
-    public Window GetCurrentAppWindow() => null;
+    public Window GetCurrentAppWindow() =>
+        hostObjectCall("CurrentAppWindow", string.Empty) as Window
+        ?? throw new InvalidDataException(
+            "Avalonia host returned an invalid current application window.");
+
+    private Task<IReadOnlyList<string>> SelectFiles(string filter, bool allowMultiple)
+    {
+        var response = hostCall("SelectFiles", V7RpcJson.Serialize(new
+        {
+            Filter = filter,
+            AllowMultiple = allowMultiple
+        }));
+        return Task.FromResult<IReadOnlyList<string>>(
+            V7RpcJson.Deserialize<List<string>>(response)
+            ?? throw new InvalidDataException("Avalonia host returned no file-picker result."));
+    }
 }
 
 internal sealed class HostAddons : IAddons
 {
+    private sealed class PluginDescriptor
+    {
+        public Guid Id { get; set; }
+        public string Kind { get; set; }
+        public string Name { get; set; }
+    }
+
+    private sealed class HostGenericPlugin : GenericPlugin
+    {
+        public override Guid Id { get; }
+
+        public HostGenericPlugin(IPlayniteAPI playniteApi, PluginDescriptor descriptor)
+            : base(playniteApi)
+        {
+            Id = descriptor.Id;
+            Properties = new GenericPluginProperties();
+        }
+    }
+
+    private sealed class HostLibraryPlugin : LibraryPlugin
+    {
+        private const string Message =
+            "Loaded-plugin descriptors do not expose another plugin's operational library API.";
+
+        public override Guid Id { get; }
+        public override string Name { get; }
+
+        public HostLibraryPlugin(IPlayniteAPI playniteApi, PluginDescriptor descriptor)
+            : base(playniteApi)
+        {
+            Id = descriptor.Id;
+            Name = descriptor.Name;
+            Properties = new LibraryPluginProperties();
+        }
+
+        public override IEnumerable<GameMetadata> GetGames(LibraryGetGamesArgs args) =>
+            throw new NotSupportedException(Message);
+        public override IEnumerable<Game> ImportGames(LibraryImportGamesArgs args) =>
+            throw new NotSupportedException(Message);
+        public override LibraryMetadataProvider GetMetadataDownloader() =>
+            throw new NotSupportedException(Message);
+    }
+
+    private sealed class HostMetadataPlugin : MetadataPlugin
+    {
+        private const string Message =
+            "Loaded-plugin descriptors do not expose another plugin's operational metadata API.";
+
+        public override Guid Id { get; }
+        public override string Name { get; }
+        public override List<MetadataField> SupportedFields => throw new NotSupportedException(Message);
+
+        public HostMetadataPlugin(IPlayniteAPI playniteApi, PluginDescriptor descriptor)
+            : base(playniteApi)
+        {
+            Id = descriptor.Id;
+            Name = descriptor.Name;
+            Properties = new MetadataPluginProperties();
+        }
+
+        public override OnDemandMetadataProvider GetMetadataProvider(MetadataRequestOptions options) =>
+            throw new NotSupportedException(Message);
+    }
+
     private readonly Func<string, string, string> hostCall;
+    private readonly IPlayniteAPI playniteApi;
+    private readonly List<Plugin> localPlugins = [];
     public List<string> DisabledAddons => ReadList("DisabledAddons");
     public List<string> Addons => ReadList("Addons");
-    public List<Plugin> Plugins => [];
-    public HostAddons(Func<string, string, string> hostCall) => this.hostCall = hostCall;
+    public List<Plugin> Plugins
+    {
+        get
+        {
+            var result = localPlugins.ToList();
+            result.AddRange(ReadPluginDescriptors()
+                .Where(descriptor => localPlugins.All(plugin => plugin.Id != descriptor.Id))
+                .Select(CreatePluginDescriptor));
+            return result;
+        }
+    }
+
+    public HostAddons(Func<string, string, string> hostCall, IPlayniteAPI playniteApi)
+    {
+        this.hostCall = hostCall ?? throw new ArgumentNullException(nameof(hostCall));
+        this.playniteApi = playniteApi ?? throw new ArgumentNullException(nameof(playniteApi));
+    }
+
+    internal void Register(Plugin plugin)
+    {
+        ArgumentNullException.ThrowIfNull(plugin);
+        if (localPlugins.Any(existing => existing.Id == plugin.Id))
+        {
+            throw new InvalidDataException($"SDK v7 plugin ID {plugin.Id} is already registered.");
+        }
+
+        localPlugins.Add(plugin);
+    }
+
     private List<string> ReadList(string operation) =>
-        Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(hostCall(operation, string.Empty) ?? "[]") ?? [];
+        Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(hostCall(operation, string.Empty))
+        ?? throw new InvalidDataException($"Avalonia host returned no list for {operation}.");
+
+    private List<PluginDescriptor> ReadPluginDescriptors() =>
+        Newtonsoft.Json.JsonConvert.DeserializeObject<List<PluginDescriptor>>(
+            hostCall("LoadedPlugins", string.Empty))
+        ?? throw new InvalidDataException("Avalonia host returned no loaded-plugin descriptors.");
+
+    private Plugin CreatePluginDescriptor(PluginDescriptor descriptor)
+    {
+        if (descriptor.Id == Guid.Empty || string.IsNullOrWhiteSpace(descriptor.Kind))
+        {
+            throw new InvalidDataException("Avalonia host returned an incomplete loaded-plugin descriptor.");
+        }
+
+        return descriptor.Kind switch
+        {
+            "LibraryPlugin" => new HostLibraryPlugin(playniteApi, descriptor),
+            "MetadataPlugin" => new HostMetadataPlugin(playniteApi, descriptor),
+            "GenericPlugin" or "Plugin" => new HostGenericPlugin(playniteApi, descriptor),
+            _ => throw new InvalidDataException(
+                $"Avalonia host returned unknown loaded-plugin kind '{descriptor.Kind}'.")
+        };
+    }
 }

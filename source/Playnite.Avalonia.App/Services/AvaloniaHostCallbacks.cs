@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
@@ -10,6 +11,8 @@ public sealed class AvaloniaHostCallbacks
     public ApplicationMode Mode { get; init; }
     public IAvaloniaHostSettings Settings { get; init; }
     public IAvaloniaDialogService Dialogs { get; init; }
+    public Func<Window> CurrentWindow { get; init; }
+    public Func<string, object> ResolveResource { get; init; } = AvaloniaPluginApi.GetNativeResource;
     public Func<IReadOnlyList<Game>> FilteredGames { get; init; } = () => Array.Empty<Game>();
     public Func<Game> SelectedGame { get; init; } = () => null;
     public Action<Guid> SelectGame { get; init; } = _ => { };

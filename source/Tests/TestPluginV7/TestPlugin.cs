@@ -191,6 +191,22 @@ public sealed class TestPlugin : LibraryPlugin
         });
         var controllers = PlayniteApi.GetConnectedControllers();
         var excluded = settings.GetGameExcludedFromImport(game.GameId, Id);
+        var choice = PlayniteApi.Dialogs.ShowChoiceAsync(
+            "SDK v7 choice",
+            "SDK v7 dialogs",
+            ["First", "Second"],
+            1,
+            0).GetAwaiter().GetResult();
+        var selectedFile = PlayniteApi.Dialogs.SelectFileAsync("Text files|*.txt").GetAwaiter().GetResult();
+        var selectedFiles = PlayniteApi.Dialogs.SelectFilesAsync("Text files|*.txt").GetAwaiter().GetResult();
+        var selectedFolder = PlayniteApi.Dialogs.SelectFolderAsync().GetAwaiter().GetResult();
+        var currentWindow = PlayniteApi.Dialogs.GetCurrentAppWindow();
+        var resource = PlayniteApi.Resources.GetString("SDKv7ProbeString");
+        var staticResource = Playnite.SDK.ResourceProvider.GetString("SDKv7ProbeString");
+        var resourceType = PlayniteApi.Resources.GetResource("SDKv7ProbeBrush")?.GetType().Name;
+        var addons = PlayniteApi.Addons.Addons;
+        var disabledAddons = PlayniteApi.Addons.DisabledAddons;
+        var loadedPlugins = PlayniteApi.Addons.Plugins;
 
         var unsupported = new List<string>();
         try
@@ -228,6 +244,12 @@ public sealed class TestPlugin : LibraryPlugin
             $"api-completion:{settings.CompletionStatus.DefaultStatus}:{settings.CompletionStatus.PlayedStatus}:{excluded}",
             $"api-expanded:{expanded}:{expandedAction.Path}",
             $"api-controllers:{controllers.Count}",
+            $"api-dialogs:{choice}:{selectedFile}:{selectedFiles.Count}:{selectedFolder}:" +
+            $"{currentWindow != null}",
+            $"api-resources:{resource}:{staticResource}:{resourceType}",
+            $"api-addons:{addons.Count}:{disabledAddons.Count}:{loadedPlugins.Count}:" +
+            $"{loadedPlugins.Single().Id}:{loadedPlugins.Single() is LibraryPlugin}:" +
+            $"{ReferenceEquals(loadedPlugins.Single(), this)}",
             $"api-unsupported:{string.Join(',', unsupported)}"
         ]);
     }

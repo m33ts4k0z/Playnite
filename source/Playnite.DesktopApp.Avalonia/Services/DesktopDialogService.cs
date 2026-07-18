@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using Avalonia.Threading;
 using Playnite.Avalonia.App.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
@@ -7,10 +8,12 @@ namespace Playnite.DesktopApp.Avalonia.Services;
 public sealed class DesktopDialogService : IAvaloniaDialogService
 {
     private readonly DesktopAppViewModel viewModel;
+    private readonly Func<Window> currentWindow;
 
-    public DesktopDialogService(DesktopAppViewModel viewModel)
+    public DesktopDialogService(DesktopAppViewModel viewModel, Func<Window> currentWindow)
     {
-        this.viewModel = viewModel;
+        this.viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        this.currentWindow = currentWindow ?? throw new ArgumentNullException(nameof(currentWindow));
     }
 
     public string ShowMessage(
@@ -50,4 +53,12 @@ public sealed class DesktopDialogService : IAvaloniaDialogService
         Dispatcher.UIThread.PushFrame(frame);
         return result ?? choices[cancelIndex];
     }
+
+    public IReadOnlyList<string> SelectFiles(string filter, bool allowMultiple) =>
+        AvaloniaStorageDialog.SelectFiles(GetCurrentWindow(), filter, allowMultiple);
+
+    public string SelectFolder() => AvaloniaStorageDialog.SelectFolder(GetCurrentWindow());
+
+    private Window GetCurrentWindow() => currentWindow() ?? throw new NotSupportedException(
+        "The Avalonia Desktop window is not available for a storage dialog.");
 }

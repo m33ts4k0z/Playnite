@@ -43,13 +43,14 @@ public sealed class App : Application
             var settingsStore = new FullscreenSettingsStore(library.ActiveUserDataDirectory);
             var settings = options.SelfTest ? new FullscreenSettings() : settingsStore.Load();
             var viewModel = new FullscreenAppViewModel(library.Games, settings, startupError);
+            MainWindow window = null;
             if (library.IsOpen)
             {
-                runtimeHost = new FullscreenRuntimeHost(library, viewModel, settings);
+                runtimeHost = new FullscreenRuntimeHost(library, viewModel, settings, () => window);
                 viewModel.AttachRuntime(runtimeHost);
             }
 
-            var window = new MainWindow(
+            window = new MainWindow(
                 viewModel,
                 library,
                 runtimeHost,

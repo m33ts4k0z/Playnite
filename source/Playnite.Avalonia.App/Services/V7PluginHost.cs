@@ -263,6 +263,28 @@ internal sealed class V7PluginHost : IDisposable
         public string Buttons { get; set; }
     }
 
+    private sealed class ChoiceDialogPayload
+    {
+        public string Message { get; set; }
+        public string Caption { get; set; }
+        public List<string> Choices { get; set; }
+        public int DefaultChoice { get; set; }
+        public int CancelChoice { get; set; }
+    }
+
+    private sealed class FilePickerPayload
+    {
+        public string Filter { get; set; }
+        public bool AllowMultiple { get; set; }
+    }
+
+    private sealed class PluginDescriptorPayload
+    {
+        public Guid Id { get; set; }
+        public string Kind { get; set; }
+        public string Name { get; set; }
+    }
+
     private sealed class UiRegistrationPayload
     {
         public Guid PluginId { get; set; }
@@ -501,6 +523,8 @@ internal sealed class V7PluginHost : IDisposable
                 return JsonConvert.SerializeObject(callbacks.Settings.DisabledPlugins ?? []);
             case "Addons":
                 return JsonConvert.SerializeObject(installedAddons().Distinct().ToList());
+            case "LoadedPlugins":
+                return JsonConvert.SerializeObject(GetLoadedPluginDescriptors());
             case "ResourceString":
                 return AvaloniaPluginApi.SharedResources.GetString(payload);
             case "NotificationAdd":
@@ -517,8 +541,17 @@ internal sealed class V7PluginHost : IDisposable
                 return "OK";
             case "ShowMessage":
                 return ShowDialog(payload, false);
+            case "ShowChoice":
+                return ShowChoiceDialog(payload);
+            case "SelectFiles":
+                var picker = JsonConvert.DeserializeObject<FilePickerPayload>(payload)
+                    ?? throw new InvalidDataException("SDK v7 file-picker payload is empty.");
+                return JsonConvert.SerializeObject(
+                    callbacks.Dialogs.SelectFiles(picker.Filter, picker.AllowMultiple) ?? []);
+            case "SelectFolder":
+                return callbacks.Dialogs.SelectFolder();
             case "OpenPluginSettings":
-                return Guid.TryParse(payload, out var pluginId) && callbacks.OpenPluginSettings(pluginId)
+                return callbacks.OpenPluginSettings(ParseGuid(operation, payload))
                     ? bool.TrueString
                     : bool.FalseString;
             case "MainView.ActiveDesktopView": return callbacks.ActiveDesktopView().ToString();
@@ -683,8 +716,48 @@ internal sealed class V7PluginHost : IDisposable
             ? value
             : throw new InvalidDataException($"Invalid GUID payload for {operation}.");
 
+    private List<PluginDescriptorPayload> GetLoadedPluginDescriptors()
+    {
+        var descriptors = new List<PluginDescriptorPayload>();
+        if (pluginApi?.Addons?.Plugins != null)
+        {
+            descriptors.AddRange(pluginApi.Addons.Plugins.Select(plugin => new PluginDescriptorPayload
+            {
+                Id = plugin.Id,
+                Kind = plugin switch
+                {
+                    LibraryPlugin => "LibraryPlugin",
+                    MetadataPlugin => "MetadataPlugin",
+                    GenericPlugin => "GenericPlugin",
+                    _ => "Plugin"
+                },
+                Name = plugin switch
+                {
+                    LibraryPlugin library => library.Name,
+                    MetadataPlugin metadata => metadata.Name,
+                    _ => plugin.GetType().Name
+                }
+            }));
+        }
+
+        descriptors.AddRange(Plugins.Select(plugin => new PluginDescriptorPayload
+        {
+            Id = plugin.Id,
+            Kind = plugin.Kind,
+            Name = plugin.Name
+        }));
+        return descriptors
+            .GroupBy(plugin => plugin.Id)
+            .Select(group => group.First())
+            .ToList();
+    }
+
     private object HostObjectCall(string operation, string payload) => operation switch
     {
+        "CurrentAppWindow" => callbacks.CurrentWindow?.Invoke()
+            ?? throw new NotSupportedException(
+                "The current Avalonia application does not expose its active window."),
+        "Resource" => callbacks.ResolveResource?.Invoke(payload),
         "CreateWebView" => webViews?.CreateV7View(
             JsonConvert.DeserializeObject<V7WebViewCreationPayload>(payload)
             ?? throw new InvalidDataException("SDK v7 web-view creation payload is empty."))
@@ -782,18 +855,20 @@ internal sealed class V7PluginHost : IDisposable
     {
         if (payload == null || string.IsNullOrWhiteSpace(payload.Id))
         {
-            return;
+            throw new InvalidDataException("SDK v7 notification payload has no notification ID.");
         }
 
         var type = Enum.TryParse<NotificationType>(payload.Type, true, out var notificationType)
             ? notificationType
-            : NotificationType.Info;
+            : throw new InvalidDataException(
+                $"SDK v7 notification payload has invalid type '{payload.Type}'.");
         notifications.Add(payload.Id, payload.Text ?? string.Empty, type);
     }
 
     private string ShowDialog(string payload, bool error)
     {
-        var dialog = JsonConvert.DeserializeObject<DialogPayload>(payload) ?? new DialogPayload();
+        var dialog = JsonConvert.DeserializeObject<DialogPayload>(payload)
+            ?? throw new InvalidDataException("SDK v7 message-dialog payload is empty.");
         var options = error ? new List<string> { "OK" } : GetDialogOptions(dialog.Buttons);
         return callbacks.Dialogs.ShowMessage(
             dialog.Message ?? string.Empty,
@@ -803,12 +878,40 @@ internal sealed class V7PluginHost : IDisposable
             options.FindIndex(option => option == "Cancel"));
     }
 
+    private string ShowChoiceDialog(string payload)
+    {
+        var dialog = JsonConvert.DeserializeObject<ChoiceDialogPayload>(payload)
+            ?? throw new InvalidDataException("SDK v7 choice-dialog payload is empty.");
+        if (dialog.Choices == null || dialog.Choices.Count == 0)
+        {
+            throw new InvalidDataException("SDK v7 choice dialog has no choices.");
+        }
+
+        if (dialog.DefaultChoice < 0 || dialog.DefaultChoice >= dialog.Choices.Count)
+        {
+            throw new InvalidDataException("SDK v7 choice dialog has an invalid default choice index.");
+        }
+
+        if (dialog.CancelChoice < -1 || dialog.CancelChoice >= dialog.Choices.Count)
+        {
+            throw new InvalidDataException("SDK v7 choice dialog has an invalid cancel choice index.");
+        }
+
+        return callbacks.Dialogs.ShowMessage(
+            dialog.Message ?? string.Empty,
+            dialog.Caption ?? "Playnite",
+            dialog.Choices,
+            dialog.DefaultChoice,
+            dialog.CancelChoice);
+    }
+
     private static List<string> GetDialogOptions(string buttons) => buttons switch
     {
+        "OK" => ["OK"],
         "OKCancel" => ["OK", "Cancel"],
         "YesNo" => ["Yes", "No"],
         "YesNoCancel" => ["Yes", "No", "Cancel"],
-        _ => ["OK"]
+        _ => throw new InvalidDataException($"SDK v7 message dialog has invalid buttons '{buttons}'.")
     };
 
     private void RunGameOperation(

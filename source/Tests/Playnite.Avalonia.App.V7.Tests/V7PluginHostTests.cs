@@ -47,6 +47,12 @@ public class V7PluginHostTests
             IReadOnlyList<string> options,
             int defaultIndex = 0,
             int cancelIndex = -1) => options.ElementAtOrDefault(defaultIndex) ?? string.Empty;
+
+        public IReadOnlyList<string> SelectFiles(string filter, bool allowMultiple) => allowMultiple
+            ? ["C:\\SDKv7First.txt", "C:\\SDKv7Second.txt"]
+            : ["C:\\SDKv7Single.txt"];
+
+        public string SelectFolder() => "C:\\SDKv7Folder";
     }
 
     private sealed class TestMetadataSettings : IMetadataDownloadSettings
@@ -306,11 +312,21 @@ public class V7PluginHostTests
         var switchedToLibrary = 0;
         var toggledFullscreen = 0;
         var settings = new TestSettings();
+        var currentWindow = (Window)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(
+            typeof(Window));
         var callbacks = new AvaloniaHostCallbacks
         {
             Mode = ApplicationMode.Desktop,
             Settings = settings,
             Dialogs = new TestDialogs(),
+            CurrentWindow = () => currentWindow,
+            ResolveResource = key => key switch
+            {
+                "SDKv7ProbeString" => "SDK v7 resource",
+                "SDKv7ProbeBrush" => new global::Avalonia.Media.SolidColorBrush(
+                    global::Avalonia.Media.Colors.CornflowerBlue),
+                _ => null
+            },
             FilteredGames = () => database.Games.ToList(),
             SelectedGame = () => selectedGame,
             SelectGame = id =>
@@ -453,6 +469,12 @@ public class V7PluginHostTests
         Assert.That(events, Has.Some.StartsWith("api-actions:True:True:"));
         Assert.That(events, Has.Some.Contains("api-expanded:game=SDK v7 bridge game updated;emu=C:\\Emulator"));
         Assert.That(events, Does.Contain("api-controllers:1"));
+        Assert.That(events, Does.Contain(
+            "api-dialogs:Second:C:\\SDKv7Single.txt:2:C:\\SDKv7Folder:True"));
+        Assert.That(events, Does.Contain(
+            "api-resources:SDK v7 resource:SDK v7 resource:SolidColorBrush"));
+        Assert.That(events, Does.Contain(
+            $"api-addons:1:0:1:{pluginId}:True:True"));
         Assert.That(events, Does.Contain("api-unsupported:multi-select,uri,emulation"));
         Assert.That(events, Does.Contain("element-created:Desktop"));
         Assert.That(events, Does.Contain("sidebar-activated"));

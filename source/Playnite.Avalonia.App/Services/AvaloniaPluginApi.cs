@@ -50,14 +50,19 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
                 return legacyResource;
             }
 
-            var application = global::Avalonia.Application.Current;
-            return application?.TryGetResource(key, null, out var resource) == true
-                ? resource
-                : null;
+            return GetNativeResource(key);
         }
     }
 
     internal static IResourceProvider SharedResources { get; } = new HostResourceProvider();
+
+    internal static object GetNativeResource(string key)
+    {
+        var application = global::Avalonia.Application.Current;
+        return application?.TryGetResource(key, null, out var resource) == true
+            ? resource
+            : null;
+    }
 
     private sealed class HostAddonsApi : IAddons
     {

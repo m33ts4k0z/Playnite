@@ -49,15 +49,17 @@ public sealed class App : Application
                     ? new DesktopSettings { EnableTray = false, CloseToTray = false }
                     : settingsStore.Load();
             var viewModel = new DesktopAppViewModel(library.Games, library.Database, settings, startupError);
+            MainWindow window = null;
             if (library.IsOpen)
             {
-                var dialogs = new DesktopDialogService(viewModel);
+                var dialogs = new DesktopDialogService(viewModel, () => window);
                 var gameEditor = new DesktopGameEditorService(viewModel);
                 runtimeHost = new AvaloniaRuntimeHost(library.Database, new AvaloniaHostCallbacks
                 {
                     Mode = Playnite.SDK.ApplicationMode.Desktop,
                     Settings = settings,
                     Dialogs = dialogs,
+                    CurrentWindow = () => window,
                     FilteredGames = () => viewModel.Games.Select(game => game.Game).ToList(),
                     SelectedGame = () => viewModel.SelectedGame?.Game,
                     SelectGame = viewModel.SelectGame,
@@ -91,13 +93,14 @@ public sealed class App : Application
                 viewModel.AttachRuntime(runtimeHost);
             }
 
-            desktop.MainWindow = new MainWindow(
+            window = new MainWindow(
                 viewModel,
                 library,
                 runtimeHost,
                 settings,
                 options.SelfTest || options.PluginCompatibilityTest ? null : settingsStore,
                 options);
+            desktop.MainWindow = window;
             // Parse the loose theme before third-party assemblies enter the process. A plugin
             // with an incompatible dependency must not interfere with Avalonia's XAML discovery.
             runtimeHost?.InitializePlugins(!options.SelfTest);

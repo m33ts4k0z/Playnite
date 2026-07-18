@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using Avalonia.Threading;
 using Playnite.Avalonia.App.Services;
 using Playnite.FullscreenApp.Avalonia.ViewModels;
@@ -7,10 +8,12 @@ namespace Playnite.FullscreenApp.Avalonia.Services;
 public sealed class FullscreenDialogService : IAvaloniaDialogService
 {
     private readonly FullscreenAppViewModel viewModel;
+    private readonly Func<Window> currentWindow;
 
-    public FullscreenDialogService(FullscreenAppViewModel viewModel)
+    public FullscreenDialogService(FullscreenAppViewModel viewModel, Func<Window> currentWindow)
     {
-        this.viewModel = viewModel;
+        this.viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        this.currentWindow = currentWindow ?? throw new ArgumentNullException(nameof(currentWindow));
     }
 
     public string ShowMessage(
@@ -51,4 +54,12 @@ public sealed class FullscreenDialogService : IAvaloniaDialogService
         Dispatcher.UIThread.PushFrame(frame);
         return result ?? choices[cancelIndex];
     }
+
+    public IReadOnlyList<string> SelectFiles(string filter, bool allowMultiple) =>
+        AvaloniaStorageDialog.SelectFiles(GetCurrentWindow(), filter, allowMultiple);
+
+    public string SelectFolder() => AvaloniaStorageDialog.SelectFolder(GetCurrentWindow());
+
+    private Window GetCurrentWindow() => currentWindow() ?? throw new NotSupportedException(
+        "The Avalonia Fullscreen window is not available for a storage dialog.");
 }

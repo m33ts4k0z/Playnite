@@ -394,6 +394,15 @@ public class V7PluginBridgeTests
             "DatabasePath" => Path.Combine(testRoot, "library"),
             "Language" => "en_US",
             "DisabledAddons" or "Addons" => JsonConvert.SerializeObject(Array.Empty<string>()),
+            "LoadedPlugins" => JsonConvert.SerializeObject(new[]
+            {
+                new
+                {
+                    Id = "8134f4eb-556e-4e01-936f-1bf5a808cb10",
+                    Kind = "LibraryPlugin",
+                    Name = "Test SDK v7 library"
+                }
+            }),
             "IsPortable" or "InOfflineMode" or "IsDebugBuild" or "ThrowAllErrors" => "false",
             _ => string.Empty
         };
