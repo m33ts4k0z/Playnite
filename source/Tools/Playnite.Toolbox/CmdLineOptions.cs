@@ -24,6 +24,18 @@ namespace Playnite.Toolbox
         Addon
     }
 
+    public enum SdkGeneration
+    {
+        V6,
+        V7
+    }
+
+    public enum ThemeFramework
+    {
+        Wpf,
+        Avalonia
+    }
+
     [Verb("new", HelpText = "Generate new add-on from template.")]
     public class NewCmdLineOptions
     {
@@ -31,8 +43,14 @@ namespace Playnite.Toolbox
         public ItemType Type { get; set; }
         [Value(1, Required = true, HelpText = "Add-on name.")]
         public string Name { get; set; }
-        [Value(2, Required = false, HelpText = "Output directory (for extensions only).")]
+        [Value(2, Required = false, HelpText = "Output root directory.")]
         public string OutDirectory { get; set; }
+
+        [Option("sdk", Default = SdkGeneration.V7, HelpText = "Compiled plugin SDK generation.")]
+        public SdkGeneration Sdk { get; set; }
+
+        [Option("framework", Default = ThemeFramework.Avalonia, HelpText = "Theme UI framework.")]
+        public ThemeFramework Framework { get; set; }
     }
 
     [Verb("pack", HelpText = "Pack existing add-on.")]

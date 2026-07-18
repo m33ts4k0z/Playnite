@@ -1,0 +1,10 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:_namespace_"
+             x:Class="_namespace_._name_SettingsView"
+             x:DataType="local:_name_SettingsViewModel">
+  <StackPanel Spacing="8">
+    <TextBlock Text="API key:" />
+    <TextBox Text="{Binding Settings.ApiKey}" />
+  </StackPanel>
+</UserControl>

@@ -31,17 +31,39 @@ namespace Playnite.Toolbox
             return Path.Combine(PlaynitePaths.ProgramPath, "Templates", "Themes", fileName);
         }
 
-        public static string GetPluginTemplateArchivePath(ExtensionType type)
+        public static string GetPluginTemplateArchivePath(
+            ExtensionType type,
+            SdkGeneration sdkGeneration = SdkGeneration.V6)
         {
             var root = Path.Combine(PlaynitePaths.ProgramPath, "Templates", "Extensions");
+            var suffix = sdkGeneration == SdkGeneration.V7 ? "V7" : string.Empty;
             switch (type)
             {
                 case ExtensionType.GenericPlugin:
-                    return Path.Combine(root, "GenericPlugin.zip");
+                    return Path.Combine(root, $"GenericPlugin{suffix}.zip");
                 case ExtensionType.GameLibrary:
-                    return Path.Combine(root, "CustomLibraryPlugin.zip");
+                    return Path.Combine(root, $"CustomLibraryPlugin{suffix}.zip");
                 case ExtensionType.MetadataProvider:
-                    return Path.Combine(root, "CustomMetadataPlugin.zip");
+                    return Path.Combine(root, $"CustomMetadataPlugin{suffix}.zip");
+                case ExtensionType.Script:
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        public static string GetPluginTemplateProjectName(
+            ExtensionType type,
+            SdkGeneration sdkGeneration = SdkGeneration.V6)
+        {
+            var suffix = sdkGeneration == SdkGeneration.V7 ? "V7" : string.Empty;
+            switch (type)
+            {
+                case ExtensionType.GenericPlugin:
+                    return $"GenericPlugin{suffix}";
+                case ExtensionType.GameLibrary:
+                    return $"CustomLibraryPlugin{suffix}";
+                case ExtensionType.MetadataProvider:
+                    return $"CustomMetadataPlugin{suffix}";
                 case ExtensionType.Script:
                 default:
                     throw new NotSupportedException();

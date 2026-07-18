@@ -1,0 +1,8 @@
+extension.yaml
+GenericPluginV7.csproj
+GenericPluginV7.sln
+README.md
+_name_.cs
+_name_Settings.cs
+_name_SettingsView.axaml
+_name_SettingsView.axaml.cs

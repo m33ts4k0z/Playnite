@@ -162,6 +162,9 @@ if (!$SkipBuild)
     PackExtensionTemplate "CustomLibraryPlugin" $OutputDir
     PackExtensionTemplate "CustomMetadataPlugin" $OutputDir
     PackExtensionTemplate "GenericPlugin" $OutputDir
+    PackExtensionTemplate "CustomLibraryPluginV7" $OutputDir
+    PackExtensionTemplate "CustomMetadataPluginV7" $OutputDir
+    PackExtensionTemplate "GenericPluginV7" $OutputDir
     PackExtensionTemplate "PowerShellScript" $OutputDir
 }
 

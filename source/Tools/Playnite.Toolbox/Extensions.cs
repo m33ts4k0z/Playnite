@@ -112,6 +112,16 @@ namespace Playnite.Toolbox
 
         public static string GeneratePluginExtension(ExtensionType type, string name, string directory)
         {
+            return GeneratePluginExtension(type, name, directory, SdkGeneration.V6);
+        }
+
+        public static string GeneratePluginExtension(
+            ExtensionType type,
+            string name,
+            string directory,
+            SdkGeneration sdkGeneration,
+            string templateArchiveOverride = null)
+        {
             var normalizedName = Common.Paths.GetSafePathName(name).Replace(" ", string.Empty);
             var outDir = Path.Combine(directory, normalizedName);
             if (Directory.Exists(outDir))
@@ -119,7 +129,7 @@ namespace Playnite.Toolbox
                 throw new Exception($"Extension already exists: {outDir}");
             }
 
-            var templateArchive = Paths.GetPluginTemplateArchivePath(type);
+            var templateArchive = templateArchiveOverride ?? Paths.GetPluginTemplateArchivePath(type, sdkGeneration);
             ZipFile.ExtractToDirectory(templateArchive, outDir);
             var pluginId = Guid.NewGuid();
 
@@ -158,26 +168,35 @@ namespace Playnite.Toolbox
 
             var outProjectFile = Path.Combine(outDir, normalizedName + ".csproj");
             var outSolutionFile = Path.Combine(outDir, normalizedName + ".sln");
-            var baseProjectName = genericPluginProjectName;
+            var baseProjectName = sdkGeneration == SdkGeneration.V7
+                ? Paths.GetPluginTemplateProjectName(type, sdkGeneration)
+                : GetLegacyProjectName(type);
+            File.Move(Path.Combine(outDir, baseProjectName + ".csproj"), outProjectFile);
+            File.Move(Path.Combine(outDir, baseProjectName + ".sln"), outSolutionFile);
+            FileSystem.ReplaceStringInFile(
+                outSolutionFile,
+                $"\"{baseProjectName}\"",
+                $"\"{normalizedName}\"");
+            FileSystem.ReplaceStringInFile(
+                outSolutionFile,
+                baseProjectName + ".csproj",
+                normalizedName + ".csproj");
+            return outDir;
+        }
 
+        private static string GetLegacyProjectName(ExtensionType type)
+        {
             switch (type)
             {
                 case ExtensionType.GenericPlugin:
-                    baseProjectName = genericPluginProjectName;
-                    break;
+                    return genericPluginProjectName;
                 case ExtensionType.GameLibrary:
-                    baseProjectName = libraryPluginProjectName;
-                    break;
+                    return libraryPluginProjectName;
                 case ExtensionType.MetadataProvider:
-                    baseProjectName = metadataPluginProjectName;
-                    break;
+                    return metadataPluginProjectName;
+                default:
+                    throw new NotSupportedException();
             }
-
-            File.Move(Path.Combine(outDir, baseProjectName + ".csproj"), outProjectFile);
-            File.Move(Path.Combine(outDir, baseProjectName + ".sln"), outSolutionFile);
-            FileSystem.ReplaceStringInFile(outProjectFile, baseProjectName, normalizedName);
-            FileSystem.ReplaceStringInFile(outSolutionFile, baseProjectName, normalizedName);
-            return outDir;
         }
 
         public static string PackageExtension(string extDirectory, string targetPath)

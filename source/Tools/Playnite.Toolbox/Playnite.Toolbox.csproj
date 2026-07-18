@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Playnite\Playnite.csproj" />
     <ProjectReference Include="..\..\PlayniteSDK\Playnite.SDK.csproj" />
+    <ProjectReference Include="..\..\Playnite.Avalonia\Playnite.Avalonia.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +28,8 @@
     <!-- Templates are scaffolding data, not part of this compilation. -->
     <Compile Remove="Templates\**" />
     <EmbeddedResource Remove="Templates\**" />
+    <AvaloniaResource Remove="Templates\**" />
+    <AvaloniaXaml Remove="Templates\**" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,9 @@
+extension.yaml
+CustomLibraryPluginV7.csproj
+CustomLibraryPluginV7.sln
+README.md
+_name_.cs
+_name_Client.cs
+_name_Settings.cs
+_name_SettingsView.axaml
+_name_SettingsView.axaml.cs

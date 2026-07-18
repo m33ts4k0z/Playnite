@@ -4,6 +4,7 @@ using Playnite.API;
 using Playnite.Common;
 using Playnite.Plugins;
 using Playnite.SDK;
+using Playnite.Avalonia.Theming;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -76,6 +77,14 @@ namespace Playnite.Toolbox
             var extMan = Path.Combine(directory, PlaynitePaths.ExtensionManifestFileName);
             if (File.Exists(themeMan))
             {
+                if (IsAvaloniaTheme(directory))
+                {
+                    var package = AvaloniaThemePackage.Load(directory);
+                    return package.Mode == AvaloniaThemeMode.Desktop
+                        ? ItemType.DesktopTheme
+                        : ItemType.FullscreenTheme;
+                }
+
                 var desc = ExtensionInstaller.GetThemeManifest(themeMan);
                 switch (desc.Mode)
                 {
@@ -115,22 +124,29 @@ namespace Playnite.Toolbox
                 switch (options.Type)
                 {
                     case ItemType.DesktopTheme:
-                        outPath = Themes.GenerateNewTheme(ApplicationMode.Desktop, options.Name);
+                        outPath = options.Framework == ThemeFramework.Avalonia
+                            ? GenerateAvaloniaTheme(AvaloniaThemeMode.Desktop, options.Name, options.OutDirectory)
+                            : Themes.GenerateNewTheme(ApplicationMode.Desktop, options.Name);
                         break;
                     case ItemType.FullscreenTheme:
-                        outPath = Themes.GenerateNewTheme(ApplicationMode.Fullscreen, options.Name);
+                        outPath = options.Framework == ThemeFramework.Avalonia
+                            ? GenerateAvaloniaTheme(AvaloniaThemeMode.Fullscreen, options.Name, options.OutDirectory)
+                            : Themes.GenerateNewTheme(ApplicationMode.Fullscreen, options.Name);
                         break;
                     case ItemType.PowerShellScript:
                         outPath = Extensions.GenerateScriptExtension(options.Name, options.OutDirectory);
                         break;
                     case ItemType.GenericPlugin:
-                        outPath = Extensions.GeneratePluginExtension(ExtensionType.GenericPlugin, options.Name, options.OutDirectory);
+                        outPath = Extensions.GeneratePluginExtension(
+                            ExtensionType.GenericPlugin, options.Name, options.OutDirectory, options.Sdk);
                         break;
                     case ItemType.MetadataPlugin:
-                        outPath = Extensions.GeneratePluginExtension(ExtensionType.MetadataProvider, options.Name, options.OutDirectory);
+                        outPath = Extensions.GeneratePluginExtension(
+                            ExtensionType.MetadataProvider, options.Name, options.OutDirectory, options.Sdk);
                         break;
                     case ItemType.LibraryPlugin:
-                        outPath = Extensions.GeneratePluginExtension(ExtensionType.GameLibrary, options.Name, options.OutDirectory);
+                        outPath = Extensions.GeneratePluginExtension(
+                            ExtensionType.GameLibrary, options.Name, options.OutDirectory, options.Sdk);
                         break;
                     default:
                         throw new NotSupportedException($"Uknown extension type {options.Type}.");
@@ -162,10 +178,14 @@ namespace Playnite.Toolbox
                 switch (type)
                 {
                     case ItemType.DesktopTheme:
-                        outPath = Themes.PackageTheme(options.Directory, options.Destination, ApplicationMode.Desktop);
+                        outPath = IsAvaloniaTheme(options.Directory)
+                            ? AvaloniaThemeTool.Pack(options.Directory, options.Destination, AvaloniaThemeMode.Desktop)
+                            : Themes.PackageTheme(options.Directory, options.Destination, ApplicationMode.Desktop);
                         break;
                     case ItemType.FullscreenTheme:
-                        outPath = Themes.PackageTheme(options.Directory, options.Destination, ApplicationMode.Fullscreen);
+                        outPath = IsAvaloniaTheme(options.Directory)
+                            ? AvaloniaThemeTool.Pack(options.Directory, options.Destination, AvaloniaThemeMode.Fullscreen)
+                            : Themes.PackageTheme(options.Directory, options.Destination, ApplicationMode.Fullscreen);
                         break;
                     case ItemType.PowerShellScript:
                     case ItemType.GenericPlugin:
@@ -196,10 +216,26 @@ namespace Playnite.Toolbox
                 switch (type)
                 {
                     case ItemType.DesktopTheme:
-                        Themes.UpdateTheme(options.Directory, ApplicationMode.Desktop);
+                        if (IsAvaloniaTheme(options.Directory))
+                        {
+                            AvaloniaThemeTool.Validate(options.Directory, AvaloniaThemeMode.Desktop);
+                            logger.Info("Avalonia Desktop theme is valid for the current API.");
+                        }
+                        else
+                        {
+                            Themes.UpdateTheme(options.Directory, ApplicationMode.Desktop);
+                        }
                         break;
                     case ItemType.FullscreenTheme:
-                        Themes.UpdateTheme(options.Directory, ApplicationMode.Desktop);
+                        if (IsAvaloniaTheme(options.Directory))
+                        {
+                            AvaloniaThemeTool.Validate(options.Directory, AvaloniaThemeMode.Fullscreen);
+                            logger.Info("Avalonia Fullscreen theme is valid for the current API.");
+                        }
+                        else
+                        {
+                            Themes.UpdateTheme(options.Directory, ApplicationMode.Fullscreen);
+                        }
                         break;
                     case ItemType.Uknown:
                     case ItemType.PowerShellScript:
@@ -214,6 +250,32 @@ namespace Playnite.Toolbox
                 AppResult = 1;
                 logger.Error(e, "Failed to update extension." + Environment.NewLine + e.Message);
             }
+        }
+
+        private static string GenerateAvaloniaTheme(
+            AvaloniaThemeMode mode,
+            string name,
+            string outputRoot)
+        {
+            var directoryName = Common.Paths.GetSafePathName(name).Replace(" ", string.Empty);
+            var root = outputRoot.IsNullOrWhiteSpace()
+                ? Path.Combine(PlaynitePaths.ThemesProgramPath, mode.ToString(), directoryName)
+                : Path.Combine(outputRoot, directoryName);
+            return AvaloniaThemeTool.Create(mode, name, root);
+        }
+
+        private static bool IsAvaloniaTheme(string directory)
+        {
+            var manifestPath = Path.Combine(directory, PlaynitePaths.ThemeManifestFileName);
+            if (!File.Exists(manifestPath))
+            {
+                return false;
+            }
+
+            return Regex.IsMatch(
+                File.ReadAllText(manifestPath),
+                "^\\s*Framework\\s*:\\s*[\\\"']?Avalonia[\\\"']?\\s*$",
+                RegexOptions.IgnoreCase | RegexOptions.Multiline);
         }
 
         public static void ProcessVerifyOptions(VerifyManifestOptions options)

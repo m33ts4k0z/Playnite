@@ -1,0 +1,9 @@
+extension.yaml
+CustomMetadataPluginV7.csproj
+CustomMetadataPluginV7.sln
+README.md
+_name_.cs
+_name_Provider.cs
+_name_Settings.cs
+_name_SettingsView.axaml
+_name_SettingsView.axaml.cs
