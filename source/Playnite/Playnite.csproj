@@ -29,13 +29,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngleSharp" Version="0.9.9" />
     <PackageReference Include="CefSharp.Common.NETCore" Version="147.0.100" />
     <PackageReference Include="CefSharp.OffScreen.NETCore" Version="147.0.100" />
     <PackageReference Include="CefSharp.Wpf.NETCore" Version="147.0.100" />
     <PackageReference Include="chromiumembeddedframework.runtime.win-x64" Version="147.0.10" />
     <PackageReference Include="chromiumembeddedframework.runtime.win-x86" Version="147.0.10" />
-    <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
     <PackageReference Include="Flurl" Version="2.7.1" />
     <PackageReference Include="LiteDB" Version="4.1.4" />
@@ -73,18 +71,6 @@
     <Reference Include="SQLNado">
       <HintPath>..\..\references\SQLNado.dll</HintPath>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <COMReference Include="IWshRuntimeLibrary">
-      <Guid>{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
   </ItemGroup>
 
   <ItemGroup>

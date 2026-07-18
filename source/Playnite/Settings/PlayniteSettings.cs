@@ -27,12 +27,6 @@ using Playnite.SDK.Plugins;
 
 namespace Playnite
 {
-    public enum WebImageSearchSource
-    {
-        Google,
-        DuckDuckGo
-    }
-
     public enum DesktopSettingsPage
     {
         General = 0,
@@ -215,15 +209,6 @@ namespace Playnite
         OnceAWeek = 2
     }
 
-    public enum SafeSearchSettings
-    {
-        [Description(LOC.Default)]
-        Default,
-        [Description(LOC.EnabledTitle)]
-        On,
-        [Description(LOC.DisabledTitle)]
-        Off
-    }
 
     public class DateFormattingOptions : ObservableObject
     {
@@ -258,7 +243,7 @@ namespace Playnite
         }
     }
 
-    public class PlayniteSettings : ObservableObject
+    public class PlayniteSettings : ObservableObject, IAutoBackupSettings, IMetadataDownloadSettings
     {
         private static SDK.ILogger logger = SDK.LogManager.GetLogger();
 

@@ -27,6 +27,7 @@ namespace Playnite.Tests
             ResourceProvider.SetGlobalProvider(TestResourceProvider.Instance);
             Playnite.Database.GameDatabase.ExpandGameVariables = (game, input, fixSeparators, emulatorDir) => game.ExpandVariables(input, fixSeparators, emulatorDir);
             Playnite.Database.GameDatabase.MatchTextFilter = (filter, toMatch, acronymStart) => Playnite.ViewModels.SearchViewModel.MatchTextFilter(filter, toMatch, acronymStart);
+            CoreRuntime.ApplicationVersion = () => Updater.CurrentVersion;
             Assert.AreEqual("Filters", ResourceProvider.GetString(LOC.Filters));
         }
 

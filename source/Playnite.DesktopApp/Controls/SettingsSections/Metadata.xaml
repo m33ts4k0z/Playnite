@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Playnite.DesktopApp.Controls.SettingsSections.Metadata"
+<UserControl x:Class="Playnite.DesktopApp.Controls.SettingsSections.Metadata"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -9,7 +9,7 @@
              xmlns:pm="clr-namespace:Playnite.SDK.Models;assembly=Playnite.SDK"
              xmlns:pcmd="clr-namespace:Playnite.Commands;assembly=Playnite"
              xmlns:pbeh="clr-namespace:Playnite.Behaviors;assembly=Playnite"
-             xmlns:p="clr-namespace:Playnite;assembly=Playnite"
+             xmlns:p="clr-namespace:Playnite;assembly=Playnite.Core"
              mc:Ignorable="d"
              d:DesignHeight="500" d:DesignWidth="600">
 

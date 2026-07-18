@@ -157,6 +157,20 @@ namespace Playnite
             Playnite.Common.ImageConverter.TgaToPng = path => System.Drawing.Imaging.BitmapExtensions.TgaToBitmap(path).ToPngArray();
             GameDatabase.ExpandGameVariables = (game, input, fixSeparators, emulatorDir) => game.ExpandVariables(input, fixSeparators, emulatorDir);
             GameDatabase.MatchTextFilter = (filter, toMatch, acronymStart) => Playnite.ViewModels.SearchViewModel.MatchTextFilter(filter, toMatch, acronymStart);
+            CoreRuntime.ApplicationVersion = () => Updater.CurrentVersion;
+            CoreRuntime.CollectSystemInfo = Computer.GetSystemInfo;
+            GoogleImageDownloader.CreateOffscreenView = settings => new WebView.OffscreenWebView(settings);
+            AddonRuntime.GetInstallerManifest = addonId => Current.ServicesClient.GetAddonInstaller(addonId);
+            AddonRuntime.IsInstalled = addon =>
+            {
+                if (addon.IsTheme)
+                {
+                    var themeMode = addon.Type == AddonType.ThemeDesktop ? ApplicationMode.Desktop : ApplicationMode.Fullscreen;
+                    return ThemeManager.GetAvailableThemes(themeMode).Any(a => a.Id == addon.AddonId);
+                }
+
+                return ExtensionFactory.GetInstalledManifests().Any(a => a.Id == addon.AddonId);
+            };
             appMutex = new Mutex(true, instanceMuxet);
 
             try

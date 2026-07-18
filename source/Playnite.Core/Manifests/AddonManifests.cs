@@ -55,9 +55,9 @@ namespace Playnite
                 case AddonType.Generic:
                     return SdkVersions.SDKVersion;
                 case AddonType.ThemeDesktop:
-                    return ThemeManager.DesktopApiVersion;
+                    return ThemeApiVersions.DesktopApiVersion;
                 case AddonType.ThemeFullscreen:
-                    return ThemeManager.FullscreenApiVersion;
+                    return ThemeApiVersions.FullscreenApiVersion;
             }
 
             return new Version(999, 0);
@@ -115,24 +115,7 @@ namespace Playnite
         [JsonIgnore]
         public bool IsInstalled
         {
-            get
-            {
-                if (IsTheme)
-                {
-                    if (Type == AddonType.ThemeDesktop)
-                    {
-                        return ThemeManager.GetAvailableThemes(ApplicationMode.Desktop).Any(a => a.Id == AddonId);
-                    }
-                    else
-                    {
-                        return ThemeManager.GetAvailableThemes(ApplicationMode.Fullscreen).Any(a => a.Id == AddonId);
-                    }
-                }
-                else
-                {
-                    return ExtensionFactory.GetInstalledManifests().Any(a => a.Id == AddonId);
-                }
-            }
+            get => AddonRuntime.IsInstalled(this);
         }
 
         [YamlIgnore]
@@ -186,7 +169,8 @@ namespace Playnite
 
                 if (InstallerManifestUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 {
-                    installerManifest = PlayniteApplication.Current.ServicesClient.GetAddonInstaller(AddonId);
+                    installerManifest = AddonRuntime.GetInstallerManifest?.Invoke(AddonId) ??
+                        throw new InvalidOperationException("No add-on installer manifest provider has been configured.");
                 }
                 else if (File.Exists(InstallerManifestUrl))
                 {

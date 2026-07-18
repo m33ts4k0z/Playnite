@@ -18,6 +18,8 @@ namespace Playnite
         public static void SetHandler(IDialogsFactory factory)
         {
             DialogsHandler = factory;
+            GameControllerDialogs.ShowError = (message, caption) =>
+                DialogsHandler?.ShowErrorMessage(message, caption);
         }
 
         public static MessageBoxResult ShowErrorMessage(string messageBoxText, string caption)

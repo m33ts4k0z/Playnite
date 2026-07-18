@@ -20,7 +20,7 @@ namespace Playnite
         /// <returns>True if HDR is supported on the primary display, false if unknown or not supported</returns>
         public static bool IsHdrSupported()
         {
-            if (Computer.WindowsVersion < WindowsVersion.Win10)
+            if (WindowsOs.WindowsVersion < WindowsVersion.Win10)
             {
                 return false;
             }
@@ -50,7 +50,7 @@ namespace Playnite
         /// <returns>True if HDR is enabled on the primary display, false if unknown or not supported</returns>
         public static bool IsHdrEnabled()
         {
-            if (Computer.WindowsVersion < WindowsVersion.Win10)
+            if (WindowsOs.WindowsVersion < WindowsVersion.Win10)
             {
                 return false;
             }
@@ -80,7 +80,7 @@ namespace Playnite
         /// <param name="enable">True if enabling HDR, false if disabling HDR</param>
         public static void SetHdrEnabled(bool enable)
         {
-            if (Computer.WindowsVersion < WindowsVersion.Win10)
+            if (WindowsOs.WindowsVersion < WindowsVersion.Win10)
             {
                 return;
             }

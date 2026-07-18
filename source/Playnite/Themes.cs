@@ -28,7 +28,7 @@ namespace Playnite
         public static ThemeManifest DefaultTheme { get; private set; }
         public const string DefaultDesktopThemeId = "Playnite_builtin_DefaultDesktop";
         public const string DefaultFullscreenThemeId = "Playnite_builtin_DefaultFullscreen";
-        public const string DefaultThemeDirName = "Default";
+        public const string DefaultThemeDirName = ThemePaths.DefaultThemeDirectoryName;
 
         public static System.Version GetApiVersion(ApplicationMode mode)
         {
@@ -37,7 +37,7 @@ namespace Playnite
 
         public static string GetThemeRootDir(ApplicationMode mode)
         {
-            return mode == ApplicationMode.Desktop ? "Desktop" : "Fullscreen";
+            return ThemePaths.GetRootDirectory(mode);
         }
 
         public static void SetCurrentTheme(ThemeManifest theme)

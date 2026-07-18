@@ -100,7 +100,7 @@ namespace Playnite
                         File.AppendAllText(extensionsPath, "----- User data extensions: -----\n\n");
                         File.AppendAllText(extensionsPath, GetManifestInfo(PlaynitePaths.ExtensionsUserDataPath, PlaynitePaths.ExtensionManifestFileName));
                         File.AppendAllText(extensionsPath, GetManifestInfo(PlaynitePaths.ThemesUserDataPath, PlaynitePaths.ThemeManifestFileName));
-                        if (PlayniteSettings.IsPortable)
+                        if (PlaynitePaths.IsPortable)
                         {
                             File.AppendAllText(extensionsPath, "\n\n----- Program dir extensions: -----\n\n");
                             File.AppendAllText(extensionsPath, GetManifestInfo(PlaynitePaths.ExtensionsProgramPath, PlaynitePaths.ExtensionManifestFileName));
@@ -118,7 +118,7 @@ namespace Playnite
                     try
                     {
                         var infoPath = Path.Combine(diagTemp, "sysinfo.txt");
-                        File.WriteAllText(infoPath, Serialization.ToJson(Computer.GetSystemInfo(), true));
+                        File.WriteAllText(infoPath, Serialization.ToJson(CoreRuntime.CollectSystemInfo(), true));
                         archive.CreateEntryFromFile(infoPath, Path.GetFileName(infoPath));
                     }
                     catch (Exception e) when (!PlayniteEnvironment.ThrowAllErrors)
@@ -130,8 +130,8 @@ namespace Playnite
                     var playnitePath = Path.Combine(diagTemp, "playniteInfo.txt");
                     var playniteInfo = new Dictionary<string, object>
                     {
-                        { "Version", Updater.CurrentVersion.ToString() },
-                        { "Portable", PlayniteSettings.IsPortable },
+                        { "Version", CoreRuntime.ApplicationVersion().ToString() },
+                        { "Portable", PlaynitePaths.IsPortable },
                         { "Memory", (PlayniteProcess.WorkingSetMemory / 1024f) / 1024f },
                         { "Path", PlayniteProcess.Path },
                         { "Cmdline", PlayniteProcess.Cmdline },

@@ -21,7 +21,7 @@
     <Compile Include="..\..\Playnite.Core\Common\Extensions\StringExtensions.cs" Link="Shared\StringExtensions.cs" />
     <Compile Include="..\..\Playnite.Core\Common\FileSystem.cs" Link="Shared\FileSystem.cs" />
     <Compile Include="..\..\Playnite.Core\Common\Paths.cs" Link="Shared\Paths.cs" />
-    <Compile Include="..\..\Playnite\Common\Resources.cs" Link="Shared\Resources.cs" />
+    <Compile Include="..\..\Playnite.Core\Common\Resources.cs" Link="Shared\Resources.cs" />
     <Compile Include="..\..\Playnite.Core\Native\Fileapi.cs" Link="Shared\Native\Fileapi.cs" />
     <Compile Include="..\..\Playnite.Core\Native\Kernel32.cs" Link="Shared\Native\Kernel32.cs" />
     <Compile Include="..\..\Playnite.Core\Native\Ntdll.cs" Link="Shared\Native\Ntdll.cs" />

@@ -7,7 +7,7 @@
         xmlns:pctrls="clr-namespace:Playnite.DesktopApp.Controls"
         xmlns:pcon="clr-namespace:Playnite.Converters;assembly=Playnite"
         xmlns:pbeh="clr-namespace:Playnite.Behaviors;assembly=Playnite"
-        xmlns:p="clr-namespace:Playnite;assembly=Playnite"
+        xmlns:p="clr-namespace:Playnite;assembly=Playnite.Core"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:prism="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"

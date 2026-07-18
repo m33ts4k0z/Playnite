@@ -22,6 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="0.9.9" />
+    <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
     <PackageReference Include="LiteDB" Version="4.1.4" />
     <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.6.3" />
@@ -36,6 +38,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="DiscordRPC">
+      <HintPath>..\..\references\DiscordRPC.dll</HintPath>
+    </Reference>
     <Reference Include="SharpCompress">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\references\SharpCompress.dll</HintPath>
@@ -43,6 +48,21 @@
     <Reference Include="SQLNado">
       <HintPath>..\..\references\SQLNado.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Windows Script Host interop for .lnk shortcut handling (Programs2.cs).
+         Interop types are embedded, so consumers need no extra runtime file.
+         Requires VS MSBuild to build (dotnet CLI can't resolve COMReference). -->
+    <COMReference Include="IWshRuntimeLibrary">
+      <Guid>{F935DC20-1CF0-11D0-ADB9-00C04FD58A0B}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
   </ItemGroup>
 
   <ItemGroup>

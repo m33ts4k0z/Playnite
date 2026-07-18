@@ -3,9 +3,9 @@ using Flurl;
 using Newtonsoft.Json;
 using Playnite.Common;
 using Playnite.SDK;
-using Playnite.WebView;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -15,6 +15,22 @@ using System.Threading.Tasks;
 
 namespace Playnite
 {
+    public enum WebImageSearchSource
+    {
+        Google,
+        DuckDuckGo
+    }
+
+    public enum SafeSearchSettings
+    {
+        [Description(LOC.Default)]
+        Default,
+        [Description(LOC.EnabledTitle)]
+        On,
+        [Description(LOC.DisabledTitle)]
+        Off
+    }
+
     public class GoogleImage
     {
         [JsonProperty("ow")]
@@ -49,12 +65,19 @@ namespace Playnite
     {
         private static ILogger logger = LogManager.GetLogger();
 
-        private readonly OffscreenWebView webView;
+        /// <summary>
+        /// Host-supplied offscreen web view provider; the CEF-backed
+        /// implementation lives in the UI assembly.
+        /// </summary>
+        public static Func<WebViewSettings, IWebView> CreateOffscreenView { get; set; } = _ =>
+            throw new InvalidOperationException("No offscreen web view provider has been configured.");
+
+        private readonly IWebView webView;
         private TaskCompletionSource<DDGImageSearchResult> ddgResult = null;
 
         public GoogleImageDownloader()
         {
-            webView = new OffscreenWebView(new WebViewSettings
+            webView = CreateOffscreenView(new WebViewSettings
             {
                 PassResourceContentStreamToCallback = true,
                 ShouldPassResourceContentFunc = (a) => UrlMatchesDdgImageSearch(a.Request.Url),

@@ -14,58 +14,6 @@ using System.Diagnostics;
 
 namespace Playnite.Common
 {
-    public class SystemInfo
-    {
-        public bool Is64Bit { get; set; }
-
-        public string WindowsVersion { get; set; }
-
-        public string ActualWindowsVersion { get; set; }
-
-        public string WindowsEdition { get; set; }
-
-        public int WindowsBuildVersion { get; set; }
-
-        public string Cpu { get; set; }
-
-        public int Ram { get; set; }
-
-        public List<string> Gpus { get; set; }
-
-        public List<ComputerScreen> Screens { get; set; }
-    }
-
-    public class ComputerScreen
-    {
-        public System.Drawing.Rectangle WorkingArea { get; private set; }
-        public bool Primary { get; private set; }
-        public string DeviceName { get; private set; }
-        public System.Drawing.Rectangle Bounds { get; private set; }
-        public int BitsPerPixel { get; private set; }
-
-        public ComputerScreen()
-        {
-        }
-
-        public ComputerScreen(Screen screen)
-        {
-            WorkingArea = screen.WorkingArea;
-            Primary = screen.Primary;
-            DeviceName = screen.DeviceFriendlyName();
-            Bounds = screen.Bounds;
-            BitsPerPixel = screen.BitsPerPixel;
-        }
-    }
-
-    public enum WindowsVersion
-    {
-        Unknown,
-        Win7,
-        Win8,
-        Win10,
-        Win11
-    }
-
     public enum HwCompany
     {
         Intel,
@@ -82,38 +30,7 @@ namespace Playnite.Common
         public static readonly (string path, string args) ShutdownCmd = ("shutdown.exe", "-s -hybrid -t 0");
         public static readonly (string path, string args) RestartCmd = ("shutdown.exe", "-r -t 0");
 
-        public static WindowsVersion WindowsVersion
-        {
-            get
-            {
-                var version = Environment.OSVersion.Version;
-                if (version.Major == 6 && version.Minor == 1)
-                {
-                    return WindowsVersion.Win7;
-                }
-                else if (version.Major == 6 && (version.Minor == 2 || version.Minor == 3))
-                {
-                    return WindowsVersion.Win8;
-                }
-                else if (version.Major == 10)
-                {
-                    // Apparently some people are spoofing Windows 10 build versions but whatherer they are using
-                    // is not updating instaled product name, so we need to check that as well.
-                    var windowsProd = Computer.GetWindowsProductName();
-                    if (windowsProd?.Contains("Windows 7") == true)
-                        return WindowsVersion.Win7;
-
-                    if (windowsProd?.Contains("Windows 8") == true)
-                        return WindowsVersion.Win8;
-
-                    return version.Build >= 22000 ? WindowsVersion.Win11 : WindowsVersion.Win10;
-                }
-                else
-                {
-                    return WindowsVersion.Unknown;
-                }
-            }
-        }
+        public static WindowsVersion WindowsVersion => WindowsOs.WindowsVersion;
 
         public static bool IsTLS13SystemWideEnabled()
         {
@@ -139,23 +56,9 @@ namespace Playnite.Common
             return false;
         }
 
-        public static int GetWindowsReleaseId()
-        {
-            var relVal = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ReleaseId", "");
-            if (relVal?.ToString().IsNullOrEmpty() == true)
-            {
-                return 0;
-            }
-            else
-            {
-                return Convert.ToInt32(relVal);
-            }
-        }
+        public static int GetWindowsReleaseId() => WindowsOs.GetWindowsReleaseId();
 
-        public static string GetWindowsProductName()
-        {
-            return Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ProductName", "")?.ToString();
-        }
+        public static string GetWindowsProductName() => WindowsOs.GetWindowsProductName();
 
         public static Guid GetMachineGuid()
         {
@@ -317,7 +220,14 @@ namespace Playnite.Common
             }
             else
             {
-                return new ComputerScreen(screen);
+                return new ComputerScreen
+                {
+                    WorkingArea = screen.WorkingArea,
+                    Primary = screen.Primary,
+                    DeviceName = screen.DeviceFriendlyName(),
+                    Bounds = screen.Bounds,
+                    BitsPerPixel = screen.BitsPerPixel
+                };
             }
         }
 

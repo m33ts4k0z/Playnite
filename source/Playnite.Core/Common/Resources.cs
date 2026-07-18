@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
 using Playnite.Native;
 
 namespace Playnite.Common
@@ -25,15 +24,6 @@ namespace Playnite.Common
             using (MemoryStream m = new MemoryStream(bPtr))
             {
                 File.WriteAllBytes(destination, m.ToArray());
-            }
-        }
-
-        public static long GetUriPackFileSize(string packUri)
-        {
-            var info = Application.GetResourceStream(new Uri(packUri));
-            using (var stream = info.Stream)
-            {
-                return stream.Length;
             }
         }
 

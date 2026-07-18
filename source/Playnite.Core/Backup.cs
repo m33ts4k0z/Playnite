@@ -58,6 +58,9 @@ namespace Playnite
         private const string backupDateFormat = "yyyy-MM-dd-HH-mm-ss";
         private const string autoBackupFilePattern = autoBackupFileName + @"\-\d{4}\-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}";
         private const string autoBackupFileName = "PlayniteBackup";
+        // Serialized property name of PlayniteSettings.DatabasePath; the settings
+        // class itself lives in the UI assembly.
+        private const string databasePathSettingName = "DatabasePath";
         private const string libraryEntryRoot = "library";
         private const string libraryFilesEntryRoot = "libraryfiles";
         private const string extensionsDataEntryRoot = "extensiondata";
@@ -162,7 +165,7 @@ namespace Playnite
                 {
                     void packThemes(ApplicationMode mode)
                     {
-                        var themeRootDir = ThemeManager.GetThemeRootDir(mode);
+                        var themeRootDir = ThemePaths.GetRootDirectory(mode);
                         var modeThemesDir = Path.Combine(themesDir, themeRootDir);
                         if (Directory.Exists(modeThemesDir))
                         {
@@ -170,7 +173,7 @@ namespace Playnite
                             {
                                 var themeDirName = Path.GetFileName(themeDir);
                                 // Never backup default themes
-                                if (themeDirName == ThemeManager.DefaultThemeDirName)
+                                if (themeDirName == ThemePaths.DefaultThemeDirectoryName)
                                 {
                                     continue;
                                 }
@@ -241,11 +244,11 @@ namespace Playnite
                         // We don't know what settings model version is the original file and potential conversion will
                         // be left to setting load on next startup.
                         var mainConfigFile = Paths.FixPathLength(Path.Combine(options.DataDir, PlaynitePaths.ConfigFileName));
-                        var resultLine = $"\"{nameof(PlayniteSettings.DatabasePath)}\": {Newtonsoft.Json.JsonConvert.ToString(options.RestoreLibrarySettingsPath)},";
+                        var resultLine = $"\"{databasePathSettingName}\": {Newtonsoft.Json.JsonConvert.ToString(options.RestoreLibrarySettingsPath)},";
                         var configContent = File.ReadAllLines(mainConfigFile);
                         for (int i = 0; i < configContent.Length; i++)
                         {
-                            if (configContent[i].Contains($"\"{nameof(PlayniteSettings.DatabasePath)}\""))
+                            if (configContent[i].Contains($"\"{databasePathSettingName}\""))
                             {
                                 configContent[i] = resultLine;
                             }
@@ -299,12 +302,12 @@ namespace Playnite
                     {
                         void cleanThemeModeDir(ApplicationMode mode)
                         {
-                            var modeDir = Path.Combine(outputDir, ThemeManager.GetThemeRootDir(mode));
+                            var modeDir = Path.Combine(outputDir, ThemePaths.GetRootDirectory(mode));
                             FileSystem.CreateDirectory(modeDir, false);
                             foreach (var dir in Directory.GetDirectories(modeDir))
                             {
                                 // Default themes must not be deleted since they are never included in the backup
-                                if (new DirectoryInfo(dir).Name.Equals(ThemeManager.DefaultThemeDirName, StringComparison.OrdinalIgnoreCase))
+                                if (new DirectoryInfo(dir).Name.Equals(ThemePaths.DefaultThemeDirectoryName, StringComparison.OrdinalIgnoreCase))
                                 {
                                     continue;
                                 }
@@ -378,7 +381,7 @@ namespace Playnite
             return selections;
         }
 
-        public static BackupOptions GetAutoBackupOptions(PlayniteSettings settings, string dataDir, string libraryDir)
+        public static BackupOptions GetAutoBackupOptions(IAutoBackupSettings settings, string dataDir, string libraryDir)
         {
             var options = new BackupOptions
             {

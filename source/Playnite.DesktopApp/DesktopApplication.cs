@@ -334,7 +334,7 @@ namespace Playnite.DesktopApp
             return new PlayniteAPI
             {
                 Addons = new AddonsAPI(Extensions, AppSettings),
-                ApplicationInfo = new PlayniteInfoAPI(),
+                ApplicationInfo = new PlayniteInfoAPI(Mode),
                 ApplicationSettings = new PlayniteSettingsAPI(AppSettings, Database),
                 Database = new DatabaseAPI(Database),
                 Dialogs = Dialogs,
@@ -354,7 +354,7 @@ namespace Playnite.DesktopApp
             return new PlayniteAPI
             {
                 Addons = new AddonsAPI(Extensions, AppSettings),
-                ApplicationInfo = new PlayniteInfoAPI(),
+                ApplicationInfo = new PlayniteInfoAPI(Mode),
                 ApplicationSettings = new PlayniteSettingsAPI(AppSettings, Database),
                 Database = new DatabaseAPI(Database),
                 Dialogs = Dialogs,
