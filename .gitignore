@@ -282,3 +282,5 @@ source/PlayniteServices/twitchTokens.json
 XBOXONE.ttf
 PlayStation4.ttf
 source/Playnite.FullscreenApp/Themes/Fullscreen/Default/audio/*
+# Claude Code project files (session memory, settings) - never commit
+.claude/
