@@ -311,6 +311,12 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    public void SwitchToLibraryView()
+    {
+        CloseOverlays();
+        LibraryFocusRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     public void RefreshGame(Guid gameId)
     {
         allGames.FirstOrDefault(item => item.Game.Id == gameId)?.Refresh();

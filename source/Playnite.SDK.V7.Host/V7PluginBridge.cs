@@ -605,44 +605,31 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
         Resources = new HostResources(hostCall);
         Notifications = new HostNotifications(hostCall);
         Dialogs = new HostDialogs(hostCall);
-        MainView = V7InterfaceProxy.Create<IMainViewAPI>((method, args) =>
-        {
-            if (method.Name == "get_UIDispatcher")
-            {
-                return Dispatcher.UIThread;
-            }
-
-            if (method.Name == "OpenPluginSettingsAsync")
-            {
-                return Task.FromResult(bool.TryParse(
-                    hostCall("OpenPluginSettings", args[0].ToString()),
-                    out var opened) && opened);
-            }
-
-            return V7InterfaceProxy.DefaultValue(method.ReturnType);
-        });
+        MainView = new HostMainView(hostCall);
         HostDatabase = new HostGameDatabase(hostCall);
         Database = HostDatabase;
-        ApplicationSettings = V7InterfaceProxy.Create<IPlayniteSettingsAPI>((method, _) => method.Name switch
-        {
-            "get_DatabasePath" => hostCall("DatabasePath", string.Empty),
-            "get_Language" => hostCall("Language", string.Empty),
-            "get_FirstTimeWizardComplete" => true,
-            "get_AsyncImageLoading" => true,
-            "get_DownloadMetadataOnImport" => true,
-            "get_CompletionStatus" => V7InterfaceProxy.Create<ICompletionStatusSettingsAPI>(),
-            "get_Fullscreen" => V7InterfaceProxy.Create<IFullscreenSettingsAPI>(),
-            _ => V7InterfaceProxy.DefaultValue(method.ReturnType)
-        });
+        ApplicationSettings = new HostApplicationSettings(hostCall);
         WebViews = new HostWebViewFactory(hostObjectCall);
-        UriHandler = V7InterfaceProxy.Create<IUriHandlerAPI>();
+        UriHandler = new UnsupportedUriHandler();
         Addons = new HostAddons(hostCall);
-        Emulation = V7InterfaceProxy.Create<IEmulationAPI>();
+        Emulation = new UnsupportedEmulationApi();
     }
 
-    public string ExpandGameVariables(Game game, string inputString) => inputString;
-    public string ExpandGameVariables(Game game, string inputString, string emulatorDir) => inputString;
-    public GameAction ExpandGameVariables(Game game, GameAction action) => action;
+    public string ExpandGameVariables(Game game, string inputString) =>
+        ExpandGameVariables(game, inputString, null);
+
+    public string ExpandGameVariables(Game game, string inputString, string emulatorDir) =>
+        hostCall("ExpandGameVariables", V7RpcJson.Serialize(new
+        {
+            Game = game,
+            Input = inputString,
+            EmulatorDirectory = emulatorDir
+        }));
+
+    public GameAction ExpandGameVariables(Game game, GameAction action) =>
+        V7RpcJson.Deserialize<GameAction>(hostCall(
+            "ExpandGameActionVariables",
+            V7RpcJson.Serialize(new { Game = game, Action = action })));
     public Task StartGameAsync(Guid gameId) => CallGameOperation("StartGame", gameId);
     public Task InstallGameAsync(Guid gameId) => CallGameOperation("InstallGame", gameId);
     public Task UninstallGameAsync(Guid gameId) => CallGameOperation("UninstallGame", gameId);
@@ -687,13 +674,242 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
             string.Equals(converter.GetType().Name, converterName, StringComparison.Ordinal));
     }
 
-    public List<GamepadController> GetConnectedControllers() => [];
+    public List<GamepadController> GetConnectedControllers() =>
+        V7RpcJson.Deserialize<List<GamepadController>>(
+            hostCall("ConnectedControllers", string.Empty)) ?? [];
 
     private Task CallGameOperation(string operation, Guid gameId)
     {
         hostCall(operation, gameId.ToString());
         return Task.CompletedTask;
     }
+}
+
+internal sealed class HostMainView : IMainViewAPI
+{
+    private readonly Func<string, string, string> hostCall;
+
+    public DesktopView ActiveDesktopView
+    {
+        get => ReadEnum<DesktopView>("MainView.ActiveDesktopView");
+        set => hostCall("MainView.SetActiveDesktopView", value.ToString());
+    }
+
+    public FullscreenView ActiveFullscreenView => ReadEnum<FullscreenView>("MainView.ActiveFullscreenView");
+    public SortOrder SortOrder => ReadEnum<SortOrder>("MainView.SortOrder");
+
+    public SortOrderDirection SortOrderDirection
+    {
+        get => ReadEnum<SortOrderDirection>("MainView.SortOrderDirection");
+        set => hostCall("MainView.SetSortOrderDirection", value.ToString());
+    }
+
+    public GroupableField Grouping
+    {
+        get => ReadEnum<GroupableField>("MainView.Grouping");
+        set => hostCall("MainView.SetGrouping", value.ToString());
+    }
+
+    public Dispatcher UIDispatcher => Dispatcher.UIThread;
+    public IEnumerable<Game> SelectedGames => Read<List<Game>>("MainView.SelectedGames") ?? [];
+    public List<Game> FilteredGames => Read<List<Game>>("MainView.FilteredGames") ?? [];
+
+    public HostMainView(Func<string, string, string> hostCall) =>
+        this.hostCall = hostCall ?? throw new ArgumentNullException(nameof(hostCall));
+
+    public Task<bool> OpenPluginSettingsAsync(Guid pluginId) => Task.FromResult(
+        bool.TryParse(hostCall("OpenPluginSettings", pluginId.ToString()), out var opened) && opened);
+
+    public void SwitchToLibraryView() => hostCall("MainView.SwitchToLibraryView", string.Empty);
+    public void SelectGame(Guid gameId) => hostCall("MainView.SelectGame", gameId.ToString());
+    public void SelectGames(IEnumerable<Guid> gameIds) =>
+        hostCall("MainView.SelectGames", V7RpcJson.Serialize(gameIds?.ToList() ?? []));
+    public void ApplyFilterPreset(Guid filterId) =>
+        hostCall("MainView.ApplyFilterPreset", filterId.ToString());
+    public void ApplyFilterPreset(FilterPreset preset) =>
+        ApplyFilterPreset((preset ?? throw new ArgumentNullException(nameof(preset))).Id);
+    public Guid GetActiveFilterPreset()
+    {
+        var value = hostCall("MainView.ActiveFilterPreset", string.Empty);
+        return Guid.TryParse(value, out var parsed)
+            ? parsed
+            : throw new InvalidDataException(
+                $"Avalonia host returned invalid active filter preset GUID '{value}'.");
+    }
+    public FilterPresetSettings GetCurrentFilterSettings() =>
+        Read<FilterPresetSettings>("MainView.CurrentFilterSettings");
+    public void OpenSearch(string searchTerm) =>
+        hostCall("MainView.OpenSearch", searchTerm ?? string.Empty);
+
+    public void OpenSearch(SearchContext context, string searchTerm)
+    {
+        if (context != null)
+        {
+            throw new NotSupportedException(
+                "SDK v7 custom search contexts cannot cross the isolated Avalonia plugin boundary yet.");
+        }
+
+        OpenSearch(searchTerm);
+    }
+
+    public Task<bool?> OpenEditDialogAsync(Guid gameId) => OpenEditDialogAsync([gameId]);
+
+    public Task<bool?> OpenEditDialogAsync(IReadOnlyList<Guid> gameIds) => Task.FromResult(
+        V7RpcJson.Deserialize<bool?>(hostCall(
+            "MainView.OpenEditDialog",
+            V7RpcJson.Serialize(gameIds ?? []))));
+
+    public List<FilterPreset> GetSortedFilterPresets() =>
+        Read<List<FilterPreset>>("MainView.FilterPresets") ?? [];
+    public List<FilterPreset> GetSortedFilterFullscreenPresets() =>
+        Read<List<FilterPreset>>("MainView.FullscreenFilterPresets") ?? [];
+    public void ToggleFullscreenView() => hostCall("MainView.ToggleFullscreenView", string.Empty);
+
+    private T Read<T>(string operation) =>
+        V7RpcJson.Deserialize<T>(hostCall(operation, string.Empty));
+
+    private TEnum ReadEnum<TEnum>(string operation) where TEnum : struct, Enum
+    {
+        var value = hostCall(operation, string.Empty);
+        return Enum.TryParse<TEnum>(value, true, out var parsed)
+            ? parsed
+            : throw new InvalidDataException(
+                $"Avalonia host returned invalid {typeof(TEnum).Name} value '{value}' for {operation}.");
+    }
+}
+
+internal sealed class HostApplicationSettings : IPlayniteSettingsAPI
+{
+    private readonly Func<string, string, string> hostCall;
+
+    public int Version => ReadInteger("Settings.Version");
+    public int GridItemWidthRatio => ReadInteger("Settings.GridItemWidthRatio");
+    public int GridItemHeightRatio => ReadInteger("Settings.GridItemHeightRatio");
+    public bool FirstTimeWizardComplete => ReadBoolean("Settings.FirstTimeWizardComplete");
+    public bool DisableHwAcceleration => ReadBoolean("Settings.DisableHwAcceleration");
+    public bool AsyncImageLoading => ReadBoolean("Settings.AsyncImageLoading");
+    public bool DownloadMetadataOnImport => ReadBoolean("Settings.DownloadMetadataOnImport");
+    public bool StartInFullscreen => ReadBoolean("Settings.StartInFullscreen");
+    public string DatabasePath => hostCall("DatabasePath", string.Empty);
+    public bool MinimizeToTray => ReadBoolean("Settings.MinimizeToTray");
+    public bool CloseToTray => ReadBoolean("Settings.CloseToTray");
+    public bool EnableTray => ReadBoolean("Settings.EnableTray");
+    public string Language => hostCall("Language", string.Empty);
+    public bool UpdateLibStartup => ReadBoolean("Settings.UpdateLibStartup");
+    public string DesktopTheme => hostCall("Settings.DesktopTheme", string.Empty);
+    public string FullscreenTheme => hostCall("Settings.FullscreenTheme", string.Empty);
+    public bool StartMinimized => ReadBoolean("Settings.StartMinimized");
+    public bool StartOnBoot => ReadBoolean("Settings.StartOnBoot");
+    public PlaytimeImportMode PlaytimeImportMode => ReadEnum<PlaytimeImportMode>("Settings.PlaytimeImportMode");
+    public string FontFamilyName => hostCall("Settings.FontFamilyName", string.Empty);
+    public bool DiscordPresenceEnabled => ReadBoolean("Settings.DiscordPresenceEnabled");
+    public AgeRatingOrg AgeRatingOrgPriority => ReadEnum<AgeRatingOrg>("Settings.AgeRatingOrgPriority");
+    public bool SidebarVisible => ReadBoolean("Settings.SidebarVisible");
+    public Dock SidebarPosition => ReadEnum<Dock>("Settings.SidebarPosition");
+    public IFullscreenSettingsAPI Fullscreen { get; }
+    public ICompletionStatusSettingsAPI CompletionStatus { get; }
+
+    public HostApplicationSettings(Func<string, string, string> hostCall)
+    {
+        this.hostCall = hostCall ?? throw new ArgumentNullException(nameof(hostCall));
+        Fullscreen = new HostFullscreenSettings(hostCall);
+        CompletionStatus = new HostCompletionStatusSettings(hostCall);
+    }
+
+    public bool GetGameExcludedFromImport(string gameId, Guid libraryId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(gameId);
+        if (libraryId == Guid.Empty)
+        {
+            throw new ArgumentException("A library ID must be specified.", nameof(libraryId));
+        }
+
+        return bool.TryParse(hostCall(
+            "Settings.GameExcludedFromImport",
+            V7RpcJson.Serialize(new { GameId = gameId, LibraryId = libraryId })), out var excluded) && excluded;
+    }
+
+    private bool ReadBoolean(string operation)
+    {
+        var value = hostCall(operation, string.Empty);
+        return bool.TryParse(value, out var parsed)
+            ? parsed
+            : throw new InvalidDataException(
+                $"Avalonia host returned invalid Boolean value '{value}' for {operation}.");
+    }
+
+    private int ReadInteger(string operation)
+    {
+        var value = hostCall(operation, string.Empty);
+        return int.TryParse(value, out var parsed)
+            ? parsed
+            : throw new InvalidDataException(
+                $"Avalonia host returned invalid integer value '{value}' for {operation}.");
+    }
+
+    private TEnum ReadEnum<TEnum>(string operation) where TEnum : struct, Enum
+    {
+        var value = hostCall(operation, string.Empty);
+        return Enum.TryParse<TEnum>(value, true, out var parsed)
+            ? parsed
+            : throw new InvalidDataException(
+                $"Avalonia host returned invalid {typeof(TEnum).Name} value '{value}' for {operation}.");
+    }
+}
+
+internal sealed class HostFullscreenSettings : IFullscreenSettingsAPI
+{
+    private readonly Func<string, string, string> hostCall;
+    public bool IsMusicMuted
+    {
+        get => ReadBoolean("Settings.Fullscreen.IsMusicMuted");
+        set => hostCall("Settings.Fullscreen.SetIsMusicMuted", value.ToString());
+    }
+    public bool SwapConfirmCancelButtons => ReadBoolean("Settings.Fullscreen.SwapConfirmCancelButtons");
+    public bool SwapStartDetailsAction => ReadBoolean("Settings.Fullscreen.SwapStartDetailsAction");
+    public bool GuideButtonFocus => ReadBoolean("Settings.Fullscreen.GuideButtonFocus");
+
+    public HostFullscreenSettings(Func<string, string, string> hostCall) => this.hostCall = hostCall;
+    private bool ReadBoolean(string operation) =>
+        bool.TryParse(hostCall(operation, string.Empty), out var value)
+            ? value
+            : throw new InvalidDataException($"Avalonia host returned an invalid Boolean for {operation}.");
+}
+
+internal sealed class HostCompletionStatusSettings : ICompletionStatusSettingsAPI
+{
+    private readonly Func<string, string, string> hostCall;
+    public Guid DefaultStatus => ReadGuid("Settings.CompletionStatus.Default");
+    public Guid PlayedStatus => ReadGuid("Settings.CompletionStatus.Played");
+
+    public HostCompletionStatusSettings(Func<string, string, string> hostCall) => this.hostCall = hostCall;
+    private Guid ReadGuid(string operation) =>
+        Guid.TryParse(hostCall(operation, string.Empty), out var value)
+            ? value
+            : throw new InvalidDataException($"Avalonia host returned an invalid GUID for {operation}.");
+}
+
+internal sealed class UnsupportedUriHandler : IUriHandlerAPI
+{
+    public void RegisterSource(string source, Action<PlayniteUriEventArgs> handler) =>
+        throw new NotSupportedException(
+            "SDK v7 URI handlers cannot cross the isolated Avalonia plugin boundary yet.");
+    public void RemoveSource(string source) =>
+        throw new NotSupportedException(
+            "SDK v7 URI handlers cannot cross the isolated Avalonia plugin boundary yet.");
+}
+
+internal sealed class UnsupportedEmulationApi : IEmulationAPI
+{
+    private const string Message =
+        "SDK v7 emulation definitions are not bridged into the isolated Avalonia plugin host yet.";
+
+    public IList<EmulatedPlatform> Platforms => throw new NotSupportedException(Message);
+    public IList<EmulatedRegion> Regions => throw new NotSupportedException(Message);
+    public IList<EmulatorDefinition> Emulators => throw new NotSupportedException(Message);
+    public EmulatedPlatform GetPlatform(string platformId) => throw new NotSupportedException(Message);
+    public EmulatedRegion GetRegion(string regionId) => throw new NotSupportedException(Message);
+    public EmulatorDefinition GetEmulator(string emulatorDefinitionId) => throw new NotSupportedException(Message);
 }
 
 internal sealed class HostPaths : IPlaynitePathsAPI
@@ -828,64 +1044,4 @@ internal sealed class HostAddons : IAddons
     public HostAddons(Func<string, string, string> hostCall) => this.hostCall = hostCall;
     private List<string> ReadList(string operation) =>
         Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(hostCall(operation, string.Empty) ?? "[]") ?? [];
-}
-
-internal class V7InterfaceProxy : DispatchProxy
-{
-    public Func<MethodInfo, object[], object> Handler { get; set; }
-
-    protected override object Invoke(MethodInfo targetMethod, object[] args) =>
-        Handler?.Invoke(targetMethod, args) ?? DefaultValue(targetMethod.ReturnType);
-
-    public static T Create<T>(Func<MethodInfo, object[], object> handler = null) where T : class
-    {
-        var proxy = DispatchProxy.Create<T, V7InterfaceProxy>();
-        ((V7InterfaceProxy)(object)proxy).Handler = handler;
-        return proxy;
-    }
-
-    public static object DefaultValue(Type type)
-    {
-        if (type == typeof(void))
-        {
-            return null;
-        }
-        if (type == typeof(string))
-        {
-            return string.Empty;
-        }
-        if (type == typeof(Task))
-        {
-            return Task.CompletedTask;
-        }
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>))
-        {
-            var resultType = type.GetGenericArguments()[0];
-            return typeof(Task).GetMethod(nameof(Task.FromResult))
-                .MakeGenericMethod(resultType)
-                .Invoke(null, new[] { DefaultValue(resultType) });
-        }
-        if (type.IsArray)
-        {
-            return Array.CreateInstance(type.GetElementType(), 0);
-        }
-        if (type.IsGenericType)
-        {
-            var generic = type.GetGenericTypeDefinition();
-            if (generic == typeof(IEnumerable<>) || generic == typeof(IReadOnlyList<>) ||
-                generic == typeof(IList<>) || generic == typeof(List<>))
-            {
-                return Activator.CreateInstance(typeof(List<>).MakeGenericType(type.GetGenericArguments()[0]));
-            }
-        }
-        if (type.IsInterface)
-        {
-            return typeof(V7InterfaceProxy)
-                .GetMethod(nameof(Create), BindingFlags.Public | BindingFlags.Static)
-                .MakeGenericMethod(type)
-                .Invoke(null, new object[] { null });
-        }
-
-        return type.IsValueType ? Activator.CreateInstance(type) : null;
-    }
 }

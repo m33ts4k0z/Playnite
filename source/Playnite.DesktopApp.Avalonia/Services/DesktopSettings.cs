@@ -40,6 +40,7 @@ public sealed class DesktopSettings : IAvaloniaHostSettings
     public List<Guid> GameScannerIds { get; set; } = new();
     public bool GameScannerSelectionConfigured { get; set; }
     public PlaytimeImportMode LibraryPlaytimeImportMode { get; set; } = PlaytimeImportMode.NewImportsOnly;
+    public PlaytimeImportMode PlaytimeImportMode => LibraryPlaytimeImportMode;
     public bool DownloadMetadataOnImport { get; set; } = true;
     public bool EnableTray { get; set; } = true;
     public bool MinimizeToTray { get; set; }

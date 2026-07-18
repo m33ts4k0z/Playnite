@@ -18,6 +18,7 @@ public sealed class TestPlugin : LibraryPlugin
     private bool databaseEventsSubscribed;
     private string EventPath => Path.Combine(GetPluginUserDataPath(), "events.txt");
     private string WebViewProbePath => Path.Combine(GetPluginUserDataPath(), "web-view-probe-url.txt");
+    private string ApiParityProbePath => Path.Combine(GetPluginUserDataPath(), "api-parity-probe.txt");
 
     public override Guid Id { get; } = Guid.Parse("8134f4eb-556e-4e01-936f-1bf5a808cb10");
     public override string Name => "Test SDK v7 library";
@@ -75,6 +76,15 @@ public sealed class TestPlugin : LibraryPlugin
                 Action = _ => RunWebViewProbe()
             };
         }
+        if (File.Exists(ApiParityProbePath))
+        {
+            yield return new MainMenuItem
+            {
+                Description = "SDK v7 API parity probe",
+                MenuSection = "SDK v7|Tests",
+                Action = _ => RunApiParityProbe()
+            };
+        }
     }
 
     private void RunWebViewProbe()
@@ -111,6 +121,114 @@ public sealed class TestPlugin : LibraryPlugin
             $"web-source:{source.Contains("SDK v7 page source", StringComparison.Ordinal)}",
             $"web-script:{evaluation.Success}:{evaluation.Result}",
             $"web-cookie:{cookies.Single().Name}:{cookies.Single().Priority}"
+        ]);
+    }
+
+    private void RunApiParityProbe()
+    {
+        var main = PlayniteApi.MainView;
+        var filtered = main.FilteredGames;
+        var selected = main.SelectedGames.ToList();
+        var requestedGameId = File.ReadAllText(ApiParityProbePath).Trim();
+        var game = filtered.FirstOrDefault(item =>
+            string.Equals(item.GameId, requestedGameId, StringComparison.Ordinal))
+            ?? filtered.First(item => !string.IsNullOrWhiteSpace(item.GameId));
+        var activeDesktopView = main.ActiveDesktopView;
+        var activeFullscreenView = main.ActiveFullscreenView;
+        var sortOrder = main.SortOrder;
+        var sortDirection = main.SortOrderDirection;
+        var grouping = main.Grouping;
+        var activePreset = main.GetActiveFilterPreset();
+        var filterSettings = main.GetCurrentFilterSettings();
+        var presets = main.GetSortedFilterPresets();
+        var fullscreenPresets = main.GetSortedFilterFullscreenPresets();
+
+        main.ActiveDesktopView = DesktopView.List;
+        main.SortOrderDirection = SortOrderDirection.Descending;
+        main.Grouping = GroupableField.Genre;
+        main.SelectGame(game.Id);
+        main.SelectGames([game.Id]);
+        main.ApplyFilterPreset(activePreset);
+        main.OpenSearch("sdk-v7-search");
+        main.SwitchToLibraryView();
+        main.ToggleFullscreenView();
+        var settingsOpened = main.OpenPluginSettingsAsync(Id).GetAwaiter().GetResult();
+        var editResult = main.OpenEditDialogAsync(game.Id).GetAwaiter().GetResult();
+
+        var settings = PlayniteApi.ApplicationSettings;
+        var muted = settings.Fullscreen.IsMusicMuted;
+        settings.Fullscreen.IsMusicMuted = !muted;
+        var settingsValues = string.Join(',', new object[]
+        {
+            settings.Version,
+            settings.GridItemWidthRatio,
+            settings.GridItemHeightRatio,
+            settings.FirstTimeWizardComplete,
+            settings.DisableHwAcceleration,
+            settings.AsyncImageLoading,
+            settings.DownloadMetadataOnImport,
+            settings.StartInFullscreen,
+            settings.MinimizeToTray,
+            settings.CloseToTray,
+            settings.EnableTray,
+            settings.UpdateLibStartup,
+            settings.StartMinimized,
+            settings.StartOnBoot,
+            settings.PlaytimeImportMode,
+            settings.DiscordPresenceEnabled,
+            settings.AgeRatingOrgPriority,
+            settings.SidebarVisible,
+            settings.SidebarPosition,
+            settings.Fullscreen.SwapConfirmCancelButtons,
+            settings.Fullscreen.SwapStartDetailsAction,
+            settings.Fullscreen.GuideButtonFocus
+        });
+        var expanded = PlayniteApi.ExpandGameVariables(game, "game={Name};emu={EmulatorDir}", "C:\\Emulator");
+        var expandedAction = PlayniteApi.ExpandGameVariables(game, new GameAction
+        {
+            Type = GameActionType.File,
+            Path = "{InstallDir}\\{Name}.exe"
+        });
+        var controllers = PlayniteApi.GetConnectedControllers();
+        var excluded = settings.GetGameExcludedFromImport(game.GameId, Id);
+
+        var unsupported = new List<string>();
+        try
+        {
+            main.SelectGames(filtered.Take(2).Select(item => item.Id));
+        }
+        catch (NotSupportedException)
+        {
+            unsupported.Add("multi-select");
+        }
+        try
+        {
+            PlayniteApi.UriHandler.RemoveSource("sdk-v7-probe");
+        }
+        catch (NotSupportedException)
+        {
+            unsupported.Add("uri");
+        }
+        try
+        {
+            _ = PlayniteApi.Emulation.Platforms;
+        }
+        catch (NotSupportedException)
+        {
+            unsupported.Add("emulation");
+        }
+
+        File.AppendAllLines(EventPath,
+        [
+            $"api-main:{activeDesktopView}:{activeFullscreenView}:{sortOrder}:{sortDirection}:{grouping}:" +
+            $"{selected.Count}:{filtered.Count}:{filterSettings != null}:{presets.Count}:{fullscreenPresets.Count}",
+            $"api-actions:{settingsOpened}:{editResult}:{activePreset}",
+            $"api-settings:{settings.DatabasePath}:{settings.Language}:{settings.DesktopTheme}:" +
+            $"{settings.FullscreenTheme}:{settings.FontFamilyName}:{settingsValues}",
+            $"api-completion:{settings.CompletionStatus.DefaultStatus}:{settings.CompletionStatus.PlayedStatus}:{excluded}",
+            $"api-expanded:{expanded}:{expandedAction.Path}",
+            $"api-controllers:{controllers.Count}",
+            $"api-unsupported:{string.Join(',', unsupported)}"
         ]);
     }
 

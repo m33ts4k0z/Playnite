@@ -620,6 +620,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         SelectedGame = match;
     }
 
+    public void SwitchToLibraryView() => CloseOverlays();
+
     internal void ActivateGame(Guid gameId)
     {
         SelectGame(gameId);

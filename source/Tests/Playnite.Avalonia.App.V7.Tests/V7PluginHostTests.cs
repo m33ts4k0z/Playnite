@@ -7,6 +7,7 @@ using Playnite.Controllers;
 using Playnite.Database;
 using Playnite.Metadata;
 using Playnite.SDK;
+using Playnite.SDK.Events;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using Avalonia.Controls;
@@ -276,17 +277,73 @@ public class V7PluginHostTests
         var manifestText = File.ReadAllText(Path.Combine(fixturePath, "extension.yaml"))
             .Replace("Module: TestPluginV7.dll", $"Module: '{fixtureAssembly}'", StringComparison.Ordinal);
         File.WriteAllText(Path.Combine(extensionPath, "extension.yaml"), manifestText);
+        var pluginId = Guid.Parse("8134f4eb-556e-4e01-936f-1bf5a808cb10");
+        var pluginDataPath = Path.Combine(PlaynitePaths.ExtensionsDataPath, pluginId.ToString());
+        Directory.CreateDirectory(pluginDataPath);
+        File.WriteAllText(Path.Combine(pluginDataPath, "api-parity-probe.txt"), "sdk-v7-bridge-game");
 
         using var database = new GameDatabase(Path.Combine(testRoot, "library"));
         database.OpenDatabase();
-        var game = new Game("SDK v7 bridge game") { IsInstalled = true };
-        var cancelledGame = new Game("SDK v7 cancel game") { IsInstalled = true };
+        var game = new Game("SDK v7 bridge game")
+        {
+            GameId = "sdk-v7-bridge-game",
+            InstallDirectory = "C:\\SDKv7Bridge",
+            IsInstalled = true
+        };
+        var cancelledGame = new Game("SDK v7 cancel game")
+        {
+            GameId = "sdk-v7-cancel-game",
+            IsInstalled = true
+        };
         database.Games.Add(new[] { game, cancelledGame });
+        var activeDesktopView = DesktopView.Grid;
+        var sortDirection = SortOrderDirection.Ascending;
+        var grouping = GroupableField.None;
+        var selectedGame = game;
+        var selectedGameId = Guid.Empty;
+        var appliedFilterId = Guid.NewGuid();
+        var searchText = string.Empty;
+        var switchedToLibrary = 0;
+        var toggledFullscreen = 0;
+        var settings = new TestSettings();
         var callbacks = new AvaloniaHostCallbacks
         {
             Mode = ApplicationMode.Desktop,
-            Settings = new TestSettings(),
-            Dialogs = new TestDialogs()
+            Settings = settings,
+            Dialogs = new TestDialogs(),
+            FilteredGames = () => database.Games.ToList(),
+            SelectedGame = () => selectedGame,
+            SelectGame = id =>
+            {
+                selectedGameId = id;
+                selectedGame = database.Games[id];
+            },
+            OpenSearch = value => searchText = value,
+            OpenPluginSettings = id => id == pluginId,
+            OpenEditDialog = ids => ids.Count == 1,
+            ActiveDesktopView = () => activeDesktopView,
+            SetActiveDesktopView = value => activeDesktopView = value,
+            ActiveFullscreenView = () => FullscreenView.Details,
+            SortOrder = () => SortOrder.Name,
+            SortDirection = () => sortDirection,
+            Grouping = () => grouping,
+            SetSortDirection = value => sortDirection = value,
+            SetGrouping = value => grouping = value,
+            ApplyFilterPreset = value => appliedFilterId = value,
+            ActiveFilterPreset = () => appliedFilterId,
+            CurrentFilterSettings = () => new FilterPresetSettings { Favorite = true },
+            FilterPresets = () =>
+            [
+                new FilterPreset
+                {
+                    Id = appliedFilterId,
+                    Name = "SDK v7 filter",
+                    Settings = new FilterPresetSettings { Favorite = true }
+                }
+            ],
+            SwitchToLibraryView = () => switchedToLibrary++,
+            ToggleFullscreenView = () => toggledFullscreen++,
+            ConnectedControllers = () => [new GamepadController()]
         };
 
         using var runtime = new AvaloniaRuntimeHost(database, callbacks);
@@ -296,9 +353,22 @@ public class V7PluginHostTests
         Assert.That(runtime.V7PluginFailures, Is.Empty);
         Assert.That(runtime.LibraryPlugins, Has.Count.EqualTo(1));
         var mainMenu = runtime.GetMainMenuActions();
-        Assert.That(mainMenu.Single().DisplayName, Is.EqualTo("SDK v7 > Tools > SDK v7 main command"));
-        Assert.That(mainMenu.Single().PluginName, Is.EqualTo("Test SDK v7 library"));
-        mainMenu.Single().Invoke();
+        var mainCommand = mainMenu.Single(item => item.DisplayName == "SDK v7 > Tools > SDK v7 main command");
+        Assert.That(mainCommand.PluginName, Is.EqualTo("Test SDK v7 library"));
+        mainCommand.Invoke();
+        mainMenu.Single(item => item.DisplayName == "SDK v7 > Tests > SDK v7 API parity probe").Invoke();
+        Assert.Multiple(() =>
+        {
+            Assert.That(activeDesktopView, Is.EqualTo(DesktopView.List));
+            Assert.That(sortDirection, Is.EqualTo(SortOrderDirection.Descending));
+            Assert.That(grouping, Is.EqualTo(GroupableField.Genre));
+            Assert.That(selectedGameId, Is.EqualTo(game.Id));
+            Assert.That(appliedFilterId, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(searchText, Is.EqualTo("sdk-v7-search"));
+            Assert.That(switchedToLibrary, Is.EqualTo(1));
+            Assert.That(toggledFullscreen, Is.EqualTo(1));
+            Assert.That(settings.IsMusicMuted, Is.True);
+        });
         var gameMenu = runtime.GetGameMenuActions([database.Games[game.Id]]);
         Assert.That(gameMenu.Single().DisplayName, Is.EqualTo("SDK v7 > Game > SDK v7 game command"));
         gameMenu.Single().Invoke();
@@ -378,6 +448,12 @@ public class V7PluginHostTests
         Assert.That(events, Does.Contain("event-library-updated"));
         Assert.That(events, Does.Contain("menu-main:SDK v7 main command:False"));
         Assert.That(events, Does.Contain("menu-game:SDK v7 bridge game updated:False"));
+        Assert.That(events, Has.Some.StartsWith(
+            "api-main:Grid:Details:Name:Ascending:None:1:"));
+        Assert.That(events, Has.Some.StartsWith("api-actions:True:True:"));
+        Assert.That(events, Has.Some.Contains("api-expanded:game=SDK v7 bridge game updated;emu=C:\\Emulator"));
+        Assert.That(events, Does.Contain("api-controllers:1"));
+        Assert.That(events, Does.Contain("api-unsupported:multi-select,uri,emulation"));
         Assert.That(events, Does.Contain("element-created:Desktop"));
         Assert.That(events, Does.Contain("sidebar-activated"));
         Assert.That(events, Does.Contain("sidebar-opened"));

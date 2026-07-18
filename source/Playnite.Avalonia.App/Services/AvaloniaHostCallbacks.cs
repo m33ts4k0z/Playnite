@@ -13,10 +13,12 @@ public sealed class AvaloniaHostCallbacks
     public Func<IReadOnlyList<Game>> FilteredGames { get; init; } = () => Array.Empty<Game>();
     public Func<Game> SelectedGame { get; init; } = () => null;
     public Action<Guid> SelectGame { get; init; } = _ => { };
+    public Action<IReadOnlyList<Guid>> SelectGames { get; init; }
     public Action<string> OpenSearch { get; init; } = _ => { };
     public Func<Guid, bool> OpenPluginSettings { get; init; } = _ => false;
     public Func<IReadOnlyList<Guid>, bool?> OpenEditDialog { get; init; } = _ => null;
     public Func<DesktopView> ActiveDesktopView { get; init; } = () => DesktopView.Grid;
+    public Action<DesktopView> SetActiveDesktopView { get; init; }
     public Func<FullscreenView> ActiveFullscreenView { get; init; } = () => FullscreenView.List;
     public Func<SortOrder> SortOrder { get; init; } = () => Playnite.SDK.Models.SortOrder.Name;
     public Func<SortOrderDirection> SortDirection { get; init; } = () => SortOrderDirection.Ascending;
@@ -27,6 +29,8 @@ public sealed class AvaloniaHostCallbacks
     public Func<Guid> ActiveFilterPreset { get; init; } = () => Guid.Empty;
     public Func<FilterPresetSettings> CurrentFilterSettings { get; init; } = () => new FilterPresetSettings();
     public Func<List<FilterPreset>> FilterPresets { get; init; } = () => new List<FilterPreset>();
+    public Action SwitchToLibraryView { get; init; }
+    public Action ToggleFullscreenView { get; init; }
     public Action<string> SetStatus { get; init; } = _ => { };
     public Action<string> SetPluginSummary { get; init; } = _ => { };
     public Action<Guid> RefreshGame { get; init; } = _ => { };

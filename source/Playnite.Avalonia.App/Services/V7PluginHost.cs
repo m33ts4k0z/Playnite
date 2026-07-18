@@ -271,6 +271,20 @@ internal sealed class V7PluginHost : IDisposable
         public List<string> ConverterNames { get; set; }
     }
 
+    private sealed class VariableExpansionPayload
+    {
+        public Game Game { get; set; }
+        public string Input { get; set; }
+        public string EmulatorDirectory { get; set; }
+        public GameAction Action { get; set; }
+    }
+
+    private sealed class GameImportExclusionPayload
+    {
+        public string GameId { get; set; }
+        public Guid LibraryId { get; set; }
+    }
+
     private readonly GameDatabase database;
     private readonly AvaloniaHostCallbacks callbacks;
     private readonly GameControllerFactory controllers;
@@ -507,6 +521,130 @@ internal sealed class V7PluginHost : IDisposable
                 return Guid.TryParse(payload, out var pluginId) && callbacks.OpenPluginSettings(pluginId)
                     ? bool.TrueString
                     : bool.FalseString;
+            case "MainView.ActiveDesktopView": return callbacks.ActiveDesktopView().ToString();
+            case "MainView.SetActiveDesktopView":
+                callbacks.SetActiveDesktopView?.Invoke(ParseEnum<DesktopView>(operation, payload));
+                if (callbacks.SetActiveDesktopView == null)
+                {
+                    throw new NotSupportedException(
+                        "The current Avalonia application does not support changing its desktop view.");
+                }
+                return string.Empty;
+            case "MainView.ActiveFullscreenView": return callbacks.ActiveFullscreenView().ToString();
+            case "MainView.SortOrder": return callbacks.SortOrder().ToString();
+            case "MainView.SortOrderDirection": return callbacks.SortDirection().ToString();
+            case "MainView.SetSortOrderDirection":
+                callbacks.SetSortDirection(ParseEnum<SortOrderDirection>(operation, payload));
+                return string.Empty;
+            case "MainView.Grouping": return callbacks.Grouping().ToString();
+            case "MainView.SetGrouping":
+                callbacks.SetGrouping(ParseEnum<GroupableField>(operation, payload));
+                return string.Empty;
+            case "MainView.SelectedGames":
+                return V7DatabaseTransport.Serialize(
+                    callbacks.SelectedGame() is { } selected ? new[] { selected } : []);
+            case "MainView.FilteredGames":
+                return V7DatabaseTransport.Serialize(callbacks.FilteredGames());
+            case "MainView.SwitchToLibraryView":
+                (callbacks.SwitchToLibraryView ?? throw new NotSupportedException(
+                    "The current Avalonia application does not expose a library-view switch callback."))();
+                return string.Empty;
+            case "MainView.SelectGame":
+                callbacks.SelectGame(ParseGuid(operation, payload));
+                return string.Empty;
+            case "MainView.SelectGames":
+                var selectedIds = V7DatabaseTransport.Deserialize<List<Guid>>(payload) ?? [];
+                if (callbacks.SelectGames != null)
+                {
+                    callbacks.SelectGames(selectedIds);
+                }
+                else if (selectedIds.Count <= 1)
+                {
+                    if (selectedIds.Count == 1)
+                    {
+                        callbacks.SelectGame(selectedIds[0]);
+                    }
+                }
+                else
+                {
+                    throw new NotSupportedException(
+                        "The current Avalonia application does not support selecting multiple games.");
+                }
+                return string.Empty;
+            case "MainView.ApplyFilterPreset":
+                callbacks.ApplyFilterPreset(ParseGuid(operation, payload));
+                return string.Empty;
+            case "MainView.ActiveFilterPreset": return callbacks.ActiveFilterPreset().ToString();
+            case "MainView.CurrentFilterSettings":
+                return V7DatabaseTransport.Serialize(callbacks.CurrentFilterSettings());
+            case "MainView.OpenSearch":
+                callbacks.OpenSearch(payload);
+                return string.Empty;
+            case "MainView.OpenEditDialog":
+                return JsonConvert.SerializeObject(callbacks.OpenEditDialog(
+                    V7DatabaseTransport.Deserialize<List<Guid>>(payload) ?? []));
+            case "MainView.FilterPresets":
+            case "MainView.FullscreenFilterPresets":
+                return V7DatabaseTransport.Serialize(callbacks.FilterPresets());
+            case "MainView.ToggleFullscreenView":
+                (callbacks.ToggleFullscreenView ?? throw new NotSupportedException(
+                    "The current Avalonia application does not expose a fullscreen-toggle callback."))();
+                return string.Empty;
+            case "Settings.Version": return callbacks.Settings.Version.ToString();
+            case "Settings.GridItemWidthRatio": return callbacks.Settings.GridItemWidthRatio.ToString();
+            case "Settings.GridItemHeightRatio": return callbacks.Settings.GridItemHeightRatio.ToString();
+            case "Settings.FirstTimeWizardComplete": return callbacks.Settings.FirstTimeWizardComplete.ToString();
+            case "Settings.DisableHwAcceleration": return callbacks.Settings.DisableHwAcceleration.ToString();
+            case "Settings.AsyncImageLoading": return callbacks.Settings.AsyncImageLoading.ToString();
+            case "Settings.DownloadMetadataOnImport": return callbacks.Settings.DownloadMetadataOnImport.ToString();
+            case "Settings.StartInFullscreen": return callbacks.Settings.StartInFullscreen.ToString();
+            case "Settings.MinimizeToTray": return callbacks.Settings.MinimizeToTray.ToString();
+            case "Settings.CloseToTray": return callbacks.Settings.CloseToTray.ToString();
+            case "Settings.EnableTray": return callbacks.Settings.EnableTray.ToString();
+            case "Settings.UpdateLibStartup": return callbacks.Settings.UpdateLibStartup.ToString();
+            case "Settings.DesktopTheme": return callbacks.Settings.DesktopTheme ?? string.Empty;
+            case "Settings.FullscreenTheme": return callbacks.Settings.FullscreenTheme ?? string.Empty;
+            case "Settings.StartMinimized": return callbacks.Settings.StartMinimized.ToString();
+            case "Settings.StartOnBoot": return callbacks.Settings.StartOnBoot.ToString();
+            case "Settings.PlaytimeImportMode": return callbacks.Settings.PlaytimeImportMode.ToString();
+            case "Settings.FontFamilyName": return callbacks.Settings.FontFamilyName ?? string.Empty;
+            case "Settings.DiscordPresenceEnabled": return callbacks.Settings.DiscordPresenceEnabled.ToString();
+            case "Settings.AgeRatingOrgPriority": return callbacks.Settings.AgeRatingOrgPriority.ToString();
+            case "Settings.SidebarVisible": return callbacks.Settings.SidebarVisible.ToString();
+            case "Settings.SidebarPosition": return callbacks.Settings.SidebarPosition.ToString();
+            case "Settings.Fullscreen.IsMusicMuted": return callbacks.Settings.IsMusicMuted.ToString();
+            case "Settings.Fullscreen.SetIsMusicMuted":
+                callbacks.Settings.IsMusicMuted = bool.TryParse(payload, out var muted)
+                    ? muted
+                    : throw new InvalidDataException($"Invalid Boolean payload for {operation}.");
+                return string.Empty;
+            case "Settings.Fullscreen.SwapConfirmCancelButtons":
+                return callbacks.Settings.SwapConfirmCancelButtons.ToString();
+            case "Settings.Fullscreen.SwapStartDetailsAction":
+                return callbacks.Settings.SwapStartDetailsAction.ToString();
+            case "Settings.Fullscreen.GuideButtonFocus": return callbacks.Settings.GuideButtonFocus.ToString();
+            case "Settings.CompletionStatus.Default":
+                return database.GetCompletionStatusSettings().DefaultStatus.ToString();
+            case "Settings.CompletionStatus.Played":
+                return database.GetCompletionStatusSettings().PlayedStatus.ToString();
+            case "Settings.GameExcludedFromImport":
+                var exclusion = V7DatabaseTransport.Deserialize<GameImportExclusionPayload>(payload)
+                    ?? throw new InvalidDataException("SDK v7 import-exclusion payload is empty.");
+                return (database.ImportExclusions[ImportExclusionItem.GetId(
+                    exclusion.GameId,
+                    exclusion.LibraryId)] != null).ToString();
+            case "ExpandGameVariables":
+                var variables = V7DatabaseTransport.Deserialize<VariableExpansionPayload>(payload)
+                    ?? throw new InvalidDataException("SDK v7 variable-expansion payload is empty.");
+                return variables.Game?.ExpandVariables(
+                    variables.Input,
+                    emulatorDir: variables.EmulatorDirectory);
+            case "ExpandGameActionVariables":
+                var actionVariables = V7DatabaseTransport.Deserialize<VariableExpansionPayload>(payload)
+                    ?? throw new InvalidDataException("SDK v7 action-expansion payload is empty.");
+                return V7DatabaseTransport.Serialize(actionVariables.Action?.ExpandVariables(actionVariables.Game));
+            case "ConnectedControllers":
+                return V7DatabaseTransport.Serialize(callbacks.ConnectedControllers());
             case "StartGame":
                 RunGameOperation(payload, (runner, game) => runner.Play(game));
                 return string.Empty;
@@ -531,9 +669,19 @@ internal sealed class V7PluginHost : IDisposable
             case "MarkdownToHtml":
                 return new MarkupConverter().MarkdownToHtml(payload);
             default:
-                return string.Empty;
+                throw new NotSupportedException($"SDK v7 host operation {operation} is not supported.");
         }
     }
+
+    private static TEnum ParseEnum<TEnum>(string operation, string payload) where TEnum : struct, Enum =>
+        Enum.TryParse<TEnum>(payload, true, out var value)
+            ? value
+            : throw new InvalidDataException($"Invalid {typeof(TEnum).Name} payload for {operation}.");
+
+    private static Guid ParseGuid(string operation, string payload) =>
+        Guid.TryParse(payload, out var value)
+            ? value
+            : throw new InvalidDataException($"Invalid GUID payload for {operation}.");
 
     private object HostObjectCall(string operation, string payload) => operation switch
     {

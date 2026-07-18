@@ -67,6 +67,13 @@ public sealed class App : Application
                     ActiveDesktopView = () => viewModel.IsGridView
                         ? Playnite.SDK.DesktopView.Grid
                         : Playnite.SDK.DesktopView.List,
+                    SetActiveDesktopView = value => viewModel.SelectedViewMode = value switch
+                    {
+                        Playnite.SDK.DesktopView.Grid => "Grid",
+                        Playnite.SDK.DesktopView.List => "List",
+                        _ => throw new NotSupportedException(
+                            "The Avalonia desktop pilot does not expose a separate details view.")
+                    },
                     SortOrder = () => viewModel.SelectedSortOrder,
                     SortDirection = () => viewModel.SelectedSortDirection,
                     Grouping = () => viewModel.SelectedGrouping,
@@ -76,6 +83,7 @@ public sealed class App : Application
                     ActiveFilterPreset = () => viewModel.SelectedFilterPreset?.Id ?? Guid.Empty,
                     CurrentFilterSettings = viewModel.GetCurrentFilterSettings,
                     FilterPresets = () => viewModel.FilterPresets.ToList(),
+                    SwitchToLibraryView = viewModel.SwitchToLibraryView,
                     SetStatus = viewModel.SetStatusMessage,
                     SetPluginSummary = viewModel.SetPluginSummary,
                     RefreshGame = viewModel.RefreshGame

@@ -41,6 +41,8 @@ public sealed class FullscreenRuntimeHost : IDisposable
                 viewModel.IsDetailsVisible
                     ? Playnite.SDK.FullscreenView.Details
                     : Playnite.SDK.FullscreenView.List,
+            SwitchToLibraryView = viewModel.SwitchToLibraryView,
+            ToggleFullscreenView = () => viewModel.ToggleFullscreenCommand.Execute(null),
             SetStatus = viewModel.SetStatusMessage,
             SetPluginSummary = viewModel.SetPluginSummary,
             RefreshGame = viewModel.RefreshGame
