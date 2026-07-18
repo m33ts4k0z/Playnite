@@ -6,4 +6,12 @@
     <x:String x:Key="LOCDesktopFavorites">Favorites only</x:String>
     <x:String x:Key="LOCDesktopPlay">Play</x:String>
     <x:String x:Key="LOCDesktopEdit">Edit</x:String>
+    <x:String x:Key="LOCDesktopInstall">Install</x:String>
+    <x:String x:Key="LOCDesktopUninstall">Uninstall</x:String>
+    <x:String x:Key="LOCDesktopPreset">Filter preset</x:String>
+    <x:String x:Key="LOCDesktopView">View</x:String>
+    <x:String x:Key="LOCDesktopSort">Sort</x:String>
+    <x:String x:Key="LOCDesktopGroup">Group</x:String>
+    <x:String x:Key="LOCDesktopNotifications">Notifications</x:String>
+    <x:String x:Key="LOCDesktopChooseAction">Choose action</x:String>
 </ResourceDictionary>

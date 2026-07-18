@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Playnite.Avalonia.Theming;
+using Playnite.Avalonia.App.Services;
 using Playnite.DesktopApp.Avalonia.Controls;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
@@ -13,17 +14,27 @@ public sealed class MainWindow : Window
     private readonly DesktopAppViewModel viewModel;
     private readonly DesktopLibrary library;
     private readonly StartupOptions options;
+    private readonly AvaloniaRuntimeHost runtimeHost;
+    private readonly DesktopSettings settings;
+    private readonly DesktopSettingsStore settingsStore;
     private readonly DesktopMainView mainView;
 
     internal DesktopMainView MainView => mainView;
+    internal AvaloniaRuntimeHost RuntimeHost => runtimeHost;
 
     internal MainWindow(
         DesktopAppViewModel viewModel,
         DesktopLibrary library,
+        AvaloniaRuntimeHost runtimeHost,
+        DesktopSettings settings,
+        DesktopSettingsStore settingsStore,
         StartupOptions options)
     {
         this.viewModel = viewModel;
         this.library = library;
+        this.runtimeHost = runtimeHost;
+        this.settings = settings;
+        this.settingsStore = settingsStore;
         this.options = options;
 
         Title = "Playnite — Avalonia Desktop Pilot";
@@ -41,7 +52,26 @@ public sealed class MainWindow : Window
 
         mainView = new DesktopMainView();
         Content = mainView;
+        viewModel.SettingsChanged += (_, _) => SaveSettings();
         Opened += OnOpened;
+        Closed += (_, _) => SaveSettings();
+    }
+
+    private void SaveSettings()
+    {
+        if (settingsStore == null)
+        {
+            return;
+        }
+
+        try
+        {
+            settingsStore.Save(settings);
+        }
+        catch (Exception exception)
+        {
+            viewModel.SetStatusMessage($"Desktop settings could not be saved: {exception.Message}");
+        }
     }
 
     private async void OnOpened(object sender, EventArgs e)

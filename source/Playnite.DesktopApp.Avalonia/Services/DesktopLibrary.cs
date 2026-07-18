@@ -14,6 +14,7 @@ public sealed class DesktopLibrary : IDisposable
     public IReadOnlyList<DesktopGameItemViewModel> Games { get; private set; } =
         Array.Empty<DesktopGameItemViewModel>();
     public bool IsOpen => Database?.IsOpen == true;
+    public string ActiveUserDataDirectory => temporaryRoot ?? userDataDirectory;
 
     public DesktopLibrary(string userDataDirectory, string libraryPath)
     {

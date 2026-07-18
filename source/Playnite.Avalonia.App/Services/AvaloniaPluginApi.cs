@@ -6,85 +6,77 @@ using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using System.Reflection;
 
-namespace Playnite.FullscreenApp.Avalonia.Services;
+namespace Playnite.Avalonia.App.Services;
 
-internal sealed class LegacyPluginApi : IPlayniteAPI
+internal sealed class AvaloniaPluginApi : IPlayniteAPI
 {
-    private sealed class PilotResourceProvider : IResourceProvider
+    private sealed class HostResourceProvider : IResourceProvider
     {
         public string GetString(string key) => key;
         public object GetResource(string key) => null;
     }
 
-    private sealed class PilotAddonsApi : IAddons
+    private sealed class HostAddonsApi : IAddons
     {
         private readonly Func<Playnite.Plugins.ExtensionFactory> extensions;
-        private readonly FullscreenSettings settings;
+        private readonly IAvaloniaHostSettings settings;
 
         public List<string> DisabledAddons => settings.DisabledPlugins.ToList();
         public List<string> Addons => extensions().Plugins.Keys.Select(id => id.ToString()).ToList();
         public List<Plugin> Plugins => extensions().Plugins.Values.Select(plugin => plugin.Plugin).ToList();
 
-        public PilotAddonsApi(Func<Playnite.Plugins.ExtensionFactory> extensions, FullscreenSettings settings)
+        public HostAddonsApi(
+            Func<Playnite.Plugins.ExtensionFactory> extensions,
+            IAvaloniaHostSettings settings)
         {
             this.extensions = extensions;
             this.settings = settings;
         }
     }
 
-    private sealed class PilotUriHandler : IUriHandlerAPI
+    private sealed class HostUriHandler : IUriHandlerAPI
     {
-        private readonly Dictionary<string, Action<PlayniteUriEventArgs>> handlers = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Action<PlayniteUriEventArgs>> handlers =
+            new(StringComparer.OrdinalIgnoreCase);
+
         public void RegisterSource(string source, Action<PlayniteUriEventArgs> handler) => handlers[source] = handler;
         public void RemoveSource(string source) => handlers.Remove(source);
     }
 
     private readonly Func<Playnite.Controllers.GameActionRunner> actionRunner;
-    private readonly Func<IReadOnlyList<Game>> filteredGames;
-    private readonly Func<Game> selectedGame;
-    private readonly Action<Guid> selectGame;
-    private readonly Action<string, bool> showMessage;
-    private readonly FullscreenDialogService dialogService;
+    private readonly AvaloniaHostCallbacks callbacks;
 
     public IMainViewAPI MainView { get; }
     public IGameDatabaseAPI Database { get; }
     public IDialogsFactory Dialogs { get; }
     public IPlaynitePathsAPI Paths { get; } = new PlaynitePathsAPI();
     public INotificationsAPI Notifications { get; }
-    public IPlayniteInfoAPI ApplicationInfo { get; } = new PlayniteInfoAPI(ApplicationMode.Fullscreen);
+    public IPlayniteInfoAPI ApplicationInfo { get; }
     public IWebViewFactory WebViews { get; }
-    public IResourceProvider Resources { get; } = new PilotResourceProvider();
-    public IUriHandlerAPI UriHandler { get; } = new PilotUriHandler();
+    public IResourceProvider Resources { get; } = new HostResourceProvider();
+    public IUriHandlerAPI UriHandler { get; } = new HostUriHandler();
     public IPlayniteSettingsAPI ApplicationSettings { get; }
     public IAddons Addons { get; }
     public IEmulationAPI Emulation { get; } = new Emulation();
 
-    public LegacyPluginApi(
+    public AvaloniaPluginApi(
         Playnite.Database.GameDatabase database,
         INotificationsAPI notifications,
-        FullscreenSettings settings,
         Func<Playnite.Controllers.GameActionRunner> actionRunner,
         Func<Playnite.Plugins.ExtensionFactory> extensions,
-        Func<IReadOnlyList<Game>> filteredGames,
-        Func<Game> selectedGame,
-        Action<Guid> selectGame,
-        Action<string, bool> showMessage,
-        FullscreenDialogService dialogService)
+        AvaloniaHostCallbacks callbacks)
     {
         this.actionRunner = actionRunner;
-        this.filteredGames = filteredGames;
-        this.selectedGame = selectedGame;
-        this.selectGame = selectGame;
-        this.showMessage = showMessage;
-        this.dialogService = dialogService;
+        this.callbacks = callbacks;
 
         Database = new DatabaseAPI(database);
         Notifications = notifications;
-        Addons = new PilotAddonsApi(extensions, settings);
+        ApplicationInfo = new PlayniteInfoAPI(callbacks.Mode);
+        Addons = new HostAddonsApi(extensions, callbacks.Settings);
         Dialogs = InterfaceProxy.Create<IDialogsFactory>(HandleDialogCall);
         MainView = InterfaceProxy.Create<IMainViewAPI>(HandleMainViewCall);
         ApplicationSettings = InterfaceProxy.Create<IPlayniteSettingsAPI>((method, _) =>
-            HandleSettingsCall(method, settings, database.DatabasePath));
+            HandleSettingsCall(method, callbacks.Settings, database.DatabasePath));
         WebViews = InterfaceProxy.Create<IWebViewFactory>((method, _) =>
             throw new NotSupportedException(
                 $"Plugin web view call '{method.Name}' requires the cross-platform CEF adapter."));
@@ -97,25 +89,30 @@ internal sealed class LegacyPluginApi : IPlayniteAPI
     public void StartGame(Guid gameId) => Run(gameId, runner => runner.Play(GetGame(gameId)));
     public void InstallGame(Guid gameId) => Run(gameId, runner => runner.Install(GetGame(gameId)));
     public void UninstallGame(Guid gameId) => Run(gameId, runner => runner.Uninstall(GetGame(gameId)));
-    public void AddCustomElementSupport(Plugin source, AddCustomElementSupportArgs args) { }
-    public void AddSettingsSupport(Plugin source, AddSettingsSupportArgs args) { }
-    public void AddConvertersSupport(Plugin source, AddConvertersSupportArgs args) { }
-    public List<GamepadController> GetConnectedControllers() => new();
+    public void AddCustomElementSupport(Plugin source, AddCustomElementSupportArgs args) =>
+        callbacks.AddCustomElementSupport(source, args);
+    public void AddSettingsSupport(Plugin source, AddSettingsSupportArgs args) =>
+        callbacks.AddSettingsSupport(source, args);
+    public void AddConvertersSupport(Plugin source, AddConvertersSupportArgs args) =>
+        callbacks.AddConvertersSupport(source, args);
+    public List<GamepadController> GetConnectedControllers() => callbacks.ConnectedControllers();
 
     private Game GetGame(Guid gameId) => Database.Games[gameId];
 
-    private void Run(Guid gameId, Func<Playnite.Controllers.GameActionRunner, Playnite.Controllers.GameOperationResult> operation)
+    private void Run(
+        Guid gameId,
+        Func<Playnite.Controllers.GameActionRunner, Playnite.Controllers.GameOperationResult> operation)
     {
         if (GetGame(gameId) == null)
         {
-            showMessage($"Game {gameId} was not found.", true);
+            callbacks.SetStatus($"Game {gameId} was not found.");
             return;
         }
 
         var result = operation(actionRunner());
         if (!result.Success)
         {
-            showMessage(result.Message, true);
+            callbacks.SetStatus(result.Message);
         }
     }
 
@@ -132,14 +129,14 @@ internal sealed class LegacyPluginApi : IPlayniteAPI
                 var labels = customOptions.Select(option => option.Title).ToList();
                 var defaultIndex = customOptions.FindIndex(option => option.IsDefault);
                 var cancelIndex = customOptions.FindIndex(option => option.IsCancel);
-                var selected = dialogService.ShowMessage(message, caption, labels, defaultIndex, cancelIndex);
+                var selected = callbacks.Dialogs.ShowMessage(message, caption, labels, defaultIndex, cancelIndex);
                 return customOptions.FirstOrDefault(option => option.Title == selected) ?? customOptions.FirstOrDefault();
             }
 
             if (method.ReturnType.IsEnum)
             {
                 var available = GetMessageBoxResults(args);
-                var selected = dialogService.ShowMessage(
+                var selected = callbacks.Dialogs.ShowMessage(
                     message,
                     caption,
                     available,
@@ -148,7 +145,7 @@ internal sealed class LegacyPluginApi : IPlayniteAPI
                 return Enum.Parse(method.ReturnType, selected);
             }
 
-            dialogService.ShowMessage(message, caption, new[] { "OK" });
+            callbacks.Dialogs.ShowMessage(message, caption, new[] { "OK" });
             return null;
         }
 
@@ -172,37 +169,68 @@ internal sealed class LegacyPluginApi : IPlayniteAPI
         switch (method.Name)
         {
             case "get_SelectedGames":
-                return selectedGame() == null ? Array.Empty<Game>() : new[] { selectedGame() };
+                return callbacks.SelectedGame() == null ? Array.Empty<Game>() : new[] { callbacks.SelectedGame() };
             case "get_FilteredGames":
-                return filteredGames().ToList();
+                return callbacks.FilteredGames().ToList();
             case "get_ActiveFullscreenView":
-                return FullscreenView.List;
+                return callbacks.ActiveFullscreenView();
             case "get_ActiveDesktopView":
-                return DesktopView.Details;
+                return callbacks.ActiveDesktopView();
             case "get_SortOrder":
-                return SortOrder.Name;
+                return callbacks.SortOrder();
             case "get_SortOrderDirection":
-                return SortOrderDirection.Ascending;
+                return callbacks.SortDirection();
+            case "set_SortOrderDirection":
+                callbacks.SetSortDirection((SortOrderDirection)args[0]);
+                return null;
             case "get_Grouping":
-                return GroupableField.None;
+                return callbacks.Grouping();
+            case "set_Grouping":
+                callbacks.SetGrouping((GroupableField)args[0]);
+                return null;
             case "SelectGame":
-                selectGame((Guid)args[0]);
+                callbacks.SelectGame((Guid)args[0]);
+                return null;
+            case "SelectGames":
+                callbacks.SelectGame(((IEnumerable<Guid>)args[0]).FirstOrDefault());
                 return null;
             case "OpenPluginSettings":
-                return false;
+                return callbacks.OpenPluginSettings((Guid)args[0]);
+            case "OpenEditDialog":
+                IReadOnlyList<Guid> ids = args[0] is Guid id
+                    ? new List<Guid> { id }
+                    : ((IEnumerable<Guid>)args[0]).ToList();
+                return callbacks.OpenEditDialog(ids);
+            case "ApplyFilterPreset":
+                if (args[0] is Guid filterId)
+                {
+                    callbacks.ApplyFilterPreset(filterId);
+                }
+                else if (args[0] is FilterPreset preset)
+                {
+                    callbacks.ApplyFilterPreset(preset.Id);
+                }
+
+                return null;
             case "GetActiveFilterPreset":
-                return Guid.Empty;
+                return callbacks.ActiveFilterPreset();
             case "GetCurrentFilterSettings":
-                return new FilterPresetSettings();
+                return callbacks.CurrentFilterSettings();
             case "GetSortedFilterPresets":
             case "GetSortedFilterFullscreenPresets":
-                return new List<FilterPreset>();
+                return callbacks.FilterPresets();
+            case "OpenSearch":
+                callbacks.OpenSearch(args.OfType<string>().LastOrDefault() ?? string.Empty);
+                return null;
             default:
                 return InterfaceProxy.DefaultValue(method.ReturnType);
         }
     }
 
-    private static object HandleSettingsCall(MethodInfo method, FullscreenSettings settings, string databasePath)
+    private static object HandleSettingsCall(
+        MethodInfo method,
+        IAvaloniaHostSettings settings,
+        string databasePath)
     {
         return method.Name switch
         {
@@ -211,11 +239,38 @@ internal sealed class LegacyPluginApi : IPlayniteAPI
             "get_AsyncImageLoading" => true,
             "get_DatabasePath" => databasePath,
             "get_Language" => settings.Language,
-            "get_FullscreenTheme" => settings.ThemePath ?? string.Empty,
+            "get_DesktopTheme" => settings.DesktopTheme ?? string.Empty,
+            "get_FullscreenTheme" => settings.FullscreenTheme ?? string.Empty,
             "get_GridItemWidthRatio" => 1,
             "get_GridItemHeightRatio" => 1,
             "get_PlaytimeImportMode" => PlaytimeImportMode.Always,
+            "get_Fullscreen" => InterfaceProxy.Create<IFullscreenSettingsAPI>((nested, args) =>
+                HandleFullscreenSettingsCall(nested, args, settings)),
+            "get_CompletionStatus" => InterfaceProxy.Create<ICompletionStatusSettignsApi>((nested, _) =>
+                InterfaceProxy.DefaultValue(nested.ReturnType)),
             _ => InterfaceProxy.DefaultValue(method.ReturnType)
         };
+    }
+
+    private static object HandleFullscreenSettingsCall(
+        MethodInfo method,
+        object[] args,
+        IAvaloniaHostSettings settings)
+    {
+        return method.Name switch
+        {
+            "get_IsMusicMuted" => settings.IsMusicMuted,
+            "set_IsMusicMuted" => SetMusicMuted(settings, (bool)args[0]),
+            "get_SwapConfirmCancelButtons" => settings.SwapConfirmCancelButtons,
+            "get_SwapStartDetailsAction" => settings.SwapStartDetailsAction,
+            "get_GuideButtonFocus" => settings.GuideButtonFocus,
+            _ => InterfaceProxy.DefaultValue(method.ReturnType)
+        };
+    }
+
+    private static object SetMusicMuted(IAvaloniaHostSettings settings, bool value)
+    {
+        settings.IsMusicMuted = value;
+        return null;
     }
 }

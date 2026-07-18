@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace Playnite.FullscreenApp.Avalonia.Services;
+namespace Playnite.Avalonia.App.Services;
 
 internal class InterfaceDispatchProxy : DispatchProxy
 {

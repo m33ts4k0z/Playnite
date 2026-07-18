@@ -1,14 +1,14 @@
 using Avalonia.Threading;
 using Playnite.Avalonia.App.Services;
-using Playnite.FullscreenApp.Avalonia.ViewModels;
+using Playnite.DesktopApp.Avalonia.ViewModels;
 
-namespace Playnite.FullscreenApp.Avalonia.Services;
+namespace Playnite.DesktopApp.Avalonia.Services;
 
-public sealed class FullscreenDialogService : IAvaloniaDialogService
+public sealed class DesktopDialogService : IAvaloniaDialogService
 {
-    private readonly FullscreenAppViewModel viewModel;
+    private readonly DesktopAppViewModel viewModel;
 
-    public FullscreenDialogService(FullscreenAppViewModel viewModel)
+    public DesktopDialogService(DesktopAppViewModel viewModel)
     {
         this.viewModel = viewModel;
     }
@@ -34,7 +34,6 @@ public sealed class FullscreenDialogService : IAvaloniaDialogService
 
         defaultIndex = Math.Clamp(defaultIndex, 0, choices.Count - 1);
         cancelIndex = cancelIndex < 0 ? defaultIndex : Math.Clamp(cancelIndex, 0, choices.Count - 1);
-
         string result = null;
         var frame = new DispatcherFrame();
         viewModel.OpenDialog(

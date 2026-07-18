@@ -1,8 +1,6 @@
-using Playnite.API;
+using Playnite.Avalonia.App.Services;
 using Playnite.Controllers;
-using Playnite.Database;
 using Playnite.Plugins;
-using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.FullscreenApp.Avalonia.ViewModels;
 
@@ -10,114 +8,48 @@ namespace Playnite.FullscreenApp.Avalonia.Services;
 
 public sealed class FullscreenRuntimeHost : IDisposable
 {
-    private readonly PlayniteLibrary library;
-    private readonly FullscreenAppViewModel viewModel;
-    private readonly FullscreenSettings settings;
-    private readonly GameControllerFactory controllers;
-    private readonly ExtensionFactory extensions;
-    private readonly GameActionRunner actionRunner;
-    private readonly NotificationsAPI notifications;
-    private readonly IPlayniteAPI globalApi;
+    private readonly AvaloniaRuntimeHost host;
     private readonly FullscreenDialogService dialogs;
 
-    public GameActionRunner Actions => actionRunner;
-    public ExtensionFactory Extensions => extensions;
-    public NotificationsAPI Notifications => notifications;
+    public GameActionRunner Actions => host.Actions;
+    public ExtensionFactory Extensions => host.Extensions;
+    public Playnite.API.NotificationsAPI Notifications => host.Notifications;
     internal FullscreenDialogService Dialogs => dialogs;
-    public int LoadedPluginCount => extensions.Plugins.Count;
-    public int FailedPluginCount => extensions.FailedExtensions.Count;
+    public int LoadedPluginCount => host.LoadedPluginCount;
+    public int FailedPluginCount => host.FailedPluginCount;
 
     public FullscreenRuntimeHost(
         PlayniteLibrary library,
         FullscreenAppViewModel viewModel,
         FullscreenSettings settings)
     {
-        this.library = library;
-        this.viewModel = viewModel;
-        this.settings = settings;
-
-        GameDatabase.ExpandGameVariables = (game, input, fixSeparators, emulatorDirectory) =>
-            game.ExpandVariables(input, fixSeparators, emulatorDirectory);
-
-        notifications = new NotificationsAPI();
-        notifications.ActivationRequested += (_, args) =>
-        {
-            args.Message?.ActivationAction?.Invoke();
-            if (args.Message != null)
-            {
-                notifications.Remove(args.Message.Id);
-            }
-        };
-        notifications.CloseRequested += (_, args) =>
-        {
-            if (args.Message != null)
-            {
-                notifications.Remove(args.Message.Id);
-            }
-        };
         dialogs = new FullscreenDialogService(viewModel);
-        controllers = new GameControllerFactory(library.Database);
-
-        GameActionRunner runner = null;
-        ExtensionFactory factory = null;
-        IPlayniteAPI CreateApi() => new LegacyPluginApi(
-            library.Database,
-            notifications,
-            settings,
-            () => runner,
-            () => factory,
-            () => viewModel.Games.Select(item => item.Game).ToList(),
-            () => viewModel.SelectedGame?.Game,
-            viewModel.SelectGame,
-            ShowMessage,
-            dialogs);
-
-        extensions = factory = new ExtensionFactory(library.Database, controllers, _ => CreateApi());
-        actionRunner = runner = new GameActionRunner(library.Database, controllers, extensions, () => globalApi);
-        globalApi = CreateApi();
-
-        actionRunner.StatusChanged += (_, message) => viewModel.SetStatusMessage(message);
-        actionRunner.OperationFailed += (_, message) => ShowMessage(message, true);
-        actionRunner.GameStateChanged += (_, game) => viewModel.RefreshGame(game.Id);
-        GameControllerDialogs.ShowError = (message, caption) => ShowMessage(
-            string.IsNullOrWhiteSpace(caption) ? message : $"{caption}: {message}",
-            true);
-    }
-
-    public void InitializePlugins(bool loadUserPlugins)
-    {
-        if (!loadUserPlugins)
+        host = new AvaloniaRuntimeHost(library.Database, new AvaloniaHostCallbacks
         {
-            viewModel.SetPluginSummary("Plugin loading disabled for isolated self-test");
-            return;
-        }
-
-        ExtensionFactory.CreatePluginFolders();
-        extensions.LoadPlugins(settings.DisabledPlugins, false, new List<string>());
-        extensions.LoadScripts(settings.DisabledPlugins, false, new List<string>());
-        viewModel.SetPluginSummary(
-            $"{LoadedPluginCount} plugins loaded" +
-            (FailedPluginCount == 0 ? string.Empty : $", {FailedPluginCount} failed"));
+            Mode = Playnite.SDK.ApplicationMode.Fullscreen,
+            Settings = settings,
+            Dialogs = dialogs,
+            FilteredGames = () => viewModel.Games.Select(item => item.Game).ToList(),
+            SelectedGame = () => viewModel.SelectedGame?.Game,
+            SelectGame = viewModel.SelectGame,
+            OpenSearch = term =>
+            {
+                viewModel.OpenSearchCommand.Execute(null);
+                viewModel.SearchText = term;
+            },
+            ActiveFullscreenView = () =>
+                viewModel.IsDetailsVisible
+                    ? Playnite.SDK.FullscreenView.Details
+                    : Playnite.SDK.FullscreenView.List,
+            SetStatus = viewModel.SetStatusMessage,
+            SetPluginSummary = viewModel.SetPluginSummary,
+            RefreshGame = viewModel.RefreshGame
+        });
     }
 
-    public GameOperationResult Play(Game game, int choiceIndex = -1) => actionRunner.Play(game, choiceIndex);
-    public GameOperationResult Install(Game game, int choiceIndex = -1) => actionRunner.Install(game, choiceIndex);
-    public GameOperationResult Uninstall(Game game, int choiceIndex = -1) => actionRunner.Uninstall(game, choiceIndex);
-
-    public void Dispose()
-    {
-        GameControllerDialogs.ShowError = (_, _) => { };
-        actionRunner.Dispose();
-        extensions.Dispose();
-        controllers.Dispose();
-    }
-
-    private void ShowMessage(string message, bool error)
-    {
-        notifications.Add(
-            $"avalonia-host-{Guid.NewGuid():N}",
-            message,
-            error ? NotificationType.Error : NotificationType.Info);
-        viewModel.SetStatusMessage(message);
-    }
+    public void InitializePlugins(bool loadUserPlugins) => host.InitializePlugins(loadUserPlugins);
+    public GameOperationResult Play(Game game, int choiceIndex = -1) => host.Play(game, choiceIndex);
+    public GameOperationResult Install(Game game, int choiceIndex = -1) => host.Install(game, choiceIndex);
+    public GameOperationResult Uninstall(Game game, int choiceIndex = -1) => host.Uninstall(game, choiceIndex);
+    public void Dispose() => host.Dispose();
 }

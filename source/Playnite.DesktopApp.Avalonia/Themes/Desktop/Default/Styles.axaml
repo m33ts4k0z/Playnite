@@ -10,6 +10,10 @@
         <Setter Property="BorderBrush" Value="{DynamicResource DesktopAccentBrush}" />
         <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
     </Style>
+    <Style Selector="ListBoxItem:selected Border.desktopRow">
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopAccentBrush}" />
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
+    </Style>
     <Style Selector="Button">
         <Setter Property="Padding" Value="14,8" />
     </Style>
@@ -24,5 +28,10 @@
     <Style Selector="Button.nav.selected">
         <Setter Property="Background" Value="#26394A" />
         <Setter Property="Foreground" Value="{DynamicResource DesktopAccentBrush}" />
+    </Style>
+    <Style Selector="TextBlock.sectionLabel">
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{DynamicResource DesktopMutedBrush}" />
     </Style>
 </Styles>

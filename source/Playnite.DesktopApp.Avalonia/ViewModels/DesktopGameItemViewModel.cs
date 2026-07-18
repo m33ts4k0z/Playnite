@@ -1,36 +1,89 @@
+using System.ComponentModel;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Playnite.Database;
 using Playnite.SDK.Models;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
-public sealed class DesktopGameItemViewModel
+public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
 {
     private static readonly Regex htmlTags = new("<[^>]+>", RegexOptions.Compiled);
+    private readonly GameDatabase database;
+    private string groupHeader;
+    private bool showGroupHeader;
 
+    public event PropertyChangedEventHandler PropertyChanged;
     public Game Game { get; }
     public string Name => Game.Name ?? string.Empty;
     public bool Favorite => Game.Favorite;
     public bool IsInstalled => Game.IsInstalled;
-    public string StateText => IsInstalled ? "Installed" : "Not installed";
+    public string StateText => Game.IsLaunching
+        ? "Launching"
+        : Game.IsRunning
+            ? "Running"
+            : Game.IsInstalling
+                ? "Installing"
+                : Game.IsUninstalling
+                    ? "Uninstalling"
+                    : IsInstalled ? "Installed" : "Not installed";
     public string PlaytimeText => Game.Playtime == 0
         ? "Not played"
         : $"{TimeSpan.FromSeconds(Game.Playtime).TotalHours:0.#} hours played";
     public string LastPlayedText => Game.LastActivity.HasValue
         ? $"Last played {Game.LastActivity.Value:d}"
         : "Never played";
-    public string MetadataLine { get; }
-    public string DescriptionText { get; }
-    public string CoverPath { get; }
+    public string AddedText => Game.Added.HasValue ? Game.Added.Value.ToString("d") : "Unknown";
+    public string ReleaseYearText => Game.ReleaseYear?.ToString() ?? "Unknown";
+    public string SourceName => database.Sources[Game.SourceId]?.Name ?? "No source";
+    public string PlatformName => Game.PlatformIds?.Select(id => database.Platforms[id]?.Name)
+        .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? "No platform";
+    public string CompletionStatusName => database.CompletionStatuses[Game.CompletionStatusId]?.Name ?? "No status";
+    public string MetadataLine => BuildMetadataLine(Game, database);
+    public string DescriptionText => ToPlainText(Game.Description);
+    public string CoverPath => ResolveMediaPath(Game.CoverImage, database);
+    public string GroupHeader => groupHeader;
+    public bool ShowGroupHeader => showGroupHeader;
 
     public DesktopGameItemViewModel(Game game, GameDatabase database)
     {
-        Game = game;
-        MetadataLine = BuildMetadataLine(game, database);
-        DescriptionText = ToPlainText(game.Description);
-        CoverPath = ResolveMediaPath(game.CoverImage, database);
+        Game = game ?? throw new ArgumentNullException(nameof(game));
+        this.database = database ?? throw new ArgumentNullException(nameof(database));
+        Game.PropertyChanged += Game_PropertyChanged;
     }
+
+    internal void SetGroup(string header, bool showHeader)
+    {
+        if (groupHeader != header)
+        {
+            groupHeader = header;
+            OnPropertyChanged(nameof(GroupHeader));
+        }
+
+        if (showGroupHeader != showHeader)
+        {
+            showGroupHeader = showHeader;
+            OnPropertyChanged(nameof(ShowGroupHeader));
+        }
+    }
+
+    internal void Refresh()
+    {
+        OnPropertyChanged(string.Empty);
+    }
+
+    private void Game_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        OnPropertyChanged(e.PropertyName);
+        OnPropertyChanged(nameof(StateText));
+        OnPropertyChanged(nameof(PlaytimeText));
+        OnPropertyChanged(nameof(LastPlayedText));
+        OnPropertyChanged(nameof(MetadataLine));
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     private static string BuildMetadataLine(Game game, GameDatabase database)
     {
