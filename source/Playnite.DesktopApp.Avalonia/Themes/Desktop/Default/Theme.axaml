@@ -207,6 +207,12 @@
                                                Foreground="{DynamicResource DesktopTextBrush}" />
                                     <TextBlock Text="{Binding SelectedGame.MetadataLine}"
                                                Foreground="{DynamicResource DesktopAccentBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.SourceName}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.CompletionStatusName}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.UserScoreText}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
                                     <StackPanel Orientation="Horizontal" Spacing="16">
                                         <TextBlock Text="{Binding SelectedGame.PlaytimeText}"
                                                    Foreground="{DynamicResource DesktopMutedBrush}" />
@@ -224,7 +230,7 @@
                                         <Button Command="{Binding UninstallCommand}"
                                                 Content="{DynamicResource LOCDesktopUninstall}" />
                                     </StackPanel>
-                                    <Button Content="{DynamicResource LOCDesktopEdit}" IsEnabled="False"
+                                    <Button Content="{DynamicResource LOCDesktopEdit}" Command="{Binding EditCommand}"
                                             HorizontalAlignment="Left" />
                                 </StackPanel>
                             </ScrollViewer>
@@ -304,6 +310,84 @@
                                     <Button Command="{Binding CancelDialogCommand}" Content="Cancel" />
                                 </StackPanel>
                             </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding Editor.IsVisible}"
+                          Background="#E6000000">
+                        <Border Width="920" MaxHeight="820" Padding="30" CornerRadius="14"
+                                Background="{DynamicResource DesktopPanelStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="18">
+                                <TextBlock Text="{DynamicResource LOCDesktopEditGame}" FontSize="30"
+                                           FontWeight="Bold" Foreground="{DynamicResource DesktopTextBrush}" />
+                                <ScrollViewer Grid.Row="1" MaxHeight="650">
+                                    <StackPanel Spacing="12">
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                            <StackPanel Spacing="5">
+                                                <TextBlock Text="{DynamicResource LOCDesktopName}" Classes="sectionLabel" />
+                                                <TextBox Text="{Binding Editor.Name, Mode=TwoWay}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <TextBlock Text="{DynamicResource LOCDesktopSortingName}" Classes="sectionLabel" />
+                                                <TextBox Text="{Binding Editor.SortingName, Mode=TwoWay}" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                            <StackPanel Spacing="5">
+                                                <TextBlock Text="{DynamicResource LOCDesktopReleaseDate}" Classes="sectionLabel" />
+                                                <TextBox Text="{Binding Editor.ReleaseDate, Mode=TwoWay}"
+                                                         Watermark="YYYY, YYYY-M, or YYYY-M-D" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <TextBlock Text="{DynamicResource LOCDesktopUserScore}" Classes="sectionLabel" />
+                                                <TextBox Text="{Binding Editor.UserScore, Mode=TwoWay}"
+                                                         Watermark="0–100" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                            <StackPanel Spacing="5">
+                                                <TextBlock Text="{DynamicResource LOCDesktopSource}" Classes="sectionLabel" />
+                                                <ComboBox ItemsSource="{Binding Editor.Sources}"
+                                                          SelectedItem="{Binding Editor.SelectedSource, Mode=TwoWay}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <TextBlock Text="{DynamicResource LOCDesktopCompletionStatus}" Classes="sectionLabel" />
+                                                <ComboBox ItemsSource="{Binding Editor.CompletionStatuses}"
+                                                          SelectedItem="{Binding Editor.SelectedCompletionStatus, Mode=TwoWay}" />
+                                            </StackPanel>
+                                        </Grid>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="{DynamicResource LOCDesktopDescription}" Classes="sectionLabel" />
+                                            <TextBox Text="{Binding Editor.Description, Mode=TwoWay}"
+                                                     AcceptsReturn="True" TextWrapping="Wrap" MinHeight="120" />
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <TextBlock Text="{DynamicResource LOCDesktopNotes}" Classes="sectionLabel" />
+                                            <TextBox Text="{Binding Editor.Notes, Mode=TwoWay}"
+                                                     AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="20">
+                                            <CheckBox Content="{DynamicResource LOCDesktopFavorite}"
+                                                      IsChecked="{Binding Editor.Favorite, Mode=TwoWay}" />
+                                            <CheckBox Content="{DynamicResource LOCDesktopHidden}"
+                                                      IsChecked="{Binding Editor.Hidden, Mode=TwoWay}" />
+                                        </StackPanel>
+                                        <Border IsVisible="{Binding Editor.HasValidationError}"
+                                                Background="#42D84A4A" BorderBrush="#E45A5A"
+                                                BorderThickness="1" CornerRadius="6" Padding="10">
+                                            <TextBlock Text="{Binding Editor.ValidationMessage}" TextWrapping="Wrap"
+                                                       Foreground="#FFB6B6" />
+                                        </Border>
+                                    </StackPanel>
+                                </ScrollViewer>
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
+                                    <Button Classes="primary" Command="{Binding Editor.SaveCommand}"
+                                            Content="{DynamicResource LOCDesktopSave}" />
+                                    <Button Command="{Binding Editor.CancelCommand}"
+                                            Content="{DynamicResource LOCDesktopCancel}" />
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
                 </Grid>

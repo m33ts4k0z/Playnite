@@ -46,6 +46,7 @@ public sealed class App : Application
             if (library.IsOpen)
             {
                 var dialogs = new DesktopDialogService(viewModel);
+                var gameEditor = new DesktopGameEditorService(viewModel);
                 runtimeHost = new AvaloniaRuntimeHost(library.Database, new AvaloniaHostCallbacks
                 {
                     Mode = Playnite.SDK.ApplicationMode.Desktop,
@@ -55,6 +56,7 @@ public sealed class App : Application
                     SelectedGame = () => viewModel.SelectedGame?.Game,
                     SelectGame = viewModel.SelectGame,
                     OpenSearch = term => viewModel.SearchText = term,
+                    OpenEditDialog = gameEditor.Show,
                     ActiveDesktopView = () => viewModel.IsGridView
                         ? Playnite.SDK.DesktopView.Grid
                         : Playnite.SDK.DesktopView.List,

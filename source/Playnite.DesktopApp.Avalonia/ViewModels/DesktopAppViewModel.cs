@@ -269,10 +269,12 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     }
 
     public string StatusText { get => statusText; private set => SetField(ref statusText, value); }
+    public DesktopGameEditorViewModel Editor { get; }
 
     public ICommand ActivateCommand { get; }
     public ICommand InstallCommand { get; }
     public ICommand UninstallCommand { get; }
+    public ICommand EditCommand { get; }
     public ICommand SetGridViewCommand { get; }
     public ICommand SetListViewCommand { get; }
     public ICommand ClearSearchCommand { get; }
@@ -305,6 +307,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         statusText = startupError == null
             ? "Phase 5 Desktop runtime ready"
             : $"Library unavailable: {startupError}";
+        Editor = new DesktopGameEditorViewModel(database, RefreshGame, SetStatusMessage);
 
         ActivateCommand = new AppRelayCommand(
             () => RunOperation(SelectedGame?.IsInstalled == true ? GameOperationKind.Play : GameOperationKind.Install),
@@ -315,6 +318,9 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         UninstallCommand = new AppRelayCommand(
             () => RunOperation(GameOperationKind.Uninstall),
             () => SelectedGame?.IsInstalled == true);
+        EditCommand = new AppRelayCommand(
+            () => OpenGameEditor(SelectedGame.Game.Id),
+            () => SelectedGame != null && database != null && !Editor.IsVisible);
         SetGridViewCommand = new AppRelayCommand(() => SelectedViewMode = "Grid");
         SetListViewCommand = new AppRelayCommand(() => SelectedViewMode = "List");
         ClearSearchCommand = new AppRelayCommand(() => SearchText = string.Empty, () => SearchText.Length > 0);
@@ -371,6 +377,25 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         allGames.FirstOrDefault(game => game.Game.Id == gameId)?.Refresh();
         ApplyFilters();
         RaiseGameCommandStates();
+    }
+
+    public bool OpenGameEditor(Guid gameId, Action<bool?> completed = null)
+    {
+        CloseOverlays();
+        var opened = Editor.Open(gameId, result =>
+        {
+            RaiseGameCommandStates();
+            completed?.Invoke(result);
+        });
+        if (!opened)
+        {
+            StatusText = Editor.IsVisible
+                ? "Another game editor is already open."
+                : "The selected game is no longer available.";
+        }
+
+        RaiseGameCommandStates();
+        return opened;
     }
 
     public void ApplyFilterPreset(Guid presetId)
@@ -568,6 +593,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)ActivateCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)InstallCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)UninstallCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)EditCommand).RaiseCanExecuteChanged();
     }
 
     private void Notifications_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>

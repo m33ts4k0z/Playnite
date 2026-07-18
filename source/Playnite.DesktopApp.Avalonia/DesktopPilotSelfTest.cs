@@ -144,6 +144,71 @@ internal static class DesktopPilotSelfTest
                 ? "the nested Avalonia dispatcher returned the selected option"
                 : throw new InvalidOperationException($"Dialog returned '{dialogResult}'."));
 
+        var editorGame = viewModel.Games.First(game => !game.Game.Hidden);
+        viewModel.SelectedGame = editorGame;
+        var originalEditorName = editorGame.Name;
+        viewModel.EditCommand.Execute(null);
+        Record(results, "Desktop metadata editor opens real Core records", () =>
+            viewModel.Editor.IsVisible && viewModel.Editor.Name == originalEditorName
+                ? $"the editor loaded {originalEditorName} without mutating the database"
+                : throw new InvalidOperationException("The selected game was not loaded into the editor."));
+
+        viewModel.Editor.Name = string.Empty;
+        viewModel.Editor.SaveCommand.Execute(null);
+        Record(results, "Desktop metadata validation blocks invalid saves", () =>
+            viewModel.Editor.IsVisible &&
+            viewModel.Editor.HasValidationError &&
+            library.Database.Games[editorGame.Game.Id].Name == originalEditorName
+                ? viewModel.Editor.ValidationMessage
+                : throw new InvalidOperationException("Invalid metadata reached the Core database."));
+
+        var editedName = originalEditorName + " — Edited";
+        viewModel.Editor.Name = editedName;
+        viewModel.Editor.SortingName = "Edited Pilot";
+        viewModel.Editor.ReleaseDate = "2024-7-18";
+        viewModel.Editor.UserScore = "88";
+        viewModel.Editor.Description = "Metadata saved by the Avalonia Desktop editor.";
+        viewModel.Editor.Notes = "Phase 5 editor contract";
+        viewModel.Editor.Favorite = true;
+        viewModel.Editor.Hidden = false;
+        viewModel.Editor.SelectedCompletionStatus = viewModel.Editor.CompletionStatuses.Skip(1).First();
+        viewModel.Editor.SaveCommand.Execute(null);
+        var savedEditorGame = library.Database.Games[editorGame.Game.Id];
+        Record(results, "Desktop metadata saves through GameDatabase", () =>
+            !viewModel.Editor.IsVisible &&
+            savedEditorGame.Name == editedName &&
+            savedEditorGame.SortingName == "Edited Pilot" &&
+            savedEditorGame.ReleaseDate?.Serialize() == "2024-7-18" &&
+            savedEditorGame.UserScore == 88 &&
+            savedEditorGame.Favorite &&
+            savedEditorGame.Modified.HasValue &&
+            editorGame.Name == editedName
+                ? $"{editedName} persisted with date, score, status, notes, and flags"
+                : throw new InvalidOperationException("The edited metadata did not round-trip through Core."));
+
+        var pluginEditGame = viewModel.Games.First(game => game.Game.Id != editorGame.Game.Id);
+        var pluginEditedName = pluginEditGame.Name + " — Plugin edit";
+        Dispatcher.UIThread.Post(() =>
+        {
+            viewModel.Editor.Name = pluginEditedName;
+            viewModel.Editor.UserScore = "91";
+            viewModel.Editor.SaveCommand.Execute(null);
+        }, DispatcherPriority.Background);
+        var pluginEditResult = window.RuntimeHost.PluginApi.MainView.OpenEditDialog(pluginEditGame.Game.Id);
+        Record(results, "Plugin OpenEditDialog uses the Avalonia editor", () =>
+            pluginEditResult == true &&
+            library.Database.Games[pluginEditGame.Game.Id].Name == pluginEditedName &&
+            library.Database.Games[pluginEditGame.Game.Id].UserScore == 91
+                ? "the synchronous SDK call returned true after Core persistence"
+                : throw new InvalidOperationException("The plugin edit-dialog bridge did not persist its result."));
+
+        var bulkEditResult = window.RuntimeHost.PluginApi.MainView.OpenEditDialog(
+            new List<Guid> { editorGame.Game.Id, pluginEditGame.Game.Id });
+        Record(results, "Unsupported bulk editing reports an honest SDK gap", () =>
+            bulkEditResult == null && viewModel.StatusText.Contains("bulk", StringComparison.OrdinalIgnoreCase)
+                ? viewModel.StatusText
+                : throw new InvalidOperationException("Bulk editing did not report its current limitation."));
+
         Record(results, "Desktop settings persist atomically", () =>
         {
             var store = new DesktopSettingsStore(library.ActiveUserDataDirectory);

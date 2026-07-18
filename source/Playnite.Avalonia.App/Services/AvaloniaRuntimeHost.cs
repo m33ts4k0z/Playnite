@@ -20,6 +20,7 @@ public sealed class AvaloniaRuntimeHost : IDisposable
     public ExtensionFactory Extensions => extensions;
     public NotificationsAPI Notifications => notifications;
     public IAvaloniaDialogService Dialogs => callbacks.Dialogs;
+    public IPlayniteAPI PluginApi => globalApi;
     public int LoadedPluginCount => extensions.Plugins.Count;
     public int FailedPluginCount => extensions.FailedExtensions.Count;
 

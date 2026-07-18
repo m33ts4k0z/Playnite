@@ -40,6 +40,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public string PlatformName => Game.PlatformIds?.Select(id => database.Platforms[id]?.Name)
         .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? "No platform";
     public string CompletionStatusName => database.CompletionStatuses[Game.CompletionStatusId]?.Name ?? "No status";
+    public string UserScoreText => Game.UserScore.HasValue ? $"User score {Game.UserScore}/100" : "Not rated";
     public string MetadataLine => BuildMetadataLine(Game, database);
     public string DescriptionText => ToPlainText(Game.Description);
     public string CoverPath => ResolveMediaPath(Game.CoverImage, database);
@@ -80,6 +81,11 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(PlaytimeText));
         OnPropertyChanged(nameof(LastPlayedText));
         OnPropertyChanged(nameof(MetadataLine));
+        OnPropertyChanged(nameof(SourceName));
+        OnPropertyChanged(nameof(CompletionStatusName));
+        OnPropertyChanged(nameof(ReleaseYearText));
+        OnPropertyChanged(nameof(UserScoreText));
+        OnPropertyChanged(nameof(DescriptionText));
     }
 
     private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
