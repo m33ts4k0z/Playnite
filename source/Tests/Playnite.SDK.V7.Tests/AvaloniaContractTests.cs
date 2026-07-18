@@ -73,6 +73,14 @@ public class AvaloniaContractTests
     }
 
     [Test]
+    public void WebCookiePrioritiesRetainSdkSixNumericSemantics()
+    {
+        Assert.That((int)CookiePriority.Low, Is.EqualTo(-1));
+        Assert.That((int)CookiePriority.Medium, Is.Zero);
+        Assert.That((int)CookiePriority.High, Is.EqualTo(1));
+    }
+
+    [Test]
     public void PluginUserControlUsesStyledGameContext()
     {
         Assert.That(typeof(UserControl).IsAssignableFrom(typeof(PluginUserControl)), Is.True);

@@ -43,6 +43,25 @@ internal sealed class AvaloniaWebViewFactory : IWebViewFactory, IDisposable
 
     public IWebView CreateView(WebViewSettings settings) => Create(settings, false);
 
+    internal V7WebViewInstance CreateV7View(V7WebViewCreationPayload payload)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        var source = payload.Settings ?? new V7WebViewSettingsPayload();
+        var settings = new WebViewSettings
+        {
+            JavaScriptEnabled = source.JavaScriptEnabled,
+            UserAgent = source.UserAgent,
+            WindowWidth = source.WindowWidth,
+            WindowHeight = source.WindowHeight,
+            WindowBackground = SdkColor.FromArgb(
+                source.BackgroundA,
+                source.BackgroundR,
+                source.BackgroundG,
+                source.BackgroundB)
+        };
+        return new V7WebViewInstance(Create(settings, payload.Offscreen));
+    }
+
     private AvaloniaSdkWebView Create(WebViewSettings settings, bool offscreen)
     {
         ObjectDisposedException.ThrowIf(disposed, this);
@@ -138,6 +157,8 @@ internal sealed class AvaloniaSdkWebView : IWebView
 
     public bool CanExecuteJavascriptInMainFrame =>
         !disposed && !closed && adapterReady.Task.IsCompletedSuccessfully;
+    internal Control AvaloniaView => browser;
+    internal AvaloniaWindow AvaloniaWindowHost => offscreen ? null : window;
 
     public WpfWindow WindowHost => offscreen
         ? null

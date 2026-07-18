@@ -278,6 +278,7 @@ internal sealed class V7PluginHost : IDisposable
     private readonly Func<GameActionRunner> actionRunner;
     private readonly Func<IEnumerable<string>> installedAddons;
     private readonly IPlayniteAPI pluginApi;
+    private readonly AvaloniaWebViewFactory webViews;
     private readonly V7DatabaseTransport databaseTransport;
     private readonly string hostBundlePath;
     private readonly List<PluginLoadHandle> handles = [];
@@ -304,7 +305,8 @@ internal sealed class V7PluginHost : IDisposable
         Func<GameActionRunner> actionRunner,
         Func<IEnumerable<string>> installedAddons,
         string hostBundlePath = null,
-        IPlayniteAPI pluginApi = null)
+        IPlayniteAPI pluginApi = null,
+        AvaloniaWebViewFactory webViews = null)
     {
         this.database = database ?? throw new ArgumentNullException(nameof(database));
         this.controllers = controllers ?? throw new ArgumentNullException(nameof(controllers));
@@ -313,6 +315,7 @@ internal sealed class V7PluginHost : IDisposable
         this.actionRunner = actionRunner ?? throw new ArgumentNullException(nameof(actionRunner));
         this.installedAddons = installedAddons ?? throw new ArgumentNullException(nameof(installedAddons));
         this.pluginApi = pluginApi;
+        this.webViews = webViews;
         this.hostBundlePath = hostBundlePath ?? Path.Combine(AppContext.BaseDirectory, "SdkV7Host");
         databaseTransport = new V7DatabaseTransport(database);
         SubscribeDatabaseEvents();
@@ -420,7 +423,8 @@ internal sealed class V7PluginHost : IDisposable
             var loadAll = bridge.GetMethod("LoadAll", BindingFlags.Public | BindingFlags.Static)
                 ?? throw new MissingMethodException(bridge.FullName, "LoadAll");
             Func<string, string, string> hostCall = HostCall;
-            var instances = (object[])loadAll.Invoke(null, [modulePath, hostCall]);
+            Func<string, string, object> hostObjectCall = HostObjectCall;
+            var instances = (object[])loadAll.Invoke(null, [modulePath, hostCall, hostObjectCall]);
             constructedPlugins.AddRange(instances.Select(instance => new V7LoadedPlugin(instance, manifest)));
             if (constructedPlugins.Count == 0)
             {
@@ -530,6 +534,15 @@ internal sealed class V7PluginHost : IDisposable
                 return string.Empty;
         }
     }
+
+    private object HostObjectCall(string operation, string payload) => operation switch
+    {
+        "CreateWebView" => webViews?.CreateV7View(
+            JsonConvert.DeserializeObject<V7WebViewCreationPayload>(payload)
+            ?? throw new InvalidDataException("SDK v7 web-view creation payload is empty."))
+            ?? throw new InvalidOperationException("The Avalonia web-view factory is unavailable."),
+        _ => throw new NotSupportedException($"SDK v7 object host operation {operation} is not supported.")
+    };
 
     internal Control ResolvePluginElement(string sourceName, string elementName, Game game)
     {

@@ -143,9 +143,9 @@ public enum CookieSameSite
 public enum CookiePriority
 {
     /// <summary>Defines this Playnite SDK v7 contract member.</summary>
-    Low,
+    Low = -1,
     /// <summary>Defines this Playnite SDK v7 contract member.</summary>
-    Medium,
+    Medium = 0,
     /// <summary>Defines this Playnite SDK v7 contract member.</summary>
-    High
+    High = 1
 }

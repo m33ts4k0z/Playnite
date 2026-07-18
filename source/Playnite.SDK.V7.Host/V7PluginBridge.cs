@@ -18,7 +18,8 @@ public static class V7PluginBridge
 {
     public static object[] LoadAll(
         string pluginAssemblyPath,
-        Func<string, string, string> hostCall)
+        Func<string, string, string> hostCall,
+        Func<string, string, object> hostObjectCall = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(pluginAssemblyPath);
         ArgumentNullException.ThrowIfNull(hostCall);
@@ -45,7 +46,7 @@ public static class V7PluginBridge
                 $"Plugin assembly must reference Playnite.SDK major 7, but references {sdkReference?.Version}." );
         }
 
-        var api = new V7PlayniteApi(hostCall);
+        var api = new V7PlayniteApi(hostCall, hostObjectCall);
         API.Instance = api;
         var results = new List<object>();
         foreach (var type in assembly.GetTypes())
@@ -594,7 +595,9 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
     public IEmulationAPI Emulation { get; }
     internal HostGameDatabase HostDatabase { get; }
 
-    public V7PlayniteApi(Func<string, string, string> hostCall)
+    public V7PlayniteApi(
+        Func<string, string, string> hostCall,
+        Func<string, string, object> hostObjectCall = null)
     {
         this.hostCall = hostCall;
         Paths = new HostPaths(hostCall);
@@ -631,7 +634,7 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
             "get_Fullscreen" => V7InterfaceProxy.Create<IFullscreenSettingsAPI>(),
             _ => V7InterfaceProxy.DefaultValue(method.ReturnType)
         });
-        WebViews = V7InterfaceProxy.Create<IWebViewFactory>();
+        WebViews = new HostWebViewFactory(hostObjectCall);
         UriHandler = V7InterfaceProxy.Create<IUriHandlerAPI>();
         Addons = new HostAddons(hostCall);
         Emulation = V7InterfaceProxy.Create<IEmulationAPI>();

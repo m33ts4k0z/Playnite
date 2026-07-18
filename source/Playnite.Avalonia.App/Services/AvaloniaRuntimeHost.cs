@@ -121,7 +121,8 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
             () => actionRunner,
             () => extensions.Plugins.Keys.Select(id => id.ToString())
                 .Concat(v7Plugins?.Plugins.Select(plugin => plugin.Id.ToString()) ?? []),
-            pluginApi: globalApi);
+            pluginApi: globalApi,
+            webViews: webViews);
         previousResourceProvider = ResourceProvider.SetGlobalProvider(globalApi.Resources);
         pluginConverterResolver = (pluginSource, converterName) =>
             v7Plugins.ResolveConverter(pluginSource, converterName) ??

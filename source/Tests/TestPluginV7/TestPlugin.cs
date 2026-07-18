@@ -17,6 +17,7 @@ public sealed class TestPlugin : LibraryPlugin
     private readonly TestLibraryClient client;
     private bool databaseEventsSubscribed;
     private string EventPath => Path.Combine(GetPluginUserDataPath(), "events.txt");
+    private string WebViewProbePath => Path.Combine(GetPluginUserDataPath(), "web-view-probe-url.txt");
 
     public override Guid Id { get; } = Guid.Parse("8134f4eb-556e-4e01-936f-1bf5a808cb10");
     public override string Name => "Test SDK v7 library";
@@ -65,6 +66,52 @@ public sealed class TestPlugin : LibraryPlugin
                 $"menu-main:{actionArgs.SourceItem.Description}:{args.IsGlobalSearchRequest}"
             ])
         };
+        if (File.Exists(WebViewProbePath))
+        {
+            yield return new MainMenuItem
+            {
+                Description = "SDK v7 web-view probe",
+                MenuSection = "SDK v7|Tests",
+                Action = _ => RunWebViewProbe()
+            };
+        }
+    }
+
+    private void RunWebViewProbe()
+    {
+        var address = new Uri(File.ReadAllText(WebViewProbePath).Trim());
+        using var view = PlayniteApi.WebViews.CreateOffscreenView(new WebViewSettings
+        {
+            UserAgent = "Playnite SDK v7 fixture",
+            WindowWidth = 960,
+            WindowHeight = 540
+        });
+        var loading = new List<bool>();
+        view.LoadingChanged += (_, eventArgs) => loading.Add(eventArgs.IsLoading);
+        view.NavigateAsync(address).GetAwaiter().GetResult();
+        var text = view.GetPageTextAsync().GetAwaiter().GetResult();
+        var source = view.GetPageSourceAsync().GetAwaiter().GetResult();
+        var evaluation = view.EvaluateScriptAsync("window.playniteSdkV7").GetAwaiter().GetResult();
+        var cookies = view.GetCookiesAsync().GetAwaiter().GetResult();
+        view.SetCookieAsync(address, new HttpCookie
+        {
+            Name = "sdk-v7-probe",
+            Value = "written",
+            Domain = address.Host,
+            Path = "/",
+            SameSite = CookieSameSite.Unspecified,
+            Priority = CookiePriority.Medium
+        }).GetAwaiter().GetResult();
+        view.DeleteCookiesAsync(address, "sdk-v7-probe").GetAwaiter().GetResult();
+        File.AppendAllLines(EventPath,
+        [
+            $"web-loading:{string.Join(',', loading)}",
+            $"web-address:{view.Address}",
+            $"web-text:{text}",
+            $"web-source:{source.Contains("SDK v7 page source", StringComparison.Ordinal)}",
+            $"web-script:{evaluation.Success}:{evaluation.Result}",
+            $"web-cookie:{cookies.Single().Name}:{cookies.Single().Priority}"
+        ]);
     }
 
     public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)

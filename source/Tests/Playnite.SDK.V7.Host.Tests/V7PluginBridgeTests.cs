@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Playnite.SDK.V7.Host;
 using TestPluginV7;
@@ -225,6 +226,161 @@ public class V7PluginBridgeTests
         }));
     }
 
+    [Test]
+    public async Task BridgesSdkSevenWebViewContractsAndCancellation()
+    {
+        var fake = new FakeWebViewHost();
+        JObject creation = null;
+        var factory = new HostWebViewFactory((operation, payload) =>
+        {
+            Assert.That(operation, Is.EqualTo("CreateWebView"));
+            creation = JObject.Parse(payload);
+            return fake;
+        });
+        var settings = new Playnite.SDK.WebViewSettings
+        {
+            UserAgent = "Playnite SDK v7 test",
+            WindowWidth = 1280,
+            WindowHeight = 720,
+            WindowBackground = Avalonia.Media.Color.FromArgb(128, 12, 34, 56)
+        };
+
+        using var view = factory.CreateView(settings);
+        Assert.That(creation.Value<bool>("Offscreen"), Is.False);
+        Assert.That(creation["Settings"]?.Value<string>("UserAgent"), Is.EqualTo(settings.UserAgent));
+        Assert.That(creation["Settings"]?.Value<int>("WindowWidth"), Is.EqualTo(1280));
+        Assert.That(creation["Settings"]?.Value<int>("WindowHeight"), Is.EqualTo(720));
+        Assert.That(creation["Settings"]?.Value<int>("BackgroundA"), Is.EqualTo(128));
+        Assert.That(creation["Settings"]?.Value<int>("BackgroundR"), Is.EqualTo(12));
+        Assert.That(creation["Settings"]?.Value<int>("BackgroundG"), Is.EqualTo(34));
+        Assert.That(creation["Settings"]?.Value<int>("BackgroundB"), Is.EqualTo(56));
+        Assert.That(view.CanExecuteJavascriptInMainFrame, Is.True);
+        Assert.That(view.View, Is.SameAs(fake.View));
+        Assert.That(view.WindowHost, Is.Null);
+
+        var loadingStates = new List<bool>();
+        view.LoadingChanged += (_, args) => loadingStates.Add(args.IsLoading);
+        var address = new Uri("https://example.test/sdk-v7");
+        await view.OpenAsync(cancellationToken: CancellationToken.None);
+        await view.NavigateAsync(address);
+        Assert.That(view.Address, Is.EqualTo(address));
+        Assert.That(loadingStates, Is.EqualTo(new[] { true, false }));
+        Assert.That(await view.GetPageTextAsync(), Is.EqualTo("SDK v7 page text"));
+        Assert.That(await view.GetPageSourceAsync(), Does.Contain("SDK v7 page source"));
+
+        var evaluation = await view.EvaluateScriptAsync("window.playniteSdkV7");
+        Assert.That(evaluation.Success, Is.True);
+        Assert.That(evaluation.Message, Is.EqualTo("evaluated"));
+        var result = (Dictionary<string, object>)evaluation.Result;
+        Assert.That(result["number"], Is.EqualTo(7L));
+        Assert.That((List<object>)result["items"], Is.EqualTo(new object[] { true, "web" }));
+
+        var cookies = await view.GetCookiesAsync();
+        Assert.That(cookies, Has.Count.EqualTo(1));
+        Assert.That(cookies[0].Name, Is.EqualTo("playnite-v7"));
+        Assert.That(cookies[0].SameSite, Is.EqualTo(Playnite.SDK.CookieSameSite.LaxMode));
+        Assert.That(cookies[0].Priority, Is.EqualTo(Playnite.SDK.CookiePriority.High));
+
+        await view.SetCookieAsync(address, new Playnite.SDK.HttpCookie
+        {
+            Name = "new-cookie",
+            Value = "value",
+            Domain = "example.test",
+            Path = "/",
+            SameSite = Playnite.SDK.CookieSameSite.StrictMode,
+            Priority = Playnite.SDK.CookiePriority.High
+        });
+        Assert.That(fake.SetCookieAddress, Is.EqualTo(address));
+        Assert.That(fake.SetCookiePayload.Value<string>("SameSite"), Is.EqualTo("StrictMode"));
+        Assert.That(fake.SetCookiePayload.Value<string>("Priority"), Is.EqualTo("High"));
+
+        await view.DeleteCookiesAsync(address, "new-cookie");
+        Assert.That(fake.DeletedCookieAddress, Is.EqualTo(address));
+        Assert.That(fake.DeletedCookieName, Is.EqualTo("new-cookie"));
+
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            await view.NavigateAsync(address, cancellation.Token));
+        Assert.Throws<NotSupportedException>(() =>
+        {
+            view.ResourceLoaded += (_, _) => { };
+        });
+
+        view.Close();
+        Assert.That(fake.Closed, Is.True);
+        view.Dispose();
+        Assert.That(fake.Disposed, Is.True);
+
+        Assert.Throws<NotSupportedException>(() => factory.CreateView(new Playnite.SDK.WebViewSettings
+        {
+            JavaScriptEnabled = false
+        }));
+        Assert.Throws<NotSupportedException>(() => factory.CreateView(new Playnite.SDK.WebViewSettings
+        {
+            CaptureResponseContent = true
+        }));
+        Assert.Throws<NotSupportedException>(() => factory.CreateView(new Playnite.SDK.WebViewSettings
+        {
+            ShouldCaptureResponseContent = (_, _) => true
+        }));
+
+        var offscreenFake = new FakeWebViewHost();
+        JObject offscreenCreation = null;
+        var offscreenFactory = new HostWebViewFactory((_, payload) =>
+        {
+            offscreenCreation = JObject.Parse(payload);
+            return offscreenFake;
+        });
+        using var offscreenView = offscreenFactory.CreateOffscreenView();
+        Assert.That(offscreenCreation.Value<bool>("Offscreen"), Is.True);
+        Assert.That(offscreenView.View, Is.SameAs(offscreenFake.View));
+        Assert.That(offscreenView.WindowHost, Is.Null);
+    }
+
+    [Test]
+    public void SuppliesWebViewsThroughTheIsolatedPluginApi()
+    {
+        var pluginDataPath = Path.Combine(
+            extensionsDataPath,
+            "8134f4eb-556e-4e01-936f-1bf5a808cb10");
+        Directory.CreateDirectory(pluginDataPath);
+        File.WriteAllText(
+            Path.Combine(pluginDataPath, "web-view-probe-url.txt"),
+            "https://example.test/sdk-v7");
+        var fake = new FakeWebViewHost();
+        var plugin = (V7PluginInstance)V7PluginBridge
+            .LoadAll(
+                typeof(TestPlugin).Assembly.Location,
+                HostCall,
+                (operation, payload) =>
+                {
+                    Assert.That(operation, Is.EqualTo("CreateWebView"));
+                    Assert.That(JObject.Parse(payload).Value<bool>("Offscreen"), Is.True);
+                    return fake;
+                })
+            .Single();
+
+        var probe = plugin.GetMenuItems("Main", "[]", false)
+            .Cast<V7MenuItemInstance>()
+            .Single(item => item.Description == "SDK v7 web-view probe");
+        probe.Invoke();
+        plugin.Dispose();
+
+        var events = File.ReadAllLines(Path.Combine(pluginDataPath, "events.txt"));
+        Assert.That(events, Does.Contain("web-loading:True,False"));
+        Assert.That(events, Does.Contain("web-address:https://example.test/sdk-v7"));
+        Assert.That(events, Does.Contain("web-text:SDK v7 page text"));
+        Assert.That(events, Does.Contain("web-source:True"));
+        Assert.That(events, Does.Contain(
+            "web-script:True:System.Collections.Generic.Dictionary`2[System.String,System.Object]"));
+        Assert.That(events, Does.Contain("web-cookie:playnite-v7:High"));
+        Assert.That(fake.SetCookiePayload.Value<string>("SameSite"), Is.EqualTo("Unspecified"));
+        Assert.That(fake.SetCookiePayload.Value<string>("Priority"), Is.EqualTo("Medium"));
+        Assert.That(fake.DeletedCookieName, Is.EqualTo("sdk-v7-probe"));
+        Assert.That(fake.Disposed, Is.True);
+    }
+
     private string HostCall(string operation, string payload)
     {
         calls.Add((operation, payload));
@@ -241,5 +397,113 @@ public class V7PluginBridgeTests
             "IsPortable" or "InOfflineMode" or "IsDebugBuild" or "ThrowAllErrors" => "false",
             _ => string.Empty
         };
+    }
+
+    private sealed class FakeWebViewHost
+    {
+        private Action<bool> loadingChanged;
+
+        public bool CanExecuteJavascriptInMainFrame => true;
+        public Avalonia.Controls.Control View { get; } = new Avalonia.Controls.Border();
+        public Avalonia.Controls.Window WindowHost => null;
+        public Uri Address { get; private set; }
+        public Uri SetCookieAddress { get; private set; }
+        public JObject SetCookiePayload { get; private set; }
+        public Uri DeletedCookieAddress { get; private set; }
+        public string DeletedCookieName { get; private set; }
+        public bool Closed { get; private set; }
+        public bool Disposed { get; private set; }
+
+        public void SubscribeLoading(Action<bool> handler) => loadingChanged = handler;
+
+        public Task OpenAsync(bool modal, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
+        }
+
+        public Task NavigateAsync(Uri address, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Address = address;
+            loadingChanged?.Invoke(true);
+            loadingChanged?.Invoke(false);
+            return Task.CompletedTask;
+        }
+
+        public Task<string> GetPageTextAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult("SDK v7 page text");
+        }
+
+        public Task<string> GetPageSourceAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult("<html>SDK v7 page source</html>");
+        }
+
+        public Task<string> EvaluateScriptAsync(string script, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Assert.That(script, Is.EqualTo("window.playniteSdkV7"));
+            return Task.FromResult(JsonConvert.SerializeObject(new
+            {
+                Success = true,
+                Message = "evaluated",
+                Result = new
+                {
+                    number = 7,
+                    items = new object[] { true, "web" }
+                }
+            }));
+        }
+
+        public Task<string> GetCookiesAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(JsonConvert.SerializeObject(new[]
+            {
+                new
+                {
+                    Name = "playnite-v7",
+                    Value = "cookie-value",
+                    Domain = "example.test",
+                    Path = "/",
+                    Expires = (DateTime?)null,
+                    Creation = DateTime.UnixEpoch,
+                    Secure = true,
+                    HttpOnly = true,
+                    LastAccess = DateTime.UnixEpoch,
+                    SameSite = "LaxMode",
+                    Priority = "High"
+                }
+            }));
+        }
+
+        public Task SetCookieAsync(
+            Uri address,
+            string cookieJson,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            SetCookieAddress = address;
+            SetCookiePayload = JObject.Parse(cookieJson);
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteCookiesAsync(
+            Uri address,
+            string name,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            DeletedCookieAddress = address;
+            DeletedCookieName = name;
+            return Task.CompletedTask;
+        }
+
+        public void Close() => Closed = true;
+        public void Dispose() => Disposed = true;
     }
 }
