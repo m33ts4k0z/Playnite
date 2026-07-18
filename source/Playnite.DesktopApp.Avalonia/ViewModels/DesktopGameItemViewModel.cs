@@ -48,6 +48,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public string DevelopersText => FormatNames("Developers", Game.DeveloperIds, id => database.Companies[id]?.Name);
     public string PublishersText => FormatNames("Publishers", Game.PublisherIds, id => database.Companies[id]?.Name);
     public string LinksText => FormatLinks(Game.Links);
+    public string GameActionsText => FormatGameActions(Game);
+    public string RomsText => FormatRoms(Game.Roms);
     public string MetadataLine => BuildMetadataLine(Game, database);
     public string DescriptionText => ToPlainText(Game.Description);
     public string CoverPath => ResolveMediaPath(Game.CoverImage, database);
@@ -100,6 +102,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(DevelopersText));
         OnPropertyChanged(nameof(PublishersText));
         OnPropertyChanged(nameof(LinksText));
+        OnPropertyChanged(nameof(GameActionsText));
+        OnPropertyChanged(nameof(RomsText));
         OnPropertyChanged(nameof(CoverPath));
     }
 
@@ -167,5 +171,40 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .ToList();
         return names.Count == 0 ? "Links: None" : $"Links: {string.Join(", ", names)}";
+    }
+
+    private static string FormatGameActions(Game game)
+    {
+        var customCount = game.GameActions?.Count ?? 0;
+        if (game.IncludeLibraryPluginAction)
+        {
+            return customCount == 0
+                ? "Actions: Library plugin"
+                : $"Actions: Library plugin + {customCount:N0} custom";
+        }
+
+        return customCount == 0 ? "Actions: None" : $"Actions: {customCount:N0} custom";
+    }
+
+    private static string FormatRoms(IEnumerable<GameRom> roms)
+    {
+        var names = (roms ?? Array.Empty<GameRom>())
+            .Where(rom => rom != null)
+            .Select(rom => string.IsNullOrWhiteSpace(rom.Name) ? GetFileName(rom.Path) : rom.Name)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .ToList();
+        return names.Count == 0 ? "ROMs: None" : $"ROMs: {string.Join(", ", names)}";
+    }
+
+    private static string GetFileName(string path)
+    {
+        try
+        {
+            return Path.GetFileName(path);
+        }
+        catch
+        {
+            return path;
+        }
     }
 }

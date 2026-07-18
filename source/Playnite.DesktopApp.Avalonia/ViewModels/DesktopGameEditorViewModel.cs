@@ -48,6 +48,10 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private bool applyBackgroundImage;
     private bool applyIcon;
     private bool applyLinks;
+    private bool includeLibraryPluginAction;
+    private bool applyIncludeLibraryPluginAction;
+    private bool applyGameActions;
+    private bool applyRoms;
 
     public event PropertyChangedEventHandler PropertyChanged;
 
@@ -222,6 +226,33 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         set => SetApplyField(ref applyLinks, value, nameof(CanEditLinks));
     }
 
+    public bool IncludeLibraryPluginAction
+    {
+        get => includeLibraryPluginAction;
+        set => SetField(ref includeLibraryPluginAction, value);
+    }
+
+    public bool ApplyIncludeLibraryPluginAction
+    {
+        get => applyIncludeLibraryPluginAction;
+        set => SetApplyField(
+            ref applyIncludeLibraryPluginAction,
+            value,
+            nameof(CanEditIncludeLibraryPluginAction));
+    }
+
+    public bool ApplyGameActions
+    {
+        get => applyGameActions;
+        set => SetApplyField(ref applyGameActions, value, nameof(CanEditGameActions));
+    }
+
+    public bool ApplyRoms
+    {
+        get => applyRoms;
+        set => SetApplyField(ref applyRoms, value, nameof(CanEditRoms));
+    }
+
     public bool CanEditReleaseDate => IsSingleEdit || ApplyReleaseDate;
     public bool CanEditUserScore => IsSingleEdit || ApplyUserScore;
     public bool CanEditDescription => IsSingleEdit || ApplyDescription;
@@ -240,6 +271,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public bool CanEditBackgroundImage => IsSingleEdit || ApplyBackgroundImage;
     public bool CanEditIcon => IsSingleEdit || ApplyIcon;
     public bool CanEditLinks => IsSingleEdit || ApplyLinks;
+    public bool CanEditIncludeLibraryPluginAction => IsSingleEdit || ApplyIncludeLibraryPluginAction;
+    public bool CanEditGameActions => IsSingleEdit || ApplyGameActions;
+    public bool CanEditRoms => IsSingleEdit || ApplyRoms;
 
     public string ValidationMessage
     {
@@ -262,10 +296,15 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public IReadOnlyList<DesktopMetadataOption> Tags { get; }
     public IReadOnlyList<DesktopMetadataOption> Developers { get; }
     public IReadOnlyList<DesktopMetadataOption> Publishers { get; }
+    public IReadOnlyList<DesktopEmulatorOption> Emulators { get; }
     public ObservableCollection<DesktopLinkEditorItem> Links { get; } = new();
+    public ObservableCollection<DesktopGameActionEditorItem> GameActions { get; } = new();
+    public ObservableCollection<DesktopRomEditorItem> Roms { get; } = new();
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
     public ICommand AddLinkCommand { get; }
+    public ICommand AddGameActionCommand { get; }
+    public ICommand AddRomCommand { get; }
 
     public DesktopGameEditorViewModel(
         GameDatabase database,
@@ -287,11 +326,18 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         Tags = BuildMultiOptions(database?.Tags?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
         Developers = BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
         Publishers = BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        Emulators = BuildEmulatorOptions(database?.Emulators);
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(Cancel);
         AddLinkCommand = new RelayCommand(
             () => Links.Add(new DesktopLinkEditorItem(null, item => Links.Remove(item))),
             () => CanEditLinks);
+        AddGameActionCommand = new RelayCommand(
+            () => AddGameActionItem(null),
+            () => CanEditGameActions);
+        AddRomCommand = new RelayCommand(
+            () => AddRomItem(null),
+            () => CanEditRoms);
     }
 
     public bool Open(Guid gameId, Action<bool?> onCompleted = null) =>
@@ -354,6 +400,19 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         {
             Links.Add(new DesktopLinkEditorItem(link, item => Links.Remove(item)));
         }
+
+        IncludeLibraryPluginAction = CommonValue(games, game => game.IncludeLibraryPluginAction);
+        GameActions.Clear();
+        foreach (var action in CommonGameActions(games))
+        {
+            AddGameActionItem(action);
+        }
+
+        Roms.Clear();
+        foreach (var rom in CommonRoms(games))
+        {
+            AddRomItem(rom);
+        }
     }
 
     private void Save()
@@ -381,6 +440,11 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         }
 
         if (!TryBuildLinks(out var preparedLinks))
+        {
+            return;
+        }
+
+        if (!TryBuildGameActions(out var preparedGameActions) || !TryBuildRoms(out var preparedRoms))
         {
             return;
         }
@@ -418,11 +482,23 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
                 {
                     if (IsSingleEdit)
                     {
-                        ApplySingleGameValues(game, parsedReleaseDate, parsedScore, preparedLinks);
+                        ApplySingleGameValues(
+                            game,
+                            parsedReleaseDate,
+                            parsedScore,
+                            preparedLinks,
+                            preparedGameActions,
+                            preparedRoms);
                     }
                     else
                     {
-                        ApplyBulkValues(game, parsedReleaseDate, parsedScore, preparedLinks);
+                        ApplyBulkValues(
+                            game,
+                            parsedReleaseDate,
+                            parsedScore,
+                            preparedLinks,
+                            preparedGameActions,
+                            preparedRoms);
                     }
 
                     game.Modified = changeDate;
@@ -451,7 +527,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         Game game,
         ReleaseDate? parsedReleaseDate,
         int? parsedScore,
-        IReadOnlyList<Link> preparedLinks)
+        IReadOnlyList<Link> preparedLinks,
+        IReadOnlyList<GameAction> preparedGameActions,
+        IReadOnlyList<GameRom> preparedRoms)
     {
         game.Name = Name.Trim();
         game.SortingName = NullIfWhiteSpace(SortingName);
@@ -470,13 +548,19 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         game.DeveloperIds = SelectedIds(Developers);
         game.PublisherIds = SelectedIds(Publishers);
         game.Links = new ObservableCollection<Link>(preparedLinks.Select(link => link.GetCopy()));
+        game.IncludeLibraryPluginAction = IncludeLibraryPluginAction;
+        game.GameActions = new ObservableCollection<GameAction>(
+            preparedGameActions.Select(action => action.GetCopy()));
+        game.Roms = new ObservableCollection<GameRom>(preparedRoms.Select(rom => rom.GetCopy()));
     }
 
     private void ApplyBulkValues(
         Game game,
         ReleaseDate? parsedReleaseDate,
         int? parsedScore,
-        IReadOnlyList<Link> preparedLinks)
+        IReadOnlyList<Link> preparedLinks,
+        IReadOnlyList<GameAction> preparedGameActions,
+        IReadOnlyList<GameRom> preparedRoms)
     {
         if (ApplyReleaseDate) game.ReleaseDate = parsedReleaseDate;
         if (ApplyUserScore) game.UserScore = parsedScore;
@@ -493,6 +577,17 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         if (ApplyDevelopers) game.DeveloperIds = SelectedIds(Developers);
         if (ApplyPublishers) game.PublisherIds = SelectedIds(Publishers);
         if (ApplyLinks) game.Links = new ObservableCollection<Link>(preparedLinks.Select(link => link.GetCopy()));
+        if (ApplyIncludeLibraryPluginAction) game.IncludeLibraryPluginAction = IncludeLibraryPluginAction;
+        if (ApplyGameActions)
+        {
+            game.GameActions = new ObservableCollection<GameAction>(
+                preparedGameActions.Select(action => action.GetCopy()));
+        }
+
+        if (ApplyRoms)
+        {
+            game.Roms = new ObservableCollection<GameRom>(preparedRoms.Select(rom => rom.GetCopy()));
+        }
     }
 
     private bool TryBuildLinks(out IReadOnlyList<Link> preparedLinks)
@@ -529,6 +624,45 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             result.Add(new Link(name, uri.AbsoluteUri));
         }
 
+        return true;
+    }
+
+    private bool TryBuildGameActions(out IReadOnlyList<GameAction> preparedActions)
+    {
+        var result = new List<GameAction>();
+        preparedActions = result;
+        if (IsBulkEdit && !ApplyGameActions)
+        {
+            return true;
+        }
+
+        foreach (var item in GameActions)
+        {
+            var action = item.ToGameAction();
+            if (action.TrackingMode == TrackingMode.Directory &&
+                string.IsNullOrWhiteSpace(action.TrackingPath))
+            {
+                ValidationMessage = $"Action '{action.Name ?? "Unnamed action"}' requires a tracking directory.";
+                return false;
+            }
+
+            if (action.InitialTrackingDelay < 0 || action.TrackingFrequency < 0)
+            {
+                ValidationMessage = $"Action '{action.Name ?? "Unnamed action"}' cannot use negative tracking timing values.";
+                return false;
+            }
+
+            result.Add(action);
+        }
+
+        return true;
+    }
+
+    private bool TryBuildRoms(out IReadOnlyList<GameRom> preparedRoms)
+    {
+        preparedRoms = IsBulkEdit && !ApplyRoms
+            ? Array.Empty<GameRom>()
+            : Roms.Select(rom => rom.ToGameRom()).ToList();
         return true;
     }
 
@@ -686,7 +820,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         ApplyFavorite || ApplyHidden || ApplySource || ApplyCompletionStatus ||
         ApplyGenres || ApplyPlatforms || ApplyCategories || ApplyTags ||
         ApplyDevelopers || ApplyPublishers || ApplyCoverImage ||
-        ApplyBackgroundImage || ApplyIcon || ApplyLinks;
+        ApplyBackgroundImage || ApplyIcon || ApplyLinks ||
+        ApplyIncludeLibraryPluginAction || ApplyGameActions || ApplyRoms;
 
     private void ResetApplyFlags()
     {
@@ -708,6 +843,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         ApplyBackgroundImage = false;
         ApplyIcon = false;
         ApplyLinks = false;
+        ApplyIncludeLibraryPluginAction = false;
+        ApplyGameActions = false;
+        ApplyRoms = false;
     }
 
     private void Cancel() => Complete(false);
@@ -723,6 +861,35 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         var callback = completed;
         completed = null;
         callback?.Invoke(result);
+    }
+
+    private void AddGameActionItem(GameAction action)
+    {
+        GameActions.Add(new DesktopGameActionEditorItem(
+            action,
+            Emulators,
+            item => MoveItem(GameActions, item, -1),
+            item => MoveItem(GameActions, item, 1),
+            item => GameActions.Remove(item)));
+    }
+
+    private void AddRomItem(GameRom rom)
+    {
+        Roms.Add(new DesktopRomEditorItem(
+            rom,
+            item => MoveItem(Roms, item, -1),
+            item => MoveItem(Roms, item, 1),
+            item => Roms.Remove(item)));
+    }
+
+    private static void MoveItem<T>(ObservableCollection<T> items, T item, int offset)
+    {
+        var currentIndex = items.IndexOf(item);
+        var targetIndex = currentIndex + offset;
+        if (currentIndex >= 0 && targetIndex >= 0 && targetIndex < items.Count)
+        {
+            items.Move(currentIndex, targetIndex);
+        }
     }
 
     private static IReadOnlyList<DesktopMetadataOption> BuildOptions(
@@ -742,6 +909,16 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         IEnumerable<DesktopMetadataOption> values) =>
         values?.OrderBy(value => value.Name, StringComparer.CurrentCultureIgnoreCase).ToList() ??
         new List<DesktopMetadataOption>();
+
+    private static IReadOnlyList<DesktopEmulatorOption> BuildEmulatorOptions(
+        IEnumerable<Emulator> values) =>
+        values?.OrderBy(value => value.Name, StringComparer.CurrentCultureIgnoreCase)
+            .Select(emulator => new DesktopEmulatorOption(
+                emulator.Id,
+                emulator.Name,
+                emulator.AllProfiles.Select(profile =>
+                    new DesktopEmulatorProfileOption(profile.Id, profile.Name))))
+            .ToList() ?? new List<DesktopEmulatorOption>();
 
     private static IReadOnlyCollection<Guid> CommonIds(
         IReadOnlyList<Game> games,
@@ -763,6 +940,32 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             (game.Links?.Where(link => link != null).ToList() ?? new List<Link>()).SequenceEqual(first))
                 ? first
                 : Array.Empty<Link>();
+    }
+
+    private static IReadOnlyList<GameAction> CommonGameActions(IReadOnlyList<Game> games)
+    {
+        var first = games[0].GameActions?
+            .Where(action => action != null)
+            .Select(action => action.GetCopy())
+            .ToList() ?? new List<GameAction>();
+        return games.Skip(1).All(game =>
+            (game.GameActions?.Where(action => action != null).ToList() ?? new List<GameAction>())
+                .SequenceEqual(first))
+                    ? first
+                    : Array.Empty<GameAction>();
+    }
+
+    private static IReadOnlyList<GameRom> CommonRoms(IReadOnlyList<Game> games)
+    {
+        var first = games[0].Roms?
+            .Where(rom => rom != null)
+            .Select(rom => rom.GetCopy())
+            .ToList() ?? new List<GameRom>();
+        return games.Skip(1).All(game =>
+            (game.Roms?.Where(rom => rom != null).ToList() ?? new List<GameRom>())
+                .SequenceEqual(first))
+                    ? first
+                    : Array.Empty<GameRom>();
     }
 
     private static void SetSelected(
@@ -807,10 +1010,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         if (SetField(ref field, value))
         {
             OnPropertyChanged(editabilityProperty);
-            if (editabilityProperty == nameof(CanEditLinks))
-            {
-                ((RelayCommand)AddLinkCommand).RaiseCanExecuteChanged();
-            }
+            RaiseCollectionCommandState(editabilityProperty);
         }
     }
 
@@ -834,7 +1034,28 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanEditBackgroundImage));
         OnPropertyChanged(nameof(CanEditIcon));
         OnPropertyChanged(nameof(CanEditLinks));
+        OnPropertyChanged(nameof(CanEditIncludeLibraryPluginAction));
+        OnPropertyChanged(nameof(CanEditGameActions));
+        OnPropertyChanged(nameof(CanEditRoms));
         ((RelayCommand)AddLinkCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)AddGameActionCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)AddRomCommand).RaiseCanExecuteChanged();
+    }
+
+    private void RaiseCollectionCommandState(string editabilityProperty)
+    {
+        if (editabilityProperty == nameof(CanEditLinks))
+        {
+            ((RelayCommand)AddLinkCommand).RaiseCanExecuteChanged();
+        }
+        else if (editabilityProperty == nameof(CanEditGameActions))
+        {
+            ((RelayCommand)AddGameActionCommand).RaiseCanExecuteChanged();
+        }
+        else if (editabilityProperty == nameof(CanEditRoms))
+        {
+            ((RelayCommand)AddRomCommand).RaiseCanExecuteChanged();
+        }
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)

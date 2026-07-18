@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Playnite.Database;
 using Playnite.DesktopApp.Avalonia.ViewModels;
 using Playnite.SDK.Models;
@@ -58,11 +59,25 @@ public sealed class DesktopLibrary : IDisposable
         var cooperativeTag = new Tag("Co-op");
         var pilotDeveloper = new Company("Pilot Studio");
         var samplePublisher = new Company("Sample Publishing");
+        var pilotEmulator = new Emulator("Pilot Emulator")
+        {
+            CustomProfiles = new ObservableCollection<CustomEmulatorProfile>
+            {
+                new()
+                {
+                    Name = "Pilot Profile",
+                    Executable = SelfTestMediaPath,
+                    Arguments = "{ImagePath}",
+                    TrackingMode = TrackingMode.Process
+                }
+            }
+        };
         Database.Genres.Add(new List<Genre> { actionGenre, strategyGenre });
         Database.Platforms.Add(new List<Platform> { windowsPlatform, linuxPlatform });
         Database.Categories.Add(new List<Category> { backlogCategory, showcaseCategory });
         Database.Tags.Add(new List<Tag> { controllerTag, cooperativeTag });
         Database.Companies.Add(new List<Company> { pilotDeveloper, samplePublisher });
+        Database.Emulators.Add(pilotEmulator);
         Database.Games.Add(Enumerable.Range(1, gameCount).Select(index => new Game($"Desktop Pilot {index:N0}")
         {
             IsInstalled = index % 4 != 0,

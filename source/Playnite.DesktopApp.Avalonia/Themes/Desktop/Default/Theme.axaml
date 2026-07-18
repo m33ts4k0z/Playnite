@@ -228,6 +228,10 @@
                                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                                         <TextBlock Text="{Binding SelectedGame.LinksText}" FontSize="11"
                                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedGame.GameActionsText}" FontSize="11"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedGame.RomsText}" FontSize="11"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="16">
                                         <TextBlock Text="{Binding SelectedGame.PlaytimeText}"
@@ -576,6 +580,158 @@
                                             </ListBox>
                                             <Button Command="{Binding Editor.AddLinkCommand}"
                                                     Content="{DynamicResource LOCDesktopAddLink}"
+                                                    HorizontalAlignment="Left" />
+                                        </StackPanel>
+                                        <StackPanel Spacing="5">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{DynamicResource LOCDesktopRoms}" Classes="sectionLabel" />
+                                                <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                          IsChecked="{Binding Editor.ApplyRoms, Mode=TwoWay}"
+                                                          Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                            </StackPanel>
+                                            <ListBox ItemsSource="{Binding Editor.Roms}" MaxHeight="180"
+                                                     IsEnabled="{Binding Editor.CanEditRoms}">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid ColumnDefinitions="*,2*,Auto,Auto,Auto" ColumnSpacing="7" Margin="0,2">
+                                                            <TextBox Text="{Binding Name, Mode=TwoWay}"
+                                                                     Watermark="{DynamicResource LOCDesktopRomName}" />
+                                                            <TextBox Grid.Column="1" Text="{Binding Path, Mode=TwoWay}"
+                                                                     Watermark="{DynamicResource LOCDesktopRomPath}" />
+                                                            <Button Grid.Column="2" Command="{Binding MoveUpCommand}" Content="↑" />
+                                                            <Button Grid.Column="3" Command="{Binding MoveDownCommand}" Content="↓" />
+                                                            <Button Grid.Column="4" Command="{Binding RemoveCommand}" Content="×" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                            <Button Command="{Binding Editor.AddRomCommand}"
+                                                    Content="{DynamicResource LOCDesktopAddRom}"
+                                                    HorizontalAlignment="Left" />
+                                        </StackPanel>
+                                        <StackPanel Spacing="7">
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{DynamicResource LOCDesktopGameActions}" Classes="sectionLabel" />
+                                                <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                          IsChecked="{Binding Editor.ApplyGameActions, Mode=TwoWay}"
+                                                          Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                          IsChecked="{Binding Editor.ApplyIncludeLibraryPluginAction, Mode=TwoWay}"
+                                                          Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                <CheckBox IsEnabled="{Binding Editor.CanEditIncludeLibraryPluginAction}"
+                                                          IsChecked="{Binding Editor.IncludeLibraryPluginAction, Mode=TwoWay}"
+                                                          Content="{DynamicResource LOCDesktopIncludeLibraryAction}" />
+                                            </StackPanel>
+                                            <ListBox ItemsSource="{Binding Editor.GameActions}" MaxHeight="480"
+                                                     IsEnabled="{Binding Editor.CanEditGameActions}">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BorderBrush="#394657" BorderThickness="1" CornerRadius="7"
+                                                                Padding="10" Margin="0,3">
+                                                            <StackPanel Spacing="8">
+                                                                <Grid ColumnDefinitions="2*,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="7">
+                                                                    <TextBox Text="{Binding Name, Mode=TwoWay}"
+                                                                             Watermark="{DynamicResource LOCDesktopActionName}" />
+                                                                    <ComboBox Grid.Column="1" Width="125"
+                                                                              ItemsSource="{Binding Types}"
+                                                                              SelectedItem="{Binding Type, Mode=TwoWay}" />
+                                                                    <CheckBox Grid.Column="2" VerticalAlignment="Center"
+                                                                              IsChecked="{Binding IsPlayAction, Mode=TwoWay}"
+                                                                              Content="{DynamicResource LOCDesktopPlayAction}" />
+                                                                    <Button Grid.Column="3" Command="{Binding MoveUpCommand}" Content="↑" />
+                                                                    <Button Grid.Column="4" Command="{Binding MoveDownCommand}" Content="↓" />
+                                                                    <Button Grid.Column="5" Command="{Binding RemoveCommand}" Content="×" />
+                                                                </Grid>
+                                                                <StackPanel IsVisible="{Binding ShowPath}" Spacing="3">
+                                                                    <TextBlock Text="{DynamicResource LOCDesktopPath}" FontSize="11"
+                                                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                    <TextBox Text="{Binding Path, Mode=TwoWay}" />
+                                                                </StackPanel>
+                                                                <Grid IsVisible="{Binding IsFileAction}"
+                                                                      ColumnDefinitions="*,*" ColumnSpacing="10">
+                                                                    <StackPanel Spacing="3">
+                                                                        <TextBlock Text="{DynamicResource LOCDesktopArguments}" FontSize="11"
+                                                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                        <TextBox Text="{Binding Arguments, Mode=TwoWay}" />
+                                                                    </StackPanel>
+                                                                    <StackPanel Grid.Column="1" Spacing="3">
+                                                                        <TextBlock Text="{DynamicResource LOCDesktopWorkingDirectory}" FontSize="11"
+                                                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                        <TextBox Text="{Binding WorkingDir, Mode=TwoWay}" />
+                                                                    </StackPanel>
+                                                                </Grid>
+                                                                <StackPanel IsVisible="{Binding IsEmulatorAction}" Spacing="7">
+                                                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                                                        <StackPanel Spacing="3">
+                                                                            <TextBlock Text="{DynamicResource LOCDesktopEmulator}" FontSize="11"
+                                                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                            <ComboBox ItemsSource="{Binding Emulators}"
+                                                                                      SelectedItem="{Binding SelectedEmulator, Mode=TwoWay}" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="1" Spacing="3">
+                                                                            <TextBlock Text="{DynamicResource LOCDesktopEmulatorProfile}" FontSize="11"
+                                                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                            <ComboBox ItemsSource="{Binding EmulatorProfiles}"
+                                                                                      SelectedItem="{Binding SelectedEmulatorProfile, Mode=TwoWay}" />
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                    <CheckBox IsChecked="{Binding OverrideDefaultArgs, Mode=TwoWay}"
+                                                                              Content="{DynamicResource LOCDesktopOverrideArguments}" />
+                                                                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                                                        <StackPanel Spacing="3">
+                                                                            <TextBlock Text="{DynamicResource LOCDesktopArguments}" FontSize="11"
+                                                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                            <TextBox Text="{Binding Arguments, Mode=TwoWay}" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="1" Spacing="3">
+                                                                            <TextBlock Text="{DynamicResource LOCDesktopAdditionalArguments}" FontSize="11"
+                                                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                            <TextBox Text="{Binding AdditionalArguments, Mode=TwoWay}" />
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                </StackPanel>
+                                                                <StackPanel IsVisible="{Binding IsScriptAction}" Spacing="3">
+                                                                    <TextBlock Text="{DynamicResource LOCDesktopScript}" FontSize="11"
+                                                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                    <TextBox Text="{Binding Script, Mode=TwoWay}" AcceptsReturn="True"
+                                                                             FontFamily="Consolas" MinHeight="90" />
+                                                                </StackPanel>
+                                                                <StackPanel IsVisible="{Binding ShowTracking}" Spacing="7">
+                                                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                                                                        <StackPanel Spacing="3">
+                                                                            <TextBlock Text="{DynamicResource LOCDesktopTrackingMode}" FontSize="11"
+                                                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                            <ComboBox ItemsSource="{Binding TrackingModes}"
+                                                                                      SelectedItem="{Binding TrackingMode, Mode=TwoWay}" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="1" Spacing="3">
+                                                                            <TextBlock Text="{DynamicResource LOCDesktopTrackingDelay}" FontSize="11"
+                                                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                            <NumericUpDown Value="{Binding InitialTrackingDelay, Mode=TwoWay}"
+                                                                                           Minimum="0" Increment="100" />
+                                                                        </StackPanel>
+                                                                        <StackPanel Grid.Column="2" Spacing="3">
+                                                                            <TextBlock Text="{DynamicResource LOCDesktopTrackingFrequency}" FontSize="11"
+                                                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                            <NumericUpDown Value="{Binding TrackingFrequency, Mode=TwoWay}"
+                                                                                           Minimum="0" Increment="100" />
+                                                                        </StackPanel>
+                                                                    </Grid>
+                                                                    <StackPanel IsVisible="{Binding ShowTrackingPath}" Spacing="3">
+                                                                        <TextBlock Text="{DynamicResource LOCDesktopTrackingPath}" FontSize="11"
+                                                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                                        <TextBox Text="{Binding TrackingPath, Mode=TwoWay}" />
+                                                                    </StackPanel>
+                                                                </StackPanel>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                            <Button Command="{Binding Editor.AddGameActionCommand}"
+                                                    Content="{DynamicResource LOCDesktopAddAction}"
                                                     HorizontalAlignment="Left" />
                                         </StackPanel>
                                         <StackPanel Spacing="5">

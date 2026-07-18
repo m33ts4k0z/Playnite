@@ -193,6 +193,51 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException("A non-web link reached the Core database."));
         viewModel.Editor.Links.Clear();
 
+        viewModel.Editor.AddGameActionCommand.Execute(null);
+        var trackedAction = viewModel.Editor.GameActions.Last();
+        trackedAction.Name = "Tracked launch";
+        trackedAction.Type = Playnite.SDK.Models.GameActionType.File;
+        trackedAction.Path = library.SelfTestMediaPath;
+        trackedAction.Arguments = "--pilot";
+        trackedAction.WorkingDir = library.ActiveUserDataDirectory;
+        trackedAction.IsPlayAction = true;
+        trackedAction.TrackingMode = Playnite.SDK.Models.TrackingMode.Directory;
+        trackedAction.TrackingPath = string.Empty;
+        viewModel.Editor.SaveCommand.Execute(null);
+        Record(results, "Desktop action validation requires directory tracking paths", () =>
+            viewModel.Editor.IsVisible &&
+            viewModel.Editor.HasValidationError &&
+            viewModel.Editor.ValidationMessage.Contains("tracking directory", StringComparison.OrdinalIgnoreCase) &&
+            library.Database.Games[editorGame.Game.Id].GameActions?.Count is null or 0
+                ? viewModel.Editor.ValidationMessage
+                : throw new InvalidOperationException("An invalid tracked action reached the Core database."));
+        trackedAction.TrackingPath = library.ActiveUserDataDirectory;
+
+        viewModel.Editor.AddGameActionCommand.Execute(null);
+        var emulatorAction = viewModel.Editor.GameActions.Last();
+        emulatorAction.Name = "Emulated launch";
+        emulatorAction.Type = Playnite.SDK.Models.GameActionType.Emulator;
+        emulatorAction.IsPlayAction = true;
+        var pilotEmulator = emulatorAction.Emulators.Single(option => option.Name == "Pilot Emulator");
+        emulatorAction.SelectedEmulator = pilotEmulator;
+        var pilotProfile = emulatorAction.EmulatorProfiles.Single(option => option.Name == "Pilot Profile");
+        emulatorAction.SelectedEmulatorProfile = pilotProfile;
+        emulatorAction.OverrideDefaultArgs = true;
+        emulatorAction.Arguments = "{ImagePath} --fullscreen";
+        emulatorAction.AdditionalArguments = "--pilot-profile";
+        emulatorAction.MoveUpCommand.Execute(null);
+
+        viewModel.Editor.AddRomCommand.Execute(null);
+        var firstRom = viewModel.Editor.Roms.Last();
+        firstRom.Name = "Disc One";
+        firstRom.Path = "{InstallDir}\\roms\\disc1.iso";
+        viewModel.Editor.AddRomCommand.Execute(null);
+        var secondRom = viewModel.Editor.Roms.Last();
+        secondRom.Name = string.Empty;
+        secondRom.Path = "{InstallDir}\\roms\\disc2.iso";
+        secondRom.MoveUpCommand.Execute(null);
+        viewModel.Editor.IncludeLibraryPluginAction = false;
+
         var editedName = originalEditorName + " — Edited";
         const string singleBackgroundUrl = "https://example.invalid/desktop-background.jpg";
         const string singleLinkUrl = "https://example.com/desktop-pilot";
@@ -261,6 +306,25 @@ internal static class DesktopPilotSelfTest
             editorGame.LinksText.Contains("Website", StringComparison.Ordinal)
                 ? "local cover/icon files, a remote background, and a web link persisted and refreshed"
                 : throw new InvalidOperationException("Media or links did not round-trip through the Desktop editor."));
+
+        Record(results, "Desktop actions and ROMs round-trip through Core", () =>
+            !savedEditorGame.IncludeLibraryPluginAction &&
+            savedEditorGame.GameActions.Count == 2 &&
+            savedEditorGame.GameActions[0].Type == Playnite.SDK.Models.GameActionType.Emulator &&
+            savedEditorGame.GameActions[0].EmulatorId == pilotEmulator.Id &&
+            savedEditorGame.GameActions[0].EmulatorProfileId == pilotProfile.Id &&
+            savedEditorGame.GameActions[0].OverrideDefaultArgs &&
+            savedEditorGame.GameActions[0].Arguments == "{ImagePath} --fullscreen" &&
+            savedEditorGame.GameActions[1].Type == Playnite.SDK.Models.GameActionType.File &&
+            savedEditorGame.GameActions[1].TrackingMode == Playnite.SDK.Models.TrackingMode.Directory &&
+            savedEditorGame.GameActions[1].TrackingPath == library.ActiveUserDataDirectory &&
+            savedEditorGame.Roms.Count == 2 &&
+            savedEditorGame.Roms[0].Path.EndsWith("disc2.iso", StringComparison.Ordinal) &&
+            savedEditorGame.Roms[1].Name == "Disc One" &&
+            editorGame.GameActionsText.Contains("2 custom", StringComparison.Ordinal) &&
+            editorGame.RomsText.Contains("disc2.iso", StringComparison.OrdinalIgnoreCase)
+                ? "ordered file/emulator actions, plugin-action policy, and ROM records persisted and refreshed"
+                : throw new InvalidOperationException("Actions or ROM records did not round-trip through the Desktop editor."));
 
         viewModel.SelectedGame = editorGame;
         viewModel.EditCommand.Execute(null);
@@ -331,6 +395,22 @@ internal static class DesktopPilotSelfTest
             var sharedLink = viewModel.Editor.Links.Last();
             sharedLink.Name = "Shared website";
             sharedLink.Url = bulkLinkUrl;
+            viewModel.Editor.ApplyIncludeLibraryPluginAction = true;
+            viewModel.Editor.IncludeLibraryPluginAction = true;
+            viewModel.Editor.ApplyGameActions = true;
+            viewModel.Editor.GameActions.Clear();
+            viewModel.Editor.AddGameActionCommand.Execute(null);
+            var sharedAction = viewModel.Editor.GameActions.Last();
+            sharedAction.Name = "Shared guide";
+            sharedAction.Type = Playnite.SDK.Models.GameActionType.URL;
+            sharedAction.IsPlayAction = false;
+            sharedAction.Path = "https://example.com/shared-action";
+            viewModel.Editor.ApplyRoms = true;
+            viewModel.Editor.Roms.Clear();
+            viewModel.Editor.AddRomCommand.Execute(null);
+            var sharedRom = viewModel.Editor.Roms.Last();
+            sharedRom.Name = "Shared ROM";
+            sharedRom.Path = "{InstallDir}\\shared.rom";
             viewModel.Editor.SaveCommand.Execute(null);
         }, DispatcherPriority.Background);
         var bulkEditResult = window.RuntimeHost.PluginApi.MainView.OpenEditDialog(bulkGameIds);
@@ -367,6 +447,25 @@ internal static class DesktopPilotSelfTest
                 !ReferenceEquals(editedGames[0].Links, editedGames[1].Links)
                     ? "each game received an owned Core media file and an independent copied link collection"
                     : throw new InvalidOperationException("Bulk media or link metadata was not safely applied.");
+        });
+
+        Record(results, "Plugin bulk editing replaces actions and ROMs independently", () =>
+        {
+            var editedGames = bulkGameIds.Select(id => library.Database.Games[id]).ToList();
+            return editedGames.All(game =>
+                    game.IncludeLibraryPluginAction &&
+                    game.GameActions.Count == 1 &&
+                    game.GameActions[0].Name == "Shared guide" &&
+                    game.GameActions[0].Type == Playnite.SDK.Models.GameActionType.URL &&
+                    game.GameActions[0].Path == "https://example.com/shared-action" &&
+                    !game.GameActions[0].IsPlayAction &&
+                    game.Roms.Count == 1 &&
+                    game.Roms[0].Name == "Shared ROM" &&
+                    game.Roms[0].Path.EndsWith("shared.rom", StringComparison.Ordinal)) &&
+                !ReferenceEquals(editedGames[0].GameActions, editedGames[1].GameActions) &&
+                !ReferenceEquals(editedGames[0].Roms, editedGames[1].Roms)
+                    ? "the SDK list overload copied action and ROM collections without sharing mutable instances"
+                    : throw new InvalidOperationException("Bulk actions or ROM records were not independently applied.");
         });
 
         Record(results, "Desktop settings persist atomically", () =>

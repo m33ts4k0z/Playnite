@@ -43,4 +43,26 @@
     <x:String x:Key="LOCDesktopAddLink">Add link</x:String>
     <x:String x:Key="LOCDesktopLocalImagePath">Full local image path</x:String>
     <x:String x:Key="LOCDesktopLocalOrHttpsImagePath">Full local path or HTTPS URL</x:String>
+    <x:String x:Key="LOCDesktopGameActions">Custom game actions</x:String>
+    <x:String x:Key="LOCDesktopIncludeLibraryAction">Include library plugin actions</x:String>
+    <x:String x:Key="LOCDesktopAddAction">Add action</x:String>
+    <x:String x:Key="LOCDesktopActionName">Action name</x:String>
+    <x:String x:Key="LOCDesktopActionType">Type</x:String>
+    <x:String x:Key="LOCDesktopPlayAction">Play action</x:String>
+    <x:String x:Key="LOCDesktopPath">Path or URL</x:String>
+    <x:String x:Key="LOCDesktopArguments">Arguments</x:String>
+    <x:String x:Key="LOCDesktopWorkingDirectory">Working directory</x:String>
+    <x:String x:Key="LOCDesktopScript">Script</x:String>
+    <x:String x:Key="LOCDesktopTrackingMode">Tracking mode</x:String>
+    <x:String x:Key="LOCDesktopTrackingPath">Tracking path or process name</x:String>
+    <x:String x:Key="LOCDesktopTrackingDelay">Initial delay (ms)</x:String>
+    <x:String x:Key="LOCDesktopTrackingFrequency">Frequency (ms)</x:String>
+    <x:String x:Key="LOCDesktopEmulator">Emulator</x:String>
+    <x:String x:Key="LOCDesktopEmulatorProfile">Profile</x:String>
+    <x:String x:Key="LOCDesktopOverrideArguments">Override default arguments</x:String>
+    <x:String x:Key="LOCDesktopAdditionalArguments">Additional arguments</x:String>
+    <x:String x:Key="LOCDesktopRoms">ROMs</x:String>
+    <x:String x:Key="LOCDesktopAddRom">Add ROM</x:String>
+    <x:String x:Key="LOCDesktopRomName">ROM name (optional)</x:String>
+    <x:String x:Key="LOCDesktopRomPath">ROM path</x:String>
 </ResourceDictionary>
