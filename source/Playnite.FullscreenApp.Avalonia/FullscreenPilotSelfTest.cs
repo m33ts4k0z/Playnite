@@ -104,6 +104,15 @@ internal static class FullscreenPilotSelfTest
                 ? $"{viewModel.PluginSummary}; real Core action orchestration is attached"
                 : throw new InvalidOperationException("The Fullscreen runtime host is unavailable."));
 
+        Record(results, "SDK v7 host bundle reaches the executable output", () =>
+        {
+            var bundlePath = Path.Combine(AppContext.BaseDirectory, "SdkV7Host");
+            return File.Exists(Path.Combine(bundlePath, "Playnite.SDK.dll")) &&
+                File.Exists(Path.Combine(bundlePath, "Playnite.SDK.V7.Host.dll"))
+                    ? "the isolated SDK and host bridge are packaged beside the Fullscreen executable"
+                    : throw new FileNotFoundException($"The SDK v7 host bundle is incomplete at {bundlePath}.");
+        });
+
         var unfilteredCount = viewModel.Games.Count;
         viewModel.SearchText = "Pilot Game 99";
         Record(results, "Search filters the live library", () =>

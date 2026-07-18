@@ -69,9 +69,7 @@ public sealed class AvaloniaPluginSidebarItem : INotifyPropertyChanged
     public Control Open() => (Control)V7Reflection.Invoke(instance, open);
     public void Close() => V7Reflection.Invoke(instance, close);
 
-    private T Read<T>(string name) =>
-        (T)(type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public)?.GetValue(instance)
-            ?? default(T));
+    private T Read<T>(string name) => V7Reflection.Read<T>(instance, name);
 }
 
 public sealed class AvaloniaPluginTopPanelItem : INotifyPropertyChanged
@@ -102,7 +100,5 @@ public sealed class AvaloniaPluginTopPanelItem : INotifyPropertyChanged
 
     public void Activate() => V7Reflection.Invoke(instance, activate);
 
-    private T Read<T>(string name) =>
-        (T)(type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public)?.GetValue(instance)
-            ?? default(T));
+    private T Read<T>(string name) => V7Reflection.Read<T>(instance, name);
 }

@@ -28,6 +28,7 @@ public static class V7PluginBridge
         Serialization.Init(new V7DataSerializer());
         Markup.Init(new HostMarkupConverter(hostCall));
         SQLite.Init((path, flags) => new HostSqlite(hostRequest, path, flags));
+        LogManager.Init(new HostLogProvider(hostCall));
 
         var context = AssemblyLoadContext.GetLoadContext(typeof(V7PluginBridge).Assembly)
             ?? AssemblyLoadContext.Default;
@@ -688,7 +689,8 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
 
     public List<GamepadController> GetConnectedControllers() =>
         V7RpcJson.Deserialize<List<GamepadController>>(
-            hostCall("ConnectedControllers", string.Empty)) ?? [];
+            hostCall("ConnectedControllers", string.Empty))
+        ?? throw new InvalidDataException("Avalonia host returned no connected-controller list.");
 
     private Task CallGameOperation(string operation, Guid gameId)
     {
@@ -724,8 +726,8 @@ internal sealed class HostMainView : IMainViewAPI
     }
 
     public Dispatcher UIDispatcher => Dispatcher.UIThread;
-    public IEnumerable<Game> SelectedGames => Read<List<Game>>("MainView.SelectedGames") ?? [];
-    public List<Game> FilteredGames => Read<List<Game>>("MainView.FilteredGames") ?? [];
+    public IEnumerable<Game> SelectedGames => ReadRequired<List<Game>>("MainView.SelectedGames");
+    public List<Game> FilteredGames => ReadRequired<List<Game>>("MainView.FilteredGames");
 
     public HostMainView(
         Func<string, string, string> hostCall,
@@ -735,8 +737,14 @@ internal sealed class HostMainView : IMainViewAPI
         this.hostRequest = hostRequest;
     }
 
-    public Task<bool> OpenPluginSettingsAsync(Guid pluginId) => Task.FromResult(
-        bool.TryParse(hostCall("OpenPluginSettings", pluginId.ToString()), out var opened) && opened);
+    public Task<bool> OpenPluginSettingsAsync(Guid pluginId)
+    {
+        var response = hostCall("OpenPluginSettings", pluginId.ToString());
+        return Task.FromResult(bool.TryParse(response, out var opened)
+            ? opened
+            : throw new InvalidDataException(
+                $"Avalonia host returned invalid plugin-settings result '{response}'."));
+    }
 
     public void SwitchToLibraryView() => hostCall("MainView.SwitchToLibraryView", string.Empty);
     public void SelectGame(Guid gameId) => hostCall("MainView.SelectGame", gameId.ToString());
@@ -781,13 +789,16 @@ internal sealed class HostMainView : IMainViewAPI
             V7RpcJson.Serialize(gameIds ?? []))));
 
     public List<FilterPreset> GetSortedFilterPresets() =>
-        Read<List<FilterPreset>>("MainView.FilterPresets") ?? [];
+        ReadRequired<List<FilterPreset>>("MainView.FilterPresets");
     public List<FilterPreset> GetSortedFilterFullscreenPresets() =>
-        Read<List<FilterPreset>>("MainView.FullscreenFilterPresets") ?? [];
+        ReadRequired<List<FilterPreset>>("MainView.FullscreenFilterPresets");
     public void ToggleFullscreenView() => hostCall("MainView.ToggleFullscreenView", string.Empty);
 
     private T Read<T>(string operation) =>
         V7RpcJson.Deserialize<T>(hostCall(operation, string.Empty));
+
+    private T ReadRequired<T>(string operation) => Read<T>(operation)
+        ?? throw new InvalidDataException($"Avalonia host returned no result for {operation}.");
 
     private TEnum ReadEnum<TEnum>(string operation) where TEnum : struct, Enum
     {

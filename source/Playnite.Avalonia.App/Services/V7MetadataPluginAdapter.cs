@@ -24,6 +24,29 @@ internal static class V7Reflection
             throw;
         }
     }
+
+    public static T Read<T>(object instance, string name)
+    {
+        ArgumentNullException.ThrowIfNull(instance);
+        var type = instance.GetType();
+        var property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public)
+            ?? throw new MissingMemberException(type.FullName, name);
+        var value = property.GetValue(instance);
+        if (value == null)
+        {
+            if (typeof(T).IsValueType)
+            {
+                throw new InvalidDataException(
+                    $"SDK v7 bridge property {type.FullName}.{name} returned no {typeof(T).FullName} value.");
+            }
+            return default;
+        }
+        return value is T typed
+            ? typed
+            : throw new InvalidDataException(
+                $"SDK v7 bridge property {type.FullName}.{name} returned {value.GetType().FullName} " +
+                $"instead of {typeof(T).FullName}.");
+    }
 }
 
 internal sealed class V7MetadataPluginAdapter : MetadataPlugin

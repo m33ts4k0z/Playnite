@@ -50,6 +50,11 @@ public class V7PluginBridgeTests
         Assert.That(plugin.IsLibraryClientInstalled, Is.True);
         Assert.That(plugin.LibraryClientIcon, Is.EqualTo("client-icon.png"));
         Assert.That(calls.Any(call => call.Operation == "NotificationAdd"), Is.True);
+        var logCall = calls.Single(call => call.Operation == "Log");
+        var logPayload = JObject.Parse(logCall.Payload);
+        Assert.That(logPayload.Value<string>("Level"), Is.EqualTo("Info"));
+        Assert.That(logPayload.Value<string>("LoggerName"), Does.Contain("TestPluginV7"));
+        Assert.That(logPayload.Value<string>("Message"), Is.EqualTo("SDK v7 fixture logger initialized"));
 
         plugin.InvokeApplicationStarted();
         plugin.InvokeApplicationStarted();
@@ -381,6 +386,50 @@ public class V7PluginBridgeTests
         Assert.That(fake.Disposed, Is.True);
     }
 
+    [Test]
+    public void RejectsMissingRequiredHostValuesWithoutCoercingDefaults()
+    {
+        string StrictHostCall(string operation, string payload)
+        {
+            if (operation == "MainView.SelectedGames" || operation == "ConnectedControllers")
+            {
+                return "null";
+            }
+            if (operation == "OpenPluginSettings")
+            {
+                return "not-a-boolean";
+            }
+            if (operation == "Database")
+            {
+                var request = JObject.Parse(payload);
+                return request.Value<string>("Action") == "Get" ? "null" : string.Empty;
+            }
+            return HostCall(operation, payload);
+        }
+
+        var plugin = (V7PluginInstance)V7PluginBridge
+            .LoadAll(typeof(TestPlugin).Assembly.Location, StrictHostCall)
+            .Single();
+        var api = Playnite.SDK.API.Instance;
+
+        Assert.Multiple(() =>
+        {
+            Assert.Throws<InvalidDataException>(() => api.MainView.SelectedGames.ToList());
+            Assert.ThrowsAsync<InvalidDataException>(async () =>
+                await api.MainView.OpenPluginSettingsAsync(plugin.Id));
+            Assert.Throws<InvalidDataException>(() => api.GetConnectedControllers());
+            Assert.Throws<InvalidDataException>(() => _ = api.Database.Games.Count);
+            Assert.That(api.Database.Games[Guid.NewGuid()], Is.Null);
+        });
+        plugin.Dispose();
+
+        var invalidWebHost = new FakeWebViewHost { View = null };
+        using var view = new HostWebViewFactory((_, _) => invalidWebHost).CreateView();
+        Assert.Throws<InvalidDataException>(() => _ = view.View);
+        Assert.That(view.WindowHost, Is.Null);
+        Assert.That(view.Address, Is.Null);
+    }
+
     private string HostCall(string operation, string payload)
     {
         calls.Add((operation, payload));
@@ -393,6 +442,9 @@ public class V7PluginBridgeTests
             "ExtensionsDataPath" => extensionsDataPath,
             "DatabasePath" => Path.Combine(testRoot, "library"),
             "Language" => "en_US",
+            "Database" => JObject.Parse(payload).Value<string>("Action") == "IsOpen"
+                ? "false"
+                : string.Empty,
             "DisabledAddons" or "Addons" => JsonConvert.SerializeObject(Array.Empty<string>()),
             "LoadedPlugins" => JsonConvert.SerializeObject(new[]
             {
@@ -413,7 +465,7 @@ public class V7PluginBridgeTests
         private Action<bool> loadingChanged;
 
         public bool CanExecuteJavascriptInMainFrame => true;
-        public Avalonia.Controls.Control View { get; } = new Avalonia.Controls.Border();
+        public Avalonia.Controls.Control View { get; set; } = new Avalonia.Controls.Border();
         public Avalonia.Controls.Window WindowHost => null;
         public Uri Address { get; private set; }
         public Uri SetCookieAddress { get; private set; }

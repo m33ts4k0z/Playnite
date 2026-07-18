@@ -197,6 +197,8 @@ public sealed class V7PluginLoadFailure
 
 internal sealed class V7PluginHost : IDisposable
 {
+    private static readonly ILogger logger = LogManager.GetLogger();
+
     private sealed class PluginLoadHandle
     {
         public V7PluginLoadContext Context { get; }
@@ -261,6 +263,14 @@ internal sealed class V7PluginHost : IDisposable
         public string Id { get; set; }
         public string Text { get; set; }
         public string Type { get; set; }
+    }
+
+    private sealed class LogPayload
+    {
+        public string Level { get; set; }
+        public string LoggerName { get; set; }
+        public string Message { get; set; }
+        public string Exception { get; set; }
     }
 
     private sealed class DialogPayload
@@ -615,6 +625,9 @@ internal sealed class V7PluginHost : IDisposable
                 return V7DatabaseTransport.Serialize(emulation.GetEmulator(payload));
             case "ResourceString":
                 return AvaloniaPluginApi.SharedResources.GetString(payload);
+            case "Log":
+                WritePluginLog(JsonConvert.DeserializeObject<LogPayload>(payload));
+                return string.Empty;
             case "NotificationAdd":
                 AddNotification(JsonConvert.DeserializeObject<NotificationPayload>(payload));
                 return string.Empty;
@@ -1085,6 +1098,33 @@ internal sealed class V7PluginHost : IDisposable
             : throw new InvalidDataException(
                 $"SDK v7 notification payload has invalid type '{payload.Type}'.");
         notifications.Add(payload.Id, payload.Text ?? string.Empty, type);
+    }
+
+    private static void WritePluginLog(LogPayload payload)
+    {
+        if (payload == null || string.IsNullOrWhiteSpace(payload.LoggerName) ||
+            string.IsNullOrWhiteSpace(payload.Level))
+        {
+            throw new InvalidDataException("SDK v7 log payload is incomplete.");
+        }
+
+        var message = $"[SDK v7:{payload.LoggerName}] {payload.Message ?? string.Empty}";
+        if (!string.IsNullOrWhiteSpace(payload.Exception))
+        {
+            message += Environment.NewLine + payload.Exception;
+        }
+
+        switch (payload.Level)
+        {
+            case "Trace": logger.Trace(message); break;
+            case "Debug": logger.Debug(message); break;
+            case "Info": logger.Info(message); break;
+            case "Warn": logger.Warn(message); break;
+            case "Error": logger.Error(message); break;
+            default:
+                throw new InvalidDataException(
+                    $"SDK v7 log payload has unknown level '{payload.Level}'.");
+        }
     }
 
     private string ShowDialog(string payload, bool error)

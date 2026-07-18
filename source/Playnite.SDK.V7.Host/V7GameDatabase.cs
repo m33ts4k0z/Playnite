@@ -123,7 +123,7 @@ internal sealed class HostItemCollection<TItem> : IItemCollection<TItem>, IV7Hos
 
     private readonly Func<string, string, string> hostCall;
     public GameDatabaseCollection CollectionType { get; }
-    public int Count => Call<int>("Count");
+    public int Count => CallRequired<int>("Count");
     public bool IsReadOnly => false;
 
     public event EventHandler<ItemCollectionChangedEventArgs<TItem>> ItemCollectionChanged;
@@ -143,10 +143,10 @@ internal sealed class HostItemCollection<TItem> : IItemCollection<TItem>, IV7Hos
         this.hostCall = hostCall;
     }
 
-    public bool ContainsItem(Guid id) => Call<bool>("Contains", new { Id = id });
-    public TItem Get(Guid id) => Call<TItem>("Get", new { Id = id });
-    public List<TItem> Get(IList<Guid> ids) => Call<List<TItem>>("GetMany", new { Ids = ids });
-    public TItem Add(string itemName) => Call<TItem>("AddName", new { Name = itemName });
+    public bool ContainsItem(Guid id) => CallRequired<bool>("Contains", new { Id = id });
+    public TItem Get(Guid id) => CallOptional<TItem>("Get", new { Id = id });
+    public List<TItem> Get(IList<Guid> ids) => CallRequired<List<TItem>>("GetMany", new { Ids = ids });
+    public TItem Add(string itemName) => CallRequired<TItem>("AddName", new { Name = itemName });
 
     public TItem Add(string itemName, Func<TItem, string, bool> existingComparer)
     {
@@ -155,7 +155,7 @@ internal sealed class HostItemCollection<TItem> : IItemCollection<TItem>, IV7Hos
     }
 
     public IEnumerable<TItem> Add(List<string> items) =>
-        Call<List<TItem>>("AddNames", new { Names = items });
+        CallRequired<List<TItem>>("AddNames", new { Names = items });
 
     public IEnumerable<TItem> Add(List<string> items, Func<TItem, string, bool> existingComparer)
     {
@@ -164,31 +164,33 @@ internal sealed class HostItemCollection<TItem> : IItemCollection<TItem>, IV7Hos
     }
 
     public TItem Add(MetadataProperty property) =>
-        Call<List<TItem>>("AddMetadata", new { Properties = new[] { property } }).FirstOrDefault();
+        CallRequired<List<TItem>>("AddMetadata", new { Properties = new[] { property } }).FirstOrDefault()
+        ?? throw new InvalidDataException(
+            $"Avalonia host returned no added {CollectionType} item for metadata property {property}.");
 
     public IEnumerable<TItem> Add(IEnumerable<MetadataProperty> properties) =>
-        Call<List<TItem>>("AddMetadata", new { Properties = properties.ToList() });
+        CallRequired<List<TItem>>("AddMetadata", new { Properties = properties.ToList() });
 
     public void Add(IEnumerable<TItem> items) =>
-        Call("AddItems", new { Items = items.ToList() });
+        CallVoid("AddItems", new { Items = items.ToList() });
 
     public void Add(TItem item) => Add(new[] { item });
-    public bool Remove(Guid id) => Call<bool>("Remove", new { Ids = new[] { id } });
+    public bool Remove(Guid id) => CallRequired<bool>("Remove", new { Ids = new[] { id } });
     public bool Remove(IEnumerable<TItem> items) =>
-        Call<bool>("Remove", new { Ids = items.Select(item => item.Id).ToList() });
+        CallRequired<bool>("Remove", new { Ids = items.Select(item => item.Id).ToList() });
     public bool Remove(TItem item) => item != null && Remove(item.Id);
     public void Update(TItem item) => Update(new[] { item });
     public void Update(IEnumerable<TItem> items) =>
-        Call("Update", new { Items = items.ToList() });
-    public void Clear() => Call("Clear");
+        CallVoid("Update", new { Items = items.ToList() });
+    public void Clear() => CallVoid("Clear");
     public bool Contains(TItem item) => item != null && ContainsItem(item.Id);
     public void CopyTo(TItem[] array, int arrayIndex) => this.ToList().CopyTo(array, arrayIndex);
-    public IEnumerator<TItem> GetEnumerator() => Call<List<TItem>>("All").GetEnumerator();
+    public IEnumerator<TItem> GetEnumerator() => CallRequired<List<TItem>>("All").GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    public IEnumerable<TItem> GetClone() => Call<List<TItem>>("All");
+    public IEnumerable<TItem> GetClone() => CallRequired<List<TItem>>("All");
     public IDisposable BufferedUpdate() => new BufferScope(this);
-    public void BeginBufferUpdate() => Call("BeginBufferUpdate");
-    public void EndBufferUpdate() => Call("EndBufferUpdate");
+    public void BeginBufferUpdate() => CallVoid("BeginBufferUpdate");
+    public void EndBufferUpdate() => CallVoid("EndBufferUpdate");
     public void Dispose() { }
 
     public void Publish(string eventName, string payload)
@@ -209,21 +211,36 @@ internal sealed class HostItemCollection<TItem> : IItemCollection<TItem>, IV7Hos
         }
     }
 
-    private void Call(string action, object data = null) => Call<object>(action, data);
+    private void CallVoid(string action, object data = null) =>
+        hostCall("Database", CreateRequest(action, data));
 
-    private TResult Call<TResult>(string action, object data = null)
+    private TResult CallRequired<TResult>(string action, object data = null)
     {
-        var request = V7RpcJson.Serialize(new
+        var response = hostCall("Database", CreateRequest(action, data));
+        if (string.IsNullOrWhiteSpace(response) || response == "null")
         {
-            Action = action,
-            Collection = CollectionType.ToString(),
-            Data = data
-        });
-        var response = hostCall("Database", request);
+            throw new InvalidDataException(
+                $"Avalonia host returned no {CollectionType} result for database action {action}.");
+        }
+        return V7RpcJson.Deserialize<TResult>(response)
+            ?? throw new InvalidDataException(
+                $"Avalonia host returned an invalid {CollectionType} result for database action {action}.");
+    }
+
+    private TResult CallOptional<TResult>(string action, object data = null)
+    {
+        var response = hostCall("Database", CreateRequest(action, data));
         return string.IsNullOrWhiteSpace(response) || response == "null"
             ? default
             : V7RpcJson.Deserialize<TResult>(response);
     }
+
+    private string CreateRequest(string action, object data) => V7RpcJson.Serialize(new
+    {
+        Action = action,
+        Collection = CollectionType.ToString(),
+        Data = data
+    });
 }
 
 internal sealed class HostGameDatabase : IGameDatabaseAPI
@@ -264,8 +281,8 @@ internal sealed class HostGameDatabase : IGameDatabaseAPI
     public IItemCollection<CompletionStatus> CompletionStatuses { get; }
     public IItemCollection<ImportExclusionItem> ImportExclusions { get; }
     public IItemCollection<FilterPreset> FilterPresets { get; }
-    public string DatabasePath => Call<string>("Path");
-    public bool IsOpen => Call<bool>("IsOpen");
+    public string DatabasePath => CallRequired<string>("Path");
+    public bool IsOpen => CallRequired<bool>("IsOpen");
 
     public event EventHandler DatabaseOpened;
 
@@ -310,27 +327,27 @@ internal sealed class HostGameDatabase : IGameDatabaseAPI
     }
 
     public string AddFile(string path, Guid parentId) =>
-        Call<string>("AddFile", new { Path = path, ParentId = parentId });
-    public void SaveFile(string id, string path) => Call<object>("SaveFile", new { Id = id, Path = path });
-    public void RemoveFile(string id) => Call<object>("RemoveFile", new { Id = id });
+        CallOptional<string>("AddFile", new { Path = path, ParentId = parentId });
+    public void SaveFile(string id, string path) => CallVoid("SaveFile", new { Id = id, Path = path });
+    public void RemoveFile(string id) => CallVoid("RemoveFile", new { Id = id });
     public string GetFileStoragePath(Guid parentId) =>
-        Call<string>("GetFileStoragePath", new { ParentId = parentId });
+        CallRequired<string>("GetFileStoragePath", new { ParentId = parentId });
     public string GetFullFilePath(string databasePath) =>
-        Call<string>("GetFullFilePath", new { Path = databasePath });
+        CallRequired<string>("GetFullFilePath", new { Path = databasePath });
     public IDisposable BufferedUpdate() => new BufferScope(this);
-    public void BeginBufferUpdate() => Call<object>("BeginBufferUpdate");
-    public void EndBufferUpdate() => Call<object>("EndBufferUpdate");
-    public Game ImportGame(GameMetadata game) => Call<Game>("ImportGame", new { Game = game });
+    public void BeginBufferUpdate() => CallVoid("BeginBufferUpdate");
+    public void EndBufferUpdate() => CallVoid("EndBufferUpdate");
+    public Game ImportGame(GameMetadata game) => CallRequired<Game>("ImportGame", new { Game = game });
     public Game ImportGame(GameMetadata game, LibraryPlugin sourcePlugin) =>
-        Call<Game>("ImportGame", new { Game = game, SourcePluginId = sourcePlugin?.Id });
+        CallRequired<Game>("ImportGame", new { Game = game, SourcePluginId = sourcePlugin?.Id });
     public bool GetGameMatchesFilter(Game game, FilterPresetSettings filterSettings) =>
         GetGameMatchesFilter(game, filterSettings, false);
     public bool GetGameMatchesFilter(Game game, FilterPresetSettings filterSettings, bool useFuzzyNameMatch) =>
-        Call<bool>("MatchesFilter", new { Game = game, Filter = filterSettings, Fuzzy = useFuzzyNameMatch });
+        CallRequired<bool>("MatchesFilter", new { Game = game, Filter = filterSettings, Fuzzy = useFuzzyNameMatch });
     public IEnumerable<Game> GetFilteredGames(FilterPresetSettings filterSettings) =>
         GetFilteredGames(filterSettings, false);
     public IEnumerable<Game> GetFilteredGames(FilterPresetSettings filterSettings, bool useFuzzyNameMatch) =>
-        Call<List<Game>>("FilteredGames", new { Filter = filterSettings, Fuzzy = useFuzzyNameMatch });
+        CallRequired<List<Game>>("FilteredGames", new { Filter = filterSettings, Fuzzy = useFuzzyNameMatch });
 
     public void Publish(string collection, string eventName, string payload)
     {
@@ -347,11 +364,30 @@ internal sealed class HostGameDatabase : IGameDatabaseAPI
     private HostItemCollection<TItem> Create<TItem>(GameDatabaseCollection type)
         where TItem : DatabaseObject => new(type, hostCall);
 
-    private TResult Call<TResult>(string action, object data = null)
+    private void CallVoid(string action, object data = null) =>
+        hostCall("Database", CreateRequest(action, data));
+
+    private TResult CallRequired<TResult>(string action, object data = null)
     {
-        var response = hostCall("Database", V7RpcJson.Serialize(new { Action = action, Data = data }));
+        var response = hostCall("Database", CreateRequest(action, data));
+        if (string.IsNullOrWhiteSpace(response) || response == "null")
+        {
+            throw new InvalidDataException(
+                $"Avalonia host returned no database result for action {action}.");
+        }
+        return V7RpcJson.Deserialize<TResult>(response)
+            ?? throw new InvalidDataException(
+                $"Avalonia host returned an invalid database result for action {action}.");
+    }
+
+    private TResult CallOptional<TResult>(string action, object data = null)
+    {
+        var response = hostCall("Database", CreateRequest(action, data));
         return string.IsNullOrWhiteSpace(response) || response == "null"
             ? default
             : V7RpcJson.Deserialize<TResult>(response);
     }
+
+    private static string CreateRequest(string action, object data) =>
+        V7RpcJson.Serialize(new { Action = action, Data = data });
 }

@@ -70,10 +70,10 @@ public sealed class HostWebView : IWebView
     private readonly MethodInfo close;
     private readonly MethodInfo dispose;
 
-    public bool CanExecuteJavascriptInMainFrame => Read<bool>(nameof(CanExecuteJavascriptInMainFrame));
-    public Control View => Read<Control>(nameof(View));
-    public Window WindowHost => Read<Window>(nameof(WindowHost));
-    public Uri Address => Read<Uri>(nameof(Address));
+    public bool CanExecuteJavascriptInMainFrame => ReadRequired<bool>(nameof(CanExecuteJavascriptInMainFrame));
+    public Control View => ReadRequired<Control>(nameof(View));
+    public Window WindowHost => ReadOptional<Window>(nameof(WindowHost));
+    public Uri Address => ReadOptional<Uri>(nameof(Address));
 
     public event EventHandler<WebViewLoadingChangedEventArgs> LoadingChanged;
     public event EventHandler<WebViewResourceLoadedEventArgs> ResourceLoaded
@@ -182,9 +182,31 @@ public sealed class HostWebView : IWebView
     public void Close() => Invoke(close);
     public void Dispose() => Invoke(dispose);
 
-    private T Read<T>(string name) =>
-        (T)(type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public)?.GetValue(instance)
-            ?? default(T));
+    private T ReadRequired<T>(string name) => Read<T>(name)
+        ?? throw new InvalidDataException(
+            $"Avalonia host returned no SDK v7 web-view value for {name}.");
+
+    private T ReadOptional<T>(string name) => Read<T>(name);
+
+    private T Read<T>(string name)
+    {
+        var property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public)
+            ?? throw new MissingMemberException(type.FullName, name);
+        var value = property.GetValue(instance);
+        if (value == null)
+        {
+            if (typeof(T).IsValueType)
+            {
+                throw new InvalidDataException(
+                    $"Avalonia host returned no SDK v7 web-view value for {name}.");
+            }
+            return default;
+        }
+        return value is T typed
+            ? typed
+            : throw new InvalidDataException(
+                $"Avalonia host returned {value.GetType().FullName} instead of {typeof(T).FullName} for {name}.");
+    }
 
     private MethodInfo GetRequiredMethod(string name) =>
         type.GetMethod(name, BindingFlags.Instance | BindingFlags.Public)

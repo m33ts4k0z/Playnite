@@ -50,6 +50,7 @@ public sealed class TestPlugin : LibraryPlugin
             Converters = [new TestPrefixConverter()]
         });
         api.UriHandler.RegisterSource("sdk-v7-probe", HandleUri);
+        LogManager.GetLogger().Info("SDK v7 fixture logger initialized");
         File.AppendAllLines(EventPath, ["constructed:" + api.ApplicationInfo.Mode]);
         api.Notifications.Add("test-v7-loaded", "SDK v7 plugin constructed", NotificationType.Info);
     }

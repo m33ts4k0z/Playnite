@@ -170,6 +170,16 @@ internal static class DesktopPilotSelfTest
                 ? $"{viewModel.PluginSummary}; Core action orchestration is attached"
                 : throw new InvalidOperationException("The shared Avalonia runtime host is unavailable."));
 
+        Record(results, "SDK v7 host bundle reaches the executable output", () =>
+        {
+            var bundlePath = Path.Combine(AppContext.BaseDirectory, "SdkV7Host");
+            var sdkPath = Path.Combine(bundlePath, "Playnite.SDK.dll");
+            var hostPath = Path.Combine(bundlePath, "Playnite.SDK.V7.Host.dll");
+            return File.Exists(sdkPath) && File.Exists(hostPath)
+                ? "the isolated SDK and host bridge are packaged beside the Desktop executable"
+                : throw new FileNotFoundException($"The SDK v7 host bundle is incomplete at {bundlePath}.");
+        });
+
         Record(results, "Legacy plugin resources bridge into Avalonia", () =>
             Playnite.SDK.ResourceProvider.GetString("LOCDesktopPlay") == "Play" &&
             Playnite.SDK.ResourceProvider.GetResource("FontIcoFont") is System.Windows.Media.FontFamily &&

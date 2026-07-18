@@ -1,6 +1,7 @@
 using System.Text;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Playnite.Avalonia.App.Services;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.Plugins;
 using Playnite.SDK;
@@ -28,7 +29,9 @@ internal static class InstalledPluginCompatibilityTest
         report.AppendLine($"Avalonia {typeof(AvaloniaObject).Assembly.GetName().Version}; .NET {Environment.Version}");
         report.AppendLine($"Profile: {options.UserDataDirectory}");
         report.AppendLine($"Library: {options.LibraryPath} ({library.Games.Count:N0} games)");
-        report.AppendLine($"Discovered: {manifests.Count}; loaded: {factory.Plugins.Count}; failed: {factory.LoadFailures.Count}");
+        report.AppendLine($"Discovered: {manifests.Count}; loaded: " +
+            $"{factory.Plugins.Count + window.RuntimeHost.V7Plugins.Count}; failed: " +
+            $"{factory.LoadFailures.Count + window.RuntimeHost.V7PluginFailures.Count}");
         report.AppendLine();
 
         foreach (var manifest in manifests.OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase))
@@ -43,14 +46,23 @@ internal static class InstalledPluginCompatibilityTest
                         Path.GetFullPath(script.Path),
                         Path.GetFullPath(Path.Combine(manifest.DirectoryPath, manifest.Module)),
                         StringComparison.OrdinalIgnoreCase));
+            var loadedV7Plugins = window.RuntimeHost.V7Plugins
+                .Where(item => string.Equals(item.Manifest.Id, manifest.Id, StringComparison.OrdinalIgnoreCase))
+                .ToList();
             var failures = factory.LoadFailures
                 .Where(item => string.Equals(
                     item.Manifest.Id,
                     manifest.Id,
                     StringComparison.OrdinalIgnoreCase))
                 .ToList();
+            var v7Failures = window.RuntimeHost.V7PluginFailures
+                .Where(item => string.Equals(
+                    item.Manifest.Id,
+                    manifest.Id,
+                    StringComparison.OrdinalIgnoreCase))
+                .ToList();
 
-            if (failures.Count > 0)
+            if (failures.Count > 0 || v7Failures.Count > 0)
             {
                 failedManifestIds.Add(manifest.Id);
                 report.AppendLine($"[FAIL] {Describe(manifest)}");
@@ -63,6 +75,12 @@ internal static class InstalledPluginCompatibilityTest
                         report.AppendLine($"       {line.TrimEnd('\r')}");
                     }
                 }
+                foreach (var failure in v7Failures)
+                {
+                    report.AppendLine($"       {failure.Exception.GetType().FullName}");
+                    report.AppendLine($"       {failure.Message}");
+                    report.AppendLine($"       {failure.Exception}");
+                }
 
                 report.AppendLine();
                 continue;
@@ -73,6 +91,31 @@ internal static class InstalledPluginCompatibilityTest
                 report.AppendLine($"[PASS] {Describe(manifest)}");
                 report.AppendLine($"       PowerShell runtime loaded {loadedScript.Name}");
                 report.AppendLine();
+                continue;
+            }
+
+            if (loadedV7Plugins.Count > 0)
+            {
+                foreach (var loadedPlugin in loadedV7Plugins)
+                {
+                    logger.Info($"SDK v7 compatibility probe started for {manifest.Name} ({loadedPlugin.Name}).");
+                    var pluginReport = new StringBuilder();
+                    var pluginFailures = VerifyV7Plugin(
+                        loadedPlugin,
+                        window.RuntimeHost,
+                        library,
+                        pluginReport);
+                    logger.Info($"SDK v7 compatibility probe completed for {manifest.Name}.");
+                    report.AppendLine($"[{(pluginFailures == 0 ? "PASS" : "FAIL")}] {Describe(manifest)}");
+                    report.Append(pluginReport);
+                    if (pluginFailures > 0)
+                    {
+                        failedManifestIds.Add(manifest.Id);
+                    }
+
+                    report.AppendLine();
+                }
+
                 continue;
             }
 
@@ -202,6 +245,114 @@ internal static class InstalledPluginCompatibilityTest
         MetadataPlugin metadataPlugin => metadataPlugin.Properties?.HasSettings == true,
         _ => false
     };
+
+    private static int VerifyV7Plugin(
+        V7LoadedPlugin plugin,
+        AvaloniaRuntimeHost runtimeHost,
+        DesktopLibrary library,
+        StringBuilder report)
+    {
+        var failures = 0;
+        report.AppendLine($"       {plugin.Name} ({plugin.Id}) loaded through isolated SDK v7 as {plugin.Kind}");
+        if (plugin.Id == Guid.Empty || string.IsNullOrWhiteSpace(plugin.Name) || string.IsNullOrWhiteSpace(plugin.Kind))
+        {
+            report.AppendLine("       SDK v7 identity FAIL: plugin identity was incomplete.");
+            failures++;
+        }
+        else
+        {
+            report.AppendLine("       SDK API: isolated SDK v7 bridge constructed the plugin successfully");
+        }
+
+        if (plugin.HasSettings)
+        {
+            try
+            {
+                var view = plugin.BeginSettingsEdit();
+                V7SettingsValidationResult validation;
+                try
+                {
+                    validation = plugin.VerifySettings();
+                }
+                finally
+                {
+                    plugin.CancelSettingsEdit();
+                }
+                if (view == null || !validation.IsValid)
+                {
+                    throw new InvalidOperationException(
+                        $"Settings view was null or validation failed: {string.Join("; ", validation.Errors)}");
+                }
+
+                report.AppendLine($"       Settings: native Avalonia {view.GetType().FullName}");
+            }
+            catch (Exception exception)
+            {
+                report.AppendLine($"       Settings FAIL: {exception}");
+                failures++;
+            }
+        }
+        else
+        {
+            report.AppendLine("       Settings: not advertised");
+        }
+
+        if (string.Equals(plugin.Kind, "MetadataPlugin", StringComparison.Ordinal))
+        {
+            if (plugin.SupportedMetadataFields == null || plugin.SupportedMetadataFields.Length == 0)
+            {
+                report.AppendLine("       Metadata FAIL: supported-field list was empty.");
+                failures++;
+            }
+            else
+            {
+                report.AppendLine($"       Metadata: {plugin.SupportedMetadataFields.Length} declared fields");
+                failures += VerifyV7MetadataProvider(plugin, runtimeHost, library, report);
+            }
+        }
+
+        return failures;
+    }
+
+    private static int VerifyV7MetadataProvider(
+        V7LoadedPlugin plugin,
+        AvaloniaRuntimeHost runtimeHost,
+        DesktopLibrary library,
+        StringBuilder report)
+    {
+        try
+        {
+            var gameItem = library.Games.FirstOrDefault(item =>
+                    string.Equals(item.Name, "Cyberpunk 2077", StringComparison.OrdinalIgnoreCase))
+                ?? library.Games.FirstOrDefault(item => !string.IsNullOrWhiteSpace(item.Name))
+                ?? throw new InvalidOperationException("No real library game was available for metadata testing.");
+            var game = gameItem.Game;
+            var metadataPlugin = runtimeHost.MetadataPlugins.Single(item => item.Id == plugin.Id);
+            using var provider = metadataPlugin.GetMetadataProvider(new MetadataRequestOptions(game, true))
+                ?? throw new InvalidOperationException("The metadata plugin returned no provider.");
+            if (!provider.AvailableFields.Contains(MetadataField.Name))
+            {
+                throw new InvalidOperationException(
+                    $"The provider returned no name for the real library game '{game.Name}'.");
+            }
+
+            var fetchedName = provider.GetName(new GetMetadataFieldArgs());
+            if (string.IsNullOrWhiteSpace(fetchedName))
+            {
+                throw new InvalidOperationException(
+                    $"The provider returned an empty name for the real library game '{game.Name}'.");
+            }
+
+            report.AppendLine($"       Metadata fetch: '{game.Name}' resolved to '{fetchedName}' " +
+                $"with {provider.AvailableFields.Count} available fields");
+            return 0;
+        }
+        catch (Exception exception)
+        {
+            report.AppendLine($"       Metadata fetch FAIL: {exception}");
+            return 1;
+        }
+    }
 
     private static string Describe(ExtensionManifest manifest) =>
         $"{manifest.Name} {manifest.Version} [{manifest.Id}] ({manifest.Type})";

@@ -55,17 +55,13 @@ internal sealed class V7RemoteMenuItem
     {
         this.instance = instance ?? throw new ArgumentNullException(nameof(instance));
         var type = instance.GetType();
-        Description = Read<string>(type, nameof(Description));
-        MenuSection = Read<string>(type, nameof(MenuSection));
-        Icon = Read<string>(type, nameof(Icon));
+        Description = V7Reflection.Read<string>(instance, nameof(Description));
+        MenuSection = V7Reflection.Read<string>(instance, nameof(MenuSection));
+        Icon = V7Reflection.Read<string>(instance, nameof(Icon));
         invoke = V7Reflection.GetRequiredMethod(type, nameof(Invoke));
     }
 
     public void Invoke() => V7Reflection.Invoke(instance, invoke);
-
-    private T Read<T>(Type type, string name) =>
-        (T)(type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public)?.GetValue(instance)
-            ?? default(T));
 }
 
 public sealed partial class AvaloniaRuntimeHost
