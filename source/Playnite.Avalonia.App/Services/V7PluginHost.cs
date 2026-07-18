@@ -8,6 +8,7 @@ using Playnite.SDK;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Runtime.ExceptionServices;
 using System.Runtime.Loader;
 
 namespace Playnite.Avalonia.App.Services;
@@ -17,6 +18,7 @@ public sealed class V7LoadedPlugin
     private readonly object instance;
     private readonly MethodInfo applicationStarted;
     private readonly MethodInfo applicationStopped;
+    private readonly MethodInfo publishDatabaseEvent;
     private readonly MethodInfo dispose;
 
     public Guid Id { get; }
@@ -36,12 +38,15 @@ public sealed class V7LoadedPlugin
         HasSettings = ReadProperty<bool>(type, nameof(HasSettings));
         applicationStarted = GetRequiredMethod(type, "InvokeApplicationStarted");
         applicationStopped = GetRequiredMethod(type, "InvokeApplicationStopped");
+        publishDatabaseEvent = GetRequiredMethod(type, "PublishDatabaseEvent");
         dispose = GetRequiredMethod(type, nameof(IDisposable.Dispose));
     }
 
     internal void InvokeApplicationStarted() => Invoke(applicationStarted);
     internal void InvokeApplicationStopped() => Invoke(applicationStopped);
     internal void Dispose() => Invoke(dispose);
+    internal void PublishDatabaseEvent(string collection, string eventName, string payload) =>
+        Invoke(publishDatabaseEvent, collection, eventName, payload);
 
     private T ReadProperty<T>(Type type, string name)
     {
@@ -54,15 +59,16 @@ public sealed class V7LoadedPlugin
         type.GetMethod(name, BindingFlags.Instance | BindingFlags.Public)
         ?? throw new MissingMethodException(type.FullName, name);
 
-    private void Invoke(MethodInfo method)
+    private void Invoke(MethodInfo method, params object[] arguments)
     {
         try
         {
-            method.Invoke(instance, null);
+            method.Invoke(instance, arguments);
         }
         catch (TargetInvocationException exception) when (exception.InnerException != null)
         {
-            throw exception.InnerException;
+            ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
+            throw;
         }
     }
 }
@@ -160,8 +166,10 @@ internal sealed class V7PluginHost : IDisposable
     private readonly NotificationsAPI notifications;
     private readonly Func<GameActionRunner> actionRunner;
     private readonly Func<IEnumerable<string>> installedAddons;
+    private readonly V7DatabaseTransport databaseTransport;
     private readonly string hostBundlePath;
     private readonly List<PluginLoadHandle> handles = [];
+    private readonly List<Action> unsubscribeDatabaseEvents = [];
     private bool loaded;
     private bool disposed;
 
@@ -182,6 +190,8 @@ internal sealed class V7PluginHost : IDisposable
         this.actionRunner = actionRunner ?? throw new ArgumentNullException(nameof(actionRunner));
         this.installedAddons = installedAddons ?? throw new ArgumentNullException(nameof(installedAddons));
         this.hostBundlePath = hostBundlePath ?? Path.Combine(AppContext.BaseDirectory, "SdkV7Host");
+        databaseTransport = new V7DatabaseTransport(database);
+        SubscribeDatabaseEvents();
     }
 
     public IReadOnlyList<string> Load(
@@ -290,8 +300,8 @@ internal sealed class V7PluginHost : IDisposable
                     throw new InvalidDataException($"SDK v7 plugin ID {plugin.Id} is already loaded.");
                 }
 
-                plugin.InvokeApplicationStarted();
                 Plugins.Add(plugin);
+                plugin.InvokeApplicationStarted();
             }
 
             handles.Add(new PluginLoadHandle(context, hostCall, constructedPlugins));
@@ -322,6 +332,7 @@ internal sealed class V7PluginHost : IDisposable
             case "ConfigurationPath": return PlaynitePaths.ConfigRootPath;
             case "ExtensionsDataPath": return PlaynitePaths.ExtensionsDataPath;
             case "DatabasePath": return database.DatabasePath;
+            case "Database": return databaseTransport.Handle(payload);
             case "Language": return callbacks.Settings.Language;
             case "IsPortable": return PlaynitePaths.IsPortable.ToString();
             case "InOfflineMode": return PlayniteEnvironment.InOfflineMode.ToString();
@@ -439,6 +450,70 @@ internal sealed class V7PluginHost : IDisposable
         }
     }
 
+    private void SubscribeDatabaseEvents()
+    {
+        EventHandler opened = (_, _) => PublishDatabaseEvent("Database", "Opened", "null");
+        database.DatabaseOpened += opened;
+        unsubscribeDatabaseEvents.Add(() => database.DatabaseOpened -= opened);
+        SubscribeCollectionEvents(GameDatabaseCollection.Games, database.Games);
+        SubscribeCollectionEvents(GameDatabaseCollection.Platforms, database.Platforms);
+        SubscribeCollectionEvents(GameDatabaseCollection.Emulators, database.Emulators);
+        SubscribeCollectionEvents(GameDatabaseCollection.Genres, database.Genres);
+        SubscribeCollectionEvents(GameDatabaseCollection.Companies, database.Companies);
+        SubscribeCollectionEvents(GameDatabaseCollection.Tags, database.Tags);
+        SubscribeCollectionEvents(GameDatabaseCollection.Categories, database.Categories);
+        SubscribeCollectionEvents(GameDatabaseCollection.Series, database.Series);
+        SubscribeCollectionEvents(GameDatabaseCollection.AgeRatings, database.AgeRatings);
+        SubscribeCollectionEvents(GameDatabaseCollection.Regions, database.Regions);
+        SubscribeCollectionEvents(GameDatabaseCollection.Sources, database.Sources);
+        SubscribeCollectionEvents(GameDatabaseCollection.Features, database.Features);
+        SubscribeCollectionEvents(GameDatabaseCollection.GameScanners, database.GameScanners);
+        SubscribeCollectionEvents(GameDatabaseCollection.CompletionStatuses, database.CompletionStatuses);
+        SubscribeCollectionEvents(GameDatabaseCollection.ImportExclusions, database.ImportExclusions);
+        SubscribeCollectionEvents(GameDatabaseCollection.FilterPresets, database.FilterPresets);
+    }
+
+    private void SubscribeCollectionEvents<TItem>(
+        GameDatabaseCollection collectionType,
+        IItemCollection<TItem> collection)
+        where TItem : Playnite.SDK.Models.DatabaseObject
+    {
+        EventHandler<ItemCollectionChangedEventArgs<TItem>> changed = (_, args) =>
+            PublishDatabaseEvent(collectionType.ToString(), "Changed", V7DatabaseTransport.Serialize(new
+            {
+                args.AddedItems,
+                args.RemovedItems
+            }));
+        EventHandler<ItemUpdatedEventArgs<TItem>> updated = (_, args) =>
+            PublishDatabaseEvent(collectionType.ToString(), "Updated", V7DatabaseTransport.Serialize(new
+            {
+                args.UpdatedItems
+            }));
+        collection.ItemCollectionChanged += changed;
+        collection.ItemUpdated += updated;
+        unsubscribeDatabaseEvents.Add(() =>
+        {
+            collection.ItemCollectionChanged -= changed;
+            collection.ItemUpdated -= updated;
+        });
+    }
+
+    private void PublishDatabaseEvent(string collection, string eventName, string payload)
+    {
+        foreach (var plugin in Plugins.ToList())
+        {
+            try
+            {
+                plugin.PublishDatabaseEvent(collection, eventName, payload);
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                callbacks.SetStatus(
+                    $"SDK v7 plugin {plugin.Name} database event failed: {exception.Message}");
+            }
+        }
+    }
+
     public void Dispose()
     {
         if (disposed)
@@ -447,6 +522,11 @@ internal sealed class V7PluginHost : IDisposable
         }
 
         disposed = true;
+        foreach (var unsubscribe in unsubscribeDatabaseEvents)
+        {
+            unsubscribe();
+        }
+        unsubscribeDatabaseEvents.Clear();
         foreach (var handle in handles.AsEnumerable().Reverse())
         {
             foreach (var plugin in handle.Plugins.AsEnumerable().Reverse())

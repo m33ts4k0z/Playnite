@@ -66,7 +66,7 @@ public static class V7PluginBridge
                 throw new InvalidDataException($"SDK v7 plugin type {type.FullName} has no plugin ID.");
             }
 
-            results.Add(new V7PluginInstance(plugin));
+            results.Add(new V7PluginInstance(plugin, api));
         }
 
         return results.ToArray();
@@ -88,6 +88,7 @@ public static class V7PluginBridge
 public sealed class V7PluginInstance : IDisposable
 {
     private readonly Plugin plugin;
+    private readonly V7PlayniteApi api;
     private bool applicationStarted;
 
     public Guid Id => plugin.Id;
@@ -107,9 +108,10 @@ public sealed class V7PluginInstance : IDisposable
     };
     public bool HasSettings => plugin.GetSettings(false) != null;
 
-    internal V7PluginInstance(Plugin plugin)
+    internal V7PluginInstance(Plugin plugin, V7PlayniteApi api)
     {
         this.plugin = plugin;
+        this.api = api;
     }
 
     public void InvokeApplicationStarted()
@@ -137,6 +139,9 @@ public sealed class V7PluginInstance : IDisposable
     public object GetSettings() => plugin.GetSettings(false);
     public Control GetSettingsView() => plugin.GetSettingsView(false);
 
+    public void PublishDatabaseEvent(string collection, string eventName, string payload) =>
+        api.HostDatabase.Publish(collection, eventName, payload);
+
     public void Dispose()
     {
         InvokeApplicationStopped();
@@ -160,6 +165,7 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
     public IPlayniteSettingsAPI ApplicationSettings { get; }
     public IAddons Addons { get; }
     public IEmulationAPI Emulation { get; }
+    internal HostGameDatabase HostDatabase { get; }
 
     public V7PlayniteApi(Func<string, string, string> hostCall)
     {
@@ -185,10 +191,8 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
 
             return V7InterfaceProxy.DefaultValue(method.ReturnType);
         });
-        Database = V7InterfaceProxy.Create<IGameDatabaseAPI>((method, _) =>
-            method.Name == "get_DatabasePath"
-                ? hostCall("DatabasePath", string.Empty)
-                : V7InterfaceProxy.DefaultValue(method.ReturnType));
+        HostDatabase = new HostGameDatabase(hostCall);
+        Database = HostDatabase;
         ApplicationSettings = V7InterfaceProxy.Create<IPlayniteSettingsAPI>((method, _) => method.Name switch
         {
             "get_DatabasePath" => hostCall("DatabasePath", string.Empty),

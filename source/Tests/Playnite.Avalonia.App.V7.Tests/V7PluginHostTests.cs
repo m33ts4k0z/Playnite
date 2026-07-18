@@ -76,6 +76,9 @@ public class V7PluginHostTests
         Assert.That(V7PluginHost.IsSdkV7Assembly(typeof(IPlayniteAPI).Assembly.Location), Is.False);
 
         using var database = new GameDatabase(Path.Combine(testRoot, "library"));
+        database.OpenDatabase();
+        var seededGame = new Game("SDK v7 bridge game") { IsInstalled = true };
+        database.Games.Add(seededGame);
         var notifications = new NotificationsAPI();
         var status = string.Empty;
         var callbacks = new AvaloniaHostCallbacks
@@ -97,22 +100,47 @@ public class V7PluginHostTests
         var claimed = host.Load([manifest], []);
 
         Assert.That(claimed, Is.EqualTo(new[] { manifest.Id }));
-        Assert.That(host.FailedPlugins, Is.Empty, status);
+        Assert.That(
+            host.FailedPlugins,
+            Is.Empty,
+            host.FailedPlugins.FirstOrDefault()?.Exception.ToString() ?? status);
         Assert.That(host.Plugins, Has.Count.EqualTo(1));
         Assert.That(host.Plugins[0].Id, Is.EqualTo(Guid.Parse("8134f4eb-556e-4e01-936f-1bf5a808cb10")));
         Assert.That(host.Plugins[0].Kind, Is.EqualTo("GenericPlugin"));
         Assert.That(host.Plugins[0].HasSettings, Is.True);
         Assert.That(notifications.Messages.Select(message => message.Id), Does.Contain("test-v7-loaded"));
+        Assert.That(database.Games[seededGame.Id].Name, Is.EqualTo("SDK v7 bridge game updated"));
+        Assert.That(database.Genres.Any(genre => genre.Name == "SDK v7 bridge genre"), Is.True);
+        Assert.That(database.Tags.Any(tag => tag.Name == "SDK v7 bridge tag"), Is.True);
+        var imported = database.Games.FirstOrDefault(game => game.Name == "SDK v7 imported game");
+        Assert.That(imported, Is.Not.Null);
+        Assert.That(
+            imported.GenreIds.Select(id => database.Genres[id]?.Name),
+            Does.Contain("SDK v7 imported genre"));
 
         var eventPath = Path.Combine(
             PlaynitePaths.ExtensionsDataPath,
             host.Plugins[0].Id.ToString(),
             "events.txt");
-        Assert.That(File.ReadAllLines(eventPath), Is.EqualTo(new[] { "constructed:Desktop", "started" }));
+        Assert.That(File.ReadAllLines(eventPath), Is.EqualTo(new[]
+        {
+            "constructed:Desktop",
+            "started",
+            "database-read:SDK v7 bridge game",
+            "database-event:SDK v7 bridge game updated",
+            "database-write:SDK v7 bridge genre",
+            "database-extra:SDK v7 bridge tag:1:SDK v7 imported game:True"
+        }));
+
+        var externallyUpdated = database.Games[seededGame.Id].GetCopy();
+        externallyUpdated.Name = "SDK v7 external update";
+        database.Games.Update(externallyUpdated);
+        Assert.That(File.ReadAllLines(eventPath).Last(), Is.EqualTo("database-event:SDK v7 external update"));
+
         host.Dispose();
         Assert.That(
-            File.ReadAllLines(eventPath),
-            Is.EqualTo(new[] { "constructed:Desktop", "started", "stopped" }));
+            File.ReadAllLines(eventPath).Last(),
+            Is.EqualTo("stopped"));
     }
 
     [Test]
