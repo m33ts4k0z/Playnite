@@ -14,7 +14,17 @@ public enum GamepadButton
     DPadRight,
     Confirm,
     Cancel,
-    Start
+    Start,
+    Back,
+    X,
+    Y,
+    LeftShoulder,
+    RightShoulder,
+    LeftStick,
+    RightStick,
+    TriggerLeft,
+    TriggerRight,
+    Guide
 }
 
 /// <summary>

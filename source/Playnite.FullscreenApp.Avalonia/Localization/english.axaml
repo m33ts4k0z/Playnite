@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:String x:Key="LOCFullscreenLibrary">Library</x:String>
+    <x:String x:Key="LOCFullscreenDetails">Details</x:String>
+    <x:String x:Key="LOCFullscreenPlay">Play</x:String>
+    <x:String x:Key="LOCFullscreenMenu">Menu</x:String>
+    <x:String x:Key="LOCFullscreenReturn">Return to library</x:String>
+    <x:String x:Key="LOCFullscreenToggleFullscreen">Toggle fullscreen</x:String>
+    <x:String x:Key="LOCFullscreenExit">Exit</x:String>
+</ResourceDictionary>
