@@ -20,14 +20,19 @@
     <ProjectReference Include="..\Playnite.Avalonia\Playnite.Avalonia.csproj" />
     <ProjectReference Include="..\Playnite.Core\Playnite.Core.csproj" />
     <ProjectReference Include="..\Playnite.SDK.V7.Host\Playnite.SDK.V7.Host.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <!-- Build-order only: the SDK v7 assembly is staged below for the isolated
+         host and must never be referenced by the application directly. -->
+    <ProjectReference Include="..\PlayniteSDK.V7\Playnite.SDK.V7.csproj" ReferenceOutputAssembly="false" Private="false" />
     <ProjectReference Include="..\Playnite.WpfPluginSupport\Playnite.WpfPluginSupport.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\Playnite.SDK.V7.Host\bin\$(Platform)\$(Configuration)\net10.0\Playnite.SDK.V7.Host.dll"
+    <!-- The SDK v7 projects build platform-agnostic (AnyCPU) under every
+         solution platform, so their output path has no platform segment. -->
+    <Content Include="..\Playnite.SDK.V7.Host\bin\$(Configuration)\net10.0\Playnite.SDK.V7.Host.dll"
              Link="SdkV7Host\Playnite.SDK.V7.Host.dll"
              CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\PlayniteSDK.V7\bin\$(Platform)\$(Configuration)\net10.0\Playnite.SDK.dll"
+    <Content Include="..\PlayniteSDK.V7\bin\$(Configuration)\net10.0\Playnite.SDK.dll"
              Link="SdkV7Host\Playnite.SDK.dll"
              CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
