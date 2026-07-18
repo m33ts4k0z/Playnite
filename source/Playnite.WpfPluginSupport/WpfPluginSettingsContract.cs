@@ -1,4 +1,6 @@
 using Playnite.SDK;
+using Playnite.SDK.Controls;
+using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using System.ComponentModel;
 using System.Globalization;
@@ -54,6 +56,9 @@ internal sealed class WpfPluginSettingsContractPlugin : GenericPlugin
     public override Guid Id => PluginId;
     internal WpfPluginSettingsContract Settings { get; } = new();
     internal int ViewCreationCount { get; private set; }
+    internal int ElementCreationCount { get; private set; }
+    internal ApplicationMode? LastElementMode { get; private set; }
+    internal WpfPluginElementContractControl LastElementControl { get; private set; }
 
     public WpfPluginSettingsContractPlugin(IPlayniteAPI playniteApi) : base(playniteApi)
     {
@@ -89,8 +94,40 @@ internal sealed class WpfPluginSettingsContractPlugin : GenericPlugin
         return new UserControl { Content = textBox };
     }
 
-    public override Control GetGameViewControl(GetGameViewControlArgs args) =>
-        args.Name == ElementName ? new Label { Content = "Pilot custom element" } : null;
+    public override Control GetGameViewControl(GetGameViewControlArgs args)
+    {
+        if (args.Name != ElementName)
+        {
+            return null;
+        }
+
+        ElementCreationCount++;
+        LastElementMode = args.Mode;
+        LastElementControl = new WpfPluginElementContractControl();
+        return LastElementControl;
+    }
+}
+
+internal sealed class WpfPluginElementContractControl : PluginUserControl
+{
+    private readonly Label label = new();
+
+    internal int ContextChangeCount { get; private set; }
+    internal Game LastGameContext { get; private set; }
+
+    public WpfPluginElementContractControl()
+    {
+        Content = label;
+    }
+
+    public override void GameContextChanged(Game oldContext, Game newContext)
+    {
+        ContextChangeCount++;
+        LastGameContext = newContext;
+        label.Content = newContext == null
+            ? "Pilot custom element"
+            : $"Pilot custom element: {newContext.Name}";
+    }
 }
 
 internal sealed class WpfPluginSettingsContractConverter : IValueConverter

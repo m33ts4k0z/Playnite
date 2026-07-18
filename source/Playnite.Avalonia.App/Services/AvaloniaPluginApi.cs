@@ -1,4 +1,5 @@
 using Playnite.API;
+using Playnite.Avalonia.Controls;
 using Playnite.Emulators;
 using Playnite.SDK;
 using Playnite.SDK.Events;
@@ -95,6 +96,7 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
     {
         extensions()?.AddCustomElementSupport(source, args);
         callbacks.AddCustomElementSupport(source, args);
+        PluginElementRuntime.NotifyRegistrationsChanged();
     }
 
     public void AddSettingsSupport(Plugin source, AddSettingsSupportArgs args)

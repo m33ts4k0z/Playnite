@@ -1161,6 +1161,30 @@ internal static class DesktopPilotSelfTest
                 ? "cancel left no database or live-wrapper residue"
                 : throw new InvalidOperationException("A cancelled manual game remained in the library."));
 
+        var initialElementGame = viewModel.SelectedGame?.Game ?? viewModel.Games.First().Game;
+        var pluginElementHost = new Playnite.Avalonia.Controls.PluginElementHost
+        {
+            Plugin = WpfPluginSettingsContractPlugin.SourceName,
+            Element = WpfPluginSettingsContractPlugin.ElementName,
+            GameContext = initialElementGame,
+            Width = 480,
+            Height = 100
+        };
+        var pluginElementWindow = new global::Avalonia.Controls.Window
+        {
+            Title = "Plugin element compatibility contract",
+            Width = 520,
+            Height = 160,
+            ShowInTaskbar = false,
+            Content = pluginElementHost
+        };
+        pluginElementWindow.Show(window);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Plugin element placeholders load before their plugin", () =>
+            !pluginElementHost.HasPluginContent && pluginElementHost.Content == null
+                ? "the Avalonia host stayed empty while its late-bound plugin was unavailable"
+                : throw new InvalidOperationException("An unregistered plugin element resolved unexpectedly."));
+
         var legacyUiPlugin = new WpfPluginSettingsContractPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(
             legacyUiPlugin.Id,
@@ -1175,6 +1199,8 @@ internal static class DesktopPilotSelfTest
                     "pilot-legacy-ui",
                     "extension.yaml")
             }));
+        await Task.Delay(100);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
         Record(results, "Avalonia host retains legacy plugin UI registrations", () =>
         {
@@ -1193,6 +1219,31 @@ internal static class DesktopPilotSelfTest
                 ? "settings, custom-element, and converter contracts are retained in Core"
                 : throw new InvalidOperationException("A legacy plugin UI registration was discarded.");
         });
+
+        var nativePluginElement = pluginElementHost.Content as WpfPluginElementHost;
+        Record(results, "Avalonia embeds registered WPF plugin elements", () =>
+            pluginElementHost.HasPluginContent &&
+            nativePluginElement != null &&
+            nativePluginElement.NativeHandle != IntPtr.Zero &&
+            legacyUiPlugin.ElementCreationCount == 1 &&
+            legacyUiPlugin.LastElementMode == ApplicationMode.Desktop &&
+            legacyUiPlugin.LastElementControl?.LastGameContext?.Id == initialElementGame.Id &&
+            legacyUiPlugin.LastElementControl.ContextChangeCount == 1
+                ? $"the legacy control owns child HWND {nativePluginElement.NativeHandle} with Desktop game context"
+                : throw new InvalidOperationException("The registered legacy element was not hosted with its game context."));
+
+        var replacementElementGame = viewModel.Games
+            .Select(game => game.Game)
+            .First(game => game.Id != initialElementGame.Id);
+        pluginElementHost.GameContext = replacementElementGame;
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Plugin element game context updates without recreation", () =>
+            ReferenceEquals(pluginElementHost.Content, nativePluginElement) &&
+            legacyUiPlugin.ElementCreationCount == 1 &&
+            legacyUiPlugin.LastElementControl.LastGameContext?.Id == replacementElementGame.Id &&
+            legacyUiPlugin.LastElementControl.ContextChangeCount == 2
+                ? "PluginUserControl.GameContext changed on the existing embedded control"
+                : throw new InvalidOperationException("The embedded plugin element was recreated or kept stale context."));
 
         var legacyConverter = new PluginConverterProvider(
             WpfPluginSettingsContractPlugin.SourceName,
@@ -1256,6 +1307,13 @@ internal static class DesktopPilotSelfTest
                 ? "validation kept the dialog open until cancellation and never called EndEdit"
                 : throw new InvalidOperationException("Invalid plugin settings were accepted or left an edit open."));
         legacyUiPlugin.Settings.IsValid = true;
+
+        pluginElementWindow.Close();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Embedded plugin elements release their native window", () =>
+            nativePluginElement != null && nativePluginElement.NativeHandle == IntPtr.Zero
+                ? "closing the Avalonia surface detached and disposed the WPF child HWND"
+                : throw new InvalidOperationException("The embedded plugin HWND remained attached after its host closed."));
 
         window.RuntimeHost.Extensions.Plugins.Remove(legacyUiPlugin.Id);
         window.RuntimeHost.Extensions.SettingsSupportList.RemoveAll(item =>

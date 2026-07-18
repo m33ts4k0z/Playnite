@@ -1,4 +1,5 @@
 using Playnite.API;
+using Playnite.Avalonia.Controls;
 using Playnite.Avalonia.Markup;
 using Playnite.Controllers;
 using Playnite.Database;
@@ -18,6 +19,7 @@ public sealed class AvaloniaRuntimeHost : IDisposable
     private readonly NotificationsAPI notifications;
     private readonly IPlayniteAPI globalApi;
     private readonly Func<string, string, global::Avalonia.Data.Converters.IValueConverter> pluginConverterResolver;
+    private readonly Func<string, string, object, global::Avalonia.Controls.Control> pluginElementResolver;
 
     public GameActionRunner Actions => actionRunner;
     public ExtensionFactory Extensions => extensions;
@@ -70,6 +72,30 @@ public sealed class AvaloniaRuntimeHost : IDisposable
         pluginConverterResolver = (pluginSource, converterName) =>
             WpfPluginSupportRuntime.ResolveConverter(extensions, pluginSource, converterName);
         PluginConverterRuntime.Resolver = pluginConverterResolver;
+        pluginElementResolver = (pluginSource, elementName, gameContext) =>
+        {
+            try
+            {
+                return WpfPluginElementFactory.Create(
+                    extensions,
+                    callbacks.Mode,
+                    pluginSource,
+                    elementName,
+                    gameContext);
+            }
+            catch (Exception exception)
+            {
+                var message = $"Plugin element {pluginSource}_{elementName} failed: {exception.Message}";
+                ShowMessage(message, true);
+                return new global::Avalonia.Controls.TextBlock
+                {
+                    Text = message,
+                    TextWrapping = global::Avalonia.Media.TextWrapping.Wrap,
+                    Foreground = global::Avalonia.Media.Brushes.IndianRed
+                };
+            }
+        };
+        PluginElementRuntime.Resolver = pluginElementResolver;
 
         actionRunner.StatusChanged += (_, message) => callbacks.SetStatus(message);
         actionRunner.OperationFailed += (_, message) => ShowMessage(message, true);
@@ -114,6 +140,12 @@ public sealed class AvaloniaRuntimeHost : IDisposable
         if (ReferenceEquals(PluginConverterRuntime.Resolver, pluginConverterResolver))
         {
             PluginConverterRuntime.Resolver = (_, _) => null;
+        }
+
+        if (ReferenceEquals(PluginElementRuntime.Resolver, pluginElementResolver))
+        {
+            PluginElementRuntime.Resolver = (_, _, _) => null;
+            PluginElementRuntime.NotifyRegistrationsChanged();
         }
 
         GameControllerDialogs.ShowError = (_, _) => { };

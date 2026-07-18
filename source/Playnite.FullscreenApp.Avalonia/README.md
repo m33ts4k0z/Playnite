@@ -4,10 +4,12 @@ This project is the Phase 4 side-by-side Fullscreen port. It does not replace or
 modify `Playnite.FullscreenApp`; the WPF executable remains the production path
 until feature parity is reached.
 
-The pilot currently proves a vertical slice through the real `Playnite.Core`
-database, loose runtime theme and localization loading, virtualized game tiles,
-details/menu overlays, and SDL controller input routed through Avalonia focus and
-explicit commands.
+The pilot runs against the real `Playnite.Core` database and shared Avalonia
+application host. It includes loose API 3 themes and localization, virtualized
+game tiles, controller-native search and filters, details/menu/settings/dialog
+overlays, installed plugin loading, real play/install/uninstall orchestration,
+notifications, SDL controller input and theme audio, legacy plugin converters,
+and Windows-hosted compatibility for registered WPF game-view controls.
 
 Run against the normal Playnite library:
 
@@ -24,8 +26,8 @@ Automated pilot validation uses an isolated temporary Playnite.Core database:
 Playnite.FullscreenApp.Avalonia.exe --self-test
 ```
 
-Not yet at parity: plugin loading, game launch/install/uninstall orchestration,
-filters/search, settings, notifications, dialogs, audio, and community theme
-migration. The current Playnite SDK/Core targets are also Windows-only; the new
-shell and SDL input code avoid Win32 APIs so the Linux path remains open once
-those shared assemblies are made portable.
+Remaining parity work includes plugin web views, legacy script/HDR and client
+shutdown policy in the shared action runner, broader real-plugin testing, and
+final SDK/theme tooling. The current Playnite SDK/Core and WPF compatibility
+bridge are Windows-only; native Avalonia surfaces remain isolated from that
+bridge so it can be removed with the future SDK v7 UI contract.
