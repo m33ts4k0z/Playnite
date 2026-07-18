@@ -291,6 +291,13 @@ public class V7PluginHostTests
         Assert.That(runtime.V7Plugins, Has.Count.EqualTo(1));
         Assert.That(runtime.V7PluginFailures, Is.Empty);
         Assert.That(runtime.LibraryPlugins, Has.Count.EqualTo(1));
+        var mainMenu = runtime.GetMainMenuActions();
+        Assert.That(mainMenu.Single().DisplayName, Is.EqualTo("SDK v7 > Tools > SDK v7 main command"));
+        Assert.That(mainMenu.Single().PluginName, Is.EqualTo("Test SDK v7 library"));
+        mainMenu.Single().Invoke();
+        var gameMenu = runtime.GetGameMenuActions([database.Games[game.Id]]);
+        Assert.That(gameMenu.Single().DisplayName, Is.EqualTo("SDK v7 > Game > SDK v7 game command"));
+        gameMenu.Single().Invoke();
         var importedLibraryGames = database.ImportGames(
             runtime.LibraryPlugins[0],
             CancellationToken.None,
@@ -330,6 +337,8 @@ public class V7PluginHostTests
         Assert.That(events, Does.Contain("event-starting:SDK v7 cancel game"));
         Assert.That(events, Does.Contain("event-startup-cancelled:SDK v7 cancel game"));
         Assert.That(events, Does.Contain("event-library-updated"));
+        Assert.That(events, Does.Contain("menu-main:SDK v7 main command:False"));
+        Assert.That(events, Does.Contain("menu-game:SDK v7 bridge game updated:False"));
     }
 
     [Test]

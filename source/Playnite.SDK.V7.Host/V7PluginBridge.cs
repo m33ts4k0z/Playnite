@@ -277,6 +277,33 @@ public sealed class V7PluginInstance : IDisposable
         return provider == null ? null : new V7LibraryMetadataProviderInstance(provider);
     }
 
+    public object[] GetMenuItems(string kind, string gamesJson, bool globalSearchRequest)
+    {
+        if (string.Equals(kind, "Main", StringComparison.Ordinal))
+        {
+            return (plugin.GetMainMenuItems(new GetMainMenuItemsArgs
+            {
+                IsGlobalSearchRequest = globalSearchRequest
+            }) ?? [])
+                .Select(item => (object)new V7MenuItemInstance(item))
+                .ToArray();
+        }
+
+        if (string.Equals(kind, "Game", StringComparison.Ordinal))
+        {
+            var games = V7RpcJson.Deserialize<List<Game>>(gamesJson) ?? [];
+            return (plugin.GetGameMenuItems(new GetGameMenuItemsArgs
+            {
+                Games = games,
+                IsGlobalSearchRequest = globalSearchRequest
+            }) ?? [])
+                .Select(item => (object)new V7MenuItemInstance(item, games))
+                .ToArray();
+        }
+
+        throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown plugin menu kind.");
+    }
+
     public void PublishDatabaseEvent(string collection, string eventName, string payload) =>
         api.HostDatabase.Publish(collection, eventName, payload);
 
@@ -350,6 +377,42 @@ public sealed class V7PluginInstance : IDisposable
         CancelSettingsEdit();
         InvokeApplicationStopped();
         plugin.Dispose();
+    }
+}
+
+public sealed class V7MenuItemInstance
+{
+    private readonly MainMenuItem mainItem;
+    private readonly GameMenuItem gameItem;
+    private readonly List<Game> games;
+
+    public string Description => mainItem?.Description ?? gameItem?.Description;
+    public string MenuSection => mainItem?.MenuSection ?? gameItem?.MenuSection;
+    public string Icon => mainItem?.Icon ?? gameItem?.Icon;
+
+    public V7MenuItemInstance(MainMenuItem item) =>
+        mainItem = item ?? throw new ArgumentNullException(nameof(item));
+
+    public V7MenuItemInstance(GameMenuItem item, List<Game> games)
+    {
+        gameItem = item ?? throw new ArgumentNullException(nameof(item));
+        this.games = games ?? [];
+    }
+
+    public void Invoke()
+    {
+        if (mainItem != null)
+        {
+            mainItem.Action?.Invoke(new MainMenuItemActionArgs { SourceItem = mainItem });
+        }
+        else
+        {
+            gameItem.Action?.Invoke(new GameMenuItemActionArgs
+            {
+                Games = games,
+                SourceItem = gameItem
+            });
+        }
     }
 }
 

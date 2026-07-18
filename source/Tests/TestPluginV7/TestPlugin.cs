@@ -40,6 +40,35 @@ public sealed class TestPlugin : LibraryPlugin
 
     public override ISettings GetSettings(bool firstRunSettings) => settings;
 
+    public override IEnumerable<MainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args)
+    {
+        yield return new MainMenuItem
+        {
+            Description = "SDK v7 main command",
+            MenuSection = "SDK v7|Tools",
+            Icon = "main-menu-icon.png",
+            Action = actionArgs => File.AppendAllLines(EventPath,
+            [
+                $"menu-main:{actionArgs.SourceItem.Description}:{args.IsGlobalSearchRequest}"
+            ])
+        };
+    }
+
+    public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)
+    {
+        yield return new GameMenuItem
+        {
+            Description = "SDK v7 game command",
+            MenuSection = "SDK v7|Game",
+            Icon = "game-menu-icon.png",
+            Action = actionArgs => File.AppendAllLines(EventPath,
+            [
+                $"menu-game:{string.Join(",", actionArgs.Games.Select(game => game.Name))}:" +
+                args.IsGlobalSearchRequest
+            ])
+        };
+    }
+
     public override Control GetSettingsView(bool firstRunView)
     {
         var count = new NumericUpDown

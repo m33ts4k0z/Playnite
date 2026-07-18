@@ -18,6 +18,7 @@ using Playnite.Plugins;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
+using Playnite.Scripting;
 using Playnite.Scripting.PowerShell;
 using Playnite.WpfPluginSupport;
 using InstalledProgram = Playnite.Common.Program;
@@ -1312,6 +1313,50 @@ internal static class DesktopPilotSelfTest
                 ? "the Avalonia markup provider invoked the plugin's existing WPF converter"
                 : throw new InvalidOperationException($"Unexpected converter result: {legacyConvertedValue}"));
 
+        var pilotMenuScript = new PilotMenuScript(Path.Combine(library.ActiveUserDataDirectory, "pilot-menu.psm1"));
+        window.RuntimeHost.Extensions.Scripts.Add(pilotMenuScript);
+        var selectedMenuGame = viewModel.SelectedGame.Game;
+        var mainMenuActions = window.RuntimeHost.GetMainMenuActions(true);
+        var legacyMainAction = mainMenuActions.Single(item =>
+            item.PluginId == legacyUiPlugin.Id && item.Description == "Legacy main command");
+        var scriptMainAction = mainMenuActions.Single(item =>
+            item.PluginName == pilotMenuScript.Name && item.Description == "Script main command");
+        legacyMainAction.Invoke();
+        scriptMainAction.Invoke();
+        var gameMenuActions = window.RuntimeHost.GetGameMenuActions([selectedMenuGame], true);
+        var legacyGameAction = gameMenuActions.Single(item =>
+            item.PluginId == legacyUiPlugin.Id && item.Description == "Legacy game command");
+        var scriptGameAction = gameMenuActions.Single(item =>
+            item.PluginName == pilotMenuScript.Name && item.Description == "Script game command");
+        legacyGameAction.Invoke();
+        scriptGameAction.Invoke();
+        Record(results, "Shared plugin menus execute compiled and script actions", () =>
+            mainMenuActions.Count(item => item.Description == "-") == 0 &&
+            legacyMainAction.DisplayName == "Legacy > Tools > Legacy main command" &&
+            scriptGameAction.DisplayName == "Scripts > Game > Script game command" &&
+            legacyUiPlugin.MainMenuInvocationCount == 1 &&
+            legacyUiPlugin.GameMenuInvocationCount == 1 &&
+            legacyUiPlugin.LastMainMenuGlobalSearchRequest &&
+            legacyUiPlugin.LastGameMenuGlobalSearchRequest &&
+            legacyUiPlugin.LastMenuGameIds.SequenceEqual([selectedMenuGame.Id]) &&
+            pilotMenuScript.MainInvocationCount == 1 &&
+            pilotMenuScript.GameInvocationCount == 1 &&
+            pilotMenuScript.LastMainSourceDescription == "Script main command" &&
+            pilotMenuScript.LastGameIds.SequenceEqual([selectedMenuGame.Id])
+                ? "SDK v6 plugins and PowerShell-compatible scripts share ordered main/game action contracts"
+                : throw new InvalidOperationException("A compiled or script menu action lost its SDK arguments."));
+
+        viewModel.OpenPluginGameMenuCommand.Execute(null);
+        viewModel.SelectedPluginMenuItem = viewModel.PluginMenuItems.Single(item =>
+            item.PluginId == legacyUiPlugin.Id && item.Description == "Legacy game command");
+        viewModel.InvokePluginMenuItemCommand.Execute(null);
+        Record(results, "Native Desktop plugin command overlay invokes selected actions", () =>
+            !viewModel.IsPluginMenuVisible &&
+            legacyUiPlugin.GameMenuInvocationCount == 2 &&
+            viewModel.StatusText.Contains("Legacy game command", StringComparison.Ordinal)
+                ? "the loose Avalonia theme opened, selected, invoked, and closed the shared command surface"
+                : throw new InvalidOperationException("The native plugin command overlay did not complete its action."));
+
         viewModel.OpenPluginSettingsListCommand.Execute(null);
         var listedPlugin = viewModel.PluginSettings.Plugins.SingleOrDefault(item => item.Id == legacyUiPlugin.Id);
         Record(results, "Native plugin settings chooser lists loaded extensions", () =>
@@ -1370,6 +1415,8 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException("The embedded plugin HWND remained attached after its host closed."));
 
         window.RuntimeHost.Extensions.Plugins.Remove(legacyUiPlugin.Id);
+        window.RuntimeHost.Extensions.Scripts.Remove(pilotMenuScript);
+        pilotMenuScript.Dispose();
         window.RuntimeHost.Extensions.SettingsSupportList.RemoveAll(item =>
             ReferenceEquals(item.Source, legacyUiPlugin));
         window.RuntimeHost.Extensions.CustomElementList.RemoveAll(item =>
@@ -1806,6 +1853,87 @@ internal static class DesktopPilotSelfTest
         {
             option.IsSelected = selected.Contains(option.Id);
         }
+    }
+
+    private sealed class PilotMenuScript : PlayniteScript
+    {
+        private const string MainFunction = "InvokePilotMainMenu";
+        private const string GameFunction = "InvokePilotGameMenu";
+
+        public int MainInvocationCount { get; private set; }
+        public int GameInvocationCount { get; private set; }
+        public string LastMainSourceDescription { get; private set; }
+        public IReadOnlyList<Guid> LastGameIds { get; private set; } = [];
+
+        public PilotMenuScript(string path) : base(path, "Pilot menu script")
+        {
+            typeof(PlayniteScript)
+                .GetProperty(nameof(SupportedMenus))
+                .SetValue(this, new List<SupportedMenuMethods>
+                {
+                    SupportedMenuMethods.MainMenu,
+                    SupportedMenuMethods.GameMenu
+                });
+        }
+
+        public override List<ScriptMainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args) =>
+        [
+            new ScriptMainMenuItem
+            {
+                Description = "Script main command",
+                MenuSection = "Scripts|Tools",
+                FunctionName = MainFunction
+            }
+        ];
+
+        public override List<ScriptGameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args) =>
+        [
+            new ScriptGameMenuItem
+            {
+                Description = "Script game command",
+                MenuSection = "Scripts|Game",
+                FunctionName = GameFunction
+            }
+        ];
+
+        public override object InvokeFunction(string functionName) => InvokeFunction(functionName, []);
+
+        public override object InvokeFunction(string functionName, List<object> arguments)
+        {
+            if (functionName == MainFunction)
+            {
+                var args = (ScriptMainMenuItemActionArgs)arguments.Single();
+                LastMainSourceDescription = args.SourceItem.Description;
+                MainInvocationCount++;
+                return null;
+            }
+
+            if (functionName == GameFunction)
+            {
+                var args = (ScriptGameMenuItemActionArgs)arguments.Single();
+                LastGameIds = args.Games.Select(game => game.Id).ToList();
+                GameInvocationCount++;
+                return null;
+            }
+
+            throw new InvalidOperationException($"Unknown pilot script function {functionName}.");
+        }
+
+        public override void InvokeExportedFunction(ScriptFunctionExport function) =>
+            InvokeFunction(function.FunctionName);
+        public override void SetVariable(string name, object value) { }
+        public override void OnApplicationStarted() { }
+        public override void OnApplicationStopped() { }
+        public override void OnLibraryUpdated() { }
+        public override void OnGameStarting(Playnite.SDK.Events.OnGameStartingEventArgs args) { }
+        public override void OnGameStarted(Playnite.SDK.Events.OnGameStartedEventArgs args) { }
+        public override void OnGameStopped(Playnite.SDK.Events.OnGameStoppedEventArgs args) { }
+        public override void OnGameInstalled(Playnite.SDK.Events.OnGameInstalledEventArgs args) { }
+        public override void OnGameInstallationCancelled(
+            Playnite.SDK.Events.OnGameInstallationCancelledEventArgs args) { }
+        public override void OnGameUninstalled(Playnite.SDK.Events.OnGameUninstalledEventArgs args) { }
+        public override void OnGameSelected(Playnite.SDK.Events.OnGameSelectedEventArgs args) { }
+        public override void OnGameStartupCancelled(Playnite.SDK.Events.OnGameStartupCancelledEventArgs args) { }
     }
 
     private sealed class PilotActionPolicyPlugin : LibraryPlugin

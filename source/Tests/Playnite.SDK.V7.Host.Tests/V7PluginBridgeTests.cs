@@ -191,6 +191,40 @@ public class V7PluginBridgeTests
             Is.True);
     }
 
+    [Test]
+    public void BridgesSdkSevenMainAndGameMenuActions()
+    {
+        var plugin = (V7PluginInstance)V7PluginBridge
+            .LoadAll(typeof(TestPlugin).Assembly.Location, HostCall)
+            .Single();
+
+        var main = (V7MenuItemInstance)plugin.GetMenuItems("Main", "[]", true).Single();
+        Assert.That(main.Description, Is.EqualTo("SDK v7 main command"));
+        Assert.That(main.MenuSection, Is.EqualTo("SDK v7|Tools"));
+        Assert.That(main.Icon, Is.EqualTo("main-menu-icon.png"));
+        main.Invoke();
+
+        var gamesJson = JsonConvert.SerializeObject(new[]
+        {
+            new Playnite.SDK.Models.Game("First game"),
+            new Playnite.SDK.Models.Game("Second game")
+        });
+        var game = (V7MenuItemInstance)plugin.GetMenuItems("Game", gamesJson, false).Single();
+        Assert.That(game.Description, Is.EqualTo("SDK v7 game command"));
+        Assert.That(game.MenuSection, Is.EqualTo("SDK v7|Game"));
+        Assert.That(game.Icon, Is.EqualTo("game-menu-icon.png"));
+        game.Invoke();
+        plugin.Dispose();
+
+        var eventPath = Path.Combine(extensionsDataPath, plugin.Id.ToString(), "events.txt");
+        Assert.That(File.ReadAllLines(eventPath), Is.EqualTo(new[]
+        {
+            "constructed:Desktop",
+            "menu-main:SDK v7 main command:True",
+            "menu-game:First game,Second game:False"
+        }));
+    }
+
     private string HostCall(string operation, string payload)
     {
         calls.Add((operation, payload));

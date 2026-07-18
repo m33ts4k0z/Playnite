@@ -31,6 +31,8 @@
     <x:String x:Key="LOCDesktopCloseTray">Close Playnite to the notification area</x:String>
     <x:String x:Key="LOCDesktopPluginSettingsDescription">Choose a loaded plugin. SDK v7 settings open natively; SDK v6/WPF settings use the Windows compatibility host.</x:String>
     <x:String x:Key="LOCDesktopOpenPluginSettings">Open settings</x:String>
+    <x:String x:Key="LOCDesktopPluginCommands">Plugin commands</x:String>
+    <x:String x:Key="LOCDesktopRunPluginCommand">Run command</x:String>
     <x:String x:Key="LOCDesktopDetectInstalled">Detect installed programs</x:String>
     <x:String x:Key="LOCDesktopScanFolder">Scan folder</x:String>
     <x:String x:Key="LOCDesktopAddExecutable">Add executable</x:String>

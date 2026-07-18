@@ -145,6 +145,8 @@
                                             Command="{Binding AddManualGameCommand}" />
                                     <Button Content="{DynamicResource LOCDesktopPluginSettings}"
                                             Command="{Binding OpenPluginSettingsListCommand}" />
+                                    <Button Content="{DynamicResource LOCDesktopPluginCommands}"
+                                            Command="{Binding OpenPluginMainMenuCommand}" />
                                 </StackPanel>
                             </ScrollViewer>
                         </Border>
@@ -327,6 +329,8 @@
                                         <Button Content="{DynamicResource LOCDesktopEdit}" Command="{Binding EditCommand}" />
                                         <Button Content="{DynamicResource LOCDesktopDownloadMetadata}"
                                                 Command="{Binding OpenMetadataDownloadCommand}" />
+                                        <Button Content="{DynamicResource LOCDesktopPluginCommands}"
+                                                Command="{Binding OpenPluginGameMenuCommand}" />
                                     </StackPanel>
                                 </StackPanel>
                             </ScrollViewer>
@@ -385,6 +389,40 @@
                                     <Button Command="{Binding CloseOverlayCommand}" Content="Cancel" />
                                 </StackPanel>
                             </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsPluginMenuVisible}"
+                          Background="#E6000000">
+                        <Border Width="720" MaxHeight="720" Padding="30" CornerRadius="14"
+                                Background="{DynamicResource DesktopPanelStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16">
+                                <TextBlock Text="{Binding PluginMenuTitle}" FontSize="30"
+                                           FontWeight="Bold" Foreground="{DynamicResource DesktopTextBrush}" />
+                                <ListBox Grid.Row="1" MaxHeight="520"
+                                         ItemsSource="{Binding PluginMenuItems}"
+                                         SelectedItem="{Binding SelectedPluginMenuItem, Mode=TwoWay}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="3" Padding="13" CornerRadius="7" Background="#263140">
+                                                <StackPanel Spacing="3">
+                                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource DesktopTextBrush}" />
+                                                    <TextBlock Text="{Binding PluginName}" FontSize="11"
+                                                               Foreground="{DynamicResource DesktopAccentBrush}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
+                                    <Button Classes="primary" Content="{DynamicResource LOCDesktopRunPluginCommand}"
+                                            Command="{Binding InvokePluginMenuItemCommand}" />
+                                    <Button Content="{DynamicResource LOCDesktopCancel}"
+                                            Command="{Binding CloseOverlayCommand}" />
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
 

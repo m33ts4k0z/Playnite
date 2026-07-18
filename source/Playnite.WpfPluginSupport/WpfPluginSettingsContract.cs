@@ -59,6 +59,11 @@ internal sealed class WpfPluginSettingsContractPlugin : GenericPlugin
     internal int ElementCreationCount { get; private set; }
     internal ApplicationMode? LastElementMode { get; private set; }
     internal WpfPluginElementContractControl LastElementControl { get; private set; }
+    internal int MainMenuInvocationCount { get; private set; }
+    internal int GameMenuInvocationCount { get; private set; }
+    internal bool LastMainMenuGlobalSearchRequest { get; private set; }
+    internal bool LastGameMenuGlobalSearchRequest { get; private set; }
+    internal IReadOnlyList<Guid> LastMenuGameIds { get; private set; } = [];
 
     public WpfPluginSettingsContractPlugin(IPlayniteAPI playniteApi) : base(playniteApi)
     {
@@ -105,6 +110,39 @@ internal sealed class WpfPluginSettingsContractPlugin : GenericPlugin
         LastElementMode = args.Mode;
         LastElementControl = new WpfPluginElementContractControl();
         return LastElementControl;
+    }
+
+    public override IEnumerable<MainMenuItem> GetMainMenuItems(GetMainMenuItemsArgs args)
+    {
+        LastMainMenuGlobalSearchRequest = args.IsGlobalSearchRequest;
+        yield return new MainMenuItem
+        {
+            Description = "Legacy main command",
+            MenuSection = "Legacy|Tools",
+            Action = actionArgs =>
+            {
+                if (actionArgs.SourceItem?.Description == "Legacy main command")
+                {
+                    MainMenuInvocationCount++;
+                }
+            }
+        };
+        yield return new MainMenuItem { Description = "-" };
+    }
+
+    public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)
+    {
+        LastGameMenuGlobalSearchRequest = args.IsGlobalSearchRequest;
+        yield return new GameMenuItem
+        {
+            Description = "Legacy game command",
+            MenuSection = "Legacy|Game",
+            Action = actionArgs =>
+            {
+                LastMenuGameIds = actionArgs.Games.Select(game => game.Id).ToList();
+                GameMenuInvocationCount++;
+            }
+        };
     }
 }
 

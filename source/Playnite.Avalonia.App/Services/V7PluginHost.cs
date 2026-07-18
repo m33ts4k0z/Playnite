@@ -37,6 +37,7 @@ public sealed class V7LoadedPlugin
     private readonly MethodInfo verifySettings;
     private readonly MethodInfo endSettingsEdit;
     private readonly MethodInfo cancelSettingsEdit;
+    private readonly MethodInfo getMenuItems;
     private readonly MethodInfo dispose;
 
     public Guid Id { get; }
@@ -86,6 +87,7 @@ public sealed class V7LoadedPlugin
         verifySettings = GetRequiredMethod(type, "VerifySettings");
         endSettingsEdit = GetRequiredMethod(type, "EndSettingsEdit");
         cancelSettingsEdit = GetRequiredMethod(type, "CancelSettingsEdit");
+        getMenuItems = GetRequiredMethod(type, "GetMenuItems");
         dispose = GetRequiredMethod(type, nameof(IDisposable.Dispose));
     }
 
@@ -122,6 +124,8 @@ public sealed class V7LoadedPlugin
     }
     public void EndSettingsEdit() => Invoke(endSettingsEdit);
     public void CancelSettingsEdit() => Invoke(cancelSettingsEdit);
+    internal object[] GetMenuItems(string kind, string gamesJson, bool globalSearchRequest) =>
+        (object[])InvokeWithResult(getMenuItems, kind, gamesJson, globalSearchRequest);
 
     private T ReadProperty<T>(Type type, string name)
     {

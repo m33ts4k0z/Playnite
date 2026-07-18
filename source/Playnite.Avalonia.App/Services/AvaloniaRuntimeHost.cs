@@ -11,7 +11,7 @@ using Playnite.WpfPluginSupport;
 
 namespace Playnite.Avalonia.App.Services;
 
-public sealed class AvaloniaRuntimeHost : IDisposable
+public sealed partial class AvaloniaRuntimeHost : IDisposable
 {
     private readonly AvaloniaHostCallbacks callbacks;
     private readonly GameControllerFactory controllers;

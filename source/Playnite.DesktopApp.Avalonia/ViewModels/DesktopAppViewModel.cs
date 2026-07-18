@@ -67,6 +67,9 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     private string selectedDialogOption;
     private Action<string> dialogCompleted;
     private int dialogCancelIndex;
+    private bool isPluginMenuVisible;
+    private string pluginMenuTitle;
+    private PluginMenuAction selectedPluginMenuItem;
 
     public event PropertyChangedEventHandler PropertyChanged;
     public event EventHandler SettingsChanged;
@@ -290,9 +293,23 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public int NotificationCount => Notifications.Count;
     public ObservableCollection<string> ActionChoices { get; } = new();
     public ObservableCollection<string> DialogOptions { get; } = new();
+    public ObservableCollection<PluginMenuAction> PluginMenuItems { get; } = new();
     public bool IsNotificationsVisible { get => isNotificationsVisible; private set => SetField(ref isNotificationsVisible, value); }
     public bool IsActionPickerVisible { get => isActionPickerVisible; private set => SetField(ref isActionPickerVisible, value); }
     public bool IsDialogVisible { get => isDialogVisible; private set => SetField(ref isDialogVisible, value); }
+    public bool IsPluginMenuVisible { get => isPluginMenuVisible; private set => SetField(ref isPluginMenuVisible, value); }
+    public string PluginMenuTitle { get => pluginMenuTitle; private set => SetField(ref pluginMenuTitle, value); }
+    public PluginMenuAction SelectedPluginMenuItem
+    {
+        get => selectedPluginMenuItem;
+        set
+        {
+            if (SetField(ref selectedPluginMenuItem, value))
+            {
+                ((AppRelayCommand)InvokePluginMenuItemCommand).RaiseCanExecuteChanged();
+            }
+        }
+    }
     public string DialogCaption { get => dialogCaption; private set => SetField(ref dialogCaption, value); }
     public string DialogMessage { get => dialogMessage; private set => SetField(ref dialogMessage, value); }
     public string SelectedActionChoice
@@ -334,6 +351,9 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand OpenInstalledGameImportCommand { get; }
     public ICommand AddManualGameCommand { get; }
     public ICommand OpenPluginSettingsListCommand { get; }
+    public ICommand OpenPluginMainMenuCommand { get; }
+    public ICommand OpenPluginGameMenuCommand { get; }
+    public ICommand InvokePluginMenuItemCommand { get; }
     public ICommand SetGridViewCommand { get; }
     public ICommand SetListViewCommand { get; }
     public ICommand ClearSearchCommand { get; }
@@ -449,37 +469,54 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
         OpenMetadataDownloadCommand = new AppRelayCommand(OpenMetadataDownload,
             () => SelectedGame != null && database != null && runtimeHost != null &&
                 !Editor.IsVisible && !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
         OpenLibrarySyncCommand = new AppRelayCommand(OpenLibrarySync,
             () => database != null && runtimeHost != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
         OpenInstalledGameImportCommand = new AppRelayCommand(OpenInstalledGameImport,
             () => database != null && runtimeHost != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
         AddManualGameCommand = new AppRelayCommand(AddManualGame,
             () => database != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
         OpenPluginSettingsListCommand = new AppRelayCommand(OpenPluginSettingsList,
             () => database != null && runtimeHost != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+        OpenPluginMainMenuCommand = new AppRelayCommand(
+            () => OpenPluginMenu(false),
+            () => runtimeHost != null && !Editor.IsVisible &&
+                !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+        OpenPluginGameMenuCommand = new AppRelayCommand(
+            () => OpenPluginMenu(true),
+            () => runtimeHost != null && SelectedGame != null && !Editor.IsVisible &&
+                !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+        InvokePluginMenuItemCommand = new AppRelayCommand(
+            InvokeSelectedPluginMenuItem,
+            () => IsPluginMenuVisible && SelectedPluginMenuItem != null);
         SetGridViewCommand = new AppRelayCommand(() => SelectedViewMode = "Grid");
         SetListViewCommand = new AppRelayCommand(() => SelectedViewMode = "List");
         ClearSearchCommand = new AppRelayCommand(() => SearchText = string.Empty, () => SearchText.Length > 0);
@@ -752,6 +789,65 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         RaiseGameCommandStates();
     }
 
+    private void OpenPluginMenu(bool forSelectedGame)
+    {
+        if (runtimeHost == null || (forSelectedGame && SelectedGame == null))
+        {
+            return;
+        }
+
+        CloseOverlays();
+        PluginMenuItems.Clear();
+        var items = forSelectedGame
+            ? runtimeHost.GetGameMenuActions([SelectedGame.Game])
+            : runtimeHost.GetMainMenuActions();
+        foreach (var item in items)
+        {
+            PluginMenuItems.Add(item);
+        }
+
+        if (PluginMenuItems.Count == 0)
+        {
+            StatusText = forSelectedGame
+                ? "No plugin commands are available for the selected game."
+                : "No plugin main-menu commands are available.";
+            return;
+        }
+
+        PluginMenuTitle = forSelectedGame
+            ? $"Plugin commands — {SelectedGame.Name}"
+            : "Plugin commands";
+        SelectedPluginMenuItem = PluginMenuItems[0];
+        IsPluginMenuVisible = true;
+        RaiseGameCommandStates();
+    }
+
+    private void InvokeSelectedPluginMenuItem()
+    {
+        var item = SelectedPluginMenuItem;
+        if (item == null)
+        {
+            return;
+        }
+
+        try
+        {
+            item.Invoke();
+            StatusText = $"Ran {item.DisplayName} from {item.PluginName}.";
+            if (SelectedGame != null)
+            {
+                RefreshGame(SelectedGame.Game.Id);
+            }
+            CloseOverlays();
+        }
+        catch (Exception exception)
+        {
+            var message = $"Plugin command {item.DisplayName} failed: {exception.Message}";
+            runtimeHost?.ShowMessage(message, true);
+            StatusText = message;
+        }
+    }
+
     private void ConfirmActionChoice()
     {
         var index = ActionChoices.IndexOf(SelectedActionChoice);
@@ -782,6 +878,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         IsNotificationsVisible = false;
         IsActionPickerVisible = false;
         IsDialogVisible = false;
+        IsPluginMenuVisible = false;
+        SelectedPluginMenuItem = null;
     }
 
     private void ApplyFilters()
@@ -875,6 +973,9 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)OpenInstalledGameImportCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)AddManualGameCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginSettingsListCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenPluginMainMenuCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenPluginGameMenuCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)InvokePluginMenuItemCommand).RaiseCanExecuteChanged();
     }
 
     private void SynchronizeLibrary()
