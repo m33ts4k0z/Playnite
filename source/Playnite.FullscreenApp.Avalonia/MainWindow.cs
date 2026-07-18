@@ -25,7 +25,7 @@ public sealed class MainWindow : Window
     private readonly GamepadInputBridge gamepadBridge;
     private readonly SdlGamepadInputSource sdlInput;
     private FullscreenAudioService audioService;
-    private AvaloniaFullscreenThemePackage activeThemePackage;
+    private AvaloniaThemePackage activeThemePackage;
     private readonly System.Windows.Input.ICommand focusedActivationCommand;
 
     internal GamepadInputBridge GamepadBridge => gamepadBridge;
@@ -91,21 +91,28 @@ public sealed class MainWindow : Window
 
     private void ApplyRuntimeTheme()
     {
-        var defaultTheme = ContentPath("Themes", "Fullscreen", "Default", "Theme.axaml");
-        var styles = ContentPath("Themes", "Fullscreen", "Default", "Styles.axaml");
-        themeManager.ApplyTheme(new[] { defaultTheme }, selectorStyles: new[] { styles });
+        var defaultTheme = AvaloniaThemePackage.Load(
+            ContentPath("Themes", "Fullscreen", "Default"),
+            AvaloniaThemeMode.Fullscreen);
+        themeManager.ApplyTheme(
+            defaultTheme.ResourceDictionaries,
+            selectorStyles: defaultTheme.SelectorStyles);
+        activeThemePackage = defaultTheme;
 
         var customThemePath = options.CustomThemePath ?? settings.ThemePath;
         if (!string.IsNullOrWhiteSpace(customThemePath))
         {
             try
             {
-                activeThemePackage = AvaloniaFullscreenThemePackage.Load(customThemePath);
+                var customTheme = AvaloniaThemePackage.Load(
+                    customThemePath,
+                    AvaloniaThemeMode.Fullscreen);
                 themeManager.ApplyTheme(
-                    new[] { defaultTheme },
-                    activeThemePackage.ResourceDictionaries,
-                    new[] { styles }.Concat(activeThemePackage.SelectorStyles));
-                viewModel.SetStatusMessage($"Theme '{activeThemePackage.Name}' loaded.");
+                    defaultTheme.ResourceDictionaries,
+                    customTheme.ResourceDictionaries,
+                    defaultTheme.SelectorStyles.Concat(customTheme.SelectorStyles));
+                activeThemePackage = customTheme;
+                viewModel.SetStatusMessage($"Theme '{customTheme.Name}' loaded.");
             }
             catch (Exception exception) when (
                 exception is LooseXamlLoadException or InvalidDataException or FileNotFoundException or ArgumentException)

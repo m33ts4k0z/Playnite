@@ -6,6 +6,7 @@ internal sealed class StartupOptions
     public bool PluginCompatibilityTest { get; private set; }
     public string UserDataDirectory { get; private set; }
     public string LibraryPath { get; private set; }
+    public string CustomThemePath { get; private set; }
 
     public static StartupOptions Parse(string[] args)
     {
@@ -26,6 +27,9 @@ internal sealed class StartupOptions
                     break;
                 case "--library-path" when index + 1 < args.Length:
                     options.LibraryPath = Path.GetFullPath(args[++index]);
+                    break;
+                case "--theme" when index + 1 < args.Length:
+                    options.CustomThemePath = Path.GetFullPath(args[++index]);
                     break;
             }
         }

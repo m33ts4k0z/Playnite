@@ -1,0 +1,10 @@
+Id: Playnite_builtin_AvaloniaDefaultDesktop
+Name: Default Avalonia Desktop
+Author: Playnite
+Version: 1.0.0
+Mode: Desktop
+ThemeApiVersion: 3.0.0
+Framework: Avalonia
+EntryPoint: Theme.axaml
+Styles:
+  - Styles.axaml

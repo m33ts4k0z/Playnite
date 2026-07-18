@@ -20,17 +20,20 @@ public sealed class MainWindow : Window
     private readonly AvaloniaRuntimeHost runtimeHost;
     private readonly DesktopSettings settings;
     private readonly DesktopSettingsStore settingsStore;
+    private readonly RuntimeThemeManager themeManager;
     private readonly DesktopMainView mainView;
     private readonly DesktopWindowChrome chrome;
     private readonly DesktopTrayService trayService;
     private WindowState restoreWindowState = WindowState.Normal;
     private bool hasClosed;
+    private AvaloniaThemePackage activeThemePackage;
 
     internal DesktopMainView MainView => mainView;
     internal AvaloniaRuntimeHost RuntimeHost => runtimeHost;
     internal DesktopWindowChrome Chrome => chrome;
     internal DesktopTrayService TrayService => trayService;
     internal bool HasClosed => hasClosed;
+    internal AvaloniaThemePackage ActiveThemePackage => activeThemePackage;
 
     internal MainWindow(
         DesktopAppViewModel viewModel,
@@ -62,11 +65,9 @@ public sealed class MainWindow : Window
         RestoreWindowPosition();
         restoreWindowState = WindowState;
 
-        var themes = new RuntimeThemeManager(Application.Current, typeof(DesktopMainView).Assembly);
-        themes.ApplyTheme(
-            new[] { ContentPath("Themes", "Desktop", "Default", "Theme.axaml") },
-            selectorStyles: new[] { ContentPath("Themes", "Desktop", "Default", "Styles.axaml") });
-        themes.ApplyLanguage(ContentPath("Localization", "english.axaml"));
+        themeManager = new RuntimeThemeManager(Application.Current, typeof(DesktopMainView).Assembly);
+        ApplyRuntimeTheme();
+        themeManager.ApplyLanguage(ContentPath("Localization", "english.axaml"));
 
         mainView = new DesktopMainView();
         chrome = new DesktopWindowChrome(this)
@@ -92,6 +93,44 @@ public sealed class MainWindow : Window
         Resized += OnResized;
         PropertyChanged += OnWindowPropertyChanged;
         Closed += OnClosed;
+    }
+
+    private void ApplyRuntimeTheme()
+    {
+        var defaultTheme = AvaloniaThemePackage.Load(
+            ContentPath("Themes", "Desktop", "Default"),
+            AvaloniaThemeMode.Desktop);
+        themeManager.ApplyTheme(
+            defaultTheme.ResourceDictionaries,
+            selectorStyles: defaultTheme.SelectorStyles);
+        activeThemePackage = defaultTheme;
+
+        var customThemePath = options.CustomThemePath ?? settings.ThemePath;
+        if (string.IsNullOrWhiteSpace(customThemePath))
+        {
+            return;
+        }
+
+        try
+        {
+            var customTheme = AvaloniaThemePackage.Load(
+                customThemePath,
+                AvaloniaThemeMode.Desktop);
+            themeManager.ApplyTheme(
+                defaultTheme.ResourceDictionaries,
+                customTheme.ResourceDictionaries,
+                defaultTheme.SelectorStyles.Concat(customTheme.SelectorStyles));
+            activeThemePackage = customTheme;
+            viewModel.SetStatusMessage($"Theme '{customTheme.Name}' loaded.");
+        }
+        catch (Exception exception) when (
+            exception is LooseXamlLoadException or InvalidDataException or FileNotFoundException or ArgumentException)
+        {
+            viewModel.SetStatusMessage(
+                $"Custom theme failed to load; the default theme is active. " +
+                (exception.InnerException?.Message ?? exception.Message));
+            Trace.WriteLine(exception);
+        }
     }
 
     internal void RestoreFromTray()

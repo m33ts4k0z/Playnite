@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Playnite\Playnite.csproj" />
     <ProjectReference Include="..\..\PlayniteSDK\Playnite.SDK.csproj" />
+    <ProjectReference Include="..\..\Playnite.Avalonia\Playnite.Avalonia.csproj" />
     <ProjectReference Include="..\..\Tools\Playnite.Toolbox\Playnite.Toolbox.csproj" />
   </ItemGroup>
 

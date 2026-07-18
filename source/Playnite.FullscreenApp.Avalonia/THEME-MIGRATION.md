@@ -24,3 +24,13 @@ Registered plugin game-view controls have an explicit Avalonia placeholder. With
 Optional audio assets go in `audio/navigation.wav`, `audio/activation.wav`, and `audio/background.ogg` (WAV, OGG, MP3, and FLAC are supported). Missing audio assets are valid and silently fall back to a quiet theme.
 
 For quick iteration, `--theme path/to/Overrides.axaml` remains supported as a raw resource override without a manifest. Packaged themes are the compatibility contract intended for distribution.
+
+The shared cross-platform theme tool creates, validates, and packages both application modes:
+
+```text
+Playnite.Avalonia.ThemeTool new fullscreen "My theme" path/to/MyTheme
+Playnite.Avalonia.ThemeTool validate path/to/MyTheme fullscreen
+Playnite.Avalonia.ThemeTool pack path/to/MyTheme path/to/packages fullscreen
+```
+
+Validation checks the manifest, compatibility version, contained paths, XML safety, and required root elements. The Fullscreen app then performs final semantic Avalonia-XAML validation against its concrete control assembly before applying the package.

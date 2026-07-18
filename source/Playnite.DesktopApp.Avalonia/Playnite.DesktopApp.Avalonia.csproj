@@ -34,6 +34,7 @@
     <AvaloniaResource Remove="Themes\**\*.axaml;Localization\**\*.axaml" />
     <AvaloniaXaml Remove="Themes\**\*.axaml;Localization\**\*.axaml" />
     <Content Include="Themes\**\*.axaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Themes\**\theme.yaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Localization\**\*.axaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\Playnite.DesktopApp\Themes\Desktop\Default\Images\applogo.ico"
              Link="Assets\applogo.ico"

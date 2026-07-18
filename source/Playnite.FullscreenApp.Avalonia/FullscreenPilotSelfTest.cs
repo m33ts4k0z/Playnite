@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using Playnite.Avalonia.Input;
+using Playnite.Avalonia.Theming;
 using Playnite.FullscreenApp.Avalonia.Services;
 using Playnite.FullscreenApp.Avalonia.ViewModels;
 
@@ -175,10 +176,11 @@ internal static class FullscreenPilotSelfTest
 
         Record(results, "Avalonia theme package contract validates", () =>
         {
-            var package = AvaloniaFullscreenThemePackage.Load(
-                Path.Combine(AppContext.BaseDirectory, "Themes", "Fullscreen", "Default"));
+            var package = AvaloniaThemePackage.Load(
+                Path.Combine(AppContext.BaseDirectory, "Themes", "Fullscreen", "Default"),
+                AvaloniaThemeMode.Fullscreen);
             return package.ResourceDictionaries.Count == 1 && package.SelectorStyles.Count == 1
-                ? $"{package.Name} targets theme API {AvaloniaFullscreenThemePackage.CurrentApiVersion}"
+                ? $"{package.Name} targets theme API {AvaloniaThemePackage.CurrentApiVersion}"
                 : throw new InvalidOperationException("The default package manifest was incomplete.");
         });
 

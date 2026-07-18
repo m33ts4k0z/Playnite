@@ -9,6 +9,7 @@ using Avalonia.Controls.Chrome;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Playnite.Avalonia.Markup;
+using Playnite.Avalonia.Theming;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
 using Playnite.Plugins;
@@ -39,6 +40,14 @@ internal static class DesktopPilotSelfTest
             window.MainView.TemplateAppliedCount > 0 && window.MainView.GameList != null
                 ? "DesktopMainView resolved its runtime template contract"
                 : throw new InvalidOperationException("The Desktop theme template was not applied."));
+
+        Record(results, "Avalonia theme API 3 package contract validates", () =>
+            window.ActiveThemePackage.Mode == AvaloniaThemeMode.Desktop &&
+            window.ActiveThemePackage.Manifest?.ThemeApiVersion == AvaloniaThemePackage.CurrentApiVersion.ToString() &&
+            window.ActiveThemePackage.ResourceDictionaries.Count == 1 &&
+            window.ActiveThemePackage.SelectorStyles.Count == 1
+                ? $"{window.ActiveThemePackage.Name} targets theme API {AvaloniaThemePackage.CurrentApiVersion}"
+                : throw new InvalidOperationException("The default Desktop theme package is incomplete."));
 
         Record(results, "Avalonia 12 native window chrome contract applies", () =>
             window.WindowDecorations == WindowDecorations.BorderOnly &&
@@ -1521,7 +1530,8 @@ internal static class DesktopPilotSelfTest
                 WindowHeight = 760,
                 WindowX = 120,
                 WindowY = 80,
-                WindowMaximized = true
+                WindowMaximized = true,
+                ThemePath = @"C:\Themes\Pilot"
             });
             var loaded = store.Load();
             if (loaded.ViewMode != "List" ||
@@ -1547,7 +1557,8 @@ internal static class DesktopPilotSelfTest
                 loaded.WindowHeight != 760 ||
                 loaded.WindowX != 120 ||
                 loaded.WindowY != 80 ||
-                !loaded.WindowMaximized)
+                !loaded.WindowMaximized ||
+                loaded.ThemePath != @"C:\Themes\Pilot")
             {
                 throw new InvalidOperationException("The persisted Desktop settings did not round-trip.");
             }
