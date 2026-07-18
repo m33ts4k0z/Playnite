@@ -140,6 +140,7 @@ internal sealed class V7DatabaseTransport
     }
 
     public static string Serialize(object value) => JsonConvert.SerializeObject(value, jsonSettings);
+    internal static T Deserialize<T>(string json) => JsonConvert.DeserializeObject<T>(json, jsonSettings);
 
     private object HandleCollection(Request request)
     {
@@ -227,8 +228,6 @@ internal sealed class V7DatabaseTransport
 
     private static T Convert<T>(JToken token) =>
         token == null ? default : token.ToObject<T>(JsonSerializer.Create(jsonSettings));
-
-    private static T Deserialize<T>(string json) => JsonConvert.DeserializeObject<T>(json, jsonSettings);
 
     private static Guid GetGuid(JObject data, string propertyName) =>
         data[propertyName]?.ToObject<Guid>() ?? Guid.Empty;

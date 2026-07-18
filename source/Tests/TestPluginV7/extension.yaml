@@ -1,6 +1,6 @@
 Id: TestPluginV7_8134f4eb-556e-4e01-936f-1bf5a808cb10
-Name: Test SDK v7 plugin
+Name: Test SDK v7 library
 Author: Playnite Tests
 Version: 1.0.0
 Module: TestPluginV7.dll
-Type: GenericPlugin
+Type: GameLibrary

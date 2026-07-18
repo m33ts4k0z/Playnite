@@ -113,8 +113,13 @@ public class V7PluginHostTests
             host.FailedPlugins.FirstOrDefault()?.Exception.ToString() ?? status);
         Assert.That(host.Plugins, Has.Count.EqualTo(1));
         Assert.That(host.Plugins[0].Id, Is.EqualTo(Guid.Parse("8134f4eb-556e-4e01-936f-1bf5a808cb10")));
-        Assert.That(host.Plugins[0].Kind, Is.EqualTo("GenericPlugin"));
+        Assert.That(host.Plugins[0].Kind, Is.EqualTo("LibraryPlugin"));
         Assert.That(host.Plugins[0].HasSettings, Is.True);
+        Assert.That(host.LibraryPlugins, Has.Count.EqualTo(1));
+        Assert.That(host.LibraryPlugins[0].Name, Is.EqualTo("Test SDK v7 library"));
+        Assert.That(host.LibraryPlugins[0].Properties.CanShutdownClient, Is.True);
+        Assert.That(host.LibraryPlugins[0].Client.IsInstalled, Is.True);
+        Assert.That(host.LibraryPlugins[0].Client.Icon, Is.EqualTo("client-icon.png"));
         Assert.That(notifications.Messages.Select(message => message.Id), Does.Contain("test-v7-loaded"));
         Assert.That(database.Games[seededGame.Id].Name, Is.EqualTo("SDK v7 bridge game updated"));
         Assert.That(database.Genres.Any(genre => genre.Name == "SDK v7 bridge genre"), Is.True);
@@ -138,6 +143,31 @@ public class V7PluginHostTests
             "database-write:SDK v7 bridge genre",
             "database-extra:SDK v7 bridge tag:1:SDK v7 imported game:True"
         }));
+
+        var libraryGames = database.ImportGames(
+            host.LibraryPlugins[0],
+            CancellationToken.None,
+            PlaytimeImportMode.Always);
+        Assert.That(libraryGames, Has.Count.EqualTo(1));
+        Assert.That(libraryGames[0].Name, Is.EqualTo("SDK v7 library game"));
+        Assert.That(libraryGames[0].PluginId, Is.EqualTo(host.Plugins[0].Id));
+        Assert.That(libraryGames[0].Playtime, Is.EqualTo(120));
+        Assert.That(
+            libraryGames[0].GenreIds.Select(id => database.Genres[id]?.Name),
+            Does.Contain("SDK v7 library genre"));
+        var customizedGames = host.LibraryPlugins[0]
+            .ImportGames(new LibraryImportGamesArgs { })
+            .ToList();
+        Assert.That(customizedGames.Single().GameId, Is.EqualTo("sdk-v7-customized-game"));
+        host.NotifyLibraryUpdated();
+        host.LibraryPlugins[0].Client.Open();
+        host.LibraryPlugins[0].Client.Shutdown();
+        var libraryEvents = File.ReadAllLines(eventPath);
+        Assert.That(libraryEvents, Does.Contain("library-get-games"));
+        Assert.That(libraryEvents, Does.Contain("library-import-games"));
+        Assert.That(libraryEvents, Does.Contain("event-library-updated"));
+        Assert.That(libraryEvents, Does.Contain("library-client-open"));
+        Assert.That(libraryEvents, Does.Contain("library-client-shutdown"));
 
         var externallyUpdated = database.Games[seededGame.Id].GetCopy();
         externallyUpdated.Name = "SDK v7 external update";
@@ -243,6 +273,13 @@ public class V7PluginHostTests
 
         Assert.That(runtime.V7Plugins, Has.Count.EqualTo(1));
         Assert.That(runtime.V7PluginFailures, Is.Empty);
+        Assert.That(runtime.LibraryPlugins, Has.Count.EqualTo(1));
+        var importedLibraryGames = database.ImportGames(
+            runtime.LibraryPlugins[0],
+            CancellationToken.None,
+            PlaytimeImportMode.Always);
+        Assert.That(importedLibraryGames.Single().Name, Is.EqualTo("SDK v7 library game"));
+        runtime.NotifyLibraryUpdated();
         var playResult = runtime.Play(database.Games[game.Id]);
         Assert.That(playResult.Success, Is.True, playResult.Message);
         Assert.That(database.Games[game.Id].PlayCount, Is.EqualTo(1));
@@ -275,5 +312,6 @@ public class V7PluginHostTests
         Assert.That(events, Does.Contain("event-uninstalled:SDK v7 bridge game updated"));
         Assert.That(events, Does.Contain("event-starting:SDK v7 cancel game"));
         Assert.That(events, Does.Contain("event-startup-cancelled:SDK v7 cancel game"));
+        Assert.That(events, Does.Contain("event-library-updated"));
     }
 }

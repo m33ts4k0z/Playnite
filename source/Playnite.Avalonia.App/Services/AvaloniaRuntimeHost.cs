@@ -6,6 +6,7 @@ using Playnite.Database;
 using Playnite.Plugins;
 using Playnite.SDK;
 using Playnite.SDK.Models;
+using Playnite.SDK.Plugins;
 using Playnite.WpfPluginSupport;
 
 namespace Playnite.Avalonia.App.Services;
@@ -33,6 +34,8 @@ public sealed class AvaloniaRuntimeHost : IDisposable
     public IPlayniteAPI PluginApi => globalApi;
     public IReadOnlyList<V7LoadedPlugin> V7Plugins => v7Plugins.Plugins;
     public IReadOnlyList<V7PluginLoadFailure> V7PluginFailures => v7Plugins.FailedPlugins;
+    public IReadOnlyList<LibraryPlugin> LibraryPlugins =>
+        extensions.LibraryPlugins.Concat(v7Plugins.LibraryPlugins).ToList();
     public int LoadedPluginCount => extensions.Plugins.Count + v7Plugins.Plugins.Count;
     public int FailedPluginCount => extensions.FailedExtensions.Count + v7Plugins.FailedPlugins.Count;
 
@@ -94,6 +97,7 @@ public sealed class AvaloniaRuntimeHost : IDisposable
             ClientShutdownMinimumSessionSeconds = () =>
                 callbacks.Settings.ClientShutdownMinimumSessionSeconds,
             ClientShutdownPluginIds = () => callbacks.Settings.ClientShutdownPluginIds,
+            AdditionalLibraryPlugins = () => v7Plugins?.LibraryPlugins ?? [],
             AdditionalPlayControllers = game => v7Plugins?.GetPlayControllers(game) ?? [],
             AdditionalInstallControllers = game => v7Plugins?.GetInstallControllers(game) ?? [],
             AdditionalUninstallControllers = game => v7Plugins?.GetUninstallControllers(game) ?? []
@@ -112,7 +116,8 @@ public sealed class AvaloniaRuntimeHost : IDisposable
             notifications,
             () => actionRunner,
             () => extensions.Plugins.Keys.Select(id => id.ToString())
-                .Concat(v7Plugins?.Plugins.Select(plugin => plugin.Id.ToString()) ?? []));
+                .Concat(v7Plugins?.Plugins.Select(plugin => plugin.Id.ToString()) ?? []),
+            pluginApi: globalApi);
         previousResourceProvider = ResourceProvider.SetGlobalProvider(globalApi.Resources);
         pluginConverterResolver = (pluginSource, converterName) =>
             WpfPluginSupportRuntime.ResolveConverter(extensions, pluginSource, converterName);
@@ -173,6 +178,12 @@ public sealed class AvaloniaRuntimeHost : IDisposable
     public GameOperationResult Play(Game game, int choiceIndex = -1) => actionRunner.Play(game, choiceIndex);
     public GameOperationResult Install(Game game, int choiceIndex = -1) => actionRunner.Install(game, choiceIndex);
     public GameOperationResult Uninstall(Game game, int choiceIndex = -1) => actionRunner.Uninstall(game, choiceIndex);
+
+    public void NotifyLibraryUpdated()
+    {
+        extensions.NotifiyOnLibraryUpdated();
+        v7Plugins.NotifyLibraryUpdated();
+    }
 
     public void ShowMessage(string message, bool error)
     {

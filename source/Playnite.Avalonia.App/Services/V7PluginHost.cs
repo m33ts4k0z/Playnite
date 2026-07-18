@@ -7,6 +7,7 @@ using Playnite.Database;
 using Playnite.Plugins;
 using Playnite.SDK;
 using Playnite.SDK.Events;
+using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -24,12 +25,24 @@ public sealed class V7LoadedPlugin
     private readonly MethodInfo publishDatabaseEvent;
     private readonly MethodInfo getControllers;
     private readonly MethodInfo invokeGameEvent;
+    private readonly MethodInfo getLibraryGames;
+    private readonly MethodInfo importLibraryGames;
+    private readonly MethodInfo invokeLibraryUpdated;
+    private readonly MethodInfo openLibraryClient;
+    private readonly MethodInfo shutdownLibraryClient;
     private readonly MethodInfo dispose;
 
     public Guid Id { get; }
     public string Name { get; }
     public string Kind { get; }
     public bool HasSettings { get; }
+    public bool CanShutdownLibraryClient { get; }
+    public bool HasCustomizedGameImport { get; }
+    public string LibraryIcon { get; }
+    public string LibraryBackground { get; }
+    public bool HasLibraryClient { get; }
+    public bool IsLibraryClientInstalled { get; }
+    public string LibraryClientIcon { get; }
     public ExtensionManifest Manifest { get; }
 
     internal V7LoadedPlugin(object instance, ExtensionManifest manifest)
@@ -41,11 +54,23 @@ public sealed class V7LoadedPlugin
         Name = ReadProperty<string>(type, nameof(Name));
         Kind = ReadProperty<string>(type, nameof(Kind));
         HasSettings = ReadProperty<bool>(type, nameof(HasSettings));
+        CanShutdownLibraryClient = ReadProperty<bool>(type, nameof(CanShutdownLibraryClient));
+        HasCustomizedGameImport = ReadProperty<bool>(type, nameof(HasCustomizedGameImport));
+        LibraryIcon = ReadProperty<string>(type, nameof(LibraryIcon));
+        LibraryBackground = ReadProperty<string>(type, nameof(LibraryBackground));
+        HasLibraryClient = ReadProperty<bool>(type, nameof(HasLibraryClient));
+        IsLibraryClientInstalled = ReadProperty<bool>(type, nameof(IsLibraryClientInstalled));
+        LibraryClientIcon = ReadProperty<string>(type, nameof(LibraryClientIcon));
         applicationStarted = GetRequiredMethod(type, "InvokeApplicationStarted");
         applicationStopped = GetRequiredMethod(type, "InvokeApplicationStopped");
         publishDatabaseEvent = GetRequiredMethod(type, "PublishDatabaseEvent");
         getControllers = GetRequiredMethod(type, "GetControllers");
         invokeGameEvent = GetRequiredMethod(type, "InvokeGameEvent");
+        getLibraryGames = GetRequiredMethod(type, "GetLibraryGames");
+        importLibraryGames = GetRequiredMethod(type, "ImportLibraryGames");
+        invokeLibraryUpdated = GetRequiredMethod(type, "InvokeLibraryUpdated");
+        openLibraryClient = GetRequiredMethod(type, "OpenLibraryClient");
+        shutdownLibraryClient = GetRequiredMethod(type, "ShutdownLibraryClient");
         dispose = GetRequiredMethod(type, nameof(IDisposable.Dispose));
     }
 
@@ -58,6 +83,15 @@ public sealed class V7LoadedPlugin
         (object[])InvokeWithResult(getControllers, kind, gameJson);
     internal string InvokeGameEvent(string eventName, string payload) =>
         (string)InvokeWithResult(invokeGameEvent, eventName, payload);
+    internal List<GameMetadata> GetLibraryGames(CancellationToken cancellationToken) =>
+        V7DatabaseTransport.Deserialize<List<GameMetadata>>(
+            (string)InvokeWithResult(getLibraryGames, cancellationToken)) ?? [];
+    internal List<Game> ImportLibraryGames(CancellationToken cancellationToken) =>
+        V7DatabaseTransport.Deserialize<List<Game>>(
+            (string)InvokeWithResult(importLibraryGames, cancellationToken)) ?? [];
+    internal void InvokeLibraryUpdated() => Invoke(invokeLibraryUpdated);
+    internal void OpenLibraryClient() => Invoke(openLibraryClient);
+    internal void ShutdownLibraryClient() => Invoke(shutdownLibraryClient);
 
     private T ReadProperty<T>(Type type, string name)
     {
@@ -183,6 +217,7 @@ internal sealed class V7PluginHost : IDisposable
     private readonly NotificationsAPI notifications;
     private readonly Func<GameActionRunner> actionRunner;
     private readonly Func<IEnumerable<string>> installedAddons;
+    private readonly IPlayniteAPI pluginApi;
     private readonly V7DatabaseTransport databaseTransport;
     private readonly string hostBundlePath;
     private readonly List<PluginLoadHandle> handles = [];
@@ -196,6 +231,7 @@ internal sealed class V7PluginHost : IDisposable
 
     public List<V7LoadedPlugin> Plugins { get; } = [];
     public List<V7PluginLoadFailure> FailedPlugins { get; } = [];
+    public List<LibraryPlugin> LibraryPlugins { get; } = [];
 
     public V7PluginHost(
         GameDatabase database,
@@ -204,7 +240,8 @@ internal sealed class V7PluginHost : IDisposable
         NotificationsAPI notifications,
         Func<GameActionRunner> actionRunner,
         Func<IEnumerable<string>> installedAddons,
-        string hostBundlePath = null)
+        string hostBundlePath = null,
+        IPlayniteAPI pluginApi = null)
     {
         this.database = database ?? throw new ArgumentNullException(nameof(database));
         this.controllers = controllers ?? throw new ArgumentNullException(nameof(controllers));
@@ -212,6 +249,7 @@ internal sealed class V7PluginHost : IDisposable
         this.notifications = notifications ?? throw new ArgumentNullException(nameof(notifications));
         this.actionRunner = actionRunner ?? throw new ArgumentNullException(nameof(actionRunner));
         this.installedAddons = installedAddons ?? throw new ArgumentNullException(nameof(installedAddons));
+        this.pluginApi = pluginApi;
         this.hostBundlePath = hostBundlePath ?? Path.Combine(AppContext.BaseDirectory, "SdkV7Host");
         databaseTransport = new V7DatabaseTransport(database);
         SubscribeDatabaseEvents();
@@ -246,6 +284,10 @@ internal sealed class V7PluginHost : IDisposable
 
             LoadManifest(manifest, modulePath);
         }
+
+        LibraryPlugins.AddRange(Plugins
+            .Where(plugin => plugin.Kind == "LibraryPlugin")
+            .Select(plugin => new V7LibraryPluginAdapter(pluginApi, plugin)));
 
         return claimedManifestIds;
     }
@@ -610,6 +652,23 @@ internal sealed class V7PluginHost : IDisposable
         }
     }
 
+    public void NotifyLibraryUpdated()
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        foreach (var plugin in Plugins.ToList())
+        {
+            try
+            {
+                plugin.InvokeLibraryUpdated();
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                callbacks.SetStatus(
+                    $"SDK v7 plugin {plugin.Name} library-updated event failed: {exception.Message}");
+            }
+        }
+    }
+
     private void SubscribeControllerEvents()
     {
         EventHandler<OnGameStartingEventArgs> starting = (_, args) =>
@@ -770,6 +829,7 @@ internal sealed class V7PluginHost : IDisposable
         }
 
         handles.Clear();
+        LibraryPlugins.Clear();
         Plugins.Clear();
     }
 }

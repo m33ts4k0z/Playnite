@@ -118,6 +118,15 @@ public sealed class V7PluginInstance : IDisposable
         _ => plugin.GetType().Name
     };
     public bool HasSettings => plugin.GetSettings(false) != null;
+    public bool CanShutdownLibraryClient =>
+        plugin is LibraryPlugin library && library.Properties?.CanShutdownClient == true;
+    public bool HasCustomizedGameImport =>
+        plugin is LibraryPlugin library && library.Properties?.HasCustomizedGameImport == true;
+    public string LibraryIcon => (plugin as LibraryPlugin)?.LibraryIcon;
+    public string LibraryBackground => (plugin as LibraryPlugin)?.LibraryBackground;
+    public bool HasLibraryClient => (plugin as LibraryPlugin)?.Client != null;
+    public bool IsLibraryClientInstalled => (plugin as LibraryPlugin)?.Client?.IsInstalled == true;
+    public string LibraryClientIcon => (plugin as LibraryPlugin)?.Client?.Icon;
 
     internal V7PluginInstance(
         Plugin plugin,
@@ -153,6 +162,40 @@ public sealed class V7PluginInstance : IDisposable
 
     public object GetSettings() => plugin.GetSettings(false);
     public Control GetSettingsView() => plugin.GetSettingsView(false);
+
+    public string GetLibraryGames(CancellationToken cancellationToken)
+    {
+        if (plugin is not LibraryPlugin library)
+        {
+            return "[]";
+        }
+
+        var games = library.GetGames(new LibraryGetGamesArgs
+        {
+            CancelToken = cancellationToken
+        })?.ToList() ?? [];
+        return V7RpcJson.Serialize(games);
+    }
+
+    public string ImportLibraryGames(CancellationToken cancellationToken)
+    {
+        if (plugin is not LibraryPlugin library)
+        {
+            return "[]";
+        }
+
+        var games = library.ImportGames(new LibraryImportGamesArgs
+        {
+            CancelToken = cancellationToken
+        })?.ToList() ?? [];
+        return V7RpcJson.Serialize(games);
+    }
+
+    public void InvokeLibraryUpdated() =>
+        plugin.OnLibraryUpdated(new OnLibraryUpdatedEventArgs());
+
+    public void OpenLibraryClient() => (plugin as LibraryPlugin)?.Client?.Open();
+    public void ShutdownLibraryClient() => (plugin as LibraryPlugin)?.Client?.Shutdown();
 
     public void PublishDatabaseEvent(string collection, string eventName, string payload) =>
         api.HostDatabase.Publish(collection, eventName, payload);

@@ -73,6 +73,8 @@ namespace Playnite.Controllers
         public Func<uint> ClientShutdownMinimumSessionSeconds { get; set; } = () => 120;
         public Func<IReadOnlyCollection<Guid>> ClientShutdownPluginIds { get; set; } =
             () => Array.Empty<Guid>();
+        public Func<IEnumerable<LibraryPlugin>> AdditionalLibraryPlugins { get; set; } =
+            () => Array.Empty<LibraryPlugin>();
         public Func<Game, IEnumerable<PlayController>> AdditionalPlayControllers { get; set; } =
             _ => Array.Empty<PlayController>();
         public Func<Game, IEnumerable<InstallController>> AdditionalInstallControllers { get; set; } =
@@ -928,7 +930,9 @@ namespace Playnite.Controllers
                 return;
             }
 
-            var plugin = extensions.GetLibraryPlugin(game.PluginId);
+            var plugin = extensions.GetLibraryPlugin(game.PluginId) ??
+                (Policy.AdditionalLibraryPlugins() ?? Enumerable.Empty<LibraryPlugin>())
+                    .FirstOrDefault(candidate => candidate.Id == game.PluginId);
             var selectedPlugins = Policy.ClientShutdownPluginIds() ?? Array.Empty<Guid>();
             if (plugin?.Properties?.CanShutdownClient != true ||
                 plugin.Client == null ||

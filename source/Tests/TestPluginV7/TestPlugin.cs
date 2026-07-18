@@ -6,25 +6,65 @@ using Playnite.SDK.Plugins;
 
 namespace TestPluginV7;
 
-public sealed class TestPlugin : GenericPlugin
+public sealed class TestPlugin : LibraryPlugin
 {
     private readonly TestSettings settings;
+    private readonly TestLibraryClient client;
     private bool databaseEventsSubscribed;
     private string EventPath => Path.Combine(GetPluginUserDataPath(), "events.txt");
 
     public override Guid Id { get; } = Guid.Parse("8134f4eb-556e-4e01-936f-1bf5a808cb10");
+    public override string Name => "Test SDK v7 library";
+    public override string LibraryIcon => "library-icon.png";
+    public override string LibraryBackground => "library-background.png";
+    public override LibraryClient Client => client;
 
     public TestPlugin(IPlayniteAPI api)
         : base(api)
     {
         settings = LoadPluginSettings<TestSettings>() ?? new TestSettings();
         settings.Plugin = this;
-        Properties = new GenericPluginProperties { HasSettings = true };
+        client = new TestLibraryClient(EventPath);
+        Properties = new LibraryPluginProperties
+        {
+            HasSettings = true,
+            CanShutdownClient = true,
+            HasCustomizedGameImport = false
+        };
         File.AppendAllLines(EventPath, ["constructed:" + api.ApplicationInfo.Mode]);
         api.Notifications.Add("test-v7-loaded", "SDK v7 plugin constructed", NotificationType.Info);
     }
 
     public override ISettings GetSettings(bool firstRunSettings) => settings;
+
+    public override IEnumerable<GameMetadata> GetGames(LibraryGetGamesArgs args)
+    {
+        args.CancelToken.ThrowIfCancellationRequested();
+        File.AppendAllLines(EventPath, ["library-get-games"]);
+        yield return new GameMetadata
+        {
+            Name = "SDK v7 library game",
+            GameId = "sdk-v7-library-game",
+            IsInstalled = true,
+            InstallDirectory = "C:\\SDKv7Library",
+            Playtime = 120,
+            Genres = [new MetadataNameProperty("SDK v7 library genre")]
+        };
+    }
+
+    public override IEnumerable<Game> ImportGames(LibraryImportGamesArgs args)
+    {
+        args.CancelToken.ThrowIfCancellationRequested();
+        File.AppendAllLines(EventPath, ["library-import-games"]);
+        yield return new Game("SDK v7 customized import game")
+        {
+            PluginId = Id,
+            GameId = "sdk-v7-customized-game"
+        };
+    }
+
+    public override void OnLibraryUpdated(OnLibraryUpdatedEventArgs args) =>
+        File.AppendAllLines(EventPath, ["event-library-updated"]);
 
     public override IEnumerable<PlayController> GetPlayActions(GetPlayActionsArgs args)
     {
@@ -181,6 +221,18 @@ public sealed class TestPlugin : GenericPlugin
             File.AppendAllLines(eventPath, ["controller-uninstall"]);
             InvokeOnUninstalled();
         }
+    }
+
+    private sealed class TestLibraryClient : LibraryClient
+    {
+        private readonly string eventPath;
+
+        public override bool IsInstalled => true;
+        public override string Icon => "client-icon.png";
+
+        public TestLibraryClient(string eventPath) => this.eventPath = eventPath;
+        public override void Open() => File.AppendAllLines(eventPath, ["library-client-open"]);
+        public override void Shutdown() => File.AppendAllLines(eventPath, ["library-client-shutdown"]);
     }
 
     public sealed class TestSettings : ObservableObject, ISettings

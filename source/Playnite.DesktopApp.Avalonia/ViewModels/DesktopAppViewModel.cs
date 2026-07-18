@@ -512,11 +512,11 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(NotificationCount));
         MetadataDownload.ConfigureProviders(
             () => host.Extensions.MetadataPlugins,
-            () => host.Extensions.LibraryPlugins);
+            () => host.LibraryPlugins.ToList());
         LibrarySync.ConfigureProviders(
-            () => host.Extensions.LibraryPlugins,
-            host.Extensions.NotifiyOnLibraryUpdated);
-        InstalledGameImport.ConfigureLibraryUpdated(host.Extensions.NotifiyOnLibraryUpdated);
+            () => host.LibraryPlugins.ToList(),
+            host.NotifyLibraryUpdated);
+        InstalledGameImport.ConfigureLibraryUpdated(host.NotifyLibraryUpdated);
         PluginSettings.Configure(host.Extensions);
         RaiseGameCommandStates();
     }
