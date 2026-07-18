@@ -47,6 +47,7 @@ public sealed class V7LoadedPlugin
     private readonly MethodInfo getSidebarItems;
     private readonly MethodInfo getTopPanelItems;
     private readonly MethodInfo invokeUri;
+    private readonly MethodInfo invokeNotificationAction;
     private readonly MethodInfo dispose;
 
     public Guid Id { get; }
@@ -104,6 +105,7 @@ public sealed class V7LoadedPlugin
         getSidebarItems = GetRequiredMethod(type, "GetSidebarItems");
         getTopPanelItems = GetRequiredMethod(type, "GetTopPanelItems");
         invokeUri = GetRequiredMethod(type, "InvokeUri");
+        invokeNotificationAction = GetRequiredMethod(type, "InvokeNotificationAction");
         dispose = GetRequiredMethod(type, nameof(IDisposable.Dispose));
     }
 
@@ -149,6 +151,8 @@ public sealed class V7LoadedPlugin
     internal object[] GetSidebarItems() => (object[])InvokeWithResult(getSidebarItems);
     internal object[] GetTopPanelItems() => (object[])InvokeWithResult(getTopPanelItems);
     internal void InvokeUri(string source, string[] arguments) => Invoke(invokeUri, source, arguments);
+    internal void InvokeNotificationAction(Guid actionToken) =>
+        Invoke(invokeNotificationAction, actionToken);
 
     private T ReadProperty<T>(Type type, string name)
     {
@@ -260,9 +264,17 @@ internal sealed class V7PluginHost : IDisposable
 
     private sealed class NotificationPayload
     {
+        public Guid OwnerToken { get; set; }
+        public Guid ActionToken { get; set; }
         public string Id { get; set; }
         public string Text { get; set; }
         public string Type { get; set; }
+    }
+
+    private sealed class NotificationMutationPayload
+    {
+        public Guid OwnerToken { get; set; }
+        public string Id { get; set; }
     }
 
     private sealed class LogPayload
@@ -347,6 +359,8 @@ internal sealed class V7PluginHost : IDisposable
     private readonly List<UiRegistrationPayload> converterRegistrations = [];
     private readonly Dictionary<string, Guid> uriSources = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Guid, V7LoadedPlugin> uriOwners = [];
+    private readonly Dictionary<string, Guid> notificationOwners = new(StringComparer.Ordinal);
+    private readonly Dictionary<Guid, HashSet<string>> notificationIdsByOwner = [];
     private readonly Dictionary<Guid, Sqlite> sqliteConnections = [];
     private readonly object sqliteSync = new();
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, IV7ControllerAdapter>
@@ -493,6 +507,7 @@ internal sealed class V7PluginHost : IDisposable
         var previousConverterRegistrations = converterRegistrations.ToList();
         var previousUriSources = uriSources.ToDictionary(item => item.Key, item => item.Value, StringComparer.OrdinalIgnoreCase);
         var previousUriOwners = uriOwners.ToDictionary(item => item.Key, item => item.Value);
+        var previousNotificationIds = notificationOwners.Keys.ToHashSet(StringComparer.Ordinal);
         HashSet<Guid> previousSqliteHandles;
         lock (sqliteSync)
         {
@@ -576,6 +591,12 @@ internal sealed class V7PluginHost : IDisposable
             {
                 uriOwners.Add(owner.Key, owner.Value);
             }
+            foreach (var notificationId in notificationOwners.Keys
+                .Where(id => !previousNotificationIds.Contains(id))
+                .ToList())
+            {
+                RemoveTrackedNotification(notificationId);
+            }
             DisposeSqliteConnections(handle => !previousSqliteHandles.Contains(handle));
         }
     }
@@ -632,10 +653,10 @@ internal sealed class V7PluginHost : IDisposable
                 AddNotification(JsonConvert.DeserializeObject<NotificationPayload>(payload));
                 return string.Empty;
             case "NotificationRemove":
-                notifications.Remove(payload);
+                RemoveNotification(JsonConvert.DeserializeObject<NotificationMutationPayload>(payload));
                 return string.Empty;
             case "NotificationRemoveAll":
-                notifications.RemoveAll();
+                RemoveNotifications(JsonConvert.DeserializeObject<NotificationMutationPayload>(payload));
                 return string.Empty;
             case "ShowError":
                 ShowDialog(payload, true);
@@ -1088,16 +1109,118 @@ internal sealed class V7PluginHost : IDisposable
 
     private void AddNotification(NotificationPayload payload)
     {
-        if (payload == null || string.IsNullOrWhiteSpace(payload.Id))
+        if (payload == null || payload.OwnerToken == Guid.Empty || string.IsNullOrWhiteSpace(payload.Id))
         {
-            throw new InvalidDataException("SDK v7 notification payload has no notification ID.");
+            throw new InvalidDataException("SDK v7 notification payload has no owner or notification ID.");
         }
 
         var type = Enum.TryParse<NotificationType>(payload.Type, true, out var notificationType)
             ? notificationType
             : throw new InvalidDataException(
                 $"SDK v7 notification payload has invalid type '{payload.Type}'.");
-        notifications.Add(payload.Id, payload.Text ?? string.Empty, type);
+        if (notificationOwners.TryGetValue(payload.Id, out var existingOwner))
+        {
+            if (existingOwner != payload.OwnerToken)
+            {
+                throw new InvalidOperationException(
+                    $"SDK v7 notification ID '{payload.Id}' is already owned by another plugin context.");
+            }
+            RemoveTrackedNotification(payload.Id);
+        }
+        else if (notifications.Messages.Any(message => message.Id == payload.Id))
+        {
+            throw new InvalidOperationException(
+                $"SDK v7 notification ID '{payload.Id}' collides with a host notification.");
+        }
+
+        if (payload.ActionToken == Guid.Empty)
+        {
+            notifications.Add(payload.Id, payload.Text ?? string.Empty, type);
+        }
+        else
+        {
+            notifications.Add(new NotificationMessage(
+                payload.Id,
+                payload.Text ?? string.Empty,
+                type,
+                () => InvokeNotificationAction(payload.OwnerToken, payload.ActionToken, payload.Id)));
+        }
+
+        notificationOwners.Add(payload.Id, payload.OwnerToken);
+        if (!notificationIdsByOwner.TryGetValue(payload.OwnerToken, out var ownerIds))
+        {
+            ownerIds = [];
+            notificationIdsByOwner.Add(payload.OwnerToken, ownerIds);
+        }
+        ownerIds.Add(payload.Id);
+    }
+
+    private void RemoveNotification(NotificationMutationPayload payload)
+    {
+        if (payload == null || payload.OwnerToken == Guid.Empty || string.IsNullOrWhiteSpace(payload.Id))
+        {
+            throw new InvalidDataException("SDK v7 notification removal payload is incomplete.");
+        }
+
+        if (notificationOwners.TryGetValue(payload.Id, out var ownerToken) &&
+            ownerToken == payload.OwnerToken)
+        {
+            RemoveTrackedNotification(payload.Id);
+        }
+    }
+
+    private void RemoveNotifications(NotificationMutationPayload payload)
+    {
+        if (payload == null || payload.OwnerToken == Guid.Empty)
+        {
+            throw new InvalidDataException("SDK v7 notification removal payload has no owner.");
+        }
+
+        if (!notificationIdsByOwner.TryGetValue(payload.OwnerToken, out var notificationIds))
+        {
+            return;
+        }
+        foreach (var notificationId in notificationIds.ToList())
+        {
+            RemoveTrackedNotification(notificationId);
+        }
+    }
+
+    private void InvokeNotificationAction(Guid ownerToken, Guid actionToken, string notificationId)
+    {
+        try
+        {
+            if (!uriOwners.TryGetValue(ownerToken, out var plugin))
+            {
+                throw new InvalidOperationException(
+                    $"SDK v7 notification '{notificationId}' has no live plugin context.");
+            }
+            plugin.InvokeNotificationAction(actionToken);
+        }
+        finally
+        {
+            ForgetNotification(notificationId);
+        }
+    }
+
+    private void RemoveTrackedNotification(string notificationId)
+    {
+        notifications.Remove(notificationId);
+        ForgetNotification(notificationId);
+    }
+
+    private void ForgetNotification(string notificationId)
+    {
+        if (!notificationOwners.Remove(notificationId, out var ownerToken) ||
+            !notificationIdsByOwner.TryGetValue(ownerToken, out var ownerIds))
+        {
+            return;
+        }
+        ownerIds.Remove(notificationId);
+        if (ownerIds.Count == 0)
+        {
+            notificationIdsByOwner.Remove(ownerToken);
+        }
     }
 
     private static void WritePluginLog(LogPayload payload)
@@ -1521,6 +1644,11 @@ internal sealed class V7PluginHost : IDisposable
 
         handles.Clear();
         DisposeSqliteConnections(_ => true);
+        foreach (var notificationId in notificationOwners.Keys.ToList())
+        {
+            RemoveTrackedNotification(notificationId);
+        }
+        notificationIdsByOwner.Clear();
         uriSources.Clear();
         uriOwners.Clear();
         LibraryPlugins.Clear();

@@ -52,7 +52,11 @@ public sealed class TestPlugin : LibraryPlugin
         api.UriHandler.RegisterSource("sdk-v7-probe", HandleUri);
         LogManager.GetLogger().Info("SDK v7 fixture logger initialized");
         File.AppendAllLines(EventPath, ["constructed:" + api.ApplicationInfo.Mode]);
-        api.Notifications.Add("test-v7-loaded", "SDK v7 plugin constructed", NotificationType.Info);
+        api.Notifications.Add(new NotificationMessage(
+            "test-v7-loaded",
+            "SDK v7 plugin constructed",
+            NotificationType.Info,
+            () => File.AppendAllLines(EventPath, ["notification-activated"])));
     }
 
     public override ISettings GetSettings(bool firstRunSettings) => settings;
@@ -68,6 +72,12 @@ public sealed class TestPlugin : LibraryPlugin
             [
                 $"menu-main:{actionArgs.SourceItem.Description}:{args.IsGlobalSearchRequest}"
             ])
+        };
+        yield return new MainMenuItem
+        {
+            Description = "SDK v7 clear own notifications",
+            MenuSection = "SDK v7|Tests",
+            Action = _ => PlayniteApi.Notifications.RemoveAll()
         };
         if (File.Exists(WebViewProbePath))
         {

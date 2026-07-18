@@ -49,7 +49,11 @@ public class V7PluginBridgeTests
         Assert.That(plugin.HasLibraryClient, Is.True);
         Assert.That(plugin.IsLibraryClientInstalled, Is.True);
         Assert.That(plugin.LibraryClientIcon, Is.EqualTo("client-icon.png"));
-        Assert.That(calls.Any(call => call.Operation == "NotificationAdd"), Is.True);
+        var notificationCall = calls.Single(call => call.Operation == "NotificationAdd");
+        var notificationPayload = JObject.Parse(notificationCall.Payload);
+        Assert.That(Guid.Parse(notificationPayload.Value<string>("OwnerToken")), Is.Not.EqualTo(Guid.Empty));
+        var notificationActionToken = Guid.Parse(notificationPayload.Value<string>("ActionToken"));
+        Assert.That(notificationActionToken, Is.Not.EqualTo(Guid.Empty));
         var logCall = calls.Single(call => call.Operation == "Log");
         var logPayload = JObject.Parse(logCall.Payload);
         Assert.That(logPayload.Value<string>("Level"), Is.EqualTo("Info"));
@@ -58,6 +62,9 @@ public class V7PluginBridgeTests
 
         plugin.InvokeApplicationStarted();
         plugin.InvokeApplicationStarted();
+        plugin.InvokeNotificationAction(notificationActionToken);
+        Assert.Throws<InvalidOperationException>(() =>
+            plugin.InvokeNotificationAction(notificationActionToken));
         plugin.Dispose();
 
         var eventPath = Path.Combine(
@@ -65,7 +72,13 @@ public class V7PluginBridgeTests
             plugin.Id.ToString(),
             "events.txt");
         var events = File.ReadAllLines(eventPath);
-        Assert.That(events, Is.EqualTo(new[] { "constructed:Desktop", "started", "stopped" }));
+        Assert.That(events, Is.EqualTo(new[]
+        {
+            "constructed:Desktop",
+            "started",
+            "notification-activated",
+            "stopped"
+        }));
     }
 
     [Test]
@@ -204,11 +217,15 @@ public class V7PluginBridgeTests
             .LoadAll(typeof(TestPlugin).Assembly.Location, HostCall)
             .Single();
 
-        var main = (V7MenuItemInstance)plugin.GetMenuItems("Main", "[]", true).Single();
+        var mainItems = plugin.GetMenuItems("Main", "[]", true).Cast<V7MenuItemInstance>().ToList();
+        var main = mainItems.Single(item => item.Description == "SDK v7 main command");
         Assert.That(main.Description, Is.EqualTo("SDK v7 main command"));
         Assert.That(main.MenuSection, Is.EqualTo("SDK v7|Tools"));
         Assert.That(main.Icon, Is.EqualTo("main-menu-icon.png"));
         main.Invoke();
+        mainItems.Single(item => item.Description == "SDK v7 clear own notifications").Invoke();
+        var removeAllPayload = JObject.Parse(calls.Last(call => call.Operation == "NotificationRemoveAll").Payload);
+        Assert.That(Guid.Parse(removeAllPayload.Value<string>("OwnerToken")), Is.Not.EqualTo(Guid.Empty));
 
         var gamesJson = JsonConvert.SerializeObject(new[]
         {

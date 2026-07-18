@@ -56,8 +56,15 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
         notifications = new NotificationsAPI();
         notifications.ActivationRequested += (_, args) =>
         {
-            args.Message?.ActivationAction?.Invoke();
-            if (args.Message != null)
+            if (args.Message == null)
+            {
+                return;
+            }
+            try
+            {
+                args.Message.ActivationAction?.Invoke();
+            }
+            finally
             {
                 notifications.Remove(args.Message.Id);
             }

@@ -173,6 +173,9 @@ public sealed class V7PluginInstance : IDisposable
         applicationStarted = false;
     }
 
+    public void InvokeNotificationAction(Guid actionToken) =>
+        api.InvokeNotificationAction(actionToken);
+
     public object GetSettings() => plugin.GetSettings(false);
     public Control GetSettingsView() => plugin.GetSettingsView(false);
 
@@ -587,6 +590,7 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
 
     private readonly Func<string, string, string> hostCall;
     private readonly List<ConverterRegistration> converterRegistrations = [];
+    private readonly HostNotifications hostNotifications;
 
     public IMainViewAPI MainView { get; }
     public IGameDatabaseAPI Database { get; }
@@ -612,7 +616,8 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
         Paths = new HostPaths(hostCall);
         ApplicationInfo = new HostApplicationInfo(hostCall);
         Resources = new HostResources(hostObjectCall);
-        Notifications = new HostNotifications(hostCall);
+        hostNotifications = new HostNotifications(hostCall, UriOwnerToken);
+        Notifications = hostNotifications;
         Dialogs = new HostDialogs(hostCall, hostObjectCall);
         MainView = new HostMainView(hostCall, hostRequest);
         HostDatabase = new HostGameDatabase(hostCall);
@@ -623,6 +628,9 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
         Addons = new HostAddons(hostCall, this);
         Emulation = new HostEmulationApi(hostCall);
     }
+
+    internal void InvokeNotificationAction(Guid actionToken) =>
+        hostNotifications.InvokeActivation(actionToken);
 
     public string ExpandGameVariables(Game game, string inputString) =>
         ExpandGameVariables(game, inputString, null);
@@ -1095,19 +1103,39 @@ internal sealed class HostResources : IResourceProvider
 
 internal sealed class HostNotifications : INotificationsAPI
 {
+    private sealed record NotificationAction(string NotificationId, Action Action);
+
     private readonly Func<string, string, string> hostCall;
+    private readonly Guid ownerToken;
+    private readonly Dictionary<Guid, NotificationAction> activationActions = [];
+    private readonly Dictionary<string, Guid> notificationActionTokens = new(StringComparer.Ordinal);
     public ObservableCollection<NotificationMessage> Messages { get; } = [];
     public int Count => Messages.Count;
 
-    public HostNotifications(Func<string, string, string> hostCall) => this.hostCall = hostCall;
+    public HostNotifications(Func<string, string, string> hostCall, Guid ownerToken)
+    {
+        this.hostCall = hostCall ?? throw new ArgumentNullException(nameof(hostCall));
+        this.ownerToken = ownerToken != Guid.Empty
+            ? ownerToken
+            : throw new ArgumentException("A notification owner token is required.", nameof(ownerToken));
+    }
 
     public void Add(NotificationMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
         Remove(message.Id);
         Messages.Add(message);
+        var actionToken = Guid.Empty;
+        if (message.ActivationAction != null)
+        {
+            actionToken = Guid.NewGuid();
+            activationActions.Add(actionToken, new NotificationAction(message.Id, message.ActivationAction));
+            notificationActionTokens.Add(message.Id, actionToken);
+        }
         hostCall("NotificationAdd", Newtonsoft.Json.JsonConvert.SerializeObject(new
         {
+            OwnerToken = ownerToken,
+            ActionToken = actionToken,
             message.Id,
             message.Text,
             Type = message.Type.ToString()
@@ -1123,13 +1151,41 @@ internal sealed class HostNotifications : INotificationsAPI
         {
             Messages.Remove(existing);
         }
-        hostCall("NotificationRemove", id);
+        RemoveAction(id);
+        hostCall("NotificationRemove", V7RpcJson.Serialize(new { OwnerToken = ownerToken, Id = id }));
     }
 
     public void RemoveAll()
     {
         Messages.Clear();
-        hostCall("NotificationRemoveAll", string.Empty);
+        activationActions.Clear();
+        notificationActionTokens.Clear();
+        hostCall("NotificationRemoveAll", V7RpcJson.Serialize(new { OwnerToken = ownerToken }));
+    }
+
+    public void InvokeActivation(Guid actionToken)
+    {
+        if (!activationActions.Remove(actionToken, out var notificationAction))
+        {
+            throw new InvalidOperationException(
+                $"SDK v7 notification action {actionToken} is no longer registered.");
+        }
+
+        notificationActionTokens.Remove(notificationAction.NotificationId);
+        var message = Messages.FirstOrDefault(item => item.Id == notificationAction.NotificationId);
+        if (message != null)
+        {
+            Messages.Remove(message);
+        }
+        notificationAction.Action();
+    }
+
+    private void RemoveAction(string notificationId)
+    {
+        if (notificationActionTokens.Remove(notificationId, out var actionToken))
+        {
+            activationActions.Remove(actionToken);
+        }
     }
 }
 
