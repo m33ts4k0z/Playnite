@@ -1,11 +1,14 @@
 using Avalonia.Controls;
+using Avalonia.Data.Converters;
 using Avalonia.Threading;
+using Playnite.SDK.Controls;
 using Playnite.SDK.Data;
 using Playnite.SDK.Events;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Reflection;
 using System.Runtime.Loader;
 
@@ -304,6 +307,34 @@ public sealed class V7PluginInstance : IDisposable
         throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown plugin menu kind.");
     }
 
+    public object CreateGameViewControl(string name, string mode, string gameJson)
+    {
+        var control = plugin.GetGameViewControl(new GetGameViewControlArgs
+        {
+            Name = name,
+            Mode = Enum.Parse<ApplicationMode>(mode)
+        });
+        if (control == null)
+        {
+            return null;
+        }
+
+        var instance = new V7PluginElementInstance(control);
+        instance.SetGameContext(gameJson);
+        return instance;
+    }
+
+    public object GetConverter(string sourceName, string converterName) =>
+        api.GetConverter(plugin.Id, sourceName, converterName);
+
+    public object[] GetSidebarItems() => (plugin.GetSidebarItems() ?? [])
+        .Select(item => (object)new V7SidebarItemInstance(item))
+        .ToArray();
+
+    public object[] GetTopPanelItems() => (plugin.GetTopPanelItems() ?? [])
+        .Select(item => (object)new V7TopPanelItemInstance(item))
+        .ToArray();
+
     public void PublishDatabaseEvent(string collection, string eventName, string payload) =>
         api.HostDatabase.Publish(collection, eventName, payload);
 
@@ -416,6 +447,69 @@ public sealed class V7MenuItemInstance
     }
 }
 
+public sealed class V7PluginElementInstance
+{
+    public Control Control { get; }
+
+    public V7PluginElementInstance(Control control) =>
+        Control = control ?? throw new ArgumentNullException(nameof(control));
+
+    public void SetGameContext(string gameJson)
+    {
+        var game = V7RpcJson.Deserialize<Game>(gameJson);
+        if (Control is PluginUserControl pluginControl)
+        {
+            pluginControl.GameContext = game;
+        }
+        else
+        {
+            Control.DataContext = game;
+        }
+    }
+}
+
+public sealed class V7SidebarItemInstance : INotifyPropertyChanged
+{
+    private readonly SidebarItem item;
+
+    public event PropertyChangedEventHandler PropertyChanged;
+    public string Type => item.Type.ToString();
+    public object Icon => item.Icon;
+    public string Title => item.Title;
+    public bool Visible => item.Visible;
+    public double ProgressValue => item.ProgressValue;
+    public double ProgressMaximum => item.ProgressMaximum;
+    public Avalonia.Thickness IconPadding => item.IconPadding;
+
+    public V7SidebarItemInstance(SidebarItem item)
+    {
+        this.item = item ?? throw new ArgumentNullException(nameof(item));
+        item.PropertyChanged += (_, args) => PropertyChanged?.Invoke(this, args);
+    }
+
+    public void Activate() => item.Activated?.Invoke();
+    public Control Open() => item.Opened?.Invoke();
+    public void Close() => item.Closed?.Invoke();
+}
+
+public sealed class V7TopPanelItemInstance : INotifyPropertyChanged
+{
+    private readonly TopPanelItem item;
+
+    public event PropertyChangedEventHandler PropertyChanged;
+    public object Icon => item.Icon;
+    public string Title => item.Title;
+    public bool Visible => item.Visible;
+
+    public V7TopPanelItemInstance(TopPanelItem item)
+    {
+        this.item = item ?? throw new ArgumentNullException(nameof(item));
+        item.PropertyChanged += (_, args) => PropertyChanged?.Invoke(this, args);
+    }
+
+    public void Activate() => item.Activated?.Invoke();
+}
+
 public sealed class V7MetadataProviderInstance : IDisposable
 {
     private readonly OnDemandMetadataProvider provider;
@@ -478,7 +572,13 @@ public sealed class V7LibraryMetadataProviderInstance : IDisposable
 
 internal sealed class V7PlayniteApi : IPlayniteAPI
 {
+    private sealed record ConverterRegistration(
+        Guid PluginId,
+        string SourceName,
+        IReadOnlyList<IValueConverter> Converters);
+
     private readonly Func<string, string, string> hostCall;
+    private readonly List<ConverterRegistration> converterRegistrations = [];
 
     public IMainViewAPI MainView { get; }
     public IGameDatabaseAPI Database { get; }
@@ -560,13 +660,29 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
             args.SettingsRoot
         }));
 
-    public void AddConvertersSupport(Plugin source, AddConvertersSupportArgs args) =>
+    public void AddConvertersSupport(Plugin source, AddConvertersSupportArgs args)
+    {
+        converterRegistrations.RemoveAll(item => item.PluginId == source.Id);
+        converterRegistrations.Add(new ConverterRegistration(
+            source.Id,
+            args.SourceName,
+            args.Converters?.ToList() ?? []));
         hostCall("AddConvertersSupport", Newtonsoft.Json.JsonConvert.SerializeObject(new
         {
             PluginId = source.Id,
             args.SourceName,
-            ConverterNames = args.Converters?.Select(converter => converter.GetType().FullName).ToList()
+            ConverterNames = args.Converters?.Select(converter => converter.GetType().Name).ToList()
         }));
+    }
+
+    internal IValueConverter GetConverter(Guid pluginId, string sourceName, string converterName)
+    {
+        var registration = converterRegistrations.FirstOrDefault(item =>
+            item.PluginId == pluginId &&
+            string.Equals(item.SourceName, sourceName, StringComparison.OrdinalIgnoreCase));
+        return registration?.Converters.FirstOrDefault(converter =>
+            string.Equals(converter.GetType().Name, converterName, StringComparison.Ordinal));
+    }
 
     public List<GamepadController> GetConnectedControllers() => [];
 

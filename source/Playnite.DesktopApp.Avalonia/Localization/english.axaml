@@ -33,6 +33,8 @@
     <x:String x:Key="LOCDesktopOpenPluginSettings">Open settings</x:String>
     <x:String x:Key="LOCDesktopPluginCommands">Plugin commands</x:String>
     <x:String x:Key="LOCDesktopRunPluginCommand">Run command</x:String>
+    <x:String x:Key="LOCDesktopPluginExtensions">Plugin extensions</x:String>
+    <x:String x:Key="LOCDesktopClosePluginView">Close plugin view</x:String>
     <x:String x:Key="LOCDesktopDetectInstalled">Detect installed programs</x:String>
     <x:String x:Key="LOCDesktopScanFolder">Scan folder</x:String>
     <x:String x:Key="LOCDesktopAddExecutable">Add executable</x:String>

@@ -38,6 +38,8 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
         extensions.LibraryPlugins.Concat(v7Plugins.LibraryPlugins).ToList();
     public IReadOnlyList<MetadataPlugin> MetadataPlugins =>
         extensions.MetadataPlugins.Concat(v7Plugins.MetadataPlugins).ToList();
+    public IReadOnlyList<AvaloniaPluginSidebarItem> PluginSidebarItems => v7Plugins.GetSidebarItems();
+    public IReadOnlyList<AvaloniaPluginTopPanelItem> PluginTopPanelItems => v7Plugins.GetTopPanelItems();
     public int LoadedPluginCount => extensions.Plugins.Count + v7Plugins.Plugins.Count;
     public int FailedPluginCount => extensions.FailedExtensions.Count + v7Plugins.FailedPlugins.Count;
 
@@ -122,13 +124,17 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
             pluginApi: globalApi);
         previousResourceProvider = ResourceProvider.SetGlobalProvider(globalApi.Resources);
         pluginConverterResolver = (pluginSource, converterName) =>
+            v7Plugins.ResolveConverter(pluginSource, converterName) ??
             WpfPluginSupportRuntime.ResolveConverter(extensions, pluginSource, converterName);
         PluginConverterRuntime.Resolver = pluginConverterResolver;
         pluginElementResolver = (pluginSource, elementName, gameContext) =>
         {
             try
             {
-                return WpfPluginElementFactory.Create(
+                return v7Plugins.ResolvePluginElement(
+                    pluginSource,
+                    elementName,
+                    gameContext as Game) ?? WpfPluginElementFactory.Create(
                     extensions,
                     callbacks.Mode,
                     pluginSource,

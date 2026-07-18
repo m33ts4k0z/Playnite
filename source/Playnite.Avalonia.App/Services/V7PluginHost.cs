@@ -1,7 +1,9 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Avalonia.Controls;
+using Avalonia.Data.Converters;
 using Playnite.API;
+using Playnite.Avalonia.Controls;
 using Playnite.Common;
 using Playnite.Controllers;
 using Playnite.Database;
@@ -38,6 +40,10 @@ public sealed class V7LoadedPlugin
     private readonly MethodInfo endSettingsEdit;
     private readonly MethodInfo cancelSettingsEdit;
     private readonly MethodInfo getMenuItems;
+    private readonly MethodInfo createGameViewControl;
+    private readonly MethodInfo getConverter;
+    private readonly MethodInfo getSidebarItems;
+    private readonly MethodInfo getTopPanelItems;
     private readonly MethodInfo dispose;
 
     public Guid Id { get; }
@@ -88,6 +94,10 @@ public sealed class V7LoadedPlugin
         endSettingsEdit = GetRequiredMethod(type, "EndSettingsEdit");
         cancelSettingsEdit = GetRequiredMethod(type, "CancelSettingsEdit");
         getMenuItems = GetRequiredMethod(type, "GetMenuItems");
+        createGameViewControl = GetRequiredMethod(type, "CreateGameViewControl");
+        getConverter = GetRequiredMethod(type, "GetConverter");
+        getSidebarItems = GetRequiredMethod(type, "GetSidebarItems");
+        getTopPanelItems = GetRequiredMethod(type, "GetTopPanelItems");
         dispose = GetRequiredMethod(type, nameof(IDisposable.Dispose));
     }
 
@@ -126,6 +136,12 @@ public sealed class V7LoadedPlugin
     public void CancelSettingsEdit() => Invoke(cancelSettingsEdit);
     internal object[] GetMenuItems(string kind, string gamesJson, bool globalSearchRequest) =>
         (object[])InvokeWithResult(getMenuItems, kind, gamesJson, globalSearchRequest);
+    internal object CreateGameViewControl(string name, ApplicationMode mode, string gameJson) =>
+        InvokeWithResult(createGameViewControl, name, mode.ToString(), gameJson);
+    internal IValueConverter GetConverter(string sourceName, string converterName) =>
+        (IValueConverter)InvokeWithResult(getConverter, sourceName, converterName);
+    internal object[] GetSidebarItems() => (object[])InvokeWithResult(getSidebarItems);
+    internal object[] GetTopPanelItems() => (object[])InvokeWithResult(getTopPanelItems);
 
     private T ReadProperty<T>(Type type, string name)
     {
@@ -247,6 +263,14 @@ internal sealed class V7PluginHost : IDisposable
         public string Buttons { get; set; }
     }
 
+    private sealed class UiRegistrationPayload
+    {
+        public Guid PluginId { get; set; }
+        public string SourceName { get; set; }
+        public List<string> ElementList { get; set; }
+        public List<string> ConverterNames { get; set; }
+    }
+
     private readonly GameDatabase database;
     private readonly AvaloniaHostCallbacks callbacks;
     private readonly GameControllerFactory controllers;
@@ -258,6 +282,8 @@ internal sealed class V7PluginHost : IDisposable
     private readonly string hostBundlePath;
     private readonly List<PluginLoadHandle> handles = [];
     private readonly List<Action> unsubscribeEvents = [];
+    private readonly List<UiRegistrationPayload> customElementRegistrations = [];
+    private readonly List<UiRegistrationPayload> converterRegistrations = [];
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, IV7ControllerAdapter>
         controllerAdapters = new();
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, JObject>
@@ -377,6 +403,8 @@ internal sealed class V7PluginHost : IDisposable
     {
         V7PluginLoadContext context = null;
         var constructedPlugins = new List<V7LoadedPlugin>();
+        var previousCustomRegistrations = customElementRegistrations.ToList();
+        var previousConverterRegistrations = converterRegistrations.ToList();
         try
         {
             if (string.IsNullOrWhiteSpace(manifest.Id))
@@ -425,6 +453,10 @@ internal sealed class V7PluginHost : IDisposable
                 Plugins.Remove(plugin);
             }
             context?.Unload();
+            customElementRegistrations.Clear();
+            customElementRegistrations.AddRange(previousCustomRegistrations);
+            converterRegistrations.Clear();
+            converterRegistrations.AddRange(previousConverterRegistrations);
         }
     }
 
@@ -481,8 +513,15 @@ internal sealed class V7PluginHost : IDisposable
                 RunGameOperation(payload, (runner, game) => runner.Uninstall(game));
                 return string.Empty;
             case "AddCustomElementSupport":
+                RegisterUiSupport(customElementRegistrations, payload);
+                PluginElementRuntime.NotifyRegistrationsChanged();
+                callbacks.SetStatus($"SDK v7 registered {operation}.");
+                return string.Empty;
             case "AddSettingsSupport":
+                callbacks.SetStatus($"SDK v7 registered {operation}.");
+                return string.Empty;
             case "AddConvertersSupport":
+                RegisterUiSupport(converterRegistrations, payload);
                 callbacks.SetStatus($"SDK v7 registered {operation}.");
                 return string.Empty;
             case "MarkdownToHtml":
@@ -490,6 +529,92 @@ internal sealed class V7PluginHost : IDisposable
             default:
                 return string.Empty;
         }
+    }
+
+    internal Control ResolvePluginElement(string sourceName, string elementName, Game game)
+    {
+        var registration = customElementRegistrations.LastOrDefault(item =>
+            string.Equals(item.SourceName, sourceName, StringComparison.OrdinalIgnoreCase) &&
+            item.ElementList?.Contains(elementName, StringComparer.Ordinal) == true);
+        var plugin = registration == null
+            ? null
+            : Plugins.FirstOrDefault(item => item.Id == registration.PluginId);
+        var instance = plugin?.CreateGameViewControl(
+            elementName,
+            callbacks.Mode,
+            V7DatabaseTransport.Serialize(game));
+        return instance == null ? null : new V7RemotePluginElementHost(instance);
+    }
+
+    internal IValueConverter ResolveConverter(string sourceName, string converterName)
+    {
+        var registration = converterRegistrations.LastOrDefault(item =>
+            string.Equals(item.SourceName, sourceName, StringComparison.OrdinalIgnoreCase) &&
+            item.ConverterNames?.Contains(converterName, StringComparer.Ordinal) == true);
+        var plugin = registration == null
+            ? null
+            : Plugins.FirstOrDefault(item => item.Id == registration.PluginId);
+        return plugin?.GetConverter(sourceName, converterName);
+    }
+
+    internal IReadOnlyList<AvaloniaPluginSidebarItem> GetSidebarItems()
+    {
+        var result = new List<AvaloniaPluginSidebarItem>();
+        foreach (var plugin in Plugins)
+        {
+            try
+            {
+                result.AddRange(plugin.GetSidebarItems()
+                    .Select(instance => new AvaloniaPluginSidebarItem(plugin.Id, plugin.Name, instance)));
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                callbacks.SetStatus(
+                    $"SDK v7 plugin {plugin.Name} sidebar discovery failed: {exception.Message}");
+            }
+        }
+
+        return result
+            .OrderByDescending(item => item.IsView)
+            .ThenBy(item => item.Title, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    internal IReadOnlyList<AvaloniaPluginTopPanelItem> GetTopPanelItems()
+    {
+        var result = new List<AvaloniaPluginTopPanelItem>();
+        foreach (var plugin in Plugins)
+        {
+            try
+            {
+                result.AddRange(plugin.GetTopPanelItems()
+                    .Select(instance => new AvaloniaPluginTopPanelItem(plugin.Id, plugin.Name, instance)));
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                callbacks.SetStatus(
+                    $"SDK v7 plugin {plugin.Name} top-panel discovery failed: {exception.Message}");
+            }
+        }
+
+        return result
+            .OrderBy(item => item.Title, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+    }
+
+    private static void RegisterUiSupport(
+        List<UiRegistrationPayload> registrations,
+        string payload)
+    {
+        var registration = JsonConvert.DeserializeObject<UiRegistrationPayload>(payload)
+            ?? throw new InvalidDataException("SDK v7 UI registration payload is empty.");
+        if (registration.PluginId == Guid.Empty || string.IsNullOrWhiteSpace(registration.SourceName))
+        {
+            throw new InvalidDataException("SDK v7 UI registration has no plugin or source identity.");
+        }
+
+        registrations.RemoveAll(item => item.PluginId == registration.PluginId);
+        registrations.Add(registration);
     }
 
     private void AddNotification(NotificationPayload payload)

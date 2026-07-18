@@ -78,6 +78,24 @@
                             </StackPanel>
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12"
                                         VerticalAlignment="Center">
+                                <ItemsControl ItemsSource="{Binding PluginTopPanelItems}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="8" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Command="{Binding Command}" IsVisible="{Binding Visible}"
+                                                    ToolTip.Tip="{Binding PluginName}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <ContentPresenter Content="{Binding Icon}" MaxWidth="18" MaxHeight="18" />
+                                                    <TextBlock Text="{Binding Title}" />
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                                 <TextBlock Text="{Binding LibrarySummary}" VerticalAlignment="Center"
                                            Foreground="{DynamicResource DesktopMutedBrush}" />
                                 <Button Command="{Binding ToggleNotificationsCommand}"
@@ -147,6 +165,25 @@
                                             Command="{Binding OpenPluginSettingsListCommand}" />
                                     <Button Content="{DynamicResource LOCDesktopPluginCommands}"
                                             Command="{Binding OpenPluginMainMenuCommand}" />
+                                    <TextBlock Text="{DynamicResource LOCDesktopPluginExtensions}"
+                                               Classes="sectionLabel" Margin="0,6,0,0" />
+                                    <ItemsControl ItemsSource="{Binding PluginSidebarItems}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel IsVisible="{Binding Visible}" Spacing="2">
+                                                    <Button Command="{Binding Command}"
+                                                            ToolTip.Tip="{Binding PluginName}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="7">
+                                                            <ContentPresenter Content="{Binding Icon}" MaxWidth="20" MaxHeight="20" />
+                                                            <TextBlock Text="{Binding Title}" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <ProgressBar Height="3" Value="{Binding ProgressValue}"
+                                                                 Maximum="{Binding ProgressMaximum}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </ScrollViewer>
                         </Border>
@@ -422,6 +459,25 @@
                                     <Button Content="{DynamicResource LOCDesktopCancel}"
                                             Command="{Binding CloseOverlayCommand}" />
                                 </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsPluginSidebarVisible}"
+                          Background="#E6000000">
+                        <Border Width="900" MaxHeight="760" Padding="30" CornerRadius="14"
+                                Background="{DynamicResource DesktopPanelStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16">
+                                <TextBlock Text="{Binding PluginSidebarTitle}" FontSize="30"
+                                           FontWeight="Bold" Foreground="{DynamicResource DesktopTextBrush}" />
+                                <Border Grid.Row="1" MinHeight="320" MaxHeight="580" Padding="16"
+                                        Background="{DynamicResource DesktopPanelBrush}" CornerRadius="8">
+                                    <ContentControl Content="{Binding PluginSidebarContent}" />
+                                </Border>
+                                <Button Grid.Row="2" HorizontalAlignment="Left"
+                                        Content="{DynamicResource LOCDesktopClosePluginView}"
+                                        Command="{Binding ClosePluginSidebarCommand}" />
                             </Grid>
                         </Border>
                     </Grid>

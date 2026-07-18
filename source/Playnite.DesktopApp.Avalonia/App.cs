@@ -93,6 +93,7 @@ public sealed class App : Application
             // Parse the loose theme before third-party assemblies enter the process. A plugin
             // with an incompatible dependency must not interfere with Avalonia's XAML discovery.
             runtimeHost?.InitializePlugins(!options.SelfTest);
+            viewModel.RefreshPluginSurfaces();
             desktop.Exit += (_, _) =>
             {
                 runtimeHost?.Dispose();

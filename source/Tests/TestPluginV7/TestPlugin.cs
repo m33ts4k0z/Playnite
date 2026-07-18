@@ -3,8 +3,11 @@ using Playnite.SDK.Data;
 using Playnite.SDK.Events;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
+using Playnite.SDK.Controls;
 using Avalonia.Controls;
 using Avalonia.Data;
+using Avalonia.Data.Converters;
+using System.Globalization;
 
 namespace TestPluginV7;
 
@@ -34,6 +37,16 @@ public sealed class TestPlugin : LibraryPlugin
             CanShutdownClient = true,
             HasCustomizedGameImport = false
         };
+        AddCustomElementSupport(new AddCustomElementSupportArgs
+        {
+            SourceName = "TestSdkV7",
+            ElementList = ["GameStatus"]
+        });
+        AddConvertersSupport(new AddConvertersSupportArgs
+        {
+            SourceName = "TestSdkV7",
+            Converters = [new TestPrefixConverter()]
+        });
         File.AppendAllLines(EventPath, ["constructed:" + api.ApplicationInfo.Mode]);
         api.Notifications.Add("test-v7-loaded", "SDK v7 plugin constructed", NotificationType.Info);
     }
@@ -67,6 +80,62 @@ public sealed class TestPlugin : LibraryPlugin
                 args.IsGlobalSearchRequest
             ])
         };
+    }
+
+    public override Control GetGameViewControl(GetGameViewControlArgs args)
+    {
+        if (args.Name != "GameStatus")
+        {
+            return null!;
+        }
+
+        File.AppendAllLines(EventPath, [$"element-created:{args.Mode}"]);
+        return new TestGameView();
+    }
+
+    public override IEnumerable<SidebarItem> GetSidebarItems()
+    {
+        var quickAction = new SidebarItem
+        {
+            Type = SiderbarItemType.Button,
+            Title = "SDK v7 quick action",
+            Icon = "quick-action-icon",
+            ProgressValue = 25,
+            ProgressMaximum = 100
+        };
+        quickAction.Activated = () =>
+        {
+            quickAction.ProgressValue = 50;
+            File.AppendAllLines(EventPath, ["sidebar-activated"]);
+        };
+        yield return quickAction;
+        yield return new SidebarItem
+        {
+            Type = SiderbarItemType.View,
+            Title = "SDK v7 sidebar view",
+            Icon = "sidebar-view-icon",
+            Opened = () =>
+            {
+                File.AppendAllLines(EventPath, ["sidebar-opened"]);
+                return new TextBlock { Text = "SDK v7 sidebar content" };
+            },
+            Closed = () => File.AppendAllLines(EventPath, ["sidebar-closed"])
+        };
+    }
+
+    public override IEnumerable<TopPanelItem> GetTopPanelItems()
+    {
+        var item = new TopPanelItem
+        {
+            Title = "SDK v7 top action",
+            Icon = "top-action-icon"
+        };
+        item.Activated = () =>
+        {
+            item.Title = "SDK v7 top action used";
+            File.AppendAllLines(EventPath, ["top-panel-activated"]);
+        };
+        yield return item;
     }
 
     public override Control GetSettingsView(bool firstRunView)
@@ -292,6 +361,28 @@ public sealed class TestPlugin : LibraryPlugin
         public TestLibraryClient(string eventPath) => this.eventPath = eventPath;
         public override void Open() => File.AppendAllLines(eventPath, ["library-client-open"]);
         public override void Shutdown() => File.AppendAllLines(eventPath, ["library-client-shutdown"]);
+    }
+
+    private sealed class TestGameView : PluginUserControl
+    {
+        public TestGameView()
+        {
+            var text = new TextBlock();
+            text.Bind(TextBlock.TextProperty, new Binding("GameContext.Name")
+            {
+                Source = this
+            });
+            Content = text;
+        }
+    }
+
+    public sealed class TestPrefixConverter : IValueConverter
+    {
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+            $"sdk-v7:{value}";
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+            value?.ToString()?.Replace("sdk-v7:", string.Empty, StringComparison.Ordinal);
     }
 
     private sealed class TestLibraryMetadataProvider : LibraryMetadataProvider

@@ -1,12 +1,16 @@
 using NUnit.Framework;
 using Playnite.API;
 using Playnite.Avalonia.App.Services;
+using Playnite.Avalonia.Controls;
+using Playnite.Avalonia.Markup;
 using Playnite.Controllers;
 using Playnite.Database;
 using Playnite.Metadata;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
+using Avalonia.Controls;
+using System.Globalization;
 using System.IO;
 
 namespace Playnite.Avalonia.App.V7.Tests;
@@ -298,6 +302,41 @@ public class V7PluginHostTests
         var gameMenu = runtime.GetGameMenuActions([database.Games[game.Id]]);
         Assert.That(gameMenu.Single().DisplayName, Is.EqualTo("SDK v7 > Game > SDK v7 game command"));
         gameMenu.Single().Invoke();
+        var pluginElement = PluginElementRuntime.Resolver(
+            "TestSdkV7",
+            "GameStatus",
+            database.Games[game.Id]);
+        Assert.That(pluginElement, Is.TypeOf<V7RemotePluginElementHost>());
+        var pluginControl = (ContentControl)((ContentControl)pluginElement).Content;
+        var pluginLabel = (TextBlock)pluginControl.Content;
+        Assert.That(pluginLabel.Text, Is.EqualTo("SDK v7 bridge game updated"));
+        ((IPluginElementContextSink)pluginElement).GameContext = database.Games[cancelledGame.Id];
+        Assert.That(pluginLabel.Text, Is.EqualTo("SDK v7 cancel game"));
+        var converter = new PluginConverterProvider("TestSdkV7", "TestPrefixConverter");
+        Assert.That(
+            converter.Convert("value", typeof(string), null, CultureInfo.InvariantCulture),
+            Is.EqualTo("sdk-v7:value"));
+        var sidebarItems = runtime.PluginSidebarItems;
+        Assert.That(sidebarItems, Has.Count.EqualTo(2));
+        var sidebarButton = sidebarItems.Single(item => !item.IsView);
+        Assert.That(sidebarButton.ProgressValue, Is.EqualTo(25));
+        var sidebarChanged = false;
+        sidebarButton.PropertyChanged += (_, args) =>
+            sidebarChanged |= args.PropertyName == nameof(sidebarButton.ProgressValue);
+        sidebarButton.Activate();
+        Assert.That(sidebarButton.ProgressValue, Is.EqualTo(50));
+        Assert.That(sidebarChanged, Is.True);
+        var sidebarView = sidebarItems.Single(item => item.IsView);
+        Assert.That(((TextBlock)sidebarView.Open()).Text, Is.EqualTo("SDK v7 sidebar content"));
+        sidebarView.Close();
+        var topPanelItem = runtime.PluginTopPanelItems.Single();
+        Assert.That(topPanelItem.Title, Is.EqualTo("SDK v7 top action"));
+        var topPanelChanged = false;
+        topPanelItem.PropertyChanged += (_, args) =>
+            topPanelChanged |= args.PropertyName == nameof(topPanelItem.Title);
+        topPanelItem.Activate();
+        Assert.That(topPanelItem.Title, Is.EqualTo("SDK v7 top action used"));
+        Assert.That(topPanelChanged, Is.True);
         var importedLibraryGames = database.ImportGames(
             runtime.LibraryPlugins[0],
             CancellationToken.None,
@@ -339,6 +378,11 @@ public class V7PluginHostTests
         Assert.That(events, Does.Contain("event-library-updated"));
         Assert.That(events, Does.Contain("menu-main:SDK v7 main command:False"));
         Assert.That(events, Does.Contain("menu-game:SDK v7 bridge game updated:False"));
+        Assert.That(events, Does.Contain("element-created:Desktop"));
+        Assert.That(events, Does.Contain("sidebar-activated"));
+        Assert.That(events, Does.Contain("sidebar-opened"));
+        Assert.That(events, Does.Contain("sidebar-closed"));
+        Assert.That(events, Does.Contain("top-panel-activated"));
     }
 
     [Test]

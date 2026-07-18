@@ -70,6 +70,10 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     private bool isPluginMenuVisible;
     private string pluginMenuTitle;
     private PluginMenuAction selectedPluginMenuItem;
+    private bool isPluginSidebarVisible;
+    private string pluginSidebarTitle;
+    private global::Avalonia.Controls.Control pluginSidebarContent;
+    private AvaloniaPluginSidebarItem activePluginSidebarItem;
 
     public event PropertyChangedEventHandler PropertyChanged;
     public event EventHandler SettingsChanged;
@@ -294,11 +298,28 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public ObservableCollection<string> ActionChoices { get; } = new();
     public ObservableCollection<string> DialogOptions { get; } = new();
     public ObservableCollection<PluginMenuAction> PluginMenuItems { get; } = new();
+    public ObservableCollection<DesktopPluginSidebarItem> PluginSidebarItems { get; } = new();
+    public ObservableCollection<DesktopPluginTopPanelItem> PluginTopPanelItems { get; } = new();
     public bool IsNotificationsVisible { get => isNotificationsVisible; private set => SetField(ref isNotificationsVisible, value); }
     public bool IsActionPickerVisible { get => isActionPickerVisible; private set => SetField(ref isActionPickerVisible, value); }
     public bool IsDialogVisible { get => isDialogVisible; private set => SetField(ref isDialogVisible, value); }
     public bool IsPluginMenuVisible { get => isPluginMenuVisible; private set => SetField(ref isPluginMenuVisible, value); }
     public string PluginMenuTitle { get => pluginMenuTitle; private set => SetField(ref pluginMenuTitle, value); }
+    public bool IsPluginSidebarVisible
+    {
+        get => isPluginSidebarVisible;
+        private set => SetField(ref isPluginSidebarVisible, value);
+    }
+    public string PluginSidebarTitle
+    {
+        get => pluginSidebarTitle;
+        private set => SetField(ref pluginSidebarTitle, value);
+    }
+    public global::Avalonia.Controls.Control PluginSidebarContent
+    {
+        get => pluginSidebarContent;
+        private set => SetField(ref pluginSidebarContent, value);
+    }
     public PluginMenuAction SelectedPluginMenuItem
     {
         get => selectedPluginMenuItem;
@@ -354,6 +375,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand OpenPluginMainMenuCommand { get; }
     public ICommand OpenPluginGameMenuCommand { get; }
     public ICommand InvokePluginMenuItemCommand { get; }
+    public ICommand ClosePluginSidebarCommand { get; }
     public ICommand SetGridViewCommand { get; }
     public ICommand SetListViewCommand { get; }
     public ICommand ClearSearchCommand { get; }
@@ -517,6 +539,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         InvokePluginMenuItemCommand = new AppRelayCommand(
             InvokeSelectedPluginMenuItem,
             () => IsPluginMenuVisible && SelectedPluginMenuItem != null);
+        ClosePluginSidebarCommand = new AppRelayCommand(ClosePluginSidebar);
         SetGridViewCommand = new AppRelayCommand(() => SelectedViewMode = "Grid");
         SetListViewCommand = new AppRelayCommand(() => SelectedViewMode = "List");
         ClearSearchCommand = new AppRelayCommand(() => SearchText = string.Empty, () => SearchText.Length > 0);
@@ -555,7 +578,27 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             host.NotifyLibraryUpdated);
         InstalledGameImport.ConfigureLibraryUpdated(host.NotifyLibraryUpdated);
         PluginSettings.Configure(host.Extensions, host.V7Plugins);
+        RefreshPluginSurfaces();
         RaiseGameCommandStates();
+    }
+
+    public void RefreshPluginSurfaces()
+    {
+        if (runtimeHost == null)
+        {
+            return;
+        }
+
+        PluginSidebarItems.Clear();
+        foreach (var item in runtimeHost.PluginSidebarItems)
+        {
+            PluginSidebarItems.Add(new DesktopPluginSidebarItem(item, ActivatePluginSidebarItem));
+        }
+        PluginTopPanelItems.Clear();
+        foreach (var item in runtimeHost.PluginTopPanelItems)
+        {
+            PluginTopPanelItems.Add(new DesktopPluginTopPanelItem(item, ActivatePluginTopPanelItem));
+        }
     }
 
     public void SelectGame(Guid gameId)
@@ -848,6 +891,77 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         }
     }
 
+    private void ActivatePluginSidebarItem(AvaloniaPluginSidebarItem item)
+    {
+        try
+        {
+            if (!item.IsView)
+            {
+                item.Activate();
+                StatusText = $"Ran {item.Title} from {item.PluginName}.";
+                return;
+            }
+
+            CloseOverlays();
+            var content = item.Open();
+            if (content == null)
+            {
+                StatusText = $"Plugin view {item.Title} did not return any content.";
+                return;
+            }
+
+            activePluginSidebarItem = item;
+            PluginSidebarTitle = item.Title;
+            PluginSidebarContent = content;
+            IsPluginSidebarVisible = true;
+            StatusText = $"Opened {item.Title} from {item.PluginName}.";
+            RaiseGameCommandStates();
+        }
+        catch (Exception exception)
+        {
+            var message = $"Plugin sidebar item {item.Title} failed: {exception.Message}";
+            runtimeHost?.ShowMessage(message, true);
+            StatusText = message;
+        }
+    }
+
+    private void ActivatePluginTopPanelItem(AvaloniaPluginTopPanelItem item)
+    {
+        try
+        {
+            item.Activate();
+            StatusText = $"Ran {item.Title} from {item.PluginName}.";
+        }
+        catch (Exception exception)
+        {
+            var message = $"Plugin top-panel item {item.Title} failed: {exception.Message}";
+            runtimeHost?.ShowMessage(message, true);
+            StatusText = message;
+        }
+    }
+
+    private void ClosePluginSidebar()
+    {
+        var item = activePluginSidebarItem;
+        activePluginSidebarItem = null;
+        PluginSidebarContent = null;
+        IsPluginSidebarVisible = false;
+        if (item != null)
+        {
+            try
+            {
+                item.Close();
+            }
+            catch (Exception exception)
+            {
+                var message = $"Plugin sidebar item {item.Title} failed to close: {exception.Message}";
+                runtimeHost?.ShowMessage(message, true);
+                StatusText = message;
+            }
+        }
+        RaiseGameCommandStates();
+    }
+
     private void ConfirmActionChoice()
     {
         var index = ActionChoices.IndexOf(SelectedActionChoice);
@@ -880,6 +994,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         IsDialogVisible = false;
         IsPluginMenuVisible = false;
         SelectedPluginMenuItem = null;
+        ClosePluginSidebar();
     }
 
     private void ApplyFilters()
