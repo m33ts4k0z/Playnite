@@ -5,6 +5,7 @@ using System.Windows.Input;
 using Avalonia.Threading;
 using Playnite.Database;
 using Playnite.DesktopApp.Avalonia.Services;
+using Playnite.Emulators;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
@@ -34,6 +35,7 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
     public event EventHandler SettingsChanged;
 
     public ObservableCollection<DesktopLibraryPluginOption> Libraries { get; } = new();
+    public ObservableCollection<DesktopGameScannerOption> GameScanners { get; } = new();
     public IReadOnlyList<PlaytimeImportMode> PlaytimeModes { get; } =
         Enum.GetValues<PlaytimeImportMode>();
 
@@ -144,9 +146,10 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
         ProgressTotal = 0;
         ProgressText = string.Empty;
         RefreshLibraries();
-        if (Libraries.Count == 0)
+        RefreshGameScanners();
+        if (Libraries.Count == 0 && GameScanners.Count == 0)
         {
-            ErrorText = "No library plugins are currently loaded.";
+            ErrorText = "No library plugins or saved emulated-game scanners are available.";
         }
 
         IsVisible = true;
@@ -184,21 +187,32 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
             .GroupBy(plugin => plugin.Id)
             .Select(group => group.First())
             .ToList();
-        if (selectedPlugins.Count == 0)
+        var selectedScannerIds = GameScanners
+            .Where(option => option.IsSelected)
+            .Select(option => option.Id)
+            .ToHashSet();
+        var selectedScanners = database.GameScanners
+            .Where(scanner => selectedScannerIds.Contains(scanner.Id))
+            .GroupBy(scanner => scanner.Id)
+            .Select(group => group.First())
+            .ToList();
+        var sourceCount = selectedPlugins.Count + selectedScanners.Count;
+        if (sourceCount == 0)
         {
-            ErrorText = "Select at least one loaded library plugin.";
+            ErrorText = "Select at least one loaded library plugin or saved emulated-game scanner.";
             return false;
         }
 
         ErrorText = null;
         ProgressValue = 0;
-        ProgressTotal = selectedPlugins.Count;
+        ProgressTotal = sourceCount;
         ProgressText = $"Updating libraries [0/{ProgressTotal}]";
         IsRunning = true;
         cancellationSource = new CancellationTokenSource();
         var token = cancellationSource.Token;
         var addedGames = new List<Game>();
         var failures = new List<string>();
+        var completedSources = 0;
 
         try
         {
@@ -210,7 +224,7 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
                 }
 
                 var plugin = selectedPlugins[index];
-                ProgressText = $"Importing {plugin.Name} [{index + 1}/{selectedPlugins.Count}]";
+                ProgressText = $"Importing {plugin.Name} [{completedSources + 1}/{sourceCount}]";
                 try
                 {
                     var beforeIds = database.Games.Select(game => game.Id).ToHashSet();
@@ -236,7 +250,69 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
                     failures.Add($"{plugin.Name}: {exception.Message}");
                 }
 
-                ProgressValue = index + 1;
+                completedSources++;
+                ProgressValue = completedSources;
+                await Dispatcher.UIThread.InvokeAsync(synchronizeLibrary);
+            }
+
+            foreach (var scanner in selectedScanners)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                var scannerName = string.IsNullOrWhiteSpace(scanner.Name)
+                    ? scanner.Directory
+                    : scanner.Name;
+                ProgressText = $"Scanning {scannerName} [{completedSources + 1}/{sourceCount}]";
+                try
+                {
+                    var scanResult = await Task.Run(() =>
+                    {
+                        var games = new GameScanner(scanner, database).Scan(
+                                token,
+                                out var newPlatforms,
+                                out var newRegions)
+                            .Select(result => result.ToGame())
+                            .ToList();
+                        return new DesktopScannerImportResult(games, newPlatforms, newRegions);
+                    }, token);
+
+                    if (!token.IsCancellationRequested && scanResult.Games.Count > 0)
+                    {
+                        if (scanResult.NewPlatforms.Count > 0)
+                        {
+                            database.Platforms.Add(scanResult.NewPlatforms);
+                        }
+
+                        if (scanResult.NewRegions.Count > 0)
+                        {
+                            database.Regions.Add(scanResult.NewRegions);
+                        }
+
+                        var defaultStatusId = database.GetCompletionStatusSettings().DefaultStatus;
+                        if (defaultStatusId != Guid.Empty)
+                        {
+                            scanResult.Games.ForEach(game => game.CompletionStatusId = defaultStatusId);
+                        }
+
+                        database.Games.Add(scanResult.Games);
+                        addedGames.AddRange(scanResult.Games);
+                    }
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception exception)
+                {
+                    logger.Error(exception, $"Failed to import emulated games from {scannerName}.");
+                    failures.Add($"{scannerName}: {exception.Message}");
+                }
+
+                completedSources++;
+                ProgressValue = completedSources;
                 await Dispatcher.UIThread.InvokeAsync(synchronizeLibrary);
             }
 
@@ -312,7 +388,7 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
     {
         Libraries.Clear();
         var savedIds = settings.LibraryPluginIds ?? new List<Guid>();
-        var selectAll = savedIds.Count == 0;
+        var selectAll = !settings.LibraryPluginSelectionConfigured && savedIds.Count == 0;
         foreach (var plugin in (libraryPlugins() ?? new List<LibraryPlugin>())
                      .Where(plugin => plugin != null)
                      .GroupBy(plugin => plugin.Id)
@@ -331,11 +407,47 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
         }
     }
 
+    private void RefreshGameScanners()
+    {
+        GameScanners.Clear();
+        var savedIds = settings.GameScannerIds ?? new List<Guid>();
+        var selectGlobalScanners = !settings.GameScannerSelectionConfigured && savedIds.Count == 0;
+        foreach (var scanner in database.GameScanners
+                     .GroupBy(scanner => scanner.Id)
+                     .Select(group => group.First())
+                     .OrderBy(scanner => scanner.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            var emulatorName = database.Emulators[scanner.EmulatorId]?.Name ?? "Missing emulator";
+            var scannerName = string.IsNullOrWhiteSpace(scanner.Name) ? scanner.Directory : scanner.Name;
+            var option = new DesktopGameScannerOption(
+                scanner.Id,
+                scannerName,
+                $"{emulatorName} · {scanner.Directory}",
+                selectGlobalScanners ? scanner.InGlobalUpdate : savedIds.Contains(scanner.Id));
+            option.PropertyChanged += GameScanner_PropertyChanged;
+            GameScanners.Add(option);
+        }
+    }
+
     private void Library_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(DesktopLibraryPluginOption.IsSelected))
         {
+            settings.LibraryPluginSelectionConfigured = true;
             settings.LibraryPluginIds = Libraries
+                .Where(option => option.IsSelected)
+                .Select(option => option.Id)
+                .ToList();
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void GameScanner_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(DesktopGameScannerOption.IsSelected))
+        {
+            settings.GameScannerSelectionConfigured = true;
+            settings.GameScannerIds = GameScanners
                 .Where(option => option.IsSelected)
                 .Select(option => option.Id)
                 .ToList();
@@ -358,6 +470,11 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
     private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
+
+internal sealed record DesktopScannerImportResult(
+    List<Game> Games,
+    List<Platform> NewPlatforms,
+    List<Region> NewRegions);
 
 public sealed class DesktopLibraryPluginOption : INotifyPropertyChanged
 {
@@ -383,6 +500,38 @@ public sealed class DesktopLibraryPluginOption : INotifyPropertyChanged
     }
 
     public DesktopLibraryPluginOption(Guid id, string name, string detail, bool isSelected)
+    {
+        Id = id;
+        Name = name;
+        Detail = detail;
+        this.isSelected = isSelected;
+    }
+}
+
+public sealed class DesktopGameScannerOption : INotifyPropertyChanged
+{
+    private bool isSelected;
+
+    public event PropertyChangedEventHandler PropertyChanged;
+    public Guid Id { get; }
+    public string Name { get; }
+    public string Detail { get; }
+    public bool IsSelected
+    {
+        get => isSelected;
+        set
+        {
+            if (isSelected == value)
+            {
+                return;
+            }
+
+            isSelected = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+        }
+    }
+
+    public DesktopGameScannerOption(Guid id, string name, string detail, bool isSelected)
     {
         Id = id;
         Name = name;

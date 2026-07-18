@@ -345,7 +345,22 @@
                                 <ScrollViewer Grid.Row="1" MaxHeight="520">
                                     <StackPanel Spacing="15" IsEnabled="{Binding LibrarySync.CanConfigure}">
                                         <TextBlock Text="{DynamicResource LOCDesktopLibraries}" Classes="sectionLabel" />
-                                        <ListBox MaxHeight="270" ItemsSource="{Binding LibrarySync.Libraries}">
+                                        <ListBox MaxHeight="190" ItemsSource="{Binding LibrarySync.Libraries}">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="2,4">
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource DesktopTextBrush}" />
+                                                            <TextBlock Text="{Binding Detail}" FontSize="10" TextWrapping="Wrap"
+                                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                        </StackPanel>
+                                                    </CheckBox>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                        <TextBlock Text="Saved emulated-game scanners" Classes="sectionLabel" />
+                                        <ListBox MaxHeight="190" ItemsSource="{Binding LibrarySync.GameScanners}">
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
                                                     <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="2,4">

@@ -758,6 +758,7 @@ internal static class DesktopPilotSelfTest
         viewModel.SelectedFilterPreset = viewModel.FilterPresets.FirstOrDefault(preset => preset.Name == "All");
         viewModel.OpenLibrarySyncCommand.Execute(null);
         SelectOnly(viewModel.LibrarySync.Libraries, libraryPlugin.Id);
+        SelectOnly(viewModel.LibrarySync.GameScanners);
 
         Record(results, "Native library update exposes loaded integrations and import policy", () =>
             viewModel.LibrarySync.IsVisible &&
@@ -812,11 +813,98 @@ internal static class DesktopPilotSelfTest
             importedLibraryGame.InstallDirectory == PilotLibraryPlugin.SecondInstallDirectory &&
             importedWrapper != null &&
             !importedWrapper.IsInstalled &&
+            viewModel.LibrarySync.GameScanners.All(option => !option.IsSelected) &&
             metadataPlugin.ProviderCreationCount == metadataProvidersBeforeRefresh &&
             libraryPlugin.GetGamesCallCount == 2 &&
             libraryUpdatedCount == 2
                 ? "the existing plugin game refreshed playtime/install state with no duplicate or metadata request"
                 : throw new InvalidOperationException("Existing library state was duplicated, stale, or redownloaded unexpectedly."));
+
+        var scannerConfig = library.Database.GameScanners.Single(scanner => scanner.Name == "Pilot ROM scanner");
+        viewModel.OpenLibrarySyncCommand.Execute(null);
+        SelectOnly(viewModel.LibrarySync.Libraries);
+        SelectOnly(viewModel.LibrarySync.GameScanners, scannerConfig.Id);
+        viewModel.LibrarySync.DownloadMetadataOnImport = true;
+
+        Record(results, "Native library update exposes saved emulated-game scanners", () =>
+            viewModel.LibrarySync.IsVisible &&
+            viewModel.LibrarySync.GameScanners.Count == 1 &&
+            viewModel.LibrarySync.GameScanners[0].Id == scannerConfig.Id &&
+            viewModel.LibrarySync.GameScanners[0].IsSelected &&
+            viewModel.LibrarySync.GameScanners[0].Detail.Contains("Pilot Emulator", StringComparison.Ordinal)
+                ? "the saved Core scanner is selectable beside library integrations"
+                : throw new InvalidOperationException("The saved scanner configuration was not exposed by the update workflow."));
+
+        var gamesBeforeScannerImport = library.Database.Games.Count;
+        var regionsBeforeScannerImport = library.Database.Regions.Count;
+        var metadataProvidersBeforeScannerImport = metadataPlugin.ProviderCreationCount;
+        var libraryUpdatesBeforeScannerImport = libraryUpdatedCount;
+        var firstScannerSync = await viewModel.LibrarySync.StartSyncAsync();
+        var scannedGame = library.Database.Games.FirstOrDefault(game => game.Name == "Pilot Scanner Game");
+        var scannedRegion = scannedGame?.RegionIds
+            ?.Select(id => library.Database.Regions[id])
+            .FirstOrDefault(region => region?.Name == "Sweden" && !string.IsNullOrWhiteSpace(region.SpecificationId));
+        var scannerEmulator = library.Database.Emulators[scannerConfig.EmulatorId];
+        var scannerPlatformId = scannerEmulator.CustomProfiles
+            .Single(profile => profile.Id == scannerConfig.EmulatorProfileId)
+            .Platforms.Single();
+        var defaultCompletionStatusId = library.Database.GetCompletionStatusSettings().DefaultStatus;
+
+        Record(results, "Core scanner imports ROM state, discoveries, metadata, and live wrappers", () =>
+        {
+            var coverExists = scannedGame != null &&
+                File.Exists(library.Database.GetFullFilePath(scannedGame.CoverImage));
+            var iconExists = scannedGame != null &&
+                File.Exists(library.Database.GetFullFilePath(scannedGame.Icon));
+            var wrapperExists = scannedGame != null &&
+                viewModel.Games.Any(game => game.Game.Id == scannedGame.Id);
+            if (firstScannerSync &&
+                scannedGame != null &&
+                library.Database.Games.Count == gamesBeforeScannerImport + 1 &&
+                library.Database.Regions.Count == regionsBeforeScannerImport + 1 &&
+                scannedRegion != null &&
+                scannedGame.PlatformIds?.Contains(scannerPlatformId) == true &&
+                defaultCompletionStatusId != Guid.Empty &&
+                scannedGame.CompletionStatusId == defaultCompletionStatusId &&
+                scannedGame.Roms?.Count == 1 &&
+                scannedGame.GameActions?.SingleOrDefault()?.EmulatorId == scannerConfig.EmulatorId &&
+                scannedGame.Description == PilotMetadataPlugin.DownloadedDescription &&
+                coverExists &&
+                iconExists &&
+                wrapperExists &&
+                metadataPlugin.ProviderCreationCount == metadataProvidersBeforeScannerImport + 1 &&
+                libraryUpdatedCount == libraryUpdatesBeforeScannerImport + 1)
+            {
+                return $"{scannedGame.Name} imported with {scannedRegion.Name}, its configured platform, owned artwork, and default status";
+            }
+
+            throw new InvalidOperationException(
+                $"sync={firstScannerSync}, game={scannedGame?.Name ?? "<null>"}, " +
+                $"games={library.Database.Games.Count}/{gamesBeforeScannerImport + 1}, " +
+                $"regions={library.Database.Regions.Count}/{regionsBeforeScannerImport + 1}, " +
+                $"region={scannedRegion?.Name ?? "<null>"}, platform={scannedGame?.PlatformIds?.Contains(scannerPlatformId)}, " +
+                $"status={scannedGame?.CompletionStatusId}/{defaultCompletionStatusId}, roms={scannedGame?.Roms?.Count}, " +
+                $"emulator={scannedGame?.GameActions?.SingleOrDefault()?.EmulatorId}/{scannerConfig.EmulatorId}, " +
+                $"description={scannedGame?.Description}, media={coverExists}/{iconExists}, wrapper={wrapperExists}, " +
+                $"providers={metadataPlugin.ProviderCreationCount}/{metadataProvidersBeforeScannerImport + 1}, " +
+                $"updates={libraryUpdatedCount}/{libraryUpdatesBeforeScannerImport + 1}.");
+        });
+
+        viewModel.OpenLibrarySyncCommand.Execute(null);
+        SelectOnly(viewModel.LibrarySync.Libraries);
+        var gamesBeforeScannerRescan = library.Database.Games.Count;
+        var metadataProvidersBeforeScannerRescan = metadataPlugin.ProviderCreationCount;
+        var libraryUpdatesBeforeScannerRescan = libraryUpdatedCount;
+        var secondScannerSync = await viewModel.LibrarySync.StartSyncAsync();
+
+        Record(results, "Core scanner rescan excludes already imported ROM paths", () =>
+            secondScannerSync &&
+            library.Database.Games.Count == gamesBeforeScannerRescan &&
+            library.Database.Games.Count(game => game.Name == "Pilot Scanner Game") == 1 &&
+            metadataPlugin.ProviderCreationCount == metadataProvidersBeforeScannerRescan &&
+            libraryUpdatedCount == libraryUpdatesBeforeScannerRescan + 1
+                ? "the saved scanner completed again without a duplicate game or metadata request"
+                : throw new InvalidOperationException("The scanner rescan duplicated or redownloaded an imported ROM."));
 
         viewModel.MetadataDownload.ConfigureProviders(
             () => window.RuntimeHost.Extensions.MetadataPlugins,
@@ -841,6 +929,9 @@ internal static class DesktopPilotSelfTest
                 MetadataSourceIds = new List<Guid> { metadataPlugin.Id },
                 MetadataFields = new List<MetadataField> { MetadataField.Description, MetadataField.CoverImage },
                 LibraryPluginIds = new List<Guid> { libraryPlugin.Id },
+                LibraryPluginSelectionConfigured = true,
+                GameScannerIds = new List<Guid> { scannerConfig.Id },
+                GameScannerSelectionConfigured = true,
                 LibraryPlaytimeImportMode = PlaytimeImportMode.Always,
                 DownloadMetadataOnImport = false
             });
@@ -856,6 +947,9 @@ internal static class DesktopPilotSelfTest
                 !loaded.MetadataSourceIds.SequenceEqual(new[] { metadataPlugin.Id }) ||
                 !loaded.MetadataFields.SequenceEqual(new[] { MetadataField.Description, MetadataField.CoverImage }) ||
                 !loaded.LibraryPluginIds.SequenceEqual(new[] { libraryPlugin.Id }) ||
+                !loaded.LibraryPluginSelectionConfigured ||
+                !loaded.GameScannerIds.SequenceEqual(new[] { scannerConfig.Id }) ||
+                !loaded.GameScannerSelectionConfigured ||
                 loaded.LibraryPlaytimeImportMode != PlaytimeImportMode.Always ||
                 loaded.DownloadMetadataOnImport)
             {
@@ -922,6 +1016,17 @@ internal static class DesktopPilotSelfTest
 
     private static void SelectOnly(
         IEnumerable<DesktopLibraryPluginOption> options,
+        params Guid[] selectedIds)
+    {
+        var selected = selectedIds.ToHashSet();
+        foreach (var option in options)
+        {
+            option.IsSelected = selected.Contains(option.Id);
+        }
+    }
+
+    private static void SelectOnly(
+        IEnumerable<DesktopGameScannerOption> options,
         params Guid[] selectedIds)
     {
         var selected = selectedIds.ToHashSet();

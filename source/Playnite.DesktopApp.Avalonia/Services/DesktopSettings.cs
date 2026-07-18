@@ -29,6 +29,9 @@ public sealed class DesktopSettings : IAvaloniaHostSettings
     public List<Guid> MetadataSourceIds { get; set; } = new();
     public List<MetadataField> MetadataFields { get; set; } = GetDefaultMetadataFields();
     public List<Guid> LibraryPluginIds { get; set; } = new();
+    public bool LibraryPluginSelectionConfigured { get; set; }
+    public List<Guid> GameScannerIds { get; set; } = new();
+    public bool GameScannerSelectionConfigured { get; set; }
     public PlaytimeImportMode LibraryPlaytimeImportMode { get; set; } = PlaytimeImportMode.NewImportsOnly;
     public bool DownloadMetadataOnImport { get; set; } = true;
 

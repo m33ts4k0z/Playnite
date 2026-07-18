@@ -67,17 +67,21 @@ public sealed class DesktopLibrary : IDisposable
         var matureRating = new AgeRating("Mature");
         var worldwideRegion = new Region("Worldwide");
         var europeRegion = new Region("Europe");
+        var pilotProfile = new CustomEmulatorProfile
+        {
+            Name = "Pilot Profile",
+            Executable = SelfTestMediaPath,
+            Arguments = "{ImagePath}",
+            TrackingMode = TrackingMode.Process,
+            Platforms = new List<Guid> { windowsPlatform.Id },
+            ImageExtensions = new List<string> { "rom" }
+        };
         var pilotEmulator = new Emulator("Pilot Emulator")
         {
+            InstallDir = temporaryRoot,
             CustomProfiles = new ObservableCollection<CustomEmulatorProfile>
             {
-                new()
-                {
-                    Name = "Pilot Profile",
-                    Executable = SelfTestMediaPath,
-                    Arguments = "{ImagePath}",
-                    TrackingMode = TrackingMode.Process
-                }
+                pilotProfile
             }
         };
         Database.Genres.Add(new List<Genre> { actionGenre, strategyGenre });
@@ -90,6 +94,24 @@ public sealed class DesktopLibrary : IDisposable
         Database.AgeRatings.Add(new List<AgeRating> { teenRating, matureRating });
         Database.Regions.Add(new List<Region> { worldwideRegion, europeRegion });
         Database.Emulators.Add(pilotEmulator);
+        var romDirectory = Path.Combine(temporaryRoot, "pilot-roms");
+        Directory.CreateDirectory(romDirectory);
+        File.WriteAllBytes(
+            Path.Combine(romDirectory, "Pilot Scanner Game (Sweden).rom"),
+            new byte[] { 0x50, 0x4c, 0x41, 0x59, 0x4e, 0x49, 0x54, 0x45 });
+        Database.GameScanners.Add(new GameScannerConfig
+        {
+            Name = "Pilot ROM scanner",
+            EmulatorId = pilotEmulator.Id,
+            EmulatorProfileId = pilotProfile.Id,
+            Directory = romDirectory,
+            InGlobalUpdate = true,
+            ScanSubfolders = true,
+            ScanInsideArchives = false,
+            CrcExcludeFileTypes = new List<string>(),
+            ExcludedFiles = new List<string>(),
+            ExcludedDirectories = new List<string>()
+        });
         Database.Games.Add(Enumerable.Range(1, gameCount).Select(index => new Game($"Desktop Pilot {index:N0}")
         {
             IsInstalled = index % 4 != 0,

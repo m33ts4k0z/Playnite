@@ -33,6 +33,7 @@ public sealed class DesktopSettingsStore
                 settings.MetadataSourceIds ??= new List<Guid>();
                 settings.MetadataFields ??= DesktopSettings.GetDefaultMetadataFields();
                 settings.LibraryPluginIds ??= new List<Guid>();
+                settings.GameScannerIds ??= new List<Guid>();
                 if (!Enum.IsDefined(settings.MetadataGamesSource))
                 {
                     settings.MetadataGamesSource = Playnite.Metadata.MetadataGamesSource.Selected;
