@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Playnite.SDK</RootNamespace>
+    <AssemblyName>Playnite.SDK</AssemblyName>
+    <PackageId>PlayniteSDK</PackageId>
+    <Version>7.0.0</Version>
+    <Description>Playnite SDK 7 Avalonia contract preview</Description>
+    <Authors>Playnite</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/JosefNemec/Playnite</RepositoryUrl>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\PlayniteSDK\ApplicationMode.cs" Link="ApplicationMode.cs" />
+    <Compile Include="..\PlayniteSDK\BuiltInExtensions.cs" Link="BuiltInExtensions.cs" />
+    <Compile Include="..\PlayniteSDK\Collections\ObservableConcurrentDictionary.cs" Link="Collections\ObservableConcurrentDictionary.cs" />
+    <Compile Include="..\PlayniteSDK\Collections\ObservableObject.cs" Link="Collections\ObservableObject.cs" />
+    <Compile Include="..\PlayniteSDK\Collections\RangeObservableCollection.cs" Link="Collections\RangeObservableCollection.cs" />
+    <Compile Include="..\PlayniteSDK\Data\*.cs" Link="Data\%(Filename)%(Extension)" />
+    <Compile Include="..\PlayniteSDK\Database\*.cs" Link="Database\%(Filename)%(Extension)" />
+    <Compile Include="..\PlayniteSDK\Events\*.cs" Link="Events\%(Filename)%(Extension)" />
+    <Compile Include="..\PlayniteSDK\Exceptions\*.cs" Link="Exceptions\%(Filename)%(Extension)" />
+    <Compile Include="..\PlayniteSDK\ExpandableVariables.cs" Link="ExpandableVariables.cs" />
+    <Compile Include="..\PlayniteSDK\ExtensionFunction.cs" Link="ExtensionFunction.cs" />
+    <Compile Include="..\PlayniteSDK\Extensions\*.cs" Link="Extensions\%(Filename)%(Extension)" />
+    <Compile Include="..\PlayniteSDK\IAddons.cs" Link="IAddons.cs" />
+    <Compile Include="..\PlayniteSDK\IEmulationAPI.cs" Link="IEmulationAPI.cs" />
+    <Compile Include="..\PlayniteSDK\ILogger.cs" Link="ILogger.cs" />
+    <Compile Include="..\PlayniteSDK\INotificationsAPI.cs" Link="INotificationsAPI.cs" />
+    <Compile Include="..\PlayniteSDK\IPlayniteInfoAPI.cs" Link="IPlayniteInfoAPI.cs" />
+    <Compile Include="..\PlayniteSDK\IPlaynitePathsAPI.cs" Link="IPlaynitePathsAPI.cs" />
+    <Compile Include="..\PlayniteSDK\ISettings.cs" Link="ISettings.cs" />
+    <Compile Include="..\PlayniteSDK\IUriHandlerAPI.cs" Link="IUriHandlerAPI.cs" />
+    <Compile Include="..\PlayniteSDK\LibraryClient.cs" Link="LibraryClient.cs" />
+    <Compile Include="..\PlayniteSDK\LogManager.cs" Link="LogManager.cs" />
+    <Compile Include="..\PlayniteSDK\MetadataProvider.cs" Link="MetadataProvider.cs" />
+    <Compile Include="..\PlayniteSDK\Models\*.cs" Link="Models\%(Filename)%(Extension)" />
+    <Compile Include="..\PlayniteSDK\Plugins\Actions.cs" Link="Plugins\Actions.cs" />
+    <Compile Include="..\PlayniteSDK\Plugins\MenuEntry.cs" Link="Plugins\MenuEntry.cs" />
+    <Compile Include="..\PlayniteSDK\Plugins\MetadataPlugin.cs" Link="Plugins\MetadataPlugin.cs" />
+    <Compile Include="..\PlayniteSDK\Plugins\Search.cs" Link="Plugins\Search.cs" />
+    <Compile Include="..\PlayniteSDK\Plugins\TopPanelItem.cs" Link="Plugins\TopPanelItem.cs" />
+    <Compile Include="..\PlayniteSDK\SdkVersions.cs" Link="SdkVersions.cs" />
+    <Compile Include="..\PlayniteSDK\WebViewModels.cs" Link="WebViewModels.cs" />
+  </ItemGroup>
+
+</Project>
