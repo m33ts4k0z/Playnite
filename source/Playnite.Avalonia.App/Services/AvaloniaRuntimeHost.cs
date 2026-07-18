@@ -17,7 +17,10 @@ public sealed class AvaloniaRuntimeHost : IDisposable
     private readonly ExtensionFactory extensions;
     private readonly GameActionRunner actionRunner;
     private readonly NotificationsAPI notifications;
+    private readonly AvaloniaWebViewFactory webViews;
     private readonly IPlayniteAPI globalApi;
+    private readonly Func<WebViewSettings, IWebView> previousOffscreenWebViewFactory;
+    private readonly Func<WebViewSettings, IWebView> offscreenWebViewFactory;
     private readonly Func<string, string, global::Avalonia.Data.Converters.IValueConverter> pluginConverterResolver;
     private readonly Func<string, string, object, global::Avalonia.Controls.Control> pluginElementResolver;
 
@@ -56,6 +59,10 @@ public sealed class AvaloniaRuntimeHost : IDisposable
             }
         };
         controllers = new GameControllerFactory(database);
+        webViews = new AvaloniaWebViewFactory();
+        previousOffscreenWebViewFactory = GoogleImageDownloader.CreateOffscreenView;
+        offscreenWebViewFactory = webViews.CreateOffscreenView;
+        GoogleImageDownloader.CreateOffscreenView = offscreenWebViewFactory;
 
         GameActionRunner runner = null;
         ExtensionFactory factory = null;
@@ -64,7 +71,8 @@ public sealed class AvaloniaRuntimeHost : IDisposable
             notifications,
             () => runner,
             () => factory,
-            callbacks);
+            callbacks,
+            webViews);
 
         extensions = factory = new ExtensionFactory(database, controllers, _ => CreateApi());
         actionRunner = runner = new GameActionRunner(database, controllers, extensions, () => globalApi);
@@ -152,6 +160,12 @@ public sealed class AvaloniaRuntimeHost : IDisposable
         actionRunner.Dispose();
         extensions.Dispose();
         controllers.Dispose();
+        if (ReferenceEquals(GoogleImageDownloader.CreateOffscreenView, offscreenWebViewFactory))
+        {
+            GoogleImageDownloader.CreateOffscreenView = previousOffscreenWebViewFactory;
+        }
+
+        webViews.Dispose();
         WpfPluginSupportRuntime.Shutdown();
     }
 }

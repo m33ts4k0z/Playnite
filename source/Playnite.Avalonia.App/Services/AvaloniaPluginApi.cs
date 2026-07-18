@@ -66,7 +66,8 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
         INotificationsAPI notifications,
         Func<Playnite.Controllers.GameActionRunner> actionRunner,
         Func<Playnite.Plugins.ExtensionFactory> extensions,
-        AvaloniaHostCallbacks callbacks)
+        AvaloniaHostCallbacks callbacks,
+        IWebViewFactory webViews)
     {
         this.actionRunner = actionRunner;
         this.extensions = extensions;
@@ -80,9 +81,7 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
         MainView = InterfaceProxy.Create<IMainViewAPI>(HandleMainViewCall);
         ApplicationSettings = InterfaceProxy.Create<IPlayniteSettingsAPI>((method, _) =>
             HandleSettingsCall(method, callbacks.Settings, database.DatabasePath));
-        WebViews = InterfaceProxy.Create<IWebViewFactory>((method, _) =>
-            throw new NotSupportedException(
-                $"Plugin web view call '{method.Name}' requires the cross-platform CEF adapter."));
+        WebViews = webViews ?? throw new ArgumentNullException(nameof(webViews));
     }
 
     public string ExpandGameVariables(Game game, string inputString) => game?.ExpandVariables(inputString);

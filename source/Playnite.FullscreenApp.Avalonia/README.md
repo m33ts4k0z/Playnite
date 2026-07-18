@@ -26,8 +26,10 @@ Automated pilot validation uses an isolated temporary Playnite.Core database:
 Playnite.FullscreenApp.Avalonia.exe --self-test
 ```
 
-Remaining parity work includes plugin web views, legacy script/HDR and client
-shutdown policy in the shared action runner, broader real-plugin testing, and
-final SDK/theme tooling. The current Playnite SDK/Core and WPF compatibility
+Remaining parity work includes legacy script/HDR and client shutdown policy in
+the shared action runner, broader real-plugin testing, and final SDK/theme
+tooling. Plugin web views are now supplied by the shared Avalonia application
+host, with explicit SDK-v6 errors for its WPF-only window property and response-
+body interception contract. The current Playnite SDK/Core and WPF compatibility
 bridge are Windows-only; native Avalonia surfaces remain isolated from that
 bridge so it can be removed with the future SDK v7 UI contract.

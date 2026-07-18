@@ -1324,6 +1324,100 @@ internal static class DesktopPilotSelfTest
             ReferenceEquals(item.Source, legacyUiPlugin));
         legacyUiPlugin.Dispose();
 
+        Record(results, "Web-view adapter rejects unmappable SDK policies", () =>
+        {
+            var javaScriptError = CaptureNotSupported(() =>
+                window.RuntimeHost.PluginApi.WebViews.CreateOffscreenView(new WebViewSettings
+                {
+                    JavaScriptEnabled = false
+                }));
+            var responseError = CaptureNotSupported(() =>
+                window.RuntimeHost.PluginApi.WebViews.CreateOffscreenView(new WebViewSettings
+                {
+                    ResourceLoadedCallback = _ => { }
+                }));
+            return javaScriptError.Contains("JavaScript", StringComparison.Ordinal) &&
+                   responseError.Contains("response", StringComparison.OrdinalIgnoreCase)
+                ? "JavaScript policy and response-body interception fail explicitly instead of changing semantics"
+                : throw new InvalidOperationException(
+                    $"Unexpected compatibility messages: JavaScript='{javaScriptError}', response='{responseError}'.");
+        });
+
+        await using var webServer = new LoopbackWebServer();
+        using var offscreenWebView = window.RuntimeHost.PluginApi.WebViews.CreateOffscreenView(new WebViewSettings
+        {
+            UserAgent = LoopbackWebServer.ExpectedUserAgent
+        });
+        var loadingStates = new List<bool>();
+        offscreenWebView.LoadingChanged += (_, args) => loadingStates.Add(args.IsLoading);
+        offscreenWebView.NavigateAndWait(webServer.PageUrl);
+        var initialPageText = offscreenWebView.GetPageText();
+        var initialPageSource = await offscreenWebView.GetPageSourceAsync();
+        Record(results, "Offscreen plugin web views navigate through Avalonia NativeWebView", () =>
+            offscreenWebView.CanExecuteJavascriptInMainFrame &&
+            offscreenWebView.WindowHost == null &&
+            string.Equals(offscreenWebView.GetCurrentAddress(), webServer.PageUrl, StringComparison.OrdinalIgnoreCase) &&
+            initialPageText.Contains(LoopbackWebServer.InitialText, StringComparison.Ordinal) &&
+            initialPageSource.Contains("pilot-message", StringComparison.Ordinal) &&
+            loadingStates.Contains(true) &&
+            loadingStates.Contains(false) &&
+            string.Equals(webServer.LastUserAgent, LoopbackWebServer.ExpectedUserAgent, StringComparison.Ordinal)
+                ? $"loaded {webServer.PageUrl} with SDK loading events and the configured user agent"
+                : throw new InvalidOperationException(
+                    $"address={offscreenWebView.GetCurrentAddress()}, states={string.Join(',', loadingStates)}, " +
+                    $"userAgent={webServer.LastUserAgent}"));
+
+        var scriptResult = await offscreenWebView.EvaluateScriptAsync(
+            $"document.getElementById('pilot-message').innerText = '{LoopbackWebServer.MutatedText}'; 42");
+        var failedScriptResult = await offscreenWebView.EvaluateScriptAsync(
+            "throw new Error('pilot-script-failure')");
+        var mutatedPageText = await offscreenWebView.GetPageTextAsync();
+        Record(results, "Plugin web-view JavaScript preserves values, DOM changes, and failures", () =>
+            scriptResult.Success &&
+            Convert.ToInt64(scriptResult.Result, CultureInfo.InvariantCulture) == 42 &&
+            mutatedPageText.Contains(LoopbackWebServer.MutatedText, StringComparison.Ordinal) &&
+            !failedScriptResult.Success &&
+            failedScriptResult.Message.Contains("pilot-script-failure", StringComparison.Ordinal)
+                ? "script results were decoded, DOM mutation remained visible, and JavaScript errors stayed errors"
+                : throw new InvalidOperationException(
+                    $"success={scriptResult.Success}, value={scriptResult.Result}, failedMessage={failedScriptResult.Message}"));
+
+        offscreenWebView.SetCookies(
+            webServer.PageUrl,
+            "127.0.0.1",
+            "pilot-cookie",
+            "pilot-value",
+            "/",
+            DateTime.UtcNow.AddHours(1));
+        var writtenCookie = offscreenWebView.GetCookies().SingleOrDefault(cookie =>
+            cookie.Name == "pilot-cookie" && cookie.Domain.TrimStart('.') == "127.0.0.1");
+        offscreenWebView.DeleteCookies(webServer.PageUrl, "pilot-cookie");
+        var cookieDeleted = offscreenWebView.GetCookies().All(cookie => cookie.Name != "pilot-cookie");
+        Record(results, "Plugin web-view cookies round-trip through the native engine", () =>
+            writtenCookie?.Value == "pilot-value" &&
+            writtenCookie.Path == "/" &&
+            cookieDeleted
+                ? "the SDK cookie was written, enumerated, and deleted from WebView2"
+                : throw new InvalidOperationException(
+                    $"written={writtenCookie?.Value ?? "missing"}, deleted={cookieDeleted}"));
+
+        using var visibleWebView = window.RuntimeHost.PluginApi.WebViews.CreateView(new WebViewSettings
+        {
+            WindowWidth = 520,
+            WindowHeight = 320,
+            WindowBackground = System.Windows.Media.Colors.Black
+        });
+        visibleWebView.NavigateAndWait(webServer.PageUrl);
+        var windowHostError = CaptureNotSupported(() => _ = visibleWebView.WindowHost);
+        Dispatcher.UIThread.Post(visibleWebView.Close, DispatcherPriority.Background);
+        var visibleDialogResult = visibleWebView.OpenDialog();
+        Record(results, "Visible plugin web views use a synchronous Avalonia dialog", () =>
+            visibleDialogResult == null &&
+            windowHostError.Contains("WPF Window", StringComparison.Ordinal)
+                ? "the native browser opened and closed modally while the WPF-only WindowHost mismatch stayed explicit"
+                : throw new InvalidOperationException(
+                    $"dialogResult={visibleDialogResult}, WindowHost='{windowHostError}'"));
+
         viewModel.MetadataDownload.ConfigureProviders(
             () => window.RuntimeHost.Extensions.MetadataPlugins,
             () => window.RuntimeHost.Extensions.LibraryPlugins);
@@ -1397,6 +1491,20 @@ internal static class DesktopPilotSelfTest
         {
             results.Add((name, false, exception.Message));
         }
+    }
+
+    private static string CaptureNotSupported(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (NotSupportedException exception)
+        {
+            return exception.Message;
+        }
+
+        throw new InvalidOperationException("The compatibility call unexpectedly succeeded.");
     }
 
     private static void SelectOnly(
@@ -1627,6 +1735,108 @@ internal static class DesktopPilotSelfTest
                 await stream.WriteAsync(imageData, cancelToken);
                 await stream.FlushAsync(cancelToken);
                 Interlocked.Increment(ref requestCount);
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            cancellation.Cancel();
+            listener.Stop();
+            try
+            {
+                await listenerTask;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                cancellation.Dispose();
+            }
+        }
+    }
+
+    private sealed class LoopbackWebServer : IAsyncDisposable
+    {
+        public const string ExpectedUserAgent = "Playnite-Avalonia-WebView-SelfTest/1.0";
+        public const string InitialText = "Avalonia web-view pilot";
+        public const string MutatedText = "Avalonia web-view script updated";
+
+        private readonly TcpListener listener;
+        private readonly CancellationTokenSource cancellation = new();
+        private readonly Task listenerTask;
+        private string lastUserAgent;
+
+        public string PageUrl { get; }
+        public string LastUserAgent => Volatile.Read(ref lastUserAgent);
+
+        public LoopbackWebServer()
+        {
+            listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            var endpoint = (IPEndPoint)listener.LocalEndpoint;
+            PageUrl = $"http://127.0.0.1:{endpoint.Port}/pilot";
+            listenerTask = ListenAsync(cancellation.Token);
+        }
+
+        private async Task ListenAsync(CancellationToken cancelToken)
+        {
+            while (!cancelToken.IsCancellationRequested)
+            {
+                TcpClient client;
+                try
+                {
+                    client = await listener.AcceptTcpClientAsync(cancelToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
+
+                try
+                {
+                    await ServeAsync(client, cancelToken);
+                }
+                catch (IOException) when (!cancelToken.IsCancellationRequested)
+                {
+                }
+            }
+        }
+
+        private async Task ServeAsync(TcpClient client, CancellationToken cancelToken)
+        {
+            using (client)
+            using (var stream = client.GetStream())
+            using (var reader = new StreamReader(stream, Encoding.ASCII, false, 1024, true))
+            {
+                _ = await reader.ReadLineAsync(cancelToken);
+                string line;
+                while (!string.IsNullOrEmpty(line = await reader.ReadLineAsync(cancelToken)))
+                {
+                    var separator = line.IndexOf(':');
+                    if (separator > 0 &&
+                        line.AsSpan(0, separator).Equals("User-Agent", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Volatile.Write(ref lastUserAgent, line[(separator + 1)..].Trim());
+                    }
+                }
+
+                var body = Encoding.UTF8.GetBytes(
+                    "<!doctype html><html><head><meta charset=\"utf-8\"><title>Playnite pilot</title></head>" +
+                    $"<body><main id=\"pilot-message\">{InitialText}</main></body></html>");
+                var headers = Encoding.ASCII.GetBytes(
+                    "HTTP/1.1 200 OK\r\n" +
+                    "Content-Type: text/html; charset=utf-8\r\n" +
+                    $"Content-Length: {body.Length}\r\n" +
+                    "Cache-Control: no-store\r\n" +
+                    "Connection: close\r\n\r\n");
+                await stream.WriteAsync(headers, cancelToken);
+                await stream.WriteAsync(body, cancelToken);
+                await stream.FlushAsync(cancelToken);
             }
         }
 

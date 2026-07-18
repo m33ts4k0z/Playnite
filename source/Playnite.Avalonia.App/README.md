@@ -4,4 +4,6 @@
 
 Shell-specific behavior is supplied through `AvaloniaHostCallbacks`, `IAvaloniaHostSettings`, and `IAvaloniaDialogService`. Desktop supplies an Avalonia-native single- and multi-game editor to the shared plugin API callback. The WPF applications remain the production paths while these adapters are hardened.
 
-The legacy SDK web-view surface intentionally reports the remaining cross-platform CEF adapter gap. Plugin-provided WPF settings views, custom controls, and converters also still require Avalonia-specific host implementations.
+Plugin web views use the maintained `Avalonia.Controls.WebView` adapter (WebView2 on Windows). The shared host supports visible and hidden views, synchronous dialog behavior, navigation/loading events, page text/source, JavaScript values and failures, custom user agents, and cookie management. Two SDK v6 contracts deliberately fail with precise compatibility errors instead of being ignored: `IWebView.WindowHost` is typed as a WPF `Window`, and Avalonia's common WebView API does not expose completed response metadata/body streams for `ResourceLoadedCallback`. The latter also leaves the Core DuckDuckGo response-interception path for the SDK v7 web contract.
+
+Existing WPF plugin settings views, custom controls, and converters are isolated behind `Playnite.WpfPluginSupport`; the application surfaces and settings chooser remain native Avalonia.
