@@ -6,6 +6,8 @@ using Playnite.SDK.Events;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using System.Reflection;
+using LegacyFontFamily = System.Windows.Media.FontFamily;
+using LegacySolidColorBrush = System.Windows.Media.SolidColorBrush;
 
 namespace Playnite.Avalonia.App.Services;
 
@@ -13,9 +15,49 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
 {
     private sealed class HostResourceProvider : IResourceProvider
     {
-        public string GetString(string key) => key;
-        public object GetResource(string key) => null;
+        private static readonly LegacyFontFamily fallbackIconFont = new("Segoe MDL2 Assets");
+
+        public string GetString(string key) => GetAvaloniaResource(key) as string ?? key;
+
+        public object GetResource(string key)
+        {
+            var resource = GetAvaloniaResource(key);
+            if (resource is global::Avalonia.Media.ISolidColorBrush brush)
+            {
+                var color = brush.Color;
+                return new LegacySolidColorBrush(System.Windows.Media.Color.FromArgb(
+                    color.A,
+                    color.R,
+                    color.G,
+                    color.B));
+            }
+
+            if (resource is global::Avalonia.Media.FontFamily fontFamily)
+            {
+                return new LegacyFontFamily(fontFamily.Name);
+            }
+
+            return resource ?? (string.Equals(key, "FontIcoFont", StringComparison.Ordinal)
+                ? fallbackIconFont
+                : null);
+        }
+
+        private static object GetAvaloniaResource(string key)
+        {
+            var legacyResource = System.Windows.Application.Current?.TryFindResource(key);
+            if (legacyResource != null)
+            {
+                return legacyResource;
+            }
+
+            var application = global::Avalonia.Application.Current;
+            return application?.TryGetResource(key, null, out var resource) == true
+                ? resource
+                : null;
+        }
     }
+
+    internal static IResourceProvider SharedResources { get; } = new HostResourceProvider();
 
     private sealed class HostAddonsApi : IAddons
     {
@@ -55,7 +97,7 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
     public INotificationsAPI Notifications { get; }
     public IPlayniteInfoAPI ApplicationInfo { get; }
     public IWebViewFactory WebViews { get; }
-    public IResourceProvider Resources { get; } = new HostResourceProvider();
+    public IResourceProvider Resources { get; } = SharedResources;
     public IUriHandlerAPI UriHandler { get; } = new HostUriHandler();
     public IPlayniteSettingsAPI ApplicationSettings { get; }
     public IAddons Addons { get; }

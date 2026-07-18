@@ -23,6 +23,7 @@ public sealed class AvaloniaRuntimeHost : IDisposable
     private readonly Func<WebViewSettings, IWebView> offscreenWebViewFactory;
     private readonly Func<string, string, global::Avalonia.Data.Converters.IValueConverter> pluginConverterResolver;
     private readonly Func<string, string, object, global::Avalonia.Controls.Control> pluginElementResolver;
+    private readonly IResourceProvider previousResourceProvider;
 
     public GameActionRunner Actions => actionRunner;
     public ExtensionFactory Extensions => extensions;
@@ -74,9 +75,15 @@ public sealed class AvaloniaRuntimeHost : IDisposable
             callbacks,
             webViews);
 
-        extensions = factory = new ExtensionFactory(database, controllers, _ => CreateApi());
+        WpfPluginSupportRuntime.EnsureApplication();
+        extensions = factory = new ExtensionFactory(
+            database,
+            controllers,
+            _ => CreateApi(),
+            WpfPluginSupportRuntime.LoadPluginResources);
         actionRunner = runner = new GameActionRunner(database, controllers, extensions, () => globalApi);
         globalApi = CreateApi();
+        previousResourceProvider = ResourceProvider.SetGlobalProvider(globalApi.Resources);
         pluginConverterResolver = (pluginSource, converterName) =>
             WpfPluginSupportRuntime.ResolveConverter(extensions, pluginSource, converterName);
         PluginConverterRuntime.Resolver = pluginConverterResolver;
@@ -166,6 +173,7 @@ public sealed class AvaloniaRuntimeHost : IDisposable
         }
 
         webViews.Dispose();
+        ResourceProvider.SetGlobalProvider(previousResourceProvider);
         WpfPluginSupportRuntime.Shutdown();
     }
 }

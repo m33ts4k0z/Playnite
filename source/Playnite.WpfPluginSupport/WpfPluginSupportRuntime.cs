@@ -2,7 +2,11 @@ using Avalonia;
 using Avalonia.Data.Converters;
 using Playnite.Plugins;
 using System.Globalization;
+using System.IO;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Markup;
+using System.Windows.Media;
 using LegacyValueConverter = System.Windows.Data.IValueConverter;
 
 namespace Playnite.WpfPluginSupport;
@@ -29,7 +33,7 @@ public static class WpfPluginSupportRuntime
         return converter == null ? null : new LegacyValueConverterAdapter(converter);
     }
 
-    internal static void EnsureApplication()
+    public static void EnsureApplication()
     {
         if (System.Windows.Application.Current == null)
         {
@@ -37,6 +41,56 @@ public static class WpfPluginSupportRuntime
             {
                 ShutdownMode = ShutdownMode.OnExplicitShutdown
             };
+        }
+
+        AddFallbackResource("True", true);
+        AddFallbackResource("False", false);
+        AddFallbackResource("FontIcoFont", new FontFamily("Segoe MDL2 Assets"));
+        AddFallbackResource("BaseTextBlockStyle", new Style(typeof(TextBlock)));
+        AddFallbackResource("NormalBrushDark", Brushes.DimGray);
+        AddFallbackResource("WarningBrush", Brushes.OrangeRed);
+    }
+
+    public static void LoadPluginResources(string extensionDirectory)
+    {
+        EnsureApplication();
+        if (string.IsNullOrWhiteSpace(extensionDirectory))
+        {
+            return;
+        }
+
+        var localizationDirectory = Path.Combine(extensionDirectory, "Localization");
+        if (!Directory.Exists(localizationDirectory))
+        {
+            return;
+        }
+
+        var cultureName = CultureInfo.CurrentUICulture.Name.Replace('-', '_');
+        var localizationPath = Path.Combine(localizationDirectory, cultureName + ".xaml");
+        if (!File.Exists(localizationPath))
+        {
+            localizationPath = Path.Combine(localizationDirectory, "en_US.xaml");
+        }
+
+        if (!File.Exists(localizationPath))
+        {
+            return;
+        }
+
+        using var localizationStream = File.OpenRead(localizationPath);
+        if (XamlReader.Load(localizationStream) is not ResourceDictionary resources)
+        {
+            throw new InvalidDataException($"Plugin localization is not a ResourceDictionary: {localizationPath}");
+        }
+
+        System.Windows.Application.Current.Resources.MergedDictionaries.Add(resources);
+    }
+
+    private static void AddFallbackResource(string key, object value)
+    {
+        if (!System.Windows.Application.Current.Resources.Contains(key))
+        {
+            System.Windows.Application.Current.Resources[key] = value;
         }
     }
 

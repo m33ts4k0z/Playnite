@@ -97,9 +97,11 @@ namespace Playnite.SDK
             return (T)Application.Current?.TryFindResource(key);
         }
 
-        internal static void SetGlobalProvider(IResourceProvider provider)
+        internal static IResourceProvider SetGlobalProvider(IResourceProvider provider)
         {
+            var previousProvider = staticProvider;
             staticProvider = provider;
+            return previousProvider;
         }
     }
 }

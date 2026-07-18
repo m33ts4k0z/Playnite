@@ -156,6 +156,13 @@ internal static class DesktopPilotSelfTest
                 ? $"{viewModel.PluginSummary}; Core action orchestration is attached"
                 : throw new InvalidOperationException("The shared Avalonia runtime host is unavailable."));
 
+        Record(results, "Legacy plugin resources bridge into Avalonia", () =>
+            Playnite.SDK.ResourceProvider.GetString("LOCDesktopPlay") == "Play" &&
+            Playnite.SDK.ResourceProvider.GetResource("FontIcoFont") is System.Windows.Media.FontFamily &&
+            System.Windows.Application.Current?.TryFindResource("BaseTextBlockStyle") is System.Windows.Style
+                ? "localized strings and WPF-compatible theme primitives are available during plugin construction"
+                : throw new InvalidOperationException("The static legacy resource bridge is incomplete."));
+
         viewModel.SelectedGame = viewModel.Games.First(game => game.IsInstalled);
         viewModel.ActivateCommand.Execute(null);
         Record(results, "Desktop actions fail honestly without a provider", () =>

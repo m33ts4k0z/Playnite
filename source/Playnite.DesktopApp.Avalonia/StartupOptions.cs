@@ -3,6 +3,7 @@ namespace Playnite.DesktopApp.Avalonia;
 internal sealed class StartupOptions
 {
     public bool SelfTest { get; private set; }
+    public bool PluginCompatibilityTest { get; private set; }
     public string UserDataDirectory { get; private set; }
     public string LibraryPath { get; private set; }
 
@@ -16,6 +17,9 @@ internal sealed class StartupOptions
                 case "--self-test":
                 case "--auto":
                     options.SelfTest = true;
+                    break;
+                case "--plugin-compatibility-test":
+                    options.PluginCompatibilityTest = true;
                     break;
                 case "--userdatadir" when index + 1 < args.Length:
                     options.UserDataDirectory = Path.GetFullPath(args[++index]);

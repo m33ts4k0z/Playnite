@@ -42,6 +42,33 @@ namespace Playnite.Plugins
         SDKVersion
     }
 
+    public sealed class ExtensionLoadFailure
+    {
+        public ExtensionManifest Manifest { get; }
+        public AddonLoadError Error { get; }
+        public string ExceptionType { get; }
+        public string Message { get; }
+        public string Details { get; }
+
+        public ExtensionLoadFailure(
+            ExtensionManifest manifest,
+            AddonLoadError error,
+            string message,
+            Exception exception = null)
+        {
+            Manifest = manifest;
+            Error = error;
+            var rootException = exception?.GetBaseException();
+            ExceptionType = rootException?.GetType().FullName;
+            Message = rootException?.Message ?? message;
+            Details = exception == null
+                ? message
+                : string.IsNullOrWhiteSpace(message)
+                    ? exception.ToString()
+                    : $"{message}{Environment.NewLine}{exception}";
+        }
+    }
+
     public class ExtensionFactory : ObservableObject, IDisposable
     {
         private static ILogger logger = LogManager.GetLogger();
@@ -52,6 +79,7 @@ namespace Playnite.Plugins
         private readonly List<AssemblyLoadContext> pluginLoadContexts = new List<AssemblyLoadContext>();
 
         public List<(ExtensionManifest manifest, AddonLoadError error)> FailedExtensions { get; } = new List<(ExtensionManifest manifest, AddonLoadError error)>();
+        public List<ExtensionLoadFailure> LoadFailures { get; } = new List<ExtensionLoadFailure>();
 
         public Dictionary<Guid, LoadedPlugin> Plugins
         {
@@ -324,13 +352,17 @@ namespace Playnite.Plugins
             {
                 if (desc.Id.IsNullOrWhiteSpace())
                 {
-                    logger.Error($"Extension {desc.Name}, doesn't have ID.");
+                    var message = $"Extension {desc.Name}, doesn't have ID.";
+                    logger.Error(message);
+                    AddLoadFailure(desc, AddonLoadError.Uknown, message);
                     continue;
                 }
 
                 if (desc.Module.IsNullOrWhiteSpace())
                 {
-                    logger.Error($"Extension {desc.Name}, doesn't have module specified.");
+                    var message = $"Extension {desc.Name}, doesn't have module specified.";
+                    logger.Error(message);
+                    AddLoadFailure(desc, AddonLoadError.Uknown, message);
                     continue;
                 }
 
@@ -344,8 +376,9 @@ namespace Playnite.Plugins
                 var scriptPath = Path.Combine(Path.GetDirectoryName(desc.DescriptionPath), desc.Module);
                 if (!File.Exists(scriptPath))
                 {
-                    logger.Error($"Cannot load script extension, {scriptPath} not found.");
-                    FailedExtensions.Add((desc, AddonLoadError.Uknown));
+                    var message = $"Cannot load script extension, {scriptPath} not found.";
+                    logger.Error(message);
+                    AddLoadFailure(desc, AddonLoadError.Uknown, message);
                     continue;
                 }
 
@@ -354,7 +387,10 @@ namespace Playnite.Plugins
                     script = PlayniteScript.FromFile(scriptPath, $"{desc.DirectoryName}#PS");
                     if (script == null)
                     {
-                        FailedExtensions.Add((desc, AddonLoadError.Uknown));
+                        AddLoadFailure(
+                            desc,
+                            AddonLoadError.Uknown,
+                            $"Script extension {scriptPath} did not produce a PowerShell runtime.");
                         continue;
                     }
 
@@ -372,7 +408,7 @@ namespace Playnite.Plugins
                 {
                     allSuccess = false;
                     logger.Error(e, $"Failed to load script file {scriptPath}");
-                    FailedExtensions.Add((desc, AddonLoadError.Uknown));
+                    AddLoadFailure(desc, AddonLoadError.Uknown, $"Failed to load script file {scriptPath}.", e);
                     continue;
                 }
 
@@ -397,13 +433,17 @@ namespace Playnite.Plugins
                 var loadedAny = false;
                 if (desc.Id.IsNullOrEmpty())
                 {
-                    logger.Error($"Extension {desc.Name}, doesn't have ID.");
+                    var message = $"Extension {desc.Name}, doesn't have ID.";
+                    logger.Error(message);
+                    AddLoadFailure(desc, AddonLoadError.Uknown, message);
                     continue;
                 }
 
                 if (desc.Module.IsNullOrWhiteSpace())
                 {
-                    logger.Error($"Extension {desc.Name}, doesn't have module specified.");
+                    var message = $"Extension {desc.Name}, doesn't have module specified.";
+                    logger.Error(message);
+                    AddLoadFailure(desc, AddonLoadError.Uknown, message);
                     continue;
                 }
 
@@ -453,7 +493,18 @@ namespace Playnite.Plugins
                         }
                     }
 
-                    FailedExtensions.Add((desc, AddonLoadError.Uknown));
+                    var details = e is ReflectionTypeLoadException reflectionFailure
+                        ? string.Join(
+                            Environment.NewLine,
+                            reflectionFailure.LoaderExceptions
+                                .Where(loaderException => loaderException != null)
+                                .Select(loaderException => loaderException.ToString()))
+                        : null;
+                    AddLoadFailure(
+                        desc,
+                        AddonLoadError.Uknown,
+                        details ?? $"Failed to load plugin {desc.Name}.",
+                        e);
                 }
                 finally
                 {
@@ -503,7 +554,10 @@ namespace Playnite.Plugins
             else
             {
                 logger.Error($"Plugin dependencices are not compatible: {descriptor.Name}");
-                FailedExtensions.Add((descriptor, AddonLoadError.SDKVersion));
+                AddLoadFailure(
+                    descriptor,
+                    AddonLoadError.SDKVersion,
+                    $"Plugin dependencies are not compatible with SDK {SDK.SdkVersions.SDKVersion}.");
             }
 
             return pluginTypes;
@@ -512,6 +566,16 @@ namespace Playnite.Plugins
         private static void UnloadFailedContext(AssemblyLoadContext loadContext)
         {
             loadContext?.Unload();
+        }
+
+        private void AddLoadFailure(
+            ExtensionManifest manifest,
+            AddonLoadError error,
+            string message,
+            Exception exception = null)
+        {
+            FailedExtensions.Add((manifest, error));
+            LoadFailures.Add(new ExtensionLoadFailure(manifest, error, message, exception));
         }
 
         private sealed class ExtensionAssemblyLoadContext : AssemblyLoadContext

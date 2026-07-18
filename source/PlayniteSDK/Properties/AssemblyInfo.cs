@@ -42,5 +42,6 @@ using System.Windows.Markup;
 [assembly: InternalsVisibleTo("Playnite.FullscreenApp.Tests")]
 [assembly: InternalsVisibleTo("Playnite")]
 [assembly: InternalsVisibleTo("Playnite.Core")]
+[assembly: InternalsVisibleTo("Playnite.Avalonia.App")]
 [assembly: XmlnsDefinition("http://schemas.microsoft.com/winfx/2006/xaml/presentation", "Playnite.SDK.Models")]
 [assembly: XmlnsDefinition("http://schemas.microsoft.com/winfx/2006/xaml/presentation", "Playnite.SDK.Controls")]

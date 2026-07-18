@@ -43,7 +43,11 @@ public sealed class App : Application
             }
 
             var settingsStore = new DesktopSettingsStore(library.ActiveUserDataDirectory);
-            var settings = options.SelfTest ? new DesktopSettings() : settingsStore.Load();
+            var settings = options.SelfTest
+                ? new DesktopSettings()
+                : options.PluginCompatibilityTest
+                    ? new DesktopSettings { EnableTray = false, CloseToTray = false }
+                    : settingsStore.Load();
             var viewModel = new DesktopAppViewModel(library.Games, library.Database, settings, startupError);
             if (library.IsOpen)
             {
@@ -84,7 +88,7 @@ public sealed class App : Application
                 library,
                 runtimeHost,
                 settings,
-                options.SelfTest ? null : settingsStore,
+                options.SelfTest || options.PluginCompatibilityTest ? null : settingsStore,
                 options);
             // Parse the loose theme before third-party assemblies enter the process. A plugin
             // with an incompatible dependency must not interfere with Avalonia's XAML discovery.

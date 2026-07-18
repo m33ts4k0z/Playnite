@@ -307,7 +307,11 @@ public sealed class MainWindow : Window
     private async void OnOpened(object sender, EventArgs e)
     {
         mainView.FocusSelectedGame();
-        if (options.SelfTest)
+        if (options.PluginCompatibilityTest)
+        {
+            await InstalledPluginCompatibilityTest.Run(this, library, options);
+        }
+        else if (options.SelfTest)
         {
             await DesktopPilotSelfTest.Run(this, viewModel, library);
         }

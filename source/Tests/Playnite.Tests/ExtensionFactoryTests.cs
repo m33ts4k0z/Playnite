@@ -72,6 +72,40 @@ namespace Playnite.Tests
         }
 
         [Test]
+        public void PluginLoadFailureRetainsDiagnosticTest()
+        {
+            using (var tempDirectory = TempDirectory.Create())
+            {
+                File.WriteAllText(
+                    Path.Combine(tempDirectory.TempPath, PlaynitePaths.ExtensionManifestFileName),
+                    "Id: Missing_Module_Test\n" +
+                    "Name: Missing module test\n" +
+                    "Version: 1.0\n" +
+                    "Module: Missing.Plugin.dll\n" +
+                    "Type: GenericPlugin\n");
+                var controllers = new GameControllerFactory();
+                using (var factory = new ExtensionFactory(
+                    Mock.Of<IGameDatabase>(),
+                    controllers,
+                    _ => Mock.Of<IPlayniteAPI>()))
+                {
+                    factory.LoadPlugins(
+                        new List<string>(),
+                        false,
+                        new List<string> { tempDirectory.TempPath });
+
+                    Assert.AreEqual(factory.FailedExtensions.Count, factory.LoadFailures.Count);
+                    var failure = factory.LoadFailures.Single(item =>
+                        item.Manifest.Id == "Missing_Module_Test");
+                    Assert.AreEqual("Missing_Module_Test", failure.Manifest.Id);
+                    StringAssert.Contains("Missing.Plugin.dll", failure.Message);
+                    Assert.IsNotEmpty(failure.ExceptionType);
+                    Assert.IsNotEmpty(failure.Details);
+                }
+            }
+        }
+
+        [Test]
         [Apartment(ApartmentState.STA)]
         public void IsolatedPluginLoadsWpfResourcesTest()
         {
