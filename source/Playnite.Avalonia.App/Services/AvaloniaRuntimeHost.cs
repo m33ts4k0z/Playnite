@@ -93,7 +93,10 @@ public sealed class AvaloniaRuntimeHost : IDisposable
             ClientShutdownGraceSeconds = () => callbacks.Settings.ClientShutdownGraceSeconds,
             ClientShutdownMinimumSessionSeconds = () =>
                 callbacks.Settings.ClientShutdownMinimumSessionSeconds,
-            ClientShutdownPluginIds = () => callbacks.Settings.ClientShutdownPluginIds
+            ClientShutdownPluginIds = () => callbacks.Settings.ClientShutdownPluginIds,
+            AdditionalPlayControllers = game => v7Plugins?.GetPlayControllers(game) ?? [],
+            AdditionalInstallControllers = game => v7Plugins?.GetInstallControllers(game) ?? [],
+            AdditionalUninstallControllers = game => v7Plugins?.GetUninstallControllers(game) ?? []
         };
         actionRunner = runner = new GameActionRunner(
             database,
@@ -104,6 +107,7 @@ public sealed class AvaloniaRuntimeHost : IDisposable
         globalApi = CreateApi();
         v7Plugins = new V7PluginHost(
             database,
+            controllers,
             callbacks,
             notifications,
             () => actionRunner,
@@ -193,10 +197,10 @@ public sealed class AvaloniaRuntimeHost : IDisposable
         }
 
         GameControllerDialogs.ShowError = (_, _) => { };
-        v7Plugins.Dispose();
         actionRunner.Dispose();
         extensions.Dispose();
         controllers.Dispose();
+        v7Plugins.Dispose();
         if (ReferenceEquals(GoogleImageDownloader.CreateOffscreenView, offscreenWebViewFactory))
         {
             GoogleImageDownloader.CreateOffscreenView = previousOffscreenWebViewFactory;

@@ -1,9 +1,11 @@
 using NUnit.Framework;
 using Playnite.API;
 using Playnite.Avalonia.App.Services;
+using Playnite.Controllers;
 using Playnite.Database;
 using Playnite.SDK;
 using Playnite.SDK.Models;
+using Playnite.SDK.Plugins;
 using System.IO;
 
 namespace Playnite.Avalonia.App.V7.Tests;
@@ -61,6 +63,9 @@ public class V7PluginHostTests
     {
         SynchronizationContext.SetSynchronizationContext(previousContext);
         PlaynitePaths.UpdateUserDataDir(previousUserDataPath);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
         if (Directory.Exists(testRoot))
         {
             Directory.Delete(testRoot, true);
@@ -77,6 +82,7 @@ public class V7PluginHostTests
 
         using var database = new GameDatabase(Path.Combine(testRoot, "library"));
         database.OpenDatabase();
+        using var controllers = new GameControllerFactory(database);
         var seededGame = new Game("SDK v7 bridge game") { IsInstalled = true };
         database.Games.Add(seededGame);
         var notifications = new NotificationsAPI();
@@ -90,6 +96,7 @@ public class V7PluginHostTests
         };
         using var host = new V7PluginHost(
             database,
+            controllers,
             callbacks,
             notifications,
             () => null,
@@ -137,6 +144,43 @@ public class V7PluginHostTests
         database.Games.Update(externallyUpdated);
         Assert.That(File.ReadAllLines(eventPath).Last(), Is.EqualTo("database-event:SDK v7 external update"));
 
+        var play = host.GetPlayControllers(externallyUpdated).Single();
+        Assert.That(play.Name, Is.EqualTo("SDK v7 play action"));
+        var started = 0;
+        var stopped = 0;
+        controllers.Started += (_, args) => started = args.StartedProcessId;
+        controllers.Stopped += (_, args) => stopped = (int)args.SessionLength;
+        controllers.AddController(play);
+        play.Play(new PlayActionArgs());
+        Assert.That(started, Is.EqualTo(4242));
+        Assert.That(stopped, Is.EqualTo(9));
+        controllers.RemoveController(play);
+
+        var install = host.GetInstallControllers(externallyUpdated).Single();
+        var installDirectory = string.Empty;
+        controllers.Installed += (_, args) => installDirectory = args.InstalledInfo.InstallDirectory;
+        controllers.AddController(install);
+        install.Install(new InstallActionArgs());
+        Assert.That(installDirectory, Is.EqualTo("C:\\SDKv7Installed"));
+        controllers.RemoveController(install);
+
+        var uninstall = host.GetUninstallControllers(externallyUpdated).Single();
+        var uninstalled = false;
+        controllers.Uninstalled += (_, _) => uninstalled = true;
+        controllers.AddController(uninstall);
+        uninstall.Uninstall(new UninstallActionArgs());
+        Assert.That(uninstalled, Is.True);
+        controllers.RemoveController(uninstall);
+
+        var actionEvents = File.ReadAllLines(eventPath);
+        Assert.That(actionEvents, Does.Contain("controller-play"));
+        Assert.That(actionEvents, Does.Contain("event-started:4242"));
+        Assert.That(actionEvents, Does.Contain("event-stopped:9"));
+        Assert.That(actionEvents, Does.Contain("controller-install"));
+        Assert.That(actionEvents, Does.Contain("event-installed:SDK v7 external update"));
+        Assert.That(actionEvents, Does.Contain("controller-uninstall"));
+        Assert.That(actionEvents, Does.Contain("event-uninstalled:SDK v7 external update"));
+
         host.Dispose();
         Assert.That(
             File.ReadAllLines(eventPath).Last(),
@@ -149,8 +193,10 @@ public class V7PluginHostTests
         var fixturePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "V7Fixture");
         var manifest = ExtensionManifest.FromFile(Path.Combine(fixturePath, "extension.yaml"));
         using var database = new GameDatabase(Path.Combine(testRoot, "library"));
+        using var controllers = new GameControllerFactory(database);
         using var host = new V7PluginHost(
             database,
+            controllers,
             new AvaloniaHostCallbacks
             {
                 Mode = ApplicationMode.Desktop,
@@ -167,5 +213,67 @@ public class V7PluginHostTests
         Assert.That(claimed, Is.EqualTo(new[] { manifest.Id }));
         Assert.That(host.Plugins, Is.Empty);
         Assert.That(host.FailedPlugins, Is.Empty);
+    }
+
+    [Test]
+    public void SharedActionRunnerExecutesSdkSevenControllersAndCancellation()
+    {
+        var fixturePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "V7Fixture");
+        var extensionPath = Path.Combine(PlaynitePaths.ExtensionsUserDataPath, "TestPluginV7");
+        Directory.CreateDirectory(extensionPath);
+        var fixtureAssembly = Path.Combine(fixturePath, "TestPluginV7.dll");
+        var manifestText = File.ReadAllText(Path.Combine(fixturePath, "extension.yaml"))
+            .Replace("Module: TestPluginV7.dll", $"Module: '{fixtureAssembly}'", StringComparison.Ordinal);
+        File.WriteAllText(Path.Combine(extensionPath, "extension.yaml"), manifestText);
+
+        using var database = new GameDatabase(Path.Combine(testRoot, "library"));
+        database.OpenDatabase();
+        var game = new Game("SDK v7 bridge game") { IsInstalled = true };
+        var cancelledGame = new Game("SDK v7 cancel game") { IsInstalled = true };
+        database.Games.Add(new[] { game, cancelledGame });
+        var callbacks = new AvaloniaHostCallbacks
+        {
+            Mode = ApplicationMode.Desktop,
+            Settings = new TestSettings(),
+            Dialogs = new TestDialogs()
+        };
+
+        using var runtime = new AvaloniaRuntimeHost(database, callbacks);
+        runtime.InitializePlugins(true);
+
+        Assert.That(runtime.V7Plugins, Has.Count.EqualTo(1));
+        Assert.That(runtime.V7PluginFailures, Is.Empty);
+        var playResult = runtime.Play(database.Games[game.Id]);
+        Assert.That(playResult.Success, Is.True, playResult.Message);
+        Assert.That(database.Games[game.Id].PlayCount, Is.EqualTo(1));
+        Assert.That(database.Games[game.Id].Playtime, Is.EqualTo(9));
+        Assert.That(database.Games[game.Id].IsRunning, Is.False);
+
+        var installResult = runtime.Install(database.Games[game.Id]);
+        Assert.That(installResult.Success, Is.True, installResult.Message);
+        Assert.That(database.Games[game.Id].InstallDirectory, Is.EqualTo("C:\\SDKv7Installed"));
+        Assert.That(database.Games[game.Id].IsInstalled, Is.True);
+
+        var uninstallResult = runtime.Uninstall(database.Games[game.Id]);
+        Assert.That(uninstallResult.Success, Is.True, uninstallResult.Message);
+        Assert.That(database.Games[game.Id].IsInstalled, Is.False);
+
+        var cancelledResult = runtime.Play(database.Games[cancelledGame.Id]);
+        Assert.That(cancelledResult.Success, Is.False);
+        Assert.That(cancelledResult.Message, Does.Contain("cancelled"));
+        Assert.That(database.Games[cancelledGame.Id].IsLaunching, Is.False);
+
+        var eventPath = Path.Combine(
+            PlaynitePaths.ExtensionsDataPath,
+            runtime.V7Plugins[0].Id.ToString(),
+            "events.txt");
+        var events = File.ReadAllLines(eventPath);
+        Assert.That(events, Does.Contain("event-starting:SDK v7 bridge game updated"));
+        Assert.That(events, Does.Contain("event-started:4242"));
+        Assert.That(events, Does.Contain("event-stopped:9"));
+        Assert.That(events, Does.Contain("event-installed:SDK v7 bridge game updated"));
+        Assert.That(events, Does.Contain("event-uninstalled:SDK v7 bridge game updated"));
+        Assert.That(events, Does.Contain("event-starting:SDK v7 cancel game"));
+        Assert.That(events, Does.Contain("event-startup-cancelled:SDK v7 cancel game"));
     }
 }

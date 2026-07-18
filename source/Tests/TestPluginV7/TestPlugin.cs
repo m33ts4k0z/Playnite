@@ -26,6 +26,48 @@ public sealed class TestPlugin : GenericPlugin
 
     public override ISettings GetSettings(bool firstRunSettings) => settings;
 
+    public override IEnumerable<PlayController> GetPlayActions(GetPlayActionsArgs args)
+    {
+        yield return new TestPlayController(args.Game, EventPath) { Name = "SDK v7 play action" };
+    }
+
+    public override IEnumerable<InstallController> GetInstallActions(GetInstallActionsArgs args)
+    {
+        yield return new TestInstallController(args.Game, EventPath) { Name = "SDK v7 install action" };
+    }
+
+    public override IEnumerable<UninstallController> GetUninstallActions(GetUninstallActionsArgs args)
+    {
+        yield return new TestUninstallController(args.Game, EventPath) { Name = "SDK v7 uninstall action" };
+    }
+
+    public override void OnGameStarting(OnGameStartingEventArgs args)
+    {
+        File.AppendAllLines(EventPath, ["event-starting:" + args.Game.Name]);
+        if (args.Game.Name.Contains("cancel", StringComparison.OrdinalIgnoreCase))
+        {
+            args.CancelStartup = true;
+        }
+    }
+
+    public override void OnGameStarted(OnGameStartedEventArgs args) =>
+        File.AppendAllLines(EventPath, [$"event-started:{args.StartedProcessId}"]);
+
+    public override void OnGameStopped(OnGameStoppedEventArgs args) =>
+        File.AppendAllLines(EventPath, [$"event-stopped:{args.ElapsedSeconds}"]);
+
+    public override void OnGameInstalled(OnGameInstalledEventArgs args) =>
+        File.AppendAllLines(EventPath, ["event-installed:" + args.Game.Name]);
+
+    public override void OnGameInstallationCancelled(OnGameInstallationCancelledEventArgs args) =>
+        File.AppendAllLines(EventPath, ["event-install-cancelled:" + args.Game.Name]);
+
+    public override void OnGameUninstalled(OnGameUninstalledEventArgs args) =>
+        File.AppendAllLines(EventPath, ["event-uninstalled:" + args.Game.Name]);
+
+    public override void OnGameStartupCancelled(OnGameStartupCancelledEventArgs args) =>
+        File.AppendAllLines(EventPath, ["event-startup-cancelled:" + args.Game.Name]);
+
     public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
     {
         File.AppendAllLines(EventPath, ["started"]);
@@ -95,6 +137,49 @@ public sealed class TestPlugin : GenericPlugin
         foreach (var update in args.UpdatedItems)
         {
             File.AppendAllLines(EventPath, ["database-event:" + update.NewData.Name]);
+        }
+    }
+
+    private sealed class TestPlayController : PlayController
+    {
+        private readonly string eventPath;
+
+        public TestPlayController(Game game, string eventPath) : base(game) => this.eventPath = eventPath;
+
+        public override void Play(PlayActionArgs args)
+        {
+            File.AppendAllLines(eventPath, ["controller-play"]);
+            InvokeOnStarted(new GameStartedEventArgs { StartedProcessId = 4242 });
+            InvokeOnStopped(new GameStoppedEventArgs(9));
+        }
+    }
+
+    private sealed class TestInstallController : InstallController
+    {
+        private readonly string eventPath;
+
+        public TestInstallController(Game game, string eventPath) : base(game) => this.eventPath = eventPath;
+
+        public override void Install(InstallActionArgs args)
+        {
+            File.AppendAllLines(eventPath, ["controller-install"]);
+            InvokeOnInstalled(new GameInstalledEventArgs(new GameInstallationData
+            {
+                InstallDirectory = "C:\\SDKv7Installed"
+            }));
+        }
+    }
+
+    private sealed class TestUninstallController : UninstallController
+    {
+        private readonly string eventPath;
+
+        public TestUninstallController(Game game, string eventPath) : base(game) => this.eventPath = eventPath;
+
+        public override void Uninstall(UninstallActionArgs args)
+        {
+            File.AppendAllLines(eventPath, ["controller-uninstall"]);
+            InvokeOnUninstalled();
         }
     }
 

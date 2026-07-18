@@ -73,6 +73,12 @@ namespace Playnite.Controllers
         public Func<uint> ClientShutdownMinimumSessionSeconds { get; set; } = () => 120;
         public Func<IReadOnlyCollection<Guid>> ClientShutdownPluginIds { get; set; } =
             () => Array.Empty<Guid>();
+        public Func<Game, IEnumerable<PlayController>> AdditionalPlayControllers { get; set; } =
+            _ => Array.Empty<PlayController>();
+        public Func<Game, IEnumerable<InstallController>> AdditionalInstallControllers { get; set; } =
+            _ => Array.Empty<InstallController>();
+        public Func<Game, IEnumerable<UninstallController>> AdditionalUninstallControllers { get; set; } =
+            _ => Array.Empty<UninstallController>();
     }
 
     /// <summary>
@@ -445,6 +451,21 @@ namespace Playnite.Controllers
                 }
             }
 
+            try
+            {
+                result.AddRange((Policy.AdditionalPlayControllers(game) ?? Enumerable.Empty<PlayController>()).Select(controller =>
+                    new OperationChoice
+                    {
+                        Name = controller.Name ?? game.Name,
+                        Action = controller
+                    }));
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                logger.Error(exception, "Failed to get additional play actions.");
+                OperationFailed?.Invoke(this, $"Additional play actions failed: {exception.Message}");
+            }
+
             if (game.GameActions?.Any(action => action.IsPlayAction) == true)
             {
                 foreach (var action in ExpandGameActions(game))
@@ -566,6 +587,21 @@ namespace Playnite.Controllers
                 }
             }
 
+            try
+            {
+                result.AddRange((Policy.AdditionalInstallControllers(game) ?? Enumerable.Empty<InstallController>()).Select(controller =>
+                    new OperationChoice
+                    {
+                        Name = controller.Name ?? game.Name,
+                        Action = controller
+                    }));
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                logger.Error(exception, "Failed to get additional install actions.");
+                OperationFailed?.Invoke(this, $"Additional install actions failed: {exception.Message}");
+            }
+
             return result;
         }
 
@@ -590,6 +626,21 @@ namespace Playnite.Controllers
                 {
                     logger.Error(exception, $"Failed to get uninstall actions from {plugin.Description.Name}.");
                 }
+            }
+
+            try
+            {
+                result.AddRange((Policy.AdditionalUninstallControllers(game) ?? Enumerable.Empty<UninstallController>()).Select(controller =>
+                    new OperationChoice
+                    {
+                        Name = controller.Name ?? game.Name,
+                        Action = controller
+                    }));
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                logger.Error(exception, "Failed to get additional uninstall actions.");
+                OperationFailed?.Invoke(this, $"Additional uninstall actions failed: {exception.Message}");
             }
 
             return result;

@@ -66,7 +66,7 @@ public static class V7PluginBridge
                 throw new InvalidDataException($"SDK v7 plugin type {type.FullName} has no plugin ID.");
             }
 
-            results.Add(new V7PluginInstance(plugin, api));
+            results.Add(new V7PluginInstance(plugin, api, hostCall));
         }
 
         return results.ToArray();
@@ -87,8 +87,19 @@ public static class V7PluginBridge
 
 public sealed class V7PluginInstance : IDisposable
 {
+    private sealed class GameEventPayload
+    {
+        public Game Game { get; set; }
+        public GameAction SourceAction { get; set; }
+        public string SelectedRomFile { get; set; }
+        public int StartedProcessId { get; set; }
+        public ulong ElapsedSeconds { get; set; }
+        public bool ManuallyStopped { get; set; }
+    }
+
     private readonly Plugin plugin;
     private readonly V7PlayniteApi api;
+    private readonly Func<string, string, string> hostCall;
     private bool applicationStarted;
 
     public Guid Id => plugin.Id;
@@ -108,10 +119,14 @@ public sealed class V7PluginInstance : IDisposable
     };
     public bool HasSettings => plugin.GetSettings(false) != null;
 
-    internal V7PluginInstance(Plugin plugin, V7PlayniteApi api)
+    internal V7PluginInstance(
+        Plugin plugin,
+        V7PlayniteApi api,
+        Func<string, string, string> hostCall)
     {
         this.plugin = plugin;
         this.api = api;
+        this.hostCall = hostCall;
     }
 
     public void InvokeApplicationStarted()
@@ -141,6 +156,71 @@ public sealed class V7PluginInstance : IDisposable
 
     public void PublishDatabaseEvent(string collection, string eventName, string payload) =>
         api.HostDatabase.Publish(collection, eventName, payload);
+
+    public object[] GetControllers(string kind, string gameJson)
+    {
+        var game = V7RpcJson.Deserialize<Game>(gameJson);
+        IEnumerable<ControllerBase> controllers = kind switch
+        {
+            "Play" => plugin.GetPlayActions(new GetPlayActionsArgs { Game = game }) ?? [],
+            "Install" => plugin.GetInstallActions(new GetInstallActionsArgs { Game = game }) ?? [],
+            "Uninstall" => plugin.GetUninstallActions(new GetUninstallActionsArgs { Game = game }) ?? [],
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown controller kind.")
+        };
+        return controllers
+            .Select(controller => (object)new V7ControllerInstance(controller, hostCall))
+            .ToArray();
+    }
+
+    public string InvokeGameEvent(string eventName, string payload)
+    {
+        var data = V7RpcJson.Deserialize<GameEventPayload>(payload) ?? new GameEventPayload();
+        switch (eventName)
+        {
+            case "Starting":
+                var starting = new OnGameStartingEventArgs
+                {
+                    Game = data.Game,
+                    SourceAction = data.SourceAction,
+                    SelectedRomFile = data.SelectedRomFile
+                };
+                plugin.OnGameStarting(starting);
+                return V7RpcJson.Serialize(new { starting.CancelStartup });
+            case "Started":
+                plugin.OnGameStarted(new OnGameStartedEventArgs
+                {
+                    Game = data.Game,
+                    SourceAction = data.SourceAction,
+                    SelectedRomFile = data.SelectedRomFile,
+                    StartedProcessId = data.StartedProcessId
+                });
+                break;
+            case "StartupCancelled":
+                plugin.OnGameStartupCancelled(new OnGameStartupCancelledEventArgs { Game = data.Game });
+                break;
+            case "Stopped":
+                plugin.OnGameStopped(new OnGameStoppedEventArgs
+                {
+                    Game = data.Game,
+                    ElapsedSeconds = data.ElapsedSeconds,
+                    ManuallyStopped = data.ManuallyStopped
+                });
+                break;
+            case "Installed":
+                plugin.OnGameInstalled(new OnGameInstalledEventArgs { Game = data.Game });
+                break;
+            case "InstallCancelled":
+                plugin.OnGameInstallationCancelled(
+                    new OnGameInstallationCancelledEventArgs { Game = data.Game });
+                break;
+            case "Uninstalled":
+                plugin.OnGameUninstalled(new OnGameUninstalledEventArgs { Game = data.Game });
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(eventName), eventName, "Unknown game event.");
+        }
+        return "null";
+    }
 
     public void Dispose()
     {

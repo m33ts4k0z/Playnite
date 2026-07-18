@@ -1,10 +1,13 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Playnite.API;
 using Playnite.Common;
 using Playnite.Controllers;
 using Playnite.Database;
 using Playnite.Plugins;
 using Playnite.SDK;
+using Playnite.SDK.Events;
+using Playnite.SDK.Plugins;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
@@ -19,6 +22,8 @@ public sealed class V7LoadedPlugin
     private readonly MethodInfo applicationStarted;
     private readonly MethodInfo applicationStopped;
     private readonly MethodInfo publishDatabaseEvent;
+    private readonly MethodInfo getControllers;
+    private readonly MethodInfo invokeGameEvent;
     private readonly MethodInfo dispose;
 
     public Guid Id { get; }
@@ -39,6 +44,8 @@ public sealed class V7LoadedPlugin
         applicationStarted = GetRequiredMethod(type, "InvokeApplicationStarted");
         applicationStopped = GetRequiredMethod(type, "InvokeApplicationStopped");
         publishDatabaseEvent = GetRequiredMethod(type, "PublishDatabaseEvent");
+        getControllers = GetRequiredMethod(type, "GetControllers");
+        invokeGameEvent = GetRequiredMethod(type, "InvokeGameEvent");
         dispose = GetRequiredMethod(type, nameof(IDisposable.Dispose));
     }
 
@@ -47,6 +54,10 @@ public sealed class V7LoadedPlugin
     internal void Dispose() => Invoke(dispose);
     internal void PublishDatabaseEvent(string collection, string eventName, string payload) =>
         Invoke(publishDatabaseEvent, collection, eventName, payload);
+    internal object[] GetControllers(string kind, string gameJson) =>
+        (object[])InvokeWithResult(getControllers, kind, gameJson);
+    internal string InvokeGameEvent(string eventName, string payload) =>
+        (string)InvokeWithResult(invokeGameEvent, eventName, payload);
 
     private T ReadProperty<T>(Type type, string name)
     {
@@ -61,9 +72,14 @@ public sealed class V7LoadedPlugin
 
     private void Invoke(MethodInfo method, params object[] arguments)
     {
+        InvokeWithResult(method, arguments);
+    }
+
+    private object InvokeWithResult(MethodInfo method, params object[] arguments)
+    {
         try
         {
-            method.Invoke(instance, arguments);
+            return method.Invoke(instance, arguments);
         }
         catch (TargetInvocationException exception) when (exception.InnerException != null)
         {
@@ -163,13 +179,18 @@ internal sealed class V7PluginHost : IDisposable
 
     private readonly GameDatabase database;
     private readonly AvaloniaHostCallbacks callbacks;
+    private readonly GameControllerFactory controllers;
     private readonly NotificationsAPI notifications;
     private readonly Func<GameActionRunner> actionRunner;
     private readonly Func<IEnumerable<string>> installedAddons;
     private readonly V7DatabaseTransport databaseTransport;
     private readonly string hostBundlePath;
     private readonly List<PluginLoadHandle> handles = [];
-    private readonly List<Action> unsubscribeDatabaseEvents = [];
+    private readonly List<Action> unsubscribeEvents = [];
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, IV7ControllerAdapter>
+        controllerAdapters = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, JObject>
+        startingEventData = new();
     private bool loaded;
     private bool disposed;
 
@@ -178,6 +199,7 @@ internal sealed class V7PluginHost : IDisposable
 
     public V7PluginHost(
         GameDatabase database,
+        GameControllerFactory controllers,
         AvaloniaHostCallbacks callbacks,
         NotificationsAPI notifications,
         Func<GameActionRunner> actionRunner,
@@ -185,6 +207,7 @@ internal sealed class V7PluginHost : IDisposable
         string hostBundlePath = null)
     {
         this.database = database ?? throw new ArgumentNullException(nameof(database));
+        this.controllers = controllers ?? throw new ArgumentNullException(nameof(controllers));
         this.callbacks = callbacks ?? throw new ArgumentNullException(nameof(callbacks));
         this.notifications = notifications ?? throw new ArgumentNullException(nameof(notifications));
         this.actionRunner = actionRunner ?? throw new ArgumentNullException(nameof(actionRunner));
@@ -192,6 +215,7 @@ internal sealed class V7PluginHost : IDisposable
         this.hostBundlePath = hostBundlePath ?? Path.Combine(AppContext.BaseDirectory, "SdkV7Host");
         databaseTransport = new V7DatabaseTransport(database);
         SubscribeDatabaseEvents();
+        SubscribeControllerEvents();
     }
 
     public IReadOnlyList<string> Load(
@@ -333,6 +357,9 @@ internal sealed class V7PluginHost : IDisposable
             case "ExtensionsDataPath": return PlaynitePaths.ExtensionsDataPath;
             case "DatabasePath": return database.DatabasePath;
             case "Database": return databaseTransport.Handle(payload);
+            case "ControllerEvent":
+                HandleControllerEvent(payload);
+                return string.Empty;
             case "Language": return callbacks.Settings.Language;
             case "IsPortable": return PlaynitePaths.IsPortable.ToString();
             case "InOfflineMode": return PlayniteEnvironment.InOfflineMode.ToString();
@@ -450,11 +477,80 @@ internal sealed class V7PluginHost : IDisposable
         }
     }
 
+    public IEnumerable<PlayController> GetPlayControllers(Playnite.SDK.Models.Game game) =>
+        GetControllers<V7PlayControllerAdapter, PlayController>("Play", game);
+
+    public IEnumerable<InstallController> GetInstallControllers(Playnite.SDK.Models.Game game) =>
+        GetControllers<V7InstallControllerAdapter, InstallController>("Install", game);
+
+    public IEnumerable<UninstallController> GetUninstallControllers(Playnite.SDK.Models.Game game) =>
+        GetControllers<V7UninstallControllerAdapter, UninstallController>("Uninstall", game);
+
+    private IEnumerable<TController> GetControllers<TAdapter, TController>(
+        string kind,
+        Playnite.SDK.Models.Game game)
+        where TAdapter : TController, IV7ControllerAdapter
+        where TController : ControllerBase
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        var result = new List<TController>();
+        foreach (var plugin in Plugins)
+        {
+            if (kind == "Play" && !game.IncludeLibraryPluginAction && plugin.Id == game.PluginId)
+            {
+                continue;
+            }
+
+            foreach (var instance in plugin.GetControllers(kind, V7DatabaseTransport.Serialize(game)))
+            {
+                var remote = new V7RemoteController(instance);
+                if (!string.Equals(remote.Kind, kind, StringComparison.Ordinal))
+                {
+                    remote.Dispose();
+                    throw new InvalidDataException(
+                        $"SDK v7 plugin {plugin.Name} returned {remote.Kind} for a {kind} action request.");
+                }
+
+                TController adapter = kind switch
+                {
+                    "Play" => (TController)(ControllerBase)new V7PlayControllerAdapter(
+                        game, remote, UnregisterController),
+                    "Install" => (TController)(ControllerBase)new V7InstallControllerAdapter(
+                        game, remote, UnregisterController),
+                    "Uninstall" => (TController)(ControllerBase)new V7UninstallControllerAdapter(
+                        game, remote, UnregisterController),
+                    _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown controller kind.")
+                };
+                var v7Adapter = (IV7ControllerAdapter)(object)adapter;
+                if (!controllerAdapters.TryAdd(v7Adapter.Token, v7Adapter))
+                {
+                    adapter.Dispose();
+                    throw new InvalidDataException($"SDK v7 controller token {v7Adapter.Token} is duplicated.");
+                }
+                result.Add(adapter);
+            }
+        }
+        return result;
+    }
+
+    private void HandleControllerEvent(string payload)
+    {
+        var data = JObject.Parse(payload);
+        var token = data["Token"]?.ToObject<Guid>() ?? Guid.Empty;
+        if (token == Guid.Empty || !controllerAdapters.TryGetValue(token, out var adapter))
+        {
+            throw new InvalidDataException($"SDK v7 controller event references unknown token {token}.");
+        }
+        adapter.Dispatch(data.Value<string>("Event"), data["Data"] as JObject);
+    }
+
+    private void UnregisterController(Guid token) => controllerAdapters.TryRemove(token, out _);
+
     private void SubscribeDatabaseEvents()
     {
         EventHandler opened = (_, _) => PublishDatabaseEvent("Database", "Opened", "null");
         database.DatabaseOpened += opened;
-        unsubscribeDatabaseEvents.Add(() => database.DatabaseOpened -= opened);
+        unsubscribeEvents.Add(() => database.DatabaseOpened -= opened);
         SubscribeCollectionEvents(GameDatabaseCollection.Games, database.Games);
         SubscribeCollectionEvents(GameDatabaseCollection.Platforms, database.Platforms);
         SubscribeCollectionEvents(GameDatabaseCollection.Emulators, database.Emulators);
@@ -491,7 +587,7 @@ internal sealed class V7PluginHost : IDisposable
             }));
         collection.ItemCollectionChanged += changed;
         collection.ItemUpdated += updated;
-        unsubscribeDatabaseEvents.Add(() =>
+        unsubscribeEvents.Add(() =>
         {
             collection.ItemCollectionChanged -= changed;
             collection.ItemUpdated -= updated;
@@ -514,6 +610,122 @@ internal sealed class V7PluginHost : IDisposable
         }
     }
 
+    private void SubscribeControllerEvents()
+    {
+        EventHandler<OnGameStartingEventArgs> starting = (_, args) =>
+        {
+            startingEventData[args.Game.Id] = JObject.Parse(V7DatabaseTransport.Serialize(new
+            {
+                args.SourceAction,
+                args.SelectedRomFile
+            }));
+            var result = PublishGameEvent("Starting", new
+            {
+                args.Game,
+                args.SourceAction,
+                args.SelectedRomFile
+            }, true);
+            args.CancelStartup |= result;
+        };
+        EventHandler<GameStartedEventArgs> started = (_, args) =>
+            PublishControllerGameEvent("Started", args.Source?.Game, new
+            {
+                args.StartedProcessId
+            });
+        EventHandler<GameStoppedEventArgs> stopped = (_, args) =>
+        {
+            PublishControllerGameEvent("Stopped", args.Source?.Game, new
+            {
+                args.SessionLength,
+                ElapsedSeconds = args.SessionLength,
+                ManuallyStopped = false
+            });
+            if (args.Source?.Game != null)
+            {
+                startingEventData.TryRemove(args.Source.Game.Id, out var removedStartingData);
+            }
+        };
+        EventHandler<GameInstalledEventArgs> installed = (_, args) =>
+            PublishControllerGameEvent("Installed", args.Source?.Game);
+        EventHandler<GameInstallationCancelledEventArgs> installCancelled = (_, args) =>
+            PublishControllerGameEvent("InstallCancelled", args.Source?.Game);
+        EventHandler<GameUninstalledEventArgs> uninstalled = (_, args) =>
+            PublishControllerGameEvent("Uninstalled", args.Source?.Game);
+        EventHandler<OnGameStartupCancelledEventArgs> startupCancelled = (_, args) =>
+        {
+            PublishGameEvent("StartupCancelled", new { args.Game });
+            startingEventData.TryRemove(args.Game.Id, out var removedStartingData);
+        };
+
+        controllers.Starting += starting;
+        controllers.Started += started;
+        controllers.Stopped += stopped;
+        controllers.Installed += installed;
+        controllers.InstallationCancelled += installCancelled;
+        controllers.Uninstalled += uninstalled;
+        controllers.StartupCancelled += startupCancelled;
+        unsubscribeEvents.Add(() =>
+        {
+            controllers.Starting -= starting;
+            controllers.Started -= started;
+            controllers.Stopped -= stopped;
+            controllers.Installed -= installed;
+            controllers.InstallationCancelled -= installCancelled;
+            controllers.Uninstalled -= uninstalled;
+            controllers.StartupCancelled -= startupCancelled;
+        });
+    }
+
+    private void PublishControllerGameEvent(string eventName, Playnite.SDK.Models.Game source, object data = null)
+    {
+        if (source == null)
+        {
+            return;
+        }
+        var game = database.Games[source.Id] ?? source;
+        var payload = data == null
+            ? new JObject()
+            : JObject.Parse(V7DatabaseTransport.Serialize(data));
+        if (startingEventData.TryGetValue(source.Id, out var startingData))
+        {
+            foreach (var property in startingData.Properties())
+            {
+                if (payload[property.Name] == null)
+                {
+                    payload[property.Name] = property.Value.DeepClone();
+                }
+            }
+        }
+        payload["Game"] = JToken.Parse(V7DatabaseTransport.Serialize(game));
+        PublishGameEvent(eventName, payload);
+    }
+
+    private bool PublishGameEvent(string eventName, object data, bool stopOnCancellation = false)
+    {
+        var cancelled = false;
+        var payload = V7DatabaseTransport.Serialize(data);
+        foreach (var plugin in Plugins.ToList())
+        {
+            try
+            {
+                var response = plugin.InvokeGameEvent(eventName, payload);
+                if (!string.IsNullOrWhiteSpace(response) && response != "null")
+                {
+                    cancelled |= JObject.Parse(response).Value<bool>("CancelStartup");
+                }
+                if (cancelled && stopOnCancellation)
+                {
+                    break;
+                }
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                callbacks.SetStatus($"SDK v7 plugin {plugin.Name} {eventName} event failed: {exception.Message}");
+            }
+        }
+        return cancelled;
+    }
+
     public void Dispose()
     {
         if (disposed)
@@ -522,11 +734,31 @@ internal sealed class V7PluginHost : IDisposable
         }
 
         disposed = true;
-        foreach (var unsubscribe in unsubscribeDatabaseEvents)
+        foreach (var unsubscribe in unsubscribeEvents)
         {
             unsubscribe();
         }
-        unsubscribeDatabaseEvents.Clear();
+        unsubscribeEvents.Clear();
+        foreach (var adapter in controllerAdapters.Values.ToList())
+        {
+            if (adapter is PlayController play && controllers.PlayControllers.Contains(play))
+            {
+                controllers.RemoveController(play);
+            }
+            else if (adapter is InstallController install && controllers.InstallControllers.Contains(install))
+            {
+                controllers.RemoveController(install);
+            }
+            else if (adapter is UninstallController uninstall && controllers.UninstallControllers.Contains(uninstall))
+            {
+                controllers.RemoveController(uninstall);
+            }
+            else if (adapter is ControllerBase controller)
+            {
+                controller.Dispose();
+            }
+        }
+        controllerAdapters.Clear();
         foreach (var handle in handles.AsEnumerable().Reverse())
         {
             foreach (var plugin in handle.Plugins.AsEnumerable().Reverse())

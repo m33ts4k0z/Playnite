@@ -41,6 +41,7 @@
     </ItemGroup>
     <Copy SourceFiles="@(V7PluginFixture)" DestinationFolder="$(TargetDir)V7Fixture" SkipUnchangedFiles="true" />
     <Copy SourceFiles="@(V7HostFixture)" DestinationFolder="$(TargetDir)V7Fixture\Host" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(V7HostFixture)" DestinationFolder="$(TargetDir)SdkV7Host" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>
