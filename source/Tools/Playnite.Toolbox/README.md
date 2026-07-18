@@ -28,4 +28,4 @@ Toolbox.exe migration-check C:\source\MyPlugin
 Toolbox.exe migration-check C:\source\MyPlugin --format Json --output migration-report.json
 ```
 
-See [SDK7-MIGRATION.md](SDK7-MIGRATION.md) for the migration map, current native web-view limitations, and the required build/runtime completion gate.
+See [SDK7-MIGRATION.md](SDK7-MIGRATION.md) for the plugin migration map, web-view backend policy, and the required build/runtime completion gate. Theme authors migrate with [THEME-API-3.md](THEME-API-3.md). [PLAYNITE-11-ECOSYSTEM-CHANGES.md](PLAYNITE-11-ECOSYSTEM-CHANGES.md) collects every ecosystem-facing change in one draft changelog.
