@@ -1,9 +1,11 @@
 using Playnite.API;
+using Playnite.Avalonia.Markup;
 using Playnite.Controllers;
 using Playnite.Database;
 using Playnite.Plugins;
 using Playnite.SDK;
 using Playnite.SDK.Models;
+using Playnite.WpfPluginSupport;
 
 namespace Playnite.Avalonia.App.Services;
 
@@ -15,6 +17,7 @@ public sealed class AvaloniaRuntimeHost : IDisposable
     private readonly GameActionRunner actionRunner;
     private readonly NotificationsAPI notifications;
     private readonly IPlayniteAPI globalApi;
+    private readonly Func<string, string, global::Avalonia.Data.Converters.IValueConverter> pluginConverterResolver;
 
     public GameActionRunner Actions => actionRunner;
     public ExtensionFactory Extensions => extensions;
@@ -64,6 +67,9 @@ public sealed class AvaloniaRuntimeHost : IDisposable
         extensions = factory = new ExtensionFactory(database, controllers, _ => CreateApi());
         actionRunner = runner = new GameActionRunner(database, controllers, extensions, () => globalApi);
         globalApi = CreateApi();
+        pluginConverterResolver = (pluginSource, converterName) =>
+            WpfPluginSupportRuntime.ResolveConverter(extensions, pluginSource, converterName);
+        PluginConverterRuntime.Resolver = pluginConverterResolver;
 
         actionRunner.StatusChanged += (_, message) => callbacks.SetStatus(message);
         actionRunner.OperationFailed += (_, message) => ShowMessage(message, true);
@@ -105,9 +111,15 @@ public sealed class AvaloniaRuntimeHost : IDisposable
 
     public void Dispose()
     {
+        if (ReferenceEquals(PluginConverterRuntime.Resolver, pluginConverterResolver))
+        {
+            PluginConverterRuntime.Resolver = (_, _) => null;
+        }
+
         GameControllerDialogs.ShowError = (_, _) => { };
         actionRunner.Dispose();
         extensions.Dispose();
         controllers.Dispose();
+        WpfPluginSupportRuntime.Shutdown();
     }
 }

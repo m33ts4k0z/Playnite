@@ -274,6 +274,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public DesktopMetadataDownloadViewModel MetadataDownload { get; }
     public DesktopLibrarySyncViewModel LibrarySync { get; }
     public DesktopInstalledGameImportViewModel InstalledGameImport { get; }
+    public DesktopPluginSettingsViewModel PluginSettings { get; }
 
     public ICommand ActivateCommand { get; }
     public ICommand InstallCommand { get; }
@@ -283,6 +284,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand OpenLibrarySyncCommand { get; }
     public ICommand OpenInstalledGameImportCommand { get; }
     public ICommand AddManualGameCommand { get; }
+    public ICommand OpenPluginSettingsListCommand { get; }
     public ICommand SetGridViewCommand { get; }
     public ICommand SetListViewCommand { get; }
     public ICommand ClearSearchCommand { get; }
@@ -370,6 +372,18 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             });
         InstalledGameImport.SettingsChanged += (_, _) => SettingsChanged?.Invoke(this, EventArgs.Empty);
         InstalledGameImport.PropertyChanged += InstalledGameImport_PropertyChanged;
+        PluginSettings = new DesktopPluginSettingsViewModel((message, error) =>
+        {
+            if (runtimeHost != null)
+            {
+                runtimeHost.ShowMessage(message, error);
+            }
+            else
+            {
+                StatusText = message;
+            }
+        });
+        PluginSettings.PropertyChanged += PluginSettings_PropertyChanged;
 
         ActivateCommand = new AppRelayCommand(
             () => RunOperation(SelectedGame?.IsInstalled == true ? GameOperationKind.Play : GameOperationKind.Install),
@@ -385,27 +399,38 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             () => SelectedGame != null && database != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
-                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
         OpenMetadataDownloadCommand = new AppRelayCommand(OpenMetadataDownload,
             () => SelectedGame != null && database != null && runtimeHost != null &&
                 !Editor.IsVisible && !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
-                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
         OpenLibrarySyncCommand = new AppRelayCommand(OpenLibrarySync,
             () => database != null && runtimeHost != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
-                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
         OpenInstalledGameImportCommand = new AppRelayCommand(OpenInstalledGameImport,
             () => database != null && runtimeHost != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
-                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
         AddManualGameCommand = new AppRelayCommand(AddManualGame,
             () => database != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
-                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning);
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
+        OpenPluginSettingsListCommand = new AppRelayCommand(OpenPluginSettingsList,
+            () => database != null && runtimeHost != null && !Editor.IsVisible &&
+                !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
+                !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning);
         SetGridViewCommand = new AppRelayCommand(() => SelectedViewMode = "Grid");
         SetListViewCommand = new AppRelayCommand(() => SelectedViewMode = "List");
         ClearSearchCommand = new AppRelayCommand(() => SearchText = string.Empty, () => SearchText.Length > 0);
@@ -443,6 +468,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             () => host.Extensions.LibraryPlugins,
             host.Extensions.NotifiyOnLibraryUpdated);
         InstalledGameImport.ConfigureLibraryUpdated(host.Extensions.NotifiyOnLibraryUpdated);
+        PluginSettings.Configure(host.Extensions);
         RaiseGameCommandStates();
     }
 
@@ -490,7 +516,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     {
         if (MetadataDownload.IsVisible || MetadataDownload.IsRunning ||
             LibrarySync.IsVisible || LibrarySync.IsRunning ||
-            InstalledGameImport.IsVisible || InstalledGameImport.IsRunning)
+            InstalledGameImport.IsVisible || InstalledGameImport.IsRunning ||
+            PluginSettings.IsVisible || PluginSettings.IsRunning)
         {
             StatusText = "Finish or close the active library task before editing games.";
             return false;
@@ -524,6 +551,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
     public FilterPresetSettings GetCurrentFilterSettings() =>
         SelectedFilterPreset?.Settings ?? new FilterPresetSettings();
+
+    public bool OpenPluginSettings(Guid pluginId) => PluginSettings.OpenSettings(pluginId);
 
     public void SetStatusMessage(string message) => StatusText = message;
 
@@ -654,6 +683,17 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         }
     }
 
+    private void OpenPluginSettingsList()
+    {
+        CloseOverlays();
+        if (!PluginSettings.Open())
+        {
+            StatusText = "The plugin settings list is unavailable.";
+        }
+
+        RaiseGameCommandStates();
+    }
+
     private void ConfirmActionChoice()
     {
         var index = ActionChoices.IndexOf(SelectedActionChoice);
@@ -776,6 +816,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)OpenLibrarySyncCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenInstalledGameImportCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)AddManualGameCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenPluginSettingsListCommand).RaiseCanExecuteChanged();
     }
 
     private void SynchronizeLibrary()
@@ -834,6 +875,15 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     {
         if (e.PropertyName is nameof(DesktopInstalledGameImportViewModel.IsVisible) or
             nameof(DesktopInstalledGameImportViewModel.IsRunning))
+        {
+            RaiseGameCommandStates();
+        }
+    }
+
+    private void PluginSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(DesktopPluginSettingsViewModel.IsVisible) or
+            nameof(DesktopPluginSettingsViewModel.IsRunning))
         {
             RaiseGameCommandStates();
         }

@@ -94,6 +94,8 @@
                                             Command="{Binding OpenInstalledGameImportCommand}" />
                                     <Button Content="{DynamicResource LOCDesktopAddManualGame}"
                                             Command="{Binding AddManualGameCommand}" />
+                                    <Button Content="{DynamicResource LOCDesktopPluginSettings}"
+                                            Command="{Binding OpenPluginSettingsListCommand}" />
                                 </StackPanel>
                             </ScrollViewer>
                         </Border>
@@ -334,6 +336,60 @@
                                     <Button Command="{Binding CloseOverlayCommand}" Content="Cancel" />
                                 </StackPanel>
                             </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding PluginSettings.IsVisible}"
+                          Background="#E6000000">
+                        <Border Width="760" MaxHeight="720" Padding="30" CornerRadius="14"
+                                Background="{DynamicResource DesktopPanelStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="18">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{DynamicResource LOCDesktopPluginSettings}" FontSize="30"
+                                               FontWeight="Bold" Foreground="{DynamicResource DesktopTextBrush}" />
+                                    <TextBlock Text="{DynamicResource LOCDesktopPluginSettingsDescription}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                </StackPanel>
+
+                                <ListBox Grid.Row="1" MaxHeight="470"
+                                         ItemsSource="{Binding PluginSettings.Plugins}"
+                                         SelectedItem="{Binding PluginSettings.SelectedPlugin, Mode=TwoWay}"
+                                         IsEnabled="{Binding PluginSettings.CanConfigure}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="3" Padding="14" CornerRadius="7" Background="#263140">
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
+                                                    <StackPanel Spacing="3">
+                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource DesktopTextBrush}" />
+                                                        <TextBlock Text="{Binding PluginType}" FontSize="11"
+                                                                   Foreground="{DynamicResource DesktopAccentBrush}" />
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding SettingsState}" FontSize="11"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <StackPanel Grid.Row="2" Spacing="9">
+                                    <TextBlock Text="{Binding PluginSettings.StatusText}" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding PluginSettings.ErrorText}" TextWrapping="Wrap"
+                                               Foreground="#FF7F7F" />
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Button Classes="primary"
+                                                Content="{DynamicResource LOCDesktopOpenPluginSettings}"
+                                                Command="{Binding PluginSettings.OpenSelectedCommand}" />
+                                        <Button Content="{DynamicResource LOCDesktopCancel}"
+                                                Command="{Binding PluginSettings.CloseCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
 

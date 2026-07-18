@@ -53,6 +53,8 @@ public sealed class MainWindow : Window
 
         mainView = new DesktopMainView();
         Content = mainView;
+        viewModel.PluginSettings.ConfigureOwnerHandle(
+            () => TryGetPlatformHandle()?.Handle ?? IntPtr.Zero);
         viewModel.InstalledGameImport.ConfigureFilePickers(PickImportFolderAsync, PickExecutableAsync);
         viewModel.SettingsChanged += (_, _) => SaveSettings();
         Opened += OnOpened;

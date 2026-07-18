@@ -26,6 +26,7 @@
     <ProjectReference Include="..\Playnite.Avalonia.App\Playnite.Avalonia.App.csproj" />
     <ProjectReference Include="..\Playnite.Avalonia\Playnite.Avalonia.csproj" />
     <ProjectReference Include="..\Playnite.Core\Playnite.Core.csproj" />
+    <ProjectReference Include="..\Playnite.WpfPluginSupport\Playnite.WpfPluginSupport.csproj" />
   </ItemGroup>
 
   <ItemGroup>

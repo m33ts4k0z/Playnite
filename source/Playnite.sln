@@ -61,6 +61,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playnite.DesktopApp.Avaloni
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playnite.Avalonia.App", "Playnite.Avalonia.App\Playnite.Avalonia.App.csproj", "{0EFB591A-DEA7-41F6-A3B6-1C90643F31BF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playnite.WpfPluginSupport", "Playnite.WpfPluginSupport\Playnite.WpfPluginSupport.csproj", "{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -311,6 +313,18 @@ Global
 		{0EFB591A-DEA7-41F6-A3B6-1C90643F31BF}.Release|x64.Build.0 = Release|x64
 		{0EFB591A-DEA7-41F6-A3B6-1C90643F31BF}.Release|x86.ActiveCfg = Release|x64
 		{0EFB591A-DEA7-41F6-A3B6-1C90643F31BF}.Release|x86.Build.0 = Release|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Debug|Any CPU.Build.0 = Debug|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Debug|x64.ActiveCfg = Debug|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Debug|x64.Build.0 = Debug|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Debug|x86.ActiveCfg = Debug|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Debug|x86.Build.0 = Debug|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Release|Any CPU.ActiveCfg = Release|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Release|Any CPU.Build.0 = Release|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Release|x64.ActiveCfg = Release|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Release|x64.Build.0 = Release|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Release|x86.ActiveCfg = Release|x64
+		{D4D0B271-4F18-4AB2-A7A0-6AEBF4C3CF6A}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

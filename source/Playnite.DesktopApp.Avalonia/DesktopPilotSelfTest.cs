@@ -1,14 +1,18 @@
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
+using Playnite.Avalonia.Markup;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
+using Playnite.Plugins;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
+using Playnite.WpfPluginSupport;
 using InstalledProgram = Playnite.Common.Program;
 
 namespace Playnite.DesktopApp.Avalonia;
@@ -1156,6 +1160,111 @@ internal static class DesktopPilotSelfTest
             viewModel.AddManualGameCommand.CanExecute(null)
                 ? "cancel left no database or live-wrapper residue"
                 : throw new InvalidOperationException("A cancelled manual game remained in the library."));
+
+        var legacyUiPlugin = new WpfPluginSettingsContractPlugin(window.RuntimeHost.PluginApi);
+        window.RuntimeHost.Extensions.Plugins.Add(
+            legacyUiPlugin.Id,
+            new LoadedPlugin(legacyUiPlugin, new ExtensionManifest
+            {
+                Id = legacyUiPlugin.Id.ToString(),
+                Name = WpfPluginSettingsContractPlugin.DisplayName,
+                Version = "1.0.0",
+                Type = ExtensionType.GenericPlugin,
+                DescriptionPath = Path.Combine(
+                    library.ActiveUserDataDirectory,
+                    "pilot-legacy-ui",
+                    "extension.yaml")
+            }));
+
+        Record(results, "Avalonia host retains legacy plugin UI registrations", () =>
+        {
+            var settingsSupport = window.RuntimeHost.Extensions.SettingsSupportList.SingleOrDefault(item =>
+                ReferenceEquals(item.Source, legacyUiPlugin));
+            var elementSupport = window.RuntimeHost.Extensions.CustomElementList.SingleOrDefault(item =>
+                ReferenceEquals(item.Source, legacyUiPlugin));
+            var converterSupport = window.RuntimeHost.Extensions.ConvertersSupportList.SingleOrDefault(item =>
+                ReferenceEquals(item.Source, legacyUiPlugin));
+            return settingsSupport?.SourceName == WpfPluginSettingsContractPlugin.SourceName &&
+                   settingsSupport.SettingsRoot == "PilotSettings" &&
+                   elementSupport?.SourceName == WpfPluginSettingsContractPlugin.SourceName &&
+                   elementSupport.ElementList.SequenceEqual(new[] { WpfPluginSettingsContractPlugin.ElementName }) &&
+                   converterSupport?.SourceName == WpfPluginSettingsContractPlugin.SourceName &&
+                   converterSupport.Converters.Count == 1
+                ? "settings, custom-element, and converter contracts are retained in Core"
+                : throw new InvalidOperationException("A legacy plugin UI registration was discarded.");
+        });
+
+        var legacyConverter = new PluginConverterProvider(
+            WpfPluginSettingsContractPlugin.SourceName,
+            nameof(WpfPluginSettingsContractConverter));
+        var legacyConvertedValue = legacyConverter.Convert(
+            "pilot",
+            typeof(string),
+            null,
+            CultureInfo.InvariantCulture);
+        Record(results, "Avalonia themes resolve registered legacy converters", () =>
+            string.Equals(legacyConvertedValue as string, "legacy:pilot", StringComparison.Ordinal)
+                ? "the Avalonia markup provider invoked the plugin's existing WPF converter"
+                : throw new InvalidOperationException($"Unexpected converter result: {legacyConvertedValue}"));
+
+        viewModel.OpenPluginSettingsListCommand.Execute(null);
+        var listedPlugin = viewModel.PluginSettings.Plugins.SingleOrDefault(item => item.Id == legacyUiPlugin.Id);
+        Record(results, "Native plugin settings chooser lists loaded extensions", () =>
+            viewModel.PluginSettings.IsVisible &&
+            listedPlugin != null &&
+            listedPlugin.Name == WpfPluginSettingsContractPlugin.DisplayName &&
+            listedPlugin.HasAdvertisedSettings &&
+            ReferenceEquals(viewModel.PluginSettings.SelectedPlugin, listedPlugin)
+                ? "the Avalonia overlay selected the loaded plugin and exposed its settings capability"
+                : throw new InvalidOperationException("The native settings chooser did not mirror the loaded plugin."));
+        viewModel.PluginSettings.CloseCommand.Execute(null);
+
+        viewModel.PluginSettings.ConfigureAutomationForTesting(PluginSettingsAutomation.Save);
+        var pluginSettingsSaved = window.RuntimeHost.PluginApi.MainView.OpenPluginSettings(legacyUiPlugin.Id);
+        Record(results, "Legacy plugin settings save through the SDK callback", () =>
+            pluginSettingsSaved &&
+            legacyUiPlugin.Settings.BeginCount == 1 &&
+            legacyUiPlugin.Settings.VerifyCount == 1 &&
+            legacyUiPlugin.Settings.EndCount == 1 &&
+            legacyUiPlugin.Settings.CancelCount == 0 &&
+            legacyUiPlugin.ViewCreationCount == 1
+                ? "BeginEdit, validation, EndEdit, and the existing WPF view completed in the compatibility host"
+                : throw new InvalidOperationException("The legacy plugin settings save contract was not preserved."));
+
+        viewModel.PluginSettings.ConfigureAutomationForTesting(PluginSettingsAutomation.Cancel);
+        var pluginSettingsCancelled = legacyUiPlugin.OpenSettingsView();
+        Record(results, "Legacy plugin settings cancel through Plugin.OpenSettingsView", () =>
+            !pluginSettingsCancelled &&
+            legacyUiPlugin.Settings.BeginCount == 2 &&
+            legacyUiPlugin.Settings.VerifyCount == 1 &&
+            legacyUiPlugin.Settings.EndCount == 1 &&
+            legacyUiPlugin.Settings.CancelCount == 1 &&
+            legacyUiPlugin.ViewCreationCount == 2
+                ? "the public SDK helper returned false and called CancelEdit without persisting"
+                : throw new InvalidOperationException("The legacy plugin settings cancel contract was not preserved."));
+
+        legacyUiPlugin.Settings.IsValid = false;
+        viewModel.PluginSettings.ConfigureAutomationForTesting(PluginSettingsAutomation.VerifyFailureThenCancel);
+        var invalidSettingsSaved = legacyUiPlugin.OpenSettingsView();
+        Record(results, "Legacy plugin settings validation blocks invalid saves", () =>
+            !invalidSettingsSaved &&
+            legacyUiPlugin.Settings.BeginCount == 3 &&
+            legacyUiPlugin.Settings.VerifyCount == 2 &&
+            legacyUiPlugin.Settings.EndCount == 1 &&
+            legacyUiPlugin.Settings.CancelCount == 2 &&
+            legacyUiPlugin.ViewCreationCount == 3
+                ? "validation kept the dialog open until cancellation and never called EndEdit"
+                : throw new InvalidOperationException("Invalid plugin settings were accepted or left an edit open."));
+        legacyUiPlugin.Settings.IsValid = true;
+
+        window.RuntimeHost.Extensions.Plugins.Remove(legacyUiPlugin.Id);
+        window.RuntimeHost.Extensions.SettingsSupportList.RemoveAll(item =>
+            ReferenceEquals(item.Source, legacyUiPlugin));
+        window.RuntimeHost.Extensions.CustomElementList.RemoveAll(item =>
+            ReferenceEquals(item.Source, legacyUiPlugin));
+        window.RuntimeHost.Extensions.ConvertersSupportList.RemoveAll(item =>
+            ReferenceEquals(item.Source, legacyUiPlugin));
+        legacyUiPlugin.Dispose();
 
         viewModel.MetadataDownload.ConfigureProviders(
             () => window.RuntimeHost.Extensions.MetadataPlugins,

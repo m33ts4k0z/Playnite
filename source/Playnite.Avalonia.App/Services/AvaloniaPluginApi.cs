@@ -44,6 +44,7 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
     }
 
     private readonly Func<Playnite.Controllers.GameActionRunner> actionRunner;
+    private readonly Func<Playnite.Plugins.ExtensionFactory> extensions;
     private readonly AvaloniaHostCallbacks callbacks;
 
     public IMainViewAPI MainView { get; }
@@ -67,6 +68,7 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
         AvaloniaHostCallbacks callbacks)
     {
         this.actionRunner = actionRunner;
+        this.extensions = extensions;
         this.callbacks = callbacks;
 
         Database = new DatabaseAPI(database);
@@ -89,12 +91,23 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
     public void StartGame(Guid gameId) => Run(gameId, runner => runner.Play(GetGame(gameId)));
     public void InstallGame(Guid gameId) => Run(gameId, runner => runner.Install(GetGame(gameId)));
     public void UninstallGame(Guid gameId) => Run(gameId, runner => runner.Uninstall(GetGame(gameId)));
-    public void AddCustomElementSupport(Plugin source, AddCustomElementSupportArgs args) =>
+    public void AddCustomElementSupport(Plugin source, AddCustomElementSupportArgs args)
+    {
+        extensions()?.AddCustomElementSupport(source, args);
         callbacks.AddCustomElementSupport(source, args);
-    public void AddSettingsSupport(Plugin source, AddSettingsSupportArgs args) =>
+    }
+
+    public void AddSettingsSupport(Plugin source, AddSettingsSupportArgs args)
+    {
+        extensions()?.AddSettingsSupport(source, args);
         callbacks.AddSettingsSupport(source, args);
-    public void AddConvertersSupport(Plugin source, AddConvertersSupportArgs args) =>
+    }
+
+    public void AddConvertersSupport(Plugin source, AddConvertersSupportArgs args)
+    {
+        extensions()?.AddConvertersSupport(source, args);
         callbacks.AddConvertersSupport(source, args);
+    }
     public List<GamepadController> GetConnectedControllers() => callbacks.ConnectedControllers();
 
     private Game GetGame(Guid gameId) => Database.Games[gameId];

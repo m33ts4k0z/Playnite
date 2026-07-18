@@ -56,6 +56,7 @@ public sealed class App : Application
                     SelectedGame = () => viewModel.SelectedGame?.Game,
                     SelectGame = viewModel.SelectGame,
                     OpenSearch = term => viewModel.SearchText = term,
+                    OpenPluginSettings = viewModel.OpenPluginSettings,
                     OpenEditDialog = gameEditor.Show,
                     ActiveDesktopView = () => viewModel.IsGridView
                         ? Playnite.SDK.DesktopView.Grid
