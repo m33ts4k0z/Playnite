@@ -3,6 +3,8 @@ using Playnite.SDK.Data;
 using Playnite.SDK.Events;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
+using Avalonia.Controls;
+using Avalonia.Data;
 
 namespace TestPluginV7;
 
@@ -24,6 +26,7 @@ public sealed class TestPlugin : LibraryPlugin
     {
         settings = LoadPluginSettings<TestSettings>() ?? new TestSettings();
         settings.Plugin = this;
+        settings.EventPath = EventPath;
         client = new TestLibraryClient(EventPath);
         Properties = new LibraryPluginProperties
         {
@@ -36,6 +39,30 @@ public sealed class TestPlugin : LibraryPlugin
     }
 
     public override ISettings GetSettings(bool firstRunSettings) => settings;
+
+    public override Control GetSettingsView(bool firstRunView)
+    {
+        var count = new NumericUpDown
+        {
+            Minimum = 0,
+            Maximum = 999,
+            Width = 180
+        };
+        count.Bind(NumericUpDown.ValueProperty, new Binding(nameof(TestSettings.LaunchCount))
+        {
+            Source = settings,
+            Mode = BindingMode.TwoWay
+        });
+        return new StackPanel
+        {
+            Spacing = 10,
+            Children =
+            {
+                new TextBlock { Text = "SDK v7 launch count" },
+                count
+            }
+        };
+    }
 
     public override IEnumerable<GameMetadata> GetGames(LibraryGetGamesArgs args)
     {
@@ -267,25 +294,46 @@ public sealed class TestPlugin : LibraryPlugin
         [DontSerialize]
         public TestPlugin? Plugin { get; set; }
 
+        [DontSerialize]
+        public string? EventPath { get; set; }
+
         public int LaunchCount
         {
             get => launchCount;
             set => SetValue(ref launchCount, value);
         }
 
-        public void BeginEdit() => editClone = Serialization.GetClone(this);
+        public void BeginEdit()
+        {
+            editClone = Serialization.GetClone(this);
+            AppendEvent("settings-begin");
+        }
         public void CancelEdit()
         {
             if (editClone != null)
             {
                 LaunchCount = editClone.LaunchCount;
             }
+            AppendEvent("settings-cancel");
         }
-        public void EndEdit() => Plugin?.SavePluginSettings(this);
+        public void EndEdit()
+        {
+            Plugin?.SavePluginSettings(this);
+            AppendEvent("settings-end");
+        }
         public bool VerifySettings(out List<string> errors)
         {
+            AppendEvent("settings-verify");
             errors = [];
             return true;
+        }
+
+        private void AppendEvent(string value)
+        {
+            if (!string.IsNullOrWhiteSpace(EventPath))
+            {
+                File.AppendAllLines(EventPath, [value]);
+            }
         }
     }
 }

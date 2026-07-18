@@ -151,6 +151,14 @@ public class V7PluginHostTests
             "database-extra:SDK v7 bridge tag:1:SDK v7 imported game:True"
         }));
 
+        var settingsView = host.Plugins[0].BeginSettingsEdit();
+        Assert.That(settingsView, Is.TypeOf<global::Avalonia.Controls.StackPanel>());
+        Assert.That(host.Plugins[0].VerifySettings().IsValid, Is.True);
+        host.Plugins[0].CancelSettingsEdit();
+        Assert.That(host.Plugins[0].BeginSettingsEdit(), Is.Not.Null);
+        Assert.That(host.Plugins[0].VerifySettings().Errors, Is.Empty);
+        host.Plugins[0].EndSettingsEdit();
+
         var libraryGames = database.ImportGames(
             host.LibraryPlugins[0],
             CancellationToken.None,

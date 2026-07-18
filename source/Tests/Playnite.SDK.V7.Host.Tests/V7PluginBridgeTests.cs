@@ -156,6 +156,41 @@ public class V7PluginBridgeTests
         plugin.Dispose();
     }
 
+    [Test]
+    public void RunsSdkSevenSettingsEditLifecycleWithAvaloniaView()
+    {
+        var plugin = (V7PluginInstance)V7PluginBridge
+            .LoadAll(typeof(TestPlugin).Assembly.Location, HostCall)
+            .Single();
+
+        var firstView = plugin.BeginSettingsEdit();
+        Assert.That(firstView, Is.TypeOf<Avalonia.Controls.StackPanel>());
+        var firstValidation = Newtonsoft.Json.Linq.JObject.Parse(plugin.VerifySettings());
+        Assert.That(firstValidation.Value<bool>("Valid"), Is.True);
+        Assert.That(firstValidation["Errors"], Is.Empty);
+        plugin.CancelSettingsEdit();
+
+        Assert.That(plugin.BeginSettingsEdit(), Is.Not.Null);
+        Assert.That(Newtonsoft.Json.Linq.JObject.Parse(plugin.VerifySettings()).Value<bool>("Valid"), Is.True);
+        plugin.EndSettingsEdit();
+        plugin.Dispose();
+
+        var eventPath = Path.Combine(extensionsDataPath, plugin.Id.ToString(), "events.txt");
+        Assert.That(File.ReadAllLines(eventPath), Is.EqualTo(new[]
+        {
+            "constructed:Desktop",
+            "settings-begin",
+            "settings-verify",
+            "settings-cancel",
+            "settings-begin",
+            "settings-verify",
+            "settings-end"
+        }));
+        Assert.That(
+            File.Exists(Path.Combine(extensionsDataPath, plugin.Id.ToString(), "config.json")),
+            Is.True);
+    }
+
     private string HostCall(string operation, string payload)
     {
         calls.Add((operation, payload));

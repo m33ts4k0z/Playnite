@@ -517,7 +517,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             () => host.LibraryPlugins.ToList(),
             host.NotifyLibraryUpdated);
         InstalledGameImport.ConfigureLibraryUpdated(host.NotifyLibraryUpdated);
-        PluginSettings.Configure(host.Extensions);
+        PluginSettings.Configure(host.Extensions, host.V7Plugins);
         RaiseGameCommandStates();
     }
 

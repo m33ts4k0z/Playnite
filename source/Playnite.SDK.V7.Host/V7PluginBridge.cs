@@ -100,6 +100,7 @@ public sealed class V7PluginInstance : IDisposable
     private readonly Plugin plugin;
     private readonly V7PlayniteApi api;
     private readonly Func<string, string, string> hostCall;
+    private ISettings activeSettings;
     private bool applicationStarted;
 
     public Guid Id => plugin.Id;
@@ -165,6 +166,64 @@ public sealed class V7PluginInstance : IDisposable
 
     public object GetSettings() => plugin.GetSettings(false);
     public Control GetSettingsView() => plugin.GetSettingsView(false);
+
+    public Control BeginSettingsEdit()
+    {
+        if (activeSettings != null)
+        {
+            throw new InvalidOperationException($"Settings for plugin {Name} are already being edited.");
+        }
+
+        var settings = plugin.GetSettings(false);
+        var view = plugin.GetSettingsView(false);
+        if (settings == null || view == null)
+        {
+            return null;
+        }
+
+        settings.BeginEdit();
+        activeSettings = settings;
+        return view;
+    }
+
+    public string VerifySettings()
+    {
+        if (activeSettings == null)
+        {
+            throw new InvalidOperationException($"Settings for plugin {Name} are not being edited.");
+        }
+
+        var valid = activeSettings.VerifySettings(out var errors);
+        return V7RpcJson.Serialize(new
+        {
+            Valid = valid,
+            Errors = errors ?? []
+        });
+    }
+
+    public void EndSettingsEdit()
+    {
+        if (activeSettings == null)
+        {
+            throw new InvalidOperationException($"Settings for plugin {Name} are not being edited.");
+        }
+
+        var settings = activeSettings;
+        activeSettings = null;
+        settings.EndEdit();
+    }
+
+    public void CancelSettingsEdit()
+    {
+        if (activeSettings == null)
+        {
+            return;
+        }
+
+        var settings = activeSettings;
+        activeSettings = null;
+        settings.CancelEdit();
+    }
 
     public string GetLibraryGames(CancellationToken cancellationToken)
     {
@@ -288,6 +347,7 @@ public sealed class V7PluginInstance : IDisposable
 
     public void Dispose()
     {
+        CancelSettingsEdit();
         InvokeApplicationStopped();
         plugin.Dispose();
     }

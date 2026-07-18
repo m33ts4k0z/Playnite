@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Avalonia.Controls;
 using Playnite.API;
 using Playnite.Common;
 using Playnite.Controllers;
@@ -32,6 +33,10 @@ public sealed class V7LoadedPlugin
     private readonly MethodInfo shutdownLibraryClient;
     private readonly MethodInfo createMetadataProvider;
     private readonly MethodInfo createLibraryMetadataProvider;
+    private readonly MethodInfo beginSettingsEdit;
+    private readonly MethodInfo verifySettings;
+    private readonly MethodInfo endSettingsEdit;
+    private readonly MethodInfo cancelSettingsEdit;
     private readonly MethodInfo dispose;
 
     public Guid Id { get; }
@@ -77,6 +82,10 @@ public sealed class V7LoadedPlugin
         shutdownLibraryClient = GetRequiredMethod(type, "ShutdownLibraryClient");
         createMetadataProvider = GetRequiredMethod(type, "CreateMetadataProvider");
         createLibraryMetadataProvider = GetRequiredMethod(type, "CreateLibraryMetadataProvider");
+        beginSettingsEdit = GetRequiredMethod(type, "BeginSettingsEdit");
+        verifySettings = GetRequiredMethod(type, "VerifySettings");
+        endSettingsEdit = GetRequiredMethod(type, "EndSettingsEdit");
+        cancelSettingsEdit = GetRequiredMethod(type, "CancelSettingsEdit");
         dispose = GetRequiredMethod(type, nameof(IDisposable.Dispose));
     }
 
@@ -102,6 +111,17 @@ public sealed class V7LoadedPlugin
         InvokeWithResult(createMetadataProvider, gameJson, backgroundDownload);
     internal object CreateLibraryMetadataProvider() =>
         InvokeWithResult(createLibraryMetadataProvider);
+    public Control BeginSettingsEdit() =>
+        (Control)InvokeWithResult(beginSettingsEdit);
+    public V7SettingsValidationResult VerifySettings()
+    {
+        var result = JObject.Parse((string)InvokeWithResult(verifySettings));
+        return new V7SettingsValidationResult(
+            result.Value<bool>("Valid"),
+            result["Errors"]?.ToObject<List<string>>() ?? []);
+    }
+    public void EndSettingsEdit() => Invoke(endSettingsEdit);
+    public void CancelSettingsEdit() => Invoke(cancelSettingsEdit);
 
     private T ReadProperty<T>(Type type, string name)
     {
@@ -132,6 +152,8 @@ public sealed class V7LoadedPlugin
         }
     }
 }
+
+public sealed record V7SettingsValidationResult(bool IsValid, IReadOnlyList<string> Errors);
 
 public sealed class V7PluginLoadFailure
 {

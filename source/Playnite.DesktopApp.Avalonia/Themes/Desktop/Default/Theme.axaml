@@ -405,6 +405,7 @@
                                 <ListBox Grid.Row="1" MaxHeight="470"
                                          ItemsSource="{Binding PluginSettings.Plugins}"
                                          SelectedItem="{Binding PluginSettings.SelectedPlugin, Mode=TwoWay}"
+                                         IsVisible="{Binding PluginSettings.IsPluginListVisible}"
                                          IsEnabled="{Binding PluginSettings.CanConfigure}">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
@@ -425,17 +426,33 @@
                                     </ListBox.ItemTemplate>
                                 </ListBox>
 
+                                <ScrollViewer Grid.Row="1" MaxHeight="560"
+                                              IsVisible="{Binding PluginSettings.IsAvaloniaSettingsVisible}">
+                                    <ContentControl Content="{Binding PluginSettings.AvaloniaSettingsView}" />
+                                </ScrollViewer>
+
                                 <StackPanel Grid.Row="2" Spacing="9">
                                     <TextBlock Text="{Binding PluginSettings.StatusText}" TextWrapping="Wrap"
                                                Foreground="{DynamicResource DesktopMutedBrush}" />
                                     <TextBlock Text="{Binding PluginSettings.ErrorText}" TextWrapping="Wrap"
                                                Foreground="#FF7F7F" />
                                     <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <Button Classes="primary"
-                                                Content="{DynamicResource LOCDesktopOpenPluginSettings}"
-                                                Command="{Binding PluginSettings.OpenSelectedCommand}" />
-                                        <Button Content="{DynamicResource LOCDesktopCancel}"
-                                                Command="{Binding PluginSettings.CloseCommand}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="10"
+                                                    IsVisible="{Binding PluginSettings.IsPluginListVisible}">
+                                            <Button Classes="primary"
+                                                    Content="{DynamicResource LOCDesktopOpenPluginSettings}"
+                                                    Command="{Binding PluginSettings.OpenSelectedCommand}" />
+                                            <Button Content="{DynamicResource LOCDesktopCancel}"
+                                                    Command="{Binding PluginSettings.CloseCommand}" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="10"
+                                                    IsVisible="{Binding PluginSettings.IsAvaloniaSettingsVisible}">
+                                            <Button Classes="primary"
+                                                    Content="{DynamicResource LOCDesktopSave}"
+                                                    Command="{Binding PluginSettings.SaveAvaloniaSettingsCommand}" />
+                                            <Button Content="{DynamicResource LOCDesktopCancel}"
+                                                    Command="{Binding PluginSettings.CancelAvaloniaSettingsCommand}" />
+                                        </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
                             </Grid>
