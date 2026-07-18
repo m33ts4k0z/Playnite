@@ -27,4 +27,5 @@
     <x:String x:Key="LOCDesktopHidden">Hidden</x:String>
     <x:String x:Key="LOCDesktopSave">Save</x:String>
     <x:String x:Key="LOCDesktopCancel">Cancel</x:String>
+    <x:String x:Key="LOCDesktopApplyInBulk">Apply to all</x:String>
 </ResourceDictionary>

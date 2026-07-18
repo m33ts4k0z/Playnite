@@ -307,7 +307,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         statusText = startupError == null
             ? "Phase 5 Desktop runtime ready"
             : $"Library unavailable: {startupError}";
-        Editor = new DesktopGameEditorViewModel(database, RefreshGame, SetStatusMessage);
+        Editor = new DesktopGameEditorViewModel(database, RefreshGames, SetStatusMessage);
 
         ActivateCommand = new AppRelayCommand(
             () => RunOperation(SelectedGame?.IsInstalled == true ? GameOperationKind.Play : GameOperationKind.Install),
@@ -374,15 +374,29 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
     public void RefreshGame(Guid gameId)
     {
-        allGames.FirstOrDefault(game => game.Game.Id == gameId)?.Refresh();
+        RefreshGames(new[] { gameId });
+    }
+
+    public void RefreshGames(IReadOnlyList<Guid> gameIds)
+    {
+        foreach (var gameId in gameIds ?? Array.Empty<Guid>())
+        {
+            allGames.FirstOrDefault(game => game.Game.Id == gameId)?.Refresh();
+        }
+
         ApplyFilters();
         RaiseGameCommandStates();
     }
 
     public bool OpenGameEditor(Guid gameId, Action<bool?> completed = null)
     {
+        return OpenGameEditor(new[] { gameId }, completed);
+    }
+
+    public bool OpenGameEditor(IReadOnlyList<Guid> gameIds, Action<bool?> completed = null)
+    {
         CloseOverlays();
-        var opened = Editor.Open(gameId, result =>
+        var opened = Editor.Open(gameIds, result =>
         {
             RaiseGameCommandStates();
             completed?.Invoke(result);

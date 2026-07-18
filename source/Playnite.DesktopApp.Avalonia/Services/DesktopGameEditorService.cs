@@ -19,15 +19,9 @@ public sealed class DesktopGameEditorService
             return Dispatcher.UIThread.Invoke(() => Show(gameIds));
         }
 
-        if (gameIds?.Count != 1)
-        {
-            viewModel.SetStatusMessage("Avalonia bulk metadata editing is not implemented yet.");
-            return null;
-        }
-
         bool? result = null;
         var frame = new DispatcherFrame();
-        if (!viewModel.OpenGameEditor(gameIds[0], selected =>
+        if (!viewModel.OpenGameEditor(gameIds, selected =>
             {
                 result = selected;
                 frame.Continue = false;

@@ -319,11 +319,12 @@
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Grid RowDefinitions="Auto,*,Auto" RowSpacing="18">
-                                <TextBlock Text="{DynamicResource LOCDesktopEditGame}" FontSize="30"
+                                <TextBlock Text="{Binding Editor.Title}" FontSize="30"
                                            FontWeight="Bold" Foreground="{DynamicResource DesktopTextBrush}" />
                                 <ScrollViewer Grid.Row="1" MaxHeight="650">
                                     <StackPanel Spacing="12">
-                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16"
+                                              IsVisible="{Binding Editor.IsSingleEdit}">
                                             <StackPanel Spacing="5">
                                                 <TextBlock Text="{DynamicResource LOCDesktopName}" Classes="sectionLabel" />
                                                 <TextBox Text="{Binding Editor.Name, Mode=TwoWay}" />
@@ -335,44 +336,92 @@
                                         </Grid>
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
                                             <StackPanel Spacing="5">
-                                                <TextBlock Text="{DynamicResource LOCDesktopReleaseDate}" Classes="sectionLabel" />
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopReleaseDate}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyReleaseDate, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
                                                 <TextBox Text="{Binding Editor.ReleaseDate, Mode=TwoWay}"
+                                                         IsEnabled="{Binding Editor.CanEditReleaseDate}"
                                                          Watermark="YYYY, YYYY-M, or YYYY-M-D" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Spacing="5">
-                                                <TextBlock Text="{DynamicResource LOCDesktopUserScore}" Classes="sectionLabel" />
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopUserScore}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyUserScore, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
                                                 <TextBox Text="{Binding Editor.UserScore, Mode=TwoWay}"
+                                                         IsEnabled="{Binding Editor.CanEditUserScore}"
                                                          Watermark="0–100" />
                                             </StackPanel>
                                         </Grid>
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
                                             <StackPanel Spacing="5">
-                                                <TextBlock Text="{DynamicResource LOCDesktopSource}" Classes="sectionLabel" />
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopSource}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplySource, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
                                                 <ComboBox ItemsSource="{Binding Editor.Sources}"
+                                                          IsEnabled="{Binding Editor.CanEditSource}"
                                                           SelectedItem="{Binding Editor.SelectedSource, Mode=TwoWay}" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Spacing="5">
-                                                <TextBlock Text="{DynamicResource LOCDesktopCompletionStatus}" Classes="sectionLabel" />
+                                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                                    <TextBlock Text="{DynamicResource LOCDesktopCompletionStatus}" Classes="sectionLabel" />
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyCompletionStatus, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                </StackPanel>
                                                 <ComboBox ItemsSource="{Binding Editor.CompletionStatuses}"
+                                                          IsEnabled="{Binding Editor.CanEditCompletionStatus}"
                                                           SelectedItem="{Binding Editor.SelectedCompletionStatus, Mode=TwoWay}" />
                                             </StackPanel>
                                         </Grid>
                                         <StackPanel Spacing="5">
-                                            <TextBlock Text="{DynamicResource LOCDesktopDescription}" Classes="sectionLabel" />
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{DynamicResource LOCDesktopDescription}" Classes="sectionLabel" />
+                                                <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                          IsChecked="{Binding Editor.ApplyDescription, Mode=TwoWay}"
+                                                          Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                            </StackPanel>
                                             <TextBox Text="{Binding Editor.Description, Mode=TwoWay}"
+                                                     IsEnabled="{Binding Editor.CanEditDescription}"
                                                      AcceptsReturn="True" TextWrapping="Wrap" MinHeight="120" />
                                         </StackPanel>
                                         <StackPanel Spacing="5">
-                                            <TextBlock Text="{DynamicResource LOCDesktopNotes}" Classes="sectionLabel" />
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{DynamicResource LOCDesktopNotes}" Classes="sectionLabel" />
+                                                <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                          IsChecked="{Binding Editor.ApplyNotes, Mode=TwoWay}"
+                                                          Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                            </StackPanel>
                                             <TextBox Text="{Binding Editor.Notes, Mode=TwoWay}"
+                                                     IsEnabled="{Binding Editor.CanEditNotes}"
                                                      AcceptsReturn="True" TextWrapping="Wrap" MinHeight="90" />
                                         </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Spacing="20">
-                                            <CheckBox Content="{DynamicResource LOCDesktopFavorite}"
-                                                      IsChecked="{Binding Editor.Favorite, Mode=TwoWay}" />
-                                            <CheckBox Content="{DynamicResource LOCDesktopHidden}"
-                                                      IsChecked="{Binding Editor.Hidden, Mode=TwoWay}" />
-                                        </StackPanel>
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                            <StackPanel Spacing="5">
+                                                <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                          IsChecked="{Binding Editor.ApplyFavorite, Mode=TwoWay}"
+                                                          Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                <CheckBox Content="{DynamicResource LOCDesktopFavorite}"
+                                                          IsEnabled="{Binding Editor.CanEditFavorite}"
+                                                          IsChecked="{Binding Editor.Favorite, Mode=TwoWay}" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Spacing="5">
+                                                <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                          IsChecked="{Binding Editor.ApplyHidden, Mode=TwoWay}"
+                                                          Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                <CheckBox Content="{DynamicResource LOCDesktopHidden}"
+                                                          IsEnabled="{Binding Editor.CanEditHidden}"
+                                                          IsChecked="{Binding Editor.Hidden, Mode=TwoWay}" />
+                                            </StackPanel>
+                                        </Grid>
                                         <Border IsVisible="{Binding Editor.HasValidationError}"
                                                 Background="#42D84A4A" BorderBrush="#E45A5A"
                                                 BorderThickness="1" CornerRadius="6" Padding="10">

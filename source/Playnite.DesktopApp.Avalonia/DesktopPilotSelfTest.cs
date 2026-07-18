@@ -202,12 +202,41 @@ internal static class DesktopPilotSelfTest
                 ? "the synchronous SDK call returned true after Core persistence"
                 : throw new InvalidOperationException("The plugin edit-dialog bridge did not persist its result."));
 
-        var bulkEditResult = window.RuntimeHost.PluginApi.MainView.OpenEditDialog(
-            new List<Guid> { editorGame.Game.Id, pluginEditGame.Game.Id });
-        Record(results, "Unsupported bulk editing reports an honest SDK gap", () =>
-            bulkEditResult == null && viewModel.StatusText.Contains("bulk", StringComparison.OrdinalIgnoreCase)
-                ? viewModel.StatusText
-                : throw new InvalidOperationException("Bulk editing did not report its current limitation."));
+        var bulkGameIds = new List<Guid> { editorGame.Game.Id, pluginEditGame.Game.Id };
+        viewModel.OpenGameEditor(bulkGameIds);
+        viewModel.Editor.SaveCommand.Execute(null);
+        Record(results, "Bulk editor requires explicit field selection", () =>
+            viewModel.Editor.IsVisible &&
+            viewModel.Editor.IsBulkEdit &&
+            viewModel.Editor.HasValidationError &&
+            viewModel.Editor.ValidationMessage.Contains("at least one", StringComparison.OrdinalIgnoreCase)
+                ? viewModel.Editor.ValidationMessage
+                : throw new InvalidOperationException("A bulk save without selected fields was accepted."));
+        viewModel.Editor.CancelCommand.Execute(null);
+
+        var originalBulkNames = bulkGameIds.ToDictionary(id => id, id => library.Database.Games[id].Name);
+        Dispatcher.UIThread.Post(() =>
+        {
+            viewModel.Editor.ApplyUserScore = true;
+            viewModel.Editor.UserScore = "77";
+            viewModel.Editor.ApplyFavorite = true;
+            viewModel.Editor.Favorite = true;
+            viewModel.Editor.ApplyCompletionStatus = true;
+            viewModel.Editor.SelectedCompletionStatus = viewModel.Editor.CompletionStatuses.Skip(1).Last();
+            viewModel.Editor.SaveCommand.Execute(null);
+        }, DispatcherPriority.Background);
+        var bulkEditResult = window.RuntimeHost.PluginApi.MainView.OpenEditDialog(bulkGameIds);
+        Record(results, "Plugin bulk editing applies selected fields only", () =>
+            bulkEditResult == true && bulkGameIds.All(id =>
+            {
+                var game = library.Database.Games[id];
+                return game.Name == originalBulkNames[id] &&
+                    game.UserScore == 77 &&
+                    game.Favorite &&
+                    game.CompletionStatusId == viewModel.Editor.CompletionStatuses.Skip(1).Last().Id;
+            })
+                ? "the SDK list overload buffered two Core updates without overwriting names"
+                : throw new InvalidOperationException("The bulk editor did not preserve or apply the selected fields."));
 
         Record(results, "Desktop settings persist atomically", () =>
         {
