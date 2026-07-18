@@ -67,6 +67,10 @@ public sealed class App : Application
             // Parse the loose theme before third-party assemblies enter the process. A plugin
             // with an incompatible dependency must not interfere with Avalonia's XAML discovery.
             runtimeHost?.InitializePlugins(!options.SelfTest);
+            if (!string.IsNullOrWhiteSpace(options.UriData) && runtimeHost?.ProcessUri(options.UriData) == false)
+            {
+                viewModel.SetStatusMessage($"No URI handler is registered for '{options.UriData}'.");
+            }
             desktop.Exit += (_, _) =>
             {
                 runtimeHost?.Dispose();

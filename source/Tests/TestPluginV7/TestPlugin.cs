@@ -49,6 +49,7 @@ public sealed class TestPlugin : LibraryPlugin
             SourceName = "TestSdkV7",
             Converters = [new TestPrefixConverter()]
         });
+        api.UriHandler.RegisterSource("sdk-v7-probe", HandleUri);
         File.AppendAllLines(EventPath, ["constructed:" + api.ApplicationInfo.Mode]);
         api.Notifications.Add("test-v7-loaded", "SDK v7 plugin constructed", NotificationType.Info);
     }
@@ -207,6 +208,20 @@ public sealed class TestPlugin : LibraryPlugin
         var addons = PlayniteApi.Addons.Addons;
         var disabledAddons = PlayniteApi.Addons.DisabledAddons;
         var loadedPlugins = PlayniteApi.Addons.Plugins;
+        var platforms = PlayniteApi.Emulation.Platforms;
+        var regions = PlayniteApi.Emulation.Regions;
+        var emulators = PlayniteApi.Emulation.Emulators;
+        var platform = platforms.FirstOrDefault();
+        var region = regions.FirstOrDefault();
+        var emulator = emulators.FirstOrDefault();
+        var platformRoundTrip = platform != null &&
+            PlayniteApi.Emulation.GetPlatform(platform.Id)?.Id == platform.Id;
+        var regionRoundTrip = region != null &&
+            PlayniteApi.Emulation.GetRegion(region.Id)?.Id == region.Id;
+        var emulatorRoundTrip = emulator != null &&
+            PlayniteApi.Emulation.GetEmulator(emulator.Id)?.Id == emulator.Id;
+        PlayniteApi.UriHandler.RemoveSource("sdk-v7-probe");
+        PlayniteApi.UriHandler.RegisterSource("sdk-v7-probe", HandleUri);
 
         var unsupported = new List<string>();
         try
@@ -217,23 +232,6 @@ public sealed class TestPlugin : LibraryPlugin
         {
             unsupported.Add("multi-select");
         }
-        try
-        {
-            PlayniteApi.UriHandler.RemoveSource("sdk-v7-probe");
-        }
-        catch (NotSupportedException)
-        {
-            unsupported.Add("uri");
-        }
-        try
-        {
-            _ = PlayniteApi.Emulation.Platforms;
-        }
-        catch (NotSupportedException)
-        {
-            unsupported.Add("emulation");
-        }
-
         File.AppendAllLines(EventPath,
         [
             $"api-main:{activeDesktopView}:{activeFullscreenView}:{sortOrder}:{sortDirection}:{grouping}:" +
@@ -250,9 +248,15 @@ public sealed class TestPlugin : LibraryPlugin
             $"api-addons:{addons.Count}:{disabledAddons.Count}:{loadedPlugins.Count}:" +
             $"{loadedPlugins.Single().Id}:{loadedPlugins.Single() is LibraryPlugin}:" +
             $"{ReferenceEquals(loadedPlugins.Single(), this)}",
+            $"api-emulation:{platforms.Count > 0}:{regions.Count > 0}:{emulators.Count > 0}:" +
+            $"{platformRoundTrip}:{regionRoundTrip}:{emulatorRoundTrip}",
             $"api-unsupported:{string.Join(',', unsupported)}"
         ]);
     }
+
+    private void HandleUri(PlayniteUriEventArgs args) => File.AppendAllLines(
+        EventPath,
+        [$"uri:{string.Join(',', args.Arguments ?? [])}"]);
 
     public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)
     {

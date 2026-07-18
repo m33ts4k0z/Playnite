@@ -194,6 +194,17 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
         v7Plugins.NotifyLibraryUpdated();
     }
 
+    public bool ProcessUri(string uri)
+    {
+        if (v7Plugins.ProcessUri(uri))
+        {
+            return true;
+        }
+
+        var (source, arguments) = PlayniteUriHandler.ParseUri(uri);
+        return ((AvaloniaPluginApi)globalApi).ProcessUri(source, arguments);
+    }
+
     public void ShowMessage(string message, bool error)
     {
         notifications.Add(

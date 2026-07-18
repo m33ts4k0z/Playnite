@@ -87,13 +87,38 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
         private readonly Dictionary<string, Action<PlayniteUriEventArgs>> handlers =
             new(StringComparer.OrdinalIgnoreCase);
 
-        public void RegisterSource(string source, Action<PlayniteUriEventArgs> handler) => handlers[source] = handler;
+        public void RegisterSource(string source, Action<PlayniteUriEventArgs> handler)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(source);
+            ArgumentNullException.ThrowIfNull(handler);
+            if (string.Equals(source, "playnite", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("The 'playnite' URI source is reserved.", nameof(source));
+            }
+            if (!handlers.TryAdd(source, handler))
+            {
+                throw new InvalidOperationException($"URI source '{source}' is already registered.");
+            }
+        }
+
         public void RemoveSource(string source) => handlers.Remove(source);
+
+        public bool Process(string source, string[] arguments)
+        {
+            if (!handlers.TryGetValue(source, out var handler))
+            {
+                return false;
+            }
+
+            handler(new PlayniteUriEventArgs { Arguments = arguments ?? [] });
+            return true;
+        }
     }
 
     private readonly Func<Playnite.Controllers.GameActionRunner> actionRunner;
     private readonly Func<Playnite.Plugins.ExtensionFactory> extensions;
     private readonly AvaloniaHostCallbacks callbacks;
+    private readonly HostUriHandler uriHandler = new();
 
     public IMainViewAPI MainView { get; }
     public IGameDatabaseAPI Database { get; }
@@ -103,7 +128,7 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
     public IPlayniteInfoAPI ApplicationInfo { get; }
     public IWebViewFactory WebViews { get; }
     public IResourceProvider Resources { get; } = SharedResources;
-    public IUriHandlerAPI UriHandler { get; } = new HostUriHandler();
+    public IUriHandlerAPI UriHandler => uriHandler;
     public IPlayniteSettingsAPI ApplicationSettings { get; }
     public IAddons Addons { get; }
     public IEmulationAPI Emulation { get; } = new Emulation();
@@ -157,6 +182,8 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
         callbacks.AddConvertersSupport(source, args);
     }
     public List<GamepadController> GetConnectedControllers() => callbacks.ConnectedControllers();
+
+    internal bool ProcessUri(string source, string[] arguments) => uriHandler.Process(source, arguments);
 
     private Game GetGame(Guid gameId) => Database.Games[gameId];
 

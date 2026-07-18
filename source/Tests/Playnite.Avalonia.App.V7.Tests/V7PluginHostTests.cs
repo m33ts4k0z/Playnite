@@ -368,11 +368,15 @@ public class V7PluginHostTests
         Assert.That(runtime.V7Plugins, Has.Count.EqualTo(1));
         Assert.That(runtime.V7PluginFailures, Is.Empty);
         Assert.That(runtime.LibraryPlugins, Has.Count.EqualTo(1));
+        Assert.That(runtime.ProcessUri(
+            "playnite://sdk-v7-probe/before/encoded%20argument"), Is.True);
+        Assert.That(runtime.ProcessUri("playnite://unregistered/value"), Is.False);
         var mainMenu = runtime.GetMainMenuActions();
         var mainCommand = mainMenu.Single(item => item.DisplayName == "SDK v7 > Tools > SDK v7 main command");
         Assert.That(mainCommand.PluginName, Is.EqualTo("Test SDK v7 library"));
         mainCommand.Invoke();
         mainMenu.Single(item => item.DisplayName == "SDK v7 > Tests > SDK v7 API parity probe").Invoke();
+        Assert.That(runtime.ProcessUri("playnite://sdk-v7-probe/after"), Is.True);
         Assert.Multiple(() =>
         {
             Assert.That(activeDesktopView, Is.EqualTo(DesktopView.List));
@@ -475,7 +479,10 @@ public class V7PluginHostTests
             "api-resources:SDK v7 resource:SDK v7 resource:SolidColorBrush"));
         Assert.That(events, Does.Contain(
             $"api-addons:1:0:1:{pluginId}:True:True"));
-        Assert.That(events, Does.Contain("api-unsupported:multi-select,uri,emulation"));
+        Assert.That(events, Does.Contain("api-emulation:True:True:True:True:True:True"));
+        Assert.That(events, Does.Contain("uri:before,encoded argument"));
+        Assert.That(events, Does.Contain("uri:after"));
+        Assert.That(events, Does.Contain("api-unsupported:multi-select"));
         Assert.That(events, Does.Contain("element-created:Desktop"));
         Assert.That(events, Does.Contain("sidebar-activated"));
         Assert.That(events, Does.Contain("sidebar-opened"));

@@ -53,6 +53,7 @@ public sealed class FullscreenRuntimeHost : IDisposable
     }
 
     public void InitializePlugins(bool loadUserPlugins) => host.InitializePlugins(loadUserPlugins);
+    public bool ProcessUri(string uri) => host.ProcessUri(uri);
     public GameOperationResult Play(Game game, int choiceIndex = -1) => host.Play(game, choiceIndex);
     public GameOperationResult Install(Game game, int choiceIndex = -1) => host.Install(game, choiceIndex);
     public GameOperationResult Uninstall(Game game, int choiceIndex = -1) => host.Uninstall(game, choiceIndex);

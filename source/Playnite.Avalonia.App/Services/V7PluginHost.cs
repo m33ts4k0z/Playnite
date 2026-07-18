@@ -7,6 +7,7 @@ using Playnite.Avalonia.Controls;
 using Playnite.Common;
 using Playnite.Controllers;
 using Playnite.Database;
+using Playnite.Emulators;
 using Playnite.Plugins;
 using Playnite.SDK;
 using Playnite.SDK.Events;
@@ -44,6 +45,7 @@ public sealed class V7LoadedPlugin
     private readonly MethodInfo getConverter;
     private readonly MethodInfo getSidebarItems;
     private readonly MethodInfo getTopPanelItems;
+    private readonly MethodInfo invokeUri;
     private readonly MethodInfo dispose;
 
     public Guid Id { get; }
@@ -58,6 +60,7 @@ public sealed class V7LoadedPlugin
     public bool IsLibraryClientInstalled { get; }
     public string LibraryClientIcon { get; }
     public string[] SupportedMetadataFields { get; }
+    public Guid UriOwnerToken { get; }
     public ExtensionManifest Manifest { get; }
 
     internal V7LoadedPlugin(object instance, ExtensionManifest manifest)
@@ -77,6 +80,7 @@ public sealed class V7LoadedPlugin
         IsLibraryClientInstalled = ReadProperty<bool>(type, nameof(IsLibraryClientInstalled));
         LibraryClientIcon = ReadProperty<string>(type, nameof(LibraryClientIcon));
         SupportedMetadataFields = ReadProperty<string[]>(type, nameof(SupportedMetadataFields));
+        UriOwnerToken = ReadProperty<Guid>(type, nameof(UriOwnerToken));
         applicationStarted = GetRequiredMethod(type, "InvokeApplicationStarted");
         applicationStopped = GetRequiredMethod(type, "InvokeApplicationStopped");
         publishDatabaseEvent = GetRequiredMethod(type, "PublishDatabaseEvent");
@@ -98,6 +102,7 @@ public sealed class V7LoadedPlugin
         getConverter = GetRequiredMethod(type, "GetConverter");
         getSidebarItems = GetRequiredMethod(type, "GetSidebarItems");
         getTopPanelItems = GetRequiredMethod(type, "GetTopPanelItems");
+        invokeUri = GetRequiredMethod(type, "InvokeUri");
         dispose = GetRequiredMethod(type, nameof(IDisposable.Dispose));
     }
 
@@ -142,6 +147,7 @@ public sealed class V7LoadedPlugin
         (IValueConverter)InvokeWithResult(getConverter, sourceName, converterName);
     internal object[] GetSidebarItems() => (object[])InvokeWithResult(getSidebarItems);
     internal object[] GetTopPanelItems() => (object[])InvokeWithResult(getTopPanelItems);
+    internal void InvokeUri(string source, string[] arguments) => Invoke(invokeUri, source, arguments);
 
     private T ReadProperty<T>(Type type, string name)
     {
@@ -285,6 +291,12 @@ internal sealed class V7PluginHost : IDisposable
         public string Name { get; set; }
     }
 
+    private sealed class UriRegistrationPayload
+    {
+        public Guid OwnerToken { get; set; }
+        public string Source { get; set; }
+    }
+
     private sealed class UiRegistrationPayload
     {
         public Guid PluginId { get; set; }
@@ -314,6 +326,7 @@ internal sealed class V7PluginHost : IDisposable
     private readonly Func<GameActionRunner> actionRunner;
     private readonly Func<IEnumerable<string>> installedAddons;
     private readonly IPlayniteAPI pluginApi;
+    private readonly IEmulationAPI emulation = new Emulation();
     private readonly AvaloniaWebViewFactory webViews;
     private readonly V7DatabaseTransport databaseTransport;
     private readonly string hostBundlePath;
@@ -321,6 +334,8 @@ internal sealed class V7PluginHost : IDisposable
     private readonly List<Action> unsubscribeEvents = [];
     private readonly List<UiRegistrationPayload> customElementRegistrations = [];
     private readonly List<UiRegistrationPayload> converterRegistrations = [];
+    private readonly Dictionary<string, Guid> uriSources = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<Guid, V7LoadedPlugin> uriOwners = [];
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, IV7ControllerAdapter>
         controllerAdapters = new();
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, JObject>
@@ -397,6 +412,25 @@ internal sealed class V7PluginHost : IDisposable
         return claimedManifestIds;
     }
 
+    public bool ProcessUri(string uri)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        var (source, arguments) = PlayniteUriHandler.ParseUri(uri);
+        if (!uriSources.TryGetValue(source, out var ownerToken))
+        {
+            return false;
+        }
+
+        if (!uriOwners.TryGetValue(ownerToken, out var plugin))
+        {
+            throw new InvalidOperationException(
+                $"SDK v7 URI source '{source}' has no live plugin context.");
+        }
+
+        plugin.InvokeUri(source, arguments);
+        return true;
+    }
+
     public static bool IsSdkV7Assembly(string assemblyPath)
     {
         if (string.IsNullOrWhiteSpace(assemblyPath) || !File.Exists(assemblyPath))
@@ -444,6 +478,8 @@ internal sealed class V7PluginHost : IDisposable
         var constructedPlugins = new List<V7LoadedPlugin>();
         var previousCustomRegistrations = customElementRegistrations.ToList();
         var previousConverterRegistrations = converterRegistrations.ToList();
+        var previousUriSources = uriSources.ToDictionary(item => item.Key, item => item.Value, StringComparer.OrdinalIgnoreCase);
+        var previousUriOwners = uriOwners.ToDictionary(item => item.Key, item => item.Value);
         try
         {
             if (string.IsNullOrWhiteSpace(manifest.Id))
@@ -465,6 +501,18 @@ internal sealed class V7PluginHost : IDisposable
             if (constructedPlugins.Count == 0)
             {
                 throw new InvalidDataException($"SDK v7 extension {manifest.Name} contains no plugin types.");
+            }
+
+            var uriOwnerToken = constructedPlugins[0].UriOwnerToken;
+            if (uriOwnerToken == Guid.Empty || constructedPlugins.Any(plugin => plugin.UriOwnerToken != uriOwnerToken))
+            {
+                throw new InvalidDataException(
+                    $"SDK v7 extension {manifest.Name} has inconsistent URI owner identity.");
+            }
+            if (!uriOwners.TryAdd(uriOwnerToken, constructedPlugins[0]))
+            {
+                throw new InvalidDataException(
+                    $"SDK v7 extension {manifest.Name} duplicated a URI owner identity.");
             }
 
             foreach (var plugin in constructedPlugins)
@@ -497,6 +545,16 @@ internal sealed class V7PluginHost : IDisposable
             customElementRegistrations.AddRange(previousCustomRegistrations);
             converterRegistrations.Clear();
             converterRegistrations.AddRange(previousConverterRegistrations);
+            uriSources.Clear();
+            foreach (var registration in previousUriSources)
+            {
+                uriSources.Add(registration.Key, registration.Value);
+            }
+            uriOwners.Clear();
+            foreach (var owner in previousUriOwners)
+            {
+                uriOwners.Add(owner.Key, owner.Value);
+            }
         }
     }
 
@@ -525,6 +583,24 @@ internal sealed class V7PluginHost : IDisposable
                 return JsonConvert.SerializeObject(installedAddons().Distinct().ToList());
             case "LoadedPlugins":
                 return JsonConvert.SerializeObject(GetLoadedPluginDescriptors());
+            case "Uri.Register":
+                RegisterUriSource(payload);
+                return string.Empty;
+            case "Uri.Remove":
+                RemoveUriSource(payload);
+                return string.Empty;
+            case "Emulation.Platforms":
+                return V7DatabaseTransport.Serialize(emulation.Platforms);
+            case "Emulation.Regions":
+                return V7DatabaseTransport.Serialize(emulation.Regions);
+            case "Emulation.Emulators":
+                return V7DatabaseTransport.Serialize(emulation.Emulators);
+            case "Emulation.GetPlatform":
+                return V7DatabaseTransport.Serialize(emulation.GetPlatform(payload));
+            case "Emulation.GetRegion":
+                return V7DatabaseTransport.Serialize(emulation.GetRegion(payload));
+            case "Emulation.GetEmulator":
+                return V7DatabaseTransport.Serialize(emulation.GetEmulator(payload));
             case "ResourceString":
                 return AvaloniaPluginApi.SharedResources.GetString(payload);
             case "NotificationAdd":
@@ -546,8 +622,9 @@ internal sealed class V7PluginHost : IDisposable
             case "SelectFiles":
                 var picker = JsonConvert.DeserializeObject<FilePickerPayload>(payload)
                     ?? throw new InvalidDataException("SDK v7 file-picker payload is empty.");
-                return JsonConvert.SerializeObject(
-                    callbacks.Dialogs.SelectFiles(picker.Filter, picker.AllowMultiple) ?? []);
+                var selectedFiles = callbacks.Dialogs.SelectFiles(picker.Filter, picker.AllowMultiple)
+                    ?? throw new InvalidDataException("Avalonia dialog service returned no file-picker result.");
+                return JsonConvert.SerializeObject(selectedFiles);
             case "SelectFolder":
                 return callbacks.Dialogs.SelectFolder();
             case "OpenPluginSettings":
@@ -715,6 +792,45 @@ internal sealed class V7PluginHost : IDisposable
         Guid.TryParse(payload, out var value)
             ? value
             : throw new InvalidDataException($"Invalid GUID payload for {operation}.");
+
+    private void RegisterUriSource(string payload)
+    {
+        var registration = ParseUriRegistration(payload);
+        if (string.Equals(registration.Source, "playnite", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidDataException("The 'playnite' URI source is reserved.");
+        }
+
+        if (uriSources.ContainsKey(registration.Source))
+        {
+            throw new InvalidOperationException(
+                $"URI source '{registration.Source}' is already registered.");
+        }
+
+        uriSources.Add(registration.Source, registration.OwnerToken);
+    }
+
+    private void RemoveUriSource(string payload)
+    {
+        var registration = ParseUriRegistration(payload);
+        if (uriSources.TryGetValue(registration.Source, out var ownerToken) &&
+            ownerToken == registration.OwnerToken)
+        {
+            uriSources.Remove(registration.Source);
+        }
+    }
+
+    private static UriRegistrationPayload ParseUriRegistration(string payload)
+    {
+        var registration = JsonConvert.DeserializeObject<UriRegistrationPayload>(payload)
+            ?? throw new InvalidDataException("SDK v7 URI registration payload is empty.");
+        if (registration.OwnerToken == Guid.Empty || string.IsNullOrWhiteSpace(registration.Source))
+        {
+            throw new InvalidDataException("SDK v7 URI registration has no owner or source.");
+        }
+
+        return registration;
+    }
 
     private List<PluginDescriptorPayload> GetLoadedPluginDescriptors()
     {
@@ -1258,6 +1374,8 @@ internal sealed class V7PluginHost : IDisposable
         }
 
         handles.Clear();
+        uriSources.Clear();
+        uriOwners.Clear();
         LibraryPlugins.Clear();
         MetadataPlugins.Clear();
         Plugins.Clear();

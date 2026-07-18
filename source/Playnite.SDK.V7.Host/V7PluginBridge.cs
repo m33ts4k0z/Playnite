@@ -135,6 +135,7 @@ public sealed class V7PluginInstance : IDisposable
     public bool HasLibraryClient => (plugin as LibraryPlugin)?.Client != null;
     public bool IsLibraryClientInstalled => (plugin as LibraryPlugin)?.Client?.IsInstalled == true;
     public string LibraryClientIcon => (plugin as LibraryPlugin)?.Client?.Icon;
+    public Guid UriOwnerToken => api.UriOwnerToken;
     public string[] SupportedMetadataFields => plugin is MetadataPlugin metadata
         ? metadata.SupportedFields?.Select(metadataField => metadataField.ToString()).ToArray() ?? []
         : [];
@@ -338,6 +339,8 @@ public sealed class V7PluginInstance : IDisposable
     public object[] GetTopPanelItems() => (plugin.GetTopPanelItems() ?? [])
         .Select(item => (object)new V7TopPanelItemInstance(item))
         .ToArray();
+
+    public void InvokeUri(string source, string[] arguments) => api.DispatchUri(source, arguments);
 
     public void PublishDatabaseEvent(string collection, string eventName, string payload) =>
         api.HostDatabase.Publish(collection, eventName, payload);
@@ -597,6 +600,7 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
     public IAddons Addons { get; }
     public IEmulationAPI Emulation { get; }
     internal HostGameDatabase HostDatabase { get; }
+    internal Guid UriOwnerToken { get; } = Guid.NewGuid();
 
     public V7PlayniteApi(
         Func<string, string, string> hostCall,
@@ -613,9 +617,9 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
         Database = HostDatabase;
         ApplicationSettings = new HostApplicationSettings(hostCall);
         WebViews = new HostWebViewFactory(hostObjectCall);
-        UriHandler = new UnsupportedUriHandler();
+        UriHandler = new HostUriHandler(hostCall, UriOwnerToken);
         Addons = new HostAddons(hostCall, this);
-        Emulation = new UnsupportedEmulationApi();
+        Emulation = new HostEmulationApi(hostCall);
     }
 
     public string ExpandGameVariables(Game game, string inputString) =>
@@ -678,6 +682,8 @@ internal sealed class V7PlayniteApi : IPlayniteAPI
     }
 
     internal void RegisterPlugin(Plugin plugin) => ((HostAddons)Addons).Register(plugin);
+    internal void DispatchUri(string source, string[] arguments) =>
+        ((HostUriHandler)UriHandler).Dispatch(source, arguments);
 
     public List<GamepadController> GetConnectedControllers() =>
         V7RpcJson.Deserialize<List<GamepadController>>(
@@ -898,27 +904,85 @@ internal sealed class HostCompletionStatusSettings : ICompletionStatusSettingsAP
             : throw new InvalidDataException($"Avalonia host returned an invalid GUID for {operation}.");
 }
 
-internal sealed class UnsupportedUriHandler : IUriHandlerAPI
+internal sealed class HostUriHandler : IUriHandlerAPI
 {
-    public void RegisterSource(string source, Action<PlayniteUriEventArgs> handler) =>
-        throw new NotSupportedException(
-            "SDK v7 URI handlers cannot cross the isolated Avalonia plugin boundary yet.");
-    public void RemoveSource(string source) =>
-        throw new NotSupportedException(
-            "SDK v7 URI handlers cannot cross the isolated Avalonia plugin boundary yet.");
+    private readonly Dictionary<string, Action<PlayniteUriEventArgs>> handlers =
+        new(StringComparer.OrdinalIgnoreCase);
+    private readonly Func<string, string, string> hostCall;
+    private readonly Guid ownerToken;
+
+    public HostUriHandler(Func<string, string, string> hostCall, Guid ownerToken)
+    {
+        this.hostCall = hostCall ?? throw new ArgumentNullException(nameof(hostCall));
+        this.ownerToken = ownerToken != Guid.Empty
+            ? ownerToken
+            : throw new ArgumentException("A URI owner token is required.", nameof(ownerToken));
+    }
+
+    public void RegisterSource(string source, Action<PlayniteUriEventArgs> handler)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(source);
+        ArgumentNullException.ThrowIfNull(handler);
+        if (string.Equals(source, "playnite", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException("The 'playnite' URI source is reserved.", nameof(source));
+        }
+
+        if (handlers.ContainsKey(source))
+        {
+            throw new InvalidOperationException($"URI source '{source}' is already registered.");
+        }
+
+        hostCall("Uri.Register", V7RpcJson.Serialize(new { OwnerToken = ownerToken, Source = source }));
+        handlers.Add(source, handler);
+    }
+
+    public void RemoveSource(string source)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(source);
+        if (!handlers.ContainsKey(source))
+        {
+            return;
+        }
+
+        hostCall("Uri.Remove", V7RpcJson.Serialize(new { OwnerToken = ownerToken, Source = source }));
+        handlers.Remove(source);
+    }
+
+    internal void Dispatch(string source, string[] arguments)
+    {
+        if (!handlers.TryGetValue(source, out var handler))
+        {
+            throw new InvalidOperationException($"URI source '{source}' is not registered in its SDK v7 context.");
+        }
+
+        handler(new PlayniteUriEventArgs { Arguments = arguments ?? [] });
+    }
 }
 
-internal sealed class UnsupportedEmulationApi : IEmulationAPI
+internal sealed class HostEmulationApi : IEmulationAPI
 {
-    private const string Message =
-        "SDK v7 emulation definitions are not bridged into the isolated Avalonia plugin host yet.";
+    private readonly Func<string, string, string> hostCall;
 
-    public IList<EmulatedPlatform> Platforms => throw new NotSupportedException(Message);
-    public IList<EmulatedRegion> Regions => throw new NotSupportedException(Message);
-    public IList<EmulatorDefinition> Emulators => throw new NotSupportedException(Message);
-    public EmulatedPlatform GetPlatform(string platformId) => throw new NotSupportedException(Message);
-    public EmulatedRegion GetRegion(string regionId) => throw new NotSupportedException(Message);
-    public EmulatorDefinition GetEmulator(string emulatorDefinitionId) => throw new NotSupportedException(Message);
+    public IList<EmulatedPlatform> Platforms => ReadList<EmulatedPlatform>("Emulation.Platforms");
+    public IList<EmulatedRegion> Regions => ReadList<EmulatedRegion>("Emulation.Regions");
+    public IList<EmulatorDefinition> Emulators => ReadList<EmulatorDefinition>("Emulation.Emulators");
+
+    public HostEmulationApi(Func<string, string, string> hostCall) =>
+        this.hostCall = hostCall ?? throw new ArgumentNullException(nameof(hostCall));
+
+    public EmulatedPlatform GetPlatform(string platformId) =>
+        Read<EmulatedPlatform>("Emulation.GetPlatform", platformId);
+    public EmulatedRegion GetRegion(string regionId) =>
+        Read<EmulatedRegion>("Emulation.GetRegion", regionId);
+    public EmulatorDefinition GetEmulator(string emulatorDefinitionId) =>
+        Read<EmulatorDefinition>("Emulation.GetEmulator", emulatorDefinitionId);
+
+    private T Read<T>(string operation, string payload = "") =>
+        V7RpcJson.Deserialize<T>(hostCall(operation, payload ?? string.Empty));
+
+    private List<T> ReadList<T>(string operation) => Read<List<T>>(operation)
+        ?? throw new InvalidDataException($"Avalonia host returned no emulation list for {operation}.");
 }
 
 internal sealed class HostPaths : IPlaynitePathsAPI
