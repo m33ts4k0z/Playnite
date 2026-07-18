@@ -6,7 +6,7 @@
     <AssemblyName>Playnite.SDK</AssemblyName>
     <PackageId>PlayniteSDK</PackageId>
     <Version>7.0.0</Version>
-    <Description>Playnite SDK 7 Avalonia contract preview</Description>
+    <Description>Playnite SDK 7, the Avalonia-native extension contract for Playnite.</Description>
     <Authors>Playnite</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>

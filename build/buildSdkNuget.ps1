@@ -51,6 +51,20 @@ finally
     Remove-Item $specFile -EA 0
 }
 
+# -------------------------------------------
+#            Create SDK v7 NUGET
+# -------------------------------------------
+# SDK 7 is SDK-style and defines its package in the csproj, so msbuild Pack
+# replaces the nuspec templating used for SDK 6.
+$v7Project = Join-Path $pwd "..\source\PlayniteSDK.V7\Playnite.SDK.V7.csproj"
+$v7MsbuildPath = Get-MsBuildPath
+$v7Arguments = "`"$v7Project`" /p:Configuration=$Configuration /t:Restore;Pack /p:PackageOutputPath=`"$OutputPath`""
+$v7Result = StartAndWait $v7MsbuildPath $v7Arguments
+if ($v7Result -ne 0)
+{
+    throw "SDK v7 nuget packing failed."
+}
+
 if ($LocalPublish)
 {
     Invoke-Nuget "init `"$pwd`" `"$LocalPublish`""

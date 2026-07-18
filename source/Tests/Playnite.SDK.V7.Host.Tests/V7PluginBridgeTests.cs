@@ -2,6 +2,10 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using Playnite.SDK.V7.Host;
+using System.Reflection;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 using TestPluginV7;
 using TestV7MetadataPlugin = TestMetadataPluginV7.TestMetadataPlugin;
 
@@ -131,6 +135,102 @@ public class V7PluginBridgeTests
             plugin.GetLibraryGames(CancellationToken.None));
         Assert.That(exception.Message, Does.Contain("returned no game sequence"));
         plugin.Dispose();
+    }
+
+    [Test]
+    public void RejectsPluginReferencingNonV7Sdk()
+    {
+        var path = WriteAssemblyWithReferences("FakeV6Plugin", ("Playnite.SDK", new Version(6, 11, 0, 0)));
+        var exception = Assert.Throws<InvalidDataException>(() => V7PluginBridge.LoadAll(path, HostCall));
+        Assert.That(exception.Message, Does.Contain("major 7"));
+    }
+
+    [Test]
+    public void RejectsPluginBuiltAgainstNewerSdk()
+    {
+        var path = WriteAssemblyWithReferences("FakeFuturePlugin", ("Playnite.SDK", new Version(7, 999, 0, 0)));
+        var exception = Assert.Throws<InvalidDataException>(() => V7PluginBridge.LoadAll(path, HostCall));
+        Assert.That(exception.Message, Does.Contain("but this Playnite provides"));
+    }
+
+    [Test]
+    public void RejectsPluginReferencingInternalHostAssemblies()
+    {
+        var hostSdkVersion = typeof(Playnite.SDK.SdkVersions).Assembly.GetName().Version;
+        var path = WriteAssemblyWithReferences(
+            "FakeInternalsPlugin",
+            ("Playnite.SDK", hostSdkVersion),
+            ("Playnite.Core", new Version(1, 0, 0, 0)));
+        var exception = Assert.Throws<InvalidDataException>(() => V7PluginBridge.LoadAll(path, HostCall));
+        Assert.That(exception.Message, Does.Contain("must not reference"));
+        Assert.That(exception.Message, Does.Contain("Playnite.Core"));
+    }
+
+    // The bridge loads these into the process, which keeps the files locked
+    // until exit, so they live outside testRoot; stale files from previous
+    // runs are swept opportunistically.
+    private static readonly string fakeAssemblyRoot = Path.Combine(Path.GetTempPath(), "PlayniteSdkV7HostGateFakes");
+
+    // Emits a minimal metadata-only assembly whose AssemblyRef table contains
+    // exactly the given references, to exercise the load gates.
+    private string WriteAssemblyWithReferences(string assemblyName, params (string Name, Version Version)[] references)
+    {
+        Directory.CreateDirectory(fakeAssemblyRoot);
+        foreach (var stale in Directory.GetFiles(fakeAssemblyRoot))
+        {
+            try
+            {
+                File.Delete(stale);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+
+        var metadata = new MetadataBuilder();
+        metadata.AddAssembly(
+            metadata.GetOrAddString(assemblyName),
+            new Version(1, 0, 0, 0),
+            culture: default,
+            publicKey: default,
+            flags: default,
+            hashAlgorithm: AssemblyHashAlgorithm.None);
+        metadata.AddModule(
+            0,
+            metadata.GetOrAddString(assemblyName + ".dll"),
+            metadata.GetOrAddGuid(Guid.NewGuid()),
+            default,
+            default);
+        foreach (var (name, version) in references)
+        {
+            metadata.AddAssemblyReference(
+                metadata.GetOrAddString(name),
+                version,
+                culture: default,
+                publicKeyOrToken: default,
+                flags: default,
+                hashValue: default);
+        }
+
+        metadata.AddTypeDefinition(
+            default,
+            default,
+            metadata.GetOrAddString("<Module>"),
+            baseType: default,
+            fieldList: MetadataTokens.FieldDefinitionHandle(1),
+            methodList: MetadataTokens.MethodDefinitionHandle(1));
+
+        var peBlob = new BlobBuilder();
+        new ManagedPEBuilder(
+            PEHeaderBuilder.CreateLibraryHeader(),
+            new MetadataRootBuilder(metadata),
+            ilStream: new BlobBuilder()).Serialize(peBlob);
+        var path = Path.Combine(fakeAssemblyRoot, $"{assemblyName}_{Guid.NewGuid():N}.dll");
+        File.WriteAllBytes(path, peBlob.ToArray());
+        return path;
     }
 
     [Test]

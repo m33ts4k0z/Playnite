@@ -16,6 +16,19 @@ namespace Playnite.SDK.V7.Host;
 
 public static class V7PluginBridge
 {
+    // Playnite-internal assemblies; referencing them from a plugin is always a
+    // packaging mistake and would fail unpredictably inside the isolated
+    // context, so refuse them up front the way SDK v6 loading does.
+    private static readonly HashSet<string> forbiddenHostAssemblies = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Playnite",
+        "Playnite.Common",
+        "Playnite.Core",
+        "Playnite.Avalonia",
+        "Playnite.Avalonia.App",
+        "Playnite.SDK.V7.Host",
+    };
+
     public static object[] LoadAll(
         string pluginAssemblyPath,
         Func<string, string, string> hostCall,
@@ -45,6 +58,24 @@ public static class V7PluginBridge
         {
             throw new InvalidDataException(
                 $"Plugin assembly must reference Playnite.SDK major 7, but references {sdkReference?.Version}." );
+        }
+
+        // Same forward bound SDK v6 loading enforces: a plugin compiled against
+        // a newer SDK than this host bundles would fail with missing members
+        // mid-session; refuse it up front instead.
+        var hostSdkVersion = typeof(SdkVersions).Assembly.GetName().Version;
+        if (sdkReference.Version > hostSdkVersion)
+        {
+            throw new InvalidDataException(
+                $"Plugin requires Playnite.SDK {sdkReference.Version} but this Playnite provides {hostSdkVersion}.");
+        }
+
+        var forbiddenReference = assembly.GetReferencedAssemblies()
+            .FirstOrDefault(reference => forbiddenHostAssemblies.Contains(reference.Name));
+        if (forbiddenReference != null)
+        {
+            throw new InvalidDataException(
+                $"Plugin assembly must not reference the Playnite internal assembly {forbiddenReference.Name}.");
         }
 
         var api = new V7PlayniteApi(hostCall, hostObjectCall, hostRequest);
