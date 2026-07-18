@@ -153,6 +153,22 @@ internal static class DesktopPilotSelfTest
                 ? $"the editor loaded {originalEditorName} without mutating the database"
                 : throw new InvalidOperationException("The selected game was not loaded into the editor."));
 
+        Record(results, "Multi-value Core metadata reaches the editor", () =>
+            viewModel.Editor.Genres.Count == 2 &&
+            viewModel.Editor.Platforms.Any(option => option.Name == "Windows") &&
+            viewModel.Editor.Platforms.Any(option => option.Name == "Linux") &&
+            viewModel.Editor.Categories.Count == 2 &&
+            viewModel.Editor.Tags.Count == 2 &&
+            viewModel.Editor.Developers.Count == 2 &&
+            viewModel.Editor.Publishers.Count == 2 &&
+            viewModel.Editor.Platforms.Count(option => option.IsSelected) == 1
+                ? "genres, platforms, categories, tags, developers, and publishers loaded from Core"
+                : throw new InvalidOperationException(
+                    $"Counts were G{viewModel.Editor.Genres.Count}/P{viewModel.Editor.Platforms.Count}/" +
+                    $"C{viewModel.Editor.Categories.Count}/T{viewModel.Editor.Tags.Count}/" +
+                    $"D{viewModel.Editor.Developers.Count}/P{viewModel.Editor.Publishers.Count}; " +
+                    $"selected platforms {viewModel.Editor.Platforms.Count(option => option.IsSelected)}."));
+
         viewModel.Editor.Name = string.Empty;
         viewModel.Editor.SaveCommand.Execute(null);
         Record(results, "Desktop metadata validation blocks invalid saves", () =>
@@ -172,6 +188,12 @@ internal static class DesktopPilotSelfTest
         viewModel.Editor.Favorite = true;
         viewModel.Editor.Hidden = false;
         viewModel.Editor.SelectedCompletionStatus = viewModel.Editor.CompletionStatuses.Skip(1).First();
+        SelectOnly(viewModel.Editor.Genres, "Action");
+        SelectOnly(viewModel.Editor.Platforms, "Linux");
+        SelectOnly(viewModel.Editor.Categories, "Showcase");
+        SelectOnly(viewModel.Editor.Tags, "Co-op");
+        SelectOnly(viewModel.Editor.Developers, "Pilot Studio");
+        SelectOnly(viewModel.Editor.Publishers, "Sample Publishing");
         viewModel.Editor.SaveCommand.Execute(null);
         var savedEditorGame = library.Database.Games[editorGame.Game.Id];
         Record(results, "Desktop metadata saves through GameDatabase", () =>
@@ -182,8 +204,22 @@ internal static class DesktopPilotSelfTest
             savedEditorGame.UserScore == 88 &&
             savedEditorGame.Favorite &&
             savedEditorGame.Modified.HasValue &&
-            editorGame.Name == editedName
-                ? $"{editedName} persisted with date, score, status, notes, and flags"
+            savedEditorGame.GenreIds.SequenceEqual(
+                viewModel.Editor.Genres.Where(option => option.Name == "Action").Select(option => option.Id)) &&
+            savedEditorGame.PlatformIds.SequenceEqual(
+                viewModel.Editor.Platforms.Where(option => option.Name == "Linux").Select(option => option.Id)) &&
+            savedEditorGame.CategoryIds.SequenceEqual(
+                viewModel.Editor.Categories.Where(option => option.Name == "Showcase").Select(option => option.Id)) &&
+            savedEditorGame.TagIds.SequenceEqual(
+                viewModel.Editor.Tags.Where(option => option.Name == "Co-op").Select(option => option.Id)) &&
+            savedEditorGame.DeveloperIds.SequenceEqual(
+                viewModel.Editor.Developers.Where(option => option.Name == "Pilot Studio").Select(option => option.Id)) &&
+            savedEditorGame.PublisherIds.SequenceEqual(
+                viewModel.Editor.Publishers.Where(option => option.Name == "Sample Publishing").Select(option => option.Id)) &&
+            editorGame.Name == editedName &&
+            editorGame.GenresText.Contains("Action", StringComparison.Ordinal) &&
+            editorGame.PlatformsText.Contains("Linux", StringComparison.Ordinal)
+                ? $"{editedName} persisted scalar and multi-value metadata"
                 : throw new InvalidOperationException("The edited metadata did not round-trip through Core."));
 
         var pluginEditGame = viewModel.Games.First(game => game.Game.Id != editorGame.Game.Id);
@@ -223,6 +259,12 @@ internal static class DesktopPilotSelfTest
             viewModel.Editor.Favorite = true;
             viewModel.Editor.ApplyCompletionStatus = true;
             viewModel.Editor.SelectedCompletionStatus = viewModel.Editor.CompletionStatuses.Skip(1).Last();
+            viewModel.Editor.ApplyGenres = true;
+            SelectOnly(viewModel.Editor.Genres, "Strategy");
+            viewModel.Editor.ApplyPlatforms = true;
+            SelectOnly(viewModel.Editor.Platforms, "Windows");
+            viewModel.Editor.ApplyTags = true;
+            SelectOnly(viewModel.Editor.Tags, "Controller support", "Co-op");
             viewModel.Editor.SaveCommand.Execute(null);
         }, DispatcherPriority.Background);
         var bulkEditResult = window.RuntimeHost.PluginApi.MainView.OpenEditDialog(bulkGameIds);
@@ -233,9 +275,14 @@ internal static class DesktopPilotSelfTest
                 return game.Name == originalBulkNames[id] &&
                     game.UserScore == 77 &&
                     game.Favorite &&
-                    game.CompletionStatusId == viewModel.Editor.CompletionStatuses.Skip(1).Last().Id;
+                    game.CompletionStatusId == viewModel.Editor.CompletionStatuses.Skip(1).Last().Id &&
+                    game.GenreIds.SequenceEqual(
+                        viewModel.Editor.Genres.Where(option => option.Name == "Strategy").Select(option => option.Id)) &&
+                    game.PlatformIds.SequenceEqual(
+                        viewModel.Editor.Platforms.Where(option => option.Name == "Windows").Select(option => option.Id)) &&
+                    game.TagIds.Count == 2;
             })
-                ? "the SDK list overload buffered two Core updates without overwriting names"
+                ? "the SDK list overload buffered scalar and multi-value Core updates without overwriting names"
                 : throw new InvalidOperationException("The bulk editor did not preserve or apply the selected fields."));
 
         Record(results, "Desktop settings persist atomically", () =>
@@ -281,6 +328,17 @@ internal static class DesktopPilotSelfTest
         catch (Exception exception)
         {
             results.Add((name, false, exception.Message));
+        }
+    }
+
+    private static void SelectOnly(
+        IEnumerable<DesktopMetadataOption> options,
+        params string[] selectedNames)
+    {
+        var selected = new HashSet<string>(selectedNames, StringComparer.OrdinalIgnoreCase);
+        foreach (var option in options)
+        {
+            option.IsSelected = selected.Contains(option.Name);
         }
     }
 

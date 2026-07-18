@@ -41,6 +41,12 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? "No platform";
     public string CompletionStatusName => database.CompletionStatuses[Game.CompletionStatusId]?.Name ?? "No status";
     public string UserScoreText => Game.UserScore.HasValue ? $"User score {Game.UserScore}/100" : "Not rated";
+    public string GenresText => FormatNames("Genres", Game.GenreIds, id => database.Genres[id]?.Name);
+    public string PlatformsText => FormatNames("Platforms", Game.PlatformIds, id => database.Platforms[id]?.Name);
+    public string CategoriesText => FormatNames("Categories", Game.CategoryIds, id => database.Categories[id]?.Name);
+    public string TagsText => FormatNames("Tags", Game.TagIds, id => database.Tags[id]?.Name);
+    public string DevelopersText => FormatNames("Developers", Game.DeveloperIds, id => database.Companies[id]?.Name);
+    public string PublishersText => FormatNames("Publishers", Game.PublisherIds, id => database.Companies[id]?.Name);
     public string MetadataLine => BuildMetadataLine(Game, database);
     public string DescriptionText => ToPlainText(Game.Description);
     public string CoverPath => ResolveMediaPath(Game.CoverImage, database);
@@ -86,6 +92,12 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ReleaseYearText));
         OnPropertyChanged(nameof(UserScoreText));
         OnPropertyChanged(nameof(DescriptionText));
+        OnPropertyChanged(nameof(GenresText));
+        OnPropertyChanged(nameof(PlatformsText));
+        OnPropertyChanged(nameof(CategoriesText));
+        OnPropertyChanged(nameof(TagsText));
+        OnPropertyChanged(nameof(DevelopersText));
+        OnPropertyChanged(nameof(PublishersText));
     }
 
     private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
@@ -130,5 +142,18 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         }
 
         return Path.IsPathFullyQualified(path) ? path : database.GetFullFilePath(path);
+    }
+
+    private static string FormatNames(
+        string label,
+        IEnumerable<Guid> ids,
+        Func<Guid, string> resolveName)
+    {
+        var names = (ids ?? Array.Empty<Guid>())
+            .Select(resolveName)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+        return names.Count == 0 ? $"{label}: None" : $"{label}: {string.Join(", ", names)}";
     }
 }

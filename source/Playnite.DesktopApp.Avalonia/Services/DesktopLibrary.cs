@@ -42,6 +42,21 @@ public sealed class DesktopLibrary : IDisposable
             Guid.NewGuid().ToString("N"));
         PlaynitePaths.UpdateUserDataDir(temporaryRoot);
         Open(Path.Combine(temporaryRoot, "library"));
+        var actionGenre = new Genre("Action");
+        var strategyGenre = new Genre("Strategy");
+        var windowsPlatform = new Platform("Windows");
+        var linuxPlatform = new Platform("Linux");
+        var backlogCategory = new Category("Backlog");
+        var showcaseCategory = new Category("Showcase");
+        var controllerTag = new Tag("Controller support");
+        var cooperativeTag = new Tag("Co-op");
+        var pilotDeveloper = new Company("Pilot Studio");
+        var samplePublisher = new Company("Sample Publishing");
+        Database.Genres.Add(new List<Genre> { actionGenre, strategyGenre });
+        Database.Platforms.Add(new List<Platform> { windowsPlatform, linuxPlatform });
+        Database.Categories.Add(new List<Category> { backlogCategory, showcaseCategory });
+        Database.Tags.Add(new List<Tag> { controllerTag, cooperativeTag });
+        Database.Companies.Add(new List<Company> { pilotDeveloper, samplePublisher });
         Database.Games.Add(Enumerable.Range(1, gameCount).Select(index => new Game($"Desktop Pilot {index:N0}")
         {
             IsInstalled = index % 4 != 0,
@@ -49,7 +64,17 @@ public sealed class DesktopLibrary : IDisposable
             Hidden = index % 37 == 0,
             Playtime = (ulong)(index * 91),
             LastActivity = DateTime.Now.AddDays(-(index % 120)),
-            Description = "A real Playnite.Core game record displayed by the side-by-side Avalonia Desktop pilot."
+            Description = "A real Playnite.Core game record displayed by the side-by-side Avalonia Desktop pilot.",
+            GenreIds = new List<Guid> { index % 2 == 0 ? actionGenre.Id : strategyGenre.Id },
+            PlatformIds = new List<Guid> { index % 3 == 0 ? linuxPlatform.Id : windowsPlatform.Id },
+            CategoryIds = new List<Guid> { index % 5 == 0 ? showcaseCategory.Id : backlogCategory.Id },
+            TagIds = new List<Guid>
+            {
+                controllerTag.Id,
+                index % 7 == 0 ? cooperativeTag.Id : controllerTag.Id
+            }.Distinct().ToList(),
+            DeveloperIds = new List<Guid> { pilotDeveloper.Id },
+            PublisherIds = new List<Guid> { samplePublisher.Id }
         }).ToList());
         LoadGames();
     }

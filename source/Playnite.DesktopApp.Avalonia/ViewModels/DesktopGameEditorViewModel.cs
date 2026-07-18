@@ -34,6 +34,12 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private bool applyHidden;
     private bool applySource;
     private bool applyCompletionStatus;
+    private bool applyGenres;
+    private bool applyPlatforms;
+    private bool applyCategories;
+    private bool applyTags;
+    private bool applyDevelopers;
+    private bool applyPublishers;
 
     public event PropertyChangedEventHandler PropertyChanged;
 
@@ -109,6 +115,42 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         set => SetApplyField(ref applyCompletionStatus, value, nameof(CanEditCompletionStatus));
     }
 
+    public bool ApplyGenres
+    {
+        get => applyGenres;
+        set => SetApplyField(ref applyGenres, value, nameof(CanEditGenres));
+    }
+
+    public bool ApplyPlatforms
+    {
+        get => applyPlatforms;
+        set => SetApplyField(ref applyPlatforms, value, nameof(CanEditPlatforms));
+    }
+
+    public bool ApplyCategories
+    {
+        get => applyCategories;
+        set => SetApplyField(ref applyCategories, value, nameof(CanEditCategories));
+    }
+
+    public bool ApplyTags
+    {
+        get => applyTags;
+        set => SetApplyField(ref applyTags, value, nameof(CanEditTags));
+    }
+
+    public bool ApplyDevelopers
+    {
+        get => applyDevelopers;
+        set => SetApplyField(ref applyDevelopers, value, nameof(CanEditDevelopers));
+    }
+
+    public bool ApplyPublishers
+    {
+        get => applyPublishers;
+        set => SetApplyField(ref applyPublishers, value, nameof(CanEditPublishers));
+    }
+
     public bool CanEditReleaseDate => IsSingleEdit || ApplyReleaseDate;
     public bool CanEditUserScore => IsSingleEdit || ApplyUserScore;
     public bool CanEditDescription => IsSingleEdit || ApplyDescription;
@@ -117,6 +159,12 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public bool CanEditHidden => IsSingleEdit || ApplyHidden;
     public bool CanEditSource => IsSingleEdit || ApplySource;
     public bool CanEditCompletionStatus => IsSingleEdit || ApplyCompletionStatus;
+    public bool CanEditGenres => IsSingleEdit || ApplyGenres;
+    public bool CanEditPlatforms => IsSingleEdit || ApplyPlatforms;
+    public bool CanEditCategories => IsSingleEdit || ApplyCategories;
+    public bool CanEditTags => IsSingleEdit || ApplyTags;
+    public bool CanEditDevelopers => IsSingleEdit || ApplyDevelopers;
+    public bool CanEditPublishers => IsSingleEdit || ApplyPublishers;
 
     public string ValidationMessage
     {
@@ -133,6 +181,12 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public bool HasValidationError => !string.IsNullOrWhiteSpace(ValidationMessage);
     public IReadOnlyList<DesktopMetadataOption> Sources { get; }
     public IReadOnlyList<DesktopMetadataOption> CompletionStatuses { get; }
+    public IReadOnlyList<DesktopMetadataOption> Genres { get; }
+    public IReadOnlyList<DesktopMetadataOption> Platforms { get; }
+    public IReadOnlyList<DesktopMetadataOption> Categories { get; }
+    public IReadOnlyList<DesktopMetadataOption> Tags { get; }
+    public IReadOnlyList<DesktopMetadataOption> Developers { get; }
+    public IReadOnlyList<DesktopMetadataOption> Publishers { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
@@ -150,6 +204,12 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         CompletionStatuses = BuildOptions(
             database?.CompletionStatuses?.Select(status => new DesktopMetadataOption(status.Id, status.Name)),
             "No status");
+        Genres = BuildMultiOptions(database?.Genres?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        Platforms = BuildMultiOptions(database?.Platforms?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        Categories = BuildMultiOptions(database?.Categories?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        Tags = BuildMultiOptions(database?.Tags?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        Developers = BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        Publishers = BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(Cancel);
     }
@@ -200,6 +260,12 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         SelectedSource = Sources.FirstOrDefault(option => option.Id == sourceId) ?? Sources[0];
         SelectedCompletionStatus = CompletionStatuses
             .FirstOrDefault(option => option.Id == completionStatusId) ?? CompletionStatuses[0];
+        SetSelected(Genres, CommonIds(games, game => game.GenreIds));
+        SetSelected(Platforms, CommonIds(games, game => game.PlatformIds));
+        SetSelected(Categories, CommonIds(games, game => game.CategoryIds));
+        SetSelected(Tags, CommonIds(games, game => game.TagIds));
+        SetSelected(Developers, CommonIds(games, game => game.DeveloperIds));
+        SetSelected(Publishers, CommonIds(games, game => game.PublisherIds));
     }
 
     private void Save()
@@ -284,6 +350,12 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         game.Hidden = Hidden;
         game.SourceId = SelectedSource?.Id ?? Guid.Empty;
         game.CompletionStatusId = SelectedCompletionStatus?.Id ?? Guid.Empty;
+        game.GenreIds = SelectedIds(Genres);
+        game.PlatformIds = SelectedIds(Platforms);
+        game.CategoryIds = SelectedIds(Categories);
+        game.TagIds = SelectedIds(Tags);
+        game.DeveloperIds = SelectedIds(Developers);
+        game.PublisherIds = SelectedIds(Publishers);
     }
 
     private void ApplyBulkValues(Game game, ReleaseDate? parsedReleaseDate, int? parsedScore)
@@ -296,6 +368,12 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         if (ApplyHidden) game.Hidden = Hidden;
         if (ApplySource) game.SourceId = SelectedSource?.Id ?? Guid.Empty;
         if (ApplyCompletionStatus) game.CompletionStatusId = SelectedCompletionStatus?.Id ?? Guid.Empty;
+        if (ApplyGenres) game.GenreIds = SelectedIds(Genres);
+        if (ApplyPlatforms) game.PlatformIds = SelectedIds(Platforms);
+        if (ApplyCategories) game.CategoryIds = SelectedIds(Categories);
+        if (ApplyTags) game.TagIds = SelectedIds(Tags);
+        if (ApplyDevelopers) game.DeveloperIds = SelectedIds(Developers);
+        if (ApplyPublishers) game.PublisherIds = SelectedIds(Publishers);
     }
 
     private bool TryParseReleaseDate(out ReleaseDate? parsedReleaseDate)
@@ -336,7 +414,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
 
     private bool HasBulkChanges() =>
         ApplyReleaseDate || ApplyUserScore || ApplyDescription || ApplyNotes ||
-        ApplyFavorite || ApplyHidden || ApplySource || ApplyCompletionStatus;
+        ApplyFavorite || ApplyHidden || ApplySource || ApplyCompletionStatus ||
+        ApplyGenres || ApplyPlatforms || ApplyCategories || ApplyTags ||
+        ApplyDevelopers || ApplyPublishers;
 
     private void ResetApplyFlags()
     {
@@ -348,6 +428,12 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         ApplyHidden = false;
         ApplySource = false;
         ApplyCompletionStatus = false;
+        ApplyGenres = false;
+        ApplyPlatforms = false;
+        ApplyCategories = false;
+        ApplyTags = false;
+        ApplyDevelopers = false;
+        ApplyPublishers = false;
     }
 
     private void Cancel() => Complete(false);
@@ -378,6 +464,35 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         return result;
     }
 
+    private static IReadOnlyList<DesktopMetadataOption> BuildMultiOptions(
+        IEnumerable<DesktopMetadataOption> values) =>
+        values?.OrderBy(value => value.Name, StringComparer.CurrentCultureIgnoreCase).ToList() ??
+        new List<DesktopMetadataOption>();
+
+    private static IReadOnlyCollection<Guid> CommonIds(
+        IReadOnlyList<Game> games,
+        Func<Game, IReadOnlyCollection<Guid>> selector)
+    {
+        var first = new HashSet<Guid>(selector(games[0]) ?? Array.Empty<Guid>());
+        return games.Skip(1).All(game => first.SetEquals(selector(game) ?? Array.Empty<Guid>()))
+            ? first
+            : Array.Empty<Guid>();
+    }
+
+    private static void SetSelected(
+        IEnumerable<DesktopMetadataOption> options,
+        IReadOnlyCollection<Guid> selectedIds)
+    {
+        var selected = selectedIds is HashSet<Guid> set ? set : new HashSet<Guid>(selectedIds);
+        foreach (var option in options)
+        {
+            option.IsSelected = selected.Contains(option.Id);
+        }
+    }
+
+    private static List<Guid> SelectedIds(IEnumerable<DesktopMetadataOption> options) =>
+        options.Where(option => option.IsSelected).Select(option => option.Id).ToList();
+
     private static T CommonValue<T>(IReadOnlyList<Game> games, Func<Game, T> selector)
     {
         var first = selector(games[0]);
@@ -407,6 +522,12 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanEditHidden));
         OnPropertyChanged(nameof(CanEditSource));
         OnPropertyChanged(nameof(CanEditCompletionStatus));
+        OnPropertyChanged(nameof(CanEditGenres));
+        OnPropertyChanged(nameof(CanEditPlatforms));
+        OnPropertyChanged(nameof(CanEditCategories));
+        OnPropertyChanged(nameof(CanEditTags));
+        OnPropertyChanged(nameof(CanEditDevelopers));
+        OnPropertyChanged(nameof(CanEditPublishers));
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
