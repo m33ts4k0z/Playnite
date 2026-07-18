@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Playnite.Avalonia.App.ViewModels;
@@ -52,6 +53,42 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private bool applyIncludeLibraryPluginAction;
     private bool applyGameActions;
     private bool applyRoms;
+    private string installDirectory;
+    private bool isInstalled;
+    private bool overrideInstallState;
+    private string installSize;
+    private string version;
+    private string manual;
+    private bool enableSystemHdr;
+    private DateTime? lastActivity;
+    private string playtimeSeconds;
+    private string playCount;
+    private DateTime? added;
+    private string preScript;
+    private string postScript;
+    private string gameStartedScript;
+    private bool useGlobalPreScript;
+    private bool useGlobalPostScript;
+    private bool useGlobalGameStartedScript;
+    private bool applyInstallDirectory;
+    private bool applyIsInstalled;
+    private bool applyOverrideInstallState;
+    private bool applyInstallSize;
+    private bool applyVersion;
+    private bool applyManual;
+    private bool applyEnableSystemHdr;
+    private bool applyLastActivity;
+    private bool applyPlaytime;
+    private bool applyPlayCount;
+    private bool applyAdded;
+    private bool applyPreScript;
+    private bool applyPostScript;
+    private bool applyGameStartedScript;
+    private bool applyUseGlobalPreScript;
+    private bool applyUseGlobalPostScript;
+    private bool applyUseGlobalGameStartedScript;
+
+    private readonly record struct RuntimeValues(ulong Playtime, ulong PlayCount, ulong? InstallSize);
 
     public event PropertyChangedEventHandler PropertyChanged;
 
@@ -65,6 +102,27 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public string UserScore { get => userScore; set => SetField(ref userScore, value); }
     public string Description { get => description; set => SetField(ref description, value); }
     public string Notes { get => notes; set => SetField(ref notes, value); }
+    public string InstallDirectory { get => installDirectory; set => SetField(ref installDirectory, value); }
+    public bool IsInstalled { get => isInstalled; set => SetField(ref isInstalled, value); }
+    public bool OverrideInstallState { get => overrideInstallState; set => SetField(ref overrideInstallState, value); }
+    public string InstallSize { get => installSize; set => SetField(ref installSize, value); }
+    public string Version { get => version; set => SetField(ref version, value); }
+    public string Manual { get => manual; set => SetField(ref manual, value); }
+    public bool EnableSystemHdr { get => enableSystemHdr; set => SetField(ref enableSystemHdr, value); }
+    public DateTime? LastActivity { get => lastActivity; set => SetField(ref lastActivity, value); }
+    public string PlaytimeSeconds { get => playtimeSeconds; set => SetField(ref playtimeSeconds, value); }
+    public string PlayCount { get => playCount; set => SetField(ref playCount, value); }
+    public DateTime? Added { get => added; set => SetField(ref added, value); }
+    public string PreScript { get => preScript; set => SetField(ref preScript, value); }
+    public string PostScript { get => postScript; set => SetField(ref postScript, value); }
+    public string GameStartedScript { get => gameStartedScript; set => SetField(ref gameStartedScript, value); }
+    public bool UseGlobalPreScript { get => useGlobalPreScript; set => SetField(ref useGlobalPreScript, value); }
+    public bool UseGlobalPostScript { get => useGlobalPostScript; set => SetField(ref useGlobalPostScript, value); }
+    public bool UseGlobalGameStartedScript
+    {
+        get => useGlobalGameStartedScript;
+        set => SetField(ref useGlobalGameStartedScript, value);
+    }
     public string CoverImage
     {
         get => coverImage;
@@ -253,6 +311,111 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         set => SetApplyField(ref applyRoms, value, nameof(CanEditRoms));
     }
 
+    public bool ApplyInstallDirectory
+    {
+        get => applyInstallDirectory;
+        set => SetApplyField(ref applyInstallDirectory, value, nameof(CanEditInstallDirectory));
+    }
+
+    public bool ApplyIsInstalled
+    {
+        get => applyIsInstalled;
+        set => SetApplyField(ref applyIsInstalled, value, nameof(CanEditIsInstalled));
+    }
+
+    public bool ApplyOverrideInstallState
+    {
+        get => applyOverrideInstallState;
+        set => SetApplyField(ref applyOverrideInstallState, value, nameof(CanEditOverrideInstallState));
+    }
+
+    public bool ApplyInstallSize
+    {
+        get => applyInstallSize;
+        set => SetApplyField(ref applyInstallSize, value, nameof(CanEditInstallSize));
+    }
+
+    public bool ApplyVersion
+    {
+        get => applyVersion;
+        set => SetApplyField(ref applyVersion, value, nameof(CanEditVersion));
+    }
+
+    public bool ApplyManual
+    {
+        get => applyManual;
+        set => SetApplyField(ref applyManual, value, nameof(CanEditManual));
+    }
+
+    public bool ApplyEnableSystemHdr
+    {
+        get => applyEnableSystemHdr;
+        set => SetApplyField(ref applyEnableSystemHdr, value, nameof(CanEditEnableSystemHdr));
+    }
+
+    public bool ApplyLastActivity
+    {
+        get => applyLastActivity;
+        set => SetApplyField(ref applyLastActivity, value, nameof(CanEditLastActivity));
+    }
+
+    public bool ApplyPlaytime
+    {
+        get => applyPlaytime;
+        set => SetApplyField(ref applyPlaytime, value, nameof(CanEditPlaytime));
+    }
+
+    public bool ApplyPlayCount
+    {
+        get => applyPlayCount;
+        set => SetApplyField(ref applyPlayCount, value, nameof(CanEditPlayCount));
+    }
+
+    public bool ApplyAdded
+    {
+        get => applyAdded;
+        set => SetApplyField(ref applyAdded, value, nameof(CanEditAdded));
+    }
+
+    public bool ApplyPreScript
+    {
+        get => applyPreScript;
+        set => SetApplyField(ref applyPreScript, value, nameof(CanEditPreScript));
+    }
+
+    public bool ApplyPostScript
+    {
+        get => applyPostScript;
+        set => SetApplyField(ref applyPostScript, value, nameof(CanEditPostScript));
+    }
+
+    public bool ApplyGameStartedScript
+    {
+        get => applyGameStartedScript;
+        set => SetApplyField(ref applyGameStartedScript, value, nameof(CanEditGameStartedScript));
+    }
+
+    public bool ApplyUseGlobalPreScript
+    {
+        get => applyUseGlobalPreScript;
+        set => SetApplyField(ref applyUseGlobalPreScript, value, nameof(CanEditUseGlobalPreScript));
+    }
+
+    public bool ApplyUseGlobalPostScript
+    {
+        get => applyUseGlobalPostScript;
+        set => SetApplyField(ref applyUseGlobalPostScript, value, nameof(CanEditUseGlobalPostScript));
+    }
+
+    public bool ApplyUseGlobalGameStartedScript
+    {
+        get => applyUseGlobalGameStartedScript;
+        set => SetApplyField(
+            ref applyUseGlobalGameStartedScript,
+            value,
+            nameof(CanEditUseGlobalGameStartedScript));
+    }
+
     public bool CanEditReleaseDate => IsSingleEdit || ApplyReleaseDate;
     public bool CanEditUserScore => IsSingleEdit || ApplyUserScore;
     public bool CanEditDescription => IsSingleEdit || ApplyDescription;
@@ -274,6 +437,23 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public bool CanEditIncludeLibraryPluginAction => IsSingleEdit || ApplyIncludeLibraryPluginAction;
     public bool CanEditGameActions => IsSingleEdit || ApplyGameActions;
     public bool CanEditRoms => IsSingleEdit || ApplyRoms;
+    public bool CanEditInstallDirectory => IsSingleEdit || ApplyInstallDirectory;
+    public bool CanEditIsInstalled => IsSingleEdit || ApplyIsInstalled;
+    public bool CanEditOverrideInstallState => IsSingleEdit || ApplyOverrideInstallState;
+    public bool CanEditInstallSize => IsSingleEdit || ApplyInstallSize;
+    public bool CanEditVersion => IsSingleEdit || ApplyVersion;
+    public bool CanEditManual => IsSingleEdit || ApplyManual;
+    public bool CanEditEnableSystemHdr => IsSingleEdit || ApplyEnableSystemHdr;
+    public bool CanEditLastActivity => IsSingleEdit || ApplyLastActivity;
+    public bool CanEditPlaytime => IsSingleEdit || ApplyPlaytime;
+    public bool CanEditPlayCount => IsSingleEdit || ApplyPlayCount;
+    public bool CanEditAdded => IsSingleEdit || ApplyAdded;
+    public bool CanEditPreScript => IsSingleEdit || ApplyPreScript;
+    public bool CanEditPostScript => IsSingleEdit || ApplyPostScript;
+    public bool CanEditGameStartedScript => IsSingleEdit || ApplyGameStartedScript;
+    public bool CanEditUseGlobalPreScript => IsSingleEdit || ApplyUseGlobalPreScript;
+    public bool CanEditUseGlobalPostScript => IsSingleEdit || ApplyUseGlobalPostScript;
+    public bool CanEditUseGlobalGameStartedScript => IsSingleEdit || ApplyUseGlobalGameStartedScript;
 
     public string ValidationMessage
     {
@@ -379,6 +559,23 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         UserScore = CommonValue(games, game => game.UserScore?.ToString() ?? string.Empty);
         Description = CommonValue(games, game => game.Description ?? string.Empty);
         Notes = CommonValue(games, game => game.Notes ?? string.Empty);
+        InstallDirectory = CommonValue(games, game => game.InstallDirectory ?? string.Empty);
+        IsInstalled = CommonValue(games, game => game.IsInstalled);
+        OverrideInstallState = CommonValue(games, game => game.OverrideInstallState);
+        InstallSize = CommonValue(games, game => game.InstallSize?.ToString(CultureInfo.InvariantCulture) ?? string.Empty);
+        Version = CommonValue(games, game => game.Version ?? string.Empty);
+        Manual = CommonValue(games, game => game.Manual ?? string.Empty);
+        EnableSystemHdr = CommonValue(games, game => game.EnableSystemHdr);
+        LastActivity = CommonValue(games, game => game.LastActivity);
+        PlaytimeSeconds = CommonValue(games, game => game.Playtime.ToString(CultureInfo.InvariantCulture));
+        PlayCount = CommonValue(games, game => game.PlayCount.ToString(CultureInfo.InvariantCulture));
+        Added = CommonValue(games, game => game.Added);
+        PreScript = CommonValue(games, game => game.PreScript ?? string.Empty);
+        PostScript = CommonValue(games, game => game.PostScript ?? string.Empty);
+        GameStartedScript = CommonValue(games, game => game.GameStartedScript ?? string.Empty);
+        UseGlobalPreScript = CommonValue(games, game => game.UseGlobalPreScript);
+        UseGlobalPostScript = CommonValue(games, game => game.UseGlobalPostScript);
+        UseGlobalGameStartedScript = CommonValue(games, game => game.UseGlobalGameStartedScript);
         Favorite = CommonValue(games, game => game.Favorite);
         Hidden = CommonValue(games, game => game.Hidden);
         var sourceId = CommonValue(games, game => game.SourceId);
@@ -439,6 +636,11 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             return;
         }
 
+        if (!TryParseRuntimeValues(out var runtimeValues))
+        {
+            return;
+        }
+
         if (!TryBuildLinks(out var preparedLinks))
         {
             return;
@@ -486,6 +688,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
                             game,
                             parsedReleaseDate,
                             parsedScore,
+                            runtimeValues,
                             preparedLinks,
                             preparedGameActions,
                             preparedRoms);
@@ -496,6 +699,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
                             game,
                             parsedReleaseDate,
                             parsedScore,
+                            runtimeValues,
                             preparedLinks,
                             preparedGameActions,
                             preparedRoms);
@@ -527,6 +731,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         Game game,
         ReleaseDate? parsedReleaseDate,
         int? parsedScore,
+        RuntimeValues runtimeValues,
         IReadOnlyList<Link> preparedLinks,
         IReadOnlyList<GameAction> preparedGameActions,
         IReadOnlyList<GameRom> preparedRoms)
@@ -537,6 +742,28 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         game.UserScore = parsedScore;
         game.Description = Description ?? string.Empty;
         game.Notes = Notes ?? string.Empty;
+        game.InstallDirectory = NullIfWhiteSpace(InstallDirectory);
+        game.IsInstalled = IsInstalled;
+        game.OverrideInstallState = OverrideInstallState;
+        if (game.InstallSize != runtimeValues.InstallSize)
+        {
+            game.LastSizeScanDate = DateTime.Now;
+        }
+
+        game.InstallSize = runtimeValues.InstallSize;
+        game.Version = NullIfWhiteSpace(Version);
+        game.Manual = NullIfWhiteSpace(Manual);
+        game.EnableSystemHdr = EnableSystemHdr;
+        game.LastActivity = LastActivity;
+        game.Playtime = runtimeValues.Playtime;
+        game.PlayCount = runtimeValues.PlayCount;
+        game.Added = Added;
+        game.PreScript = NullIfWhiteSpace(PreScript);
+        game.PostScript = NullIfWhiteSpace(PostScript);
+        game.GameStartedScript = NullIfWhiteSpace(GameStartedScript);
+        game.UseGlobalPreScript = UseGlobalPreScript;
+        game.UseGlobalPostScript = UseGlobalPostScript;
+        game.UseGlobalGameStartedScript = UseGlobalGameStartedScript;
         game.Favorite = Favorite;
         game.Hidden = Hidden;
         game.SourceId = SelectedSource?.Id ?? Guid.Empty;
@@ -558,6 +785,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         Game game,
         ReleaseDate? parsedReleaseDate,
         int? parsedScore,
+        RuntimeValues runtimeValues,
         IReadOnlyList<Link> preparedLinks,
         IReadOnlyList<GameAction> preparedGameActions,
         IReadOnlyList<GameRom> preparedRoms)
@@ -566,6 +794,32 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         if (ApplyUserScore) game.UserScore = parsedScore;
         if (ApplyDescription) game.Description = Description ?? string.Empty;
         if (ApplyNotes) game.Notes = Notes ?? string.Empty;
+        if (ApplyInstallDirectory) game.InstallDirectory = NullIfWhiteSpace(InstallDirectory);
+        if (ApplyIsInstalled) game.IsInstalled = IsInstalled;
+        if (ApplyOverrideInstallState) game.OverrideInstallState = OverrideInstallState;
+        if (ApplyInstallSize)
+        {
+            if (game.InstallSize != runtimeValues.InstallSize)
+            {
+                game.LastSizeScanDate = DateTime.Now;
+            }
+
+            game.InstallSize = runtimeValues.InstallSize;
+        }
+
+        if (ApplyVersion) game.Version = NullIfWhiteSpace(Version);
+        if (ApplyManual) game.Manual = NullIfWhiteSpace(Manual);
+        if (ApplyEnableSystemHdr) game.EnableSystemHdr = EnableSystemHdr;
+        if (ApplyLastActivity) game.LastActivity = LastActivity;
+        if (ApplyPlaytime) game.Playtime = runtimeValues.Playtime;
+        if (ApplyPlayCount) game.PlayCount = runtimeValues.PlayCount;
+        if (ApplyAdded) game.Added = Added;
+        if (ApplyPreScript) game.PreScript = NullIfWhiteSpace(PreScript);
+        if (ApplyPostScript) game.PostScript = NullIfWhiteSpace(PostScript);
+        if (ApplyGameStartedScript) game.GameStartedScript = NullIfWhiteSpace(GameStartedScript);
+        if (ApplyUseGlobalPreScript) game.UseGlobalPreScript = UseGlobalPreScript;
+        if (ApplyUseGlobalPostScript) game.UseGlobalPostScript = UseGlobalPostScript;
+        if (ApplyUseGlobalGameStartedScript) game.UseGlobalGameStartedScript = UseGlobalGameStartedScript;
         if (ApplyFavorite) game.Favorite = Favorite;
         if (ApplyHidden) game.Hidden = Hidden;
         if (ApplySource) game.SourceId = SelectedSource?.Id ?? Guid.Empty;
@@ -815,13 +1069,76 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         return true;
     }
 
+    private bool TryParseRuntimeValues(out RuntimeValues values)
+    {
+        values = default;
+        if (!TryParseUnsignedValue(
+                PlaytimeSeconds,
+                IsSingleEdit || ApplyPlaytime,
+                false,
+                "Playtime",
+                out var parsedPlaytime) ||
+            !TryParseUnsignedValue(
+                PlayCount,
+                IsSingleEdit || ApplyPlayCount,
+                false,
+                "Play count",
+                out var parsedPlayCount) ||
+            !TryParseUnsignedValue(
+                InstallSize,
+                IsSingleEdit || ApplyInstallSize,
+                true,
+                "Install size",
+                out var parsedInstallSize))
+        {
+            return false;
+        }
+
+        values = new RuntimeValues(parsedPlaytime ?? 0, parsedPlayCount ?? 0, parsedInstallSize);
+        return true;
+    }
+
+    private bool TryParseUnsignedValue(
+        string input,
+        bool shouldParse,
+        bool isNullable,
+        string fieldName,
+        out ulong? value)
+    {
+        value = null;
+        if (!shouldParse)
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            value = isNullable ? null : 0;
+            return true;
+        }
+
+        if (!ulong.TryParse(input.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var parsed))
+        {
+            ValidationMessage = $"{fieldName} must be a non-negative whole number.";
+            return false;
+        }
+
+        value = parsed;
+        return true;
+    }
+
     private bool HasBulkChanges() =>
         ApplyReleaseDate || ApplyUserScore || ApplyDescription || ApplyNotes ||
         ApplyFavorite || ApplyHidden || ApplySource || ApplyCompletionStatus ||
         ApplyGenres || ApplyPlatforms || ApplyCategories || ApplyTags ||
         ApplyDevelopers || ApplyPublishers || ApplyCoverImage ||
         ApplyBackgroundImage || ApplyIcon || ApplyLinks ||
-        ApplyIncludeLibraryPluginAction || ApplyGameActions || ApplyRoms;
+        ApplyIncludeLibraryPluginAction || ApplyGameActions || ApplyRoms ||
+        ApplyInstallDirectory || ApplyIsInstalled || ApplyOverrideInstallState ||
+        ApplyInstallSize || ApplyVersion || ApplyManual || ApplyEnableSystemHdr ||
+        ApplyLastActivity || ApplyPlaytime || ApplyPlayCount || ApplyAdded ||
+        ApplyPreScript || ApplyPostScript || ApplyGameStartedScript ||
+        ApplyUseGlobalPreScript || ApplyUseGlobalPostScript || ApplyUseGlobalGameStartedScript;
 
     private void ResetApplyFlags()
     {
@@ -846,6 +1163,23 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         ApplyIncludeLibraryPluginAction = false;
         ApplyGameActions = false;
         ApplyRoms = false;
+        ApplyInstallDirectory = false;
+        ApplyIsInstalled = false;
+        ApplyOverrideInstallState = false;
+        ApplyInstallSize = false;
+        ApplyVersion = false;
+        ApplyManual = false;
+        ApplyEnableSystemHdr = false;
+        ApplyLastActivity = false;
+        ApplyPlaytime = false;
+        ApplyPlayCount = false;
+        ApplyAdded = false;
+        ApplyPreScript = false;
+        ApplyPostScript = false;
+        ApplyGameStartedScript = false;
+        ApplyUseGlobalPreScript = false;
+        ApplyUseGlobalPostScript = false;
+        ApplyUseGlobalGameStartedScript = false;
     }
 
     private void Cancel() => Complete(false);
@@ -1037,6 +1371,23 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CanEditIncludeLibraryPluginAction));
         OnPropertyChanged(nameof(CanEditGameActions));
         OnPropertyChanged(nameof(CanEditRoms));
+        OnPropertyChanged(nameof(CanEditInstallDirectory));
+        OnPropertyChanged(nameof(CanEditIsInstalled));
+        OnPropertyChanged(nameof(CanEditOverrideInstallState));
+        OnPropertyChanged(nameof(CanEditInstallSize));
+        OnPropertyChanged(nameof(CanEditVersion));
+        OnPropertyChanged(nameof(CanEditManual));
+        OnPropertyChanged(nameof(CanEditEnableSystemHdr));
+        OnPropertyChanged(nameof(CanEditLastActivity));
+        OnPropertyChanged(nameof(CanEditPlaytime));
+        OnPropertyChanged(nameof(CanEditPlayCount));
+        OnPropertyChanged(nameof(CanEditAdded));
+        OnPropertyChanged(nameof(CanEditPreScript));
+        OnPropertyChanged(nameof(CanEditPostScript));
+        OnPropertyChanged(nameof(CanEditGameStartedScript));
+        OnPropertyChanged(nameof(CanEditUseGlobalPreScript));
+        OnPropertyChanged(nameof(CanEditUseGlobalPostScript));
+        OnPropertyChanged(nameof(CanEditUseGlobalGameStartedScript));
         ((RelayCommand)AddLinkCommand).RaiseCanExecuteChanged();
         ((RelayCommand)AddGameActionCommand).RaiseCanExecuteChanged();
         ((RelayCommand)AddRomCommand).RaiseCanExecuteChanged();

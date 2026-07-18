@@ -238,9 +238,22 @@ internal static class DesktopPilotSelfTest
         secondRom.MoveUpCommand.Execute(null);
         viewModel.Editor.IncludeLibraryPluginAction = false;
 
+        viewModel.Editor.InstallSize = "not-a-number";
+        viewModel.Editor.SaveCommand.Execute(null);
+        Record(results, "Desktop runtime validation rejects invalid unsigned values", () =>
+            viewModel.Editor.IsVisible &&
+            viewModel.Editor.HasValidationError &&
+            viewModel.Editor.ValidationMessage.Contains("Install size", StringComparison.OrdinalIgnoreCase) &&
+            library.Database.Games[editorGame.Game.Id].InstallSize == null
+                ? viewModel.Editor.ValidationMessage
+                : throw new InvalidOperationException("An invalid install size reached the Core database."));
+
         var editedName = originalEditorName + " — Edited";
         const string singleBackgroundUrl = "https://example.invalid/desktop-background.jpg";
         const string singleLinkUrl = "https://example.com/desktop-pilot";
+        var singleInstallDirectory = Path.Combine(library.ActiveUserDataDirectory, "games", "desktop-pilot");
+        var singleLastActivity = new DateTime(2025, 6, 7, 8, 9, 10, DateTimeKind.Unspecified);
+        var singleAdded = new DateTime(2023, 4, 5, 6, 7, 8, DateTimeKind.Unspecified);
         viewModel.Editor.Name = editedName;
         viewModel.Editor.SortingName = "Edited Pilot";
         viewModel.Editor.ReleaseDate = "2024-7-18";
@@ -259,6 +272,23 @@ internal static class DesktopPilotSelfTest
         viewModel.Editor.CoverImage = library.SelfTestMediaPath;
         viewModel.Editor.BackgroundImage = singleBackgroundUrl;
         viewModel.Editor.Icon = library.SelfTestMediaPath;
+        viewModel.Editor.InstallDirectory = singleInstallDirectory;
+        viewModel.Editor.IsInstalled = false;
+        viewModel.Editor.OverrideInstallState = true;
+        viewModel.Editor.InstallSize = "123456789";
+        viewModel.Editor.Version = "1.2.3-pilot";
+        viewModel.Editor.Manual = "https://example.com/desktop-manual";
+        viewModel.Editor.EnableSystemHdr = true;
+        viewModel.Editor.LastActivity = singleLastActivity;
+        viewModel.Editor.PlaytimeSeconds = "4321";
+        viewModel.Editor.PlayCount = "12";
+        viewModel.Editor.Added = singleAdded;
+        viewModel.Editor.PreScript = "$env:PLAYNITE_PILOT = 'pre'";
+        viewModel.Editor.GameStartedScript = "$env:PLAYNITE_PILOT = 'started'";
+        viewModel.Editor.PostScript = "$env:PLAYNITE_PILOT = 'post'";
+        viewModel.Editor.UseGlobalPreScript = false;
+        viewModel.Editor.UseGlobalGameStartedScript = true;
+        viewModel.Editor.UseGlobalPostScript = false;
         viewModel.Editor.AddLinkCommand.Execute(null);
         var websiteLink = viewModel.Editor.Links.Last();
         websiteLink.Name = "Website";
@@ -326,6 +356,31 @@ internal static class DesktopPilotSelfTest
                 ? "ordered file/emulator actions, plugin-action policy, and ROM records persisted and refreshed"
                 : throw new InvalidOperationException("Actions or ROM records did not round-trip through the Desktop editor."));
 
+        Record(results, "Desktop installation, runtime, and scripts round-trip through Core", () =>
+            savedEditorGame.InstallDirectory == singleInstallDirectory &&
+            !savedEditorGame.IsInstalled &&
+            savedEditorGame.OverrideInstallState &&
+            savedEditorGame.InstallSize == 123456789 &&
+            savedEditorGame.LastSizeScanDate.HasValue &&
+            savedEditorGame.Version == "1.2.3-pilot" &&
+            savedEditorGame.Manual == "https://example.com/desktop-manual" &&
+            savedEditorGame.EnableSystemHdr &&
+            savedEditorGame.LastActivity == singleLastActivity &&
+            savedEditorGame.Playtime == 4321 &&
+            savedEditorGame.PlayCount == 12 &&
+            savedEditorGame.Added == singleAdded &&
+            savedEditorGame.PreScript == "$env:PLAYNITE_PILOT = 'pre'" &&
+            savedEditorGame.GameStartedScript == "$env:PLAYNITE_PILOT = 'started'" &&
+            savedEditorGame.PostScript == "$env:PLAYNITE_PILOT = 'post'" &&
+            !savedEditorGame.UseGlobalPreScript &&
+            savedEditorGame.UseGlobalGameStartedScript &&
+            !savedEditorGame.UseGlobalPostScript &&
+            editorGame.InstallationDetailsText.Contains("1.2.3-pilot", StringComparison.Ordinal) &&
+            editorGame.ScriptsText.Contains("System HDR", StringComparison.Ordinal) &&
+            editorGame.PlaytimeText.Contains("hours played", StringComparison.Ordinal)
+                ? "installation state, statistics, HDR/manual fields, and all script policies persisted and refreshed"
+                : throw new InvalidOperationException("Installation, runtime, or script fields did not round-trip."));
+
         viewModel.SelectedGame = editorGame;
         viewModel.EditCommand.Execute(null);
         viewModel.Editor.CoverImage = string.Empty;
@@ -369,6 +424,10 @@ internal static class DesktopPilotSelfTest
 
         var originalBulkNames = bulkGameIds.ToDictionary(id => id, id => library.Database.Games[id].Name);
         var originalBulkIcons = bulkGameIds.ToDictionary(id => id, id => library.Database.Games[id].Icon);
+        var originalBulkManuals = bulkGameIds.ToDictionary(id => id, id => library.Database.Games[id].Manual);
+        var originalBulkPostScripts = bulkGameIds.ToDictionary(id => id, id => library.Database.Games[id].PostScript);
+        var originalBulkAdded = bulkGameIds.ToDictionary(id => id, id => library.Database.Games[id].Added);
+        var originalSizeScanDate = library.Database.Games[editorGame.Game.Id].LastSizeScanDate;
         const string bulkBackgroundUrl = "https://example.invalid/bulk-background.jpg";
         const string bulkLinkUrl = "https://example.com/shared-pilot-link";
         Dispatcher.UIThread.Post(() =>
@@ -411,6 +470,22 @@ internal static class DesktopPilotSelfTest
             var sharedRom = viewModel.Editor.Roms.Last();
             sharedRom.Name = "Shared ROM";
             sharedRom.Path = "{InstallDir}\\shared.rom";
+            viewModel.Editor.ApplyIsInstalled = true;
+            viewModel.Editor.IsInstalled = true;
+            viewModel.Editor.ApplyInstallSize = true;
+            viewModel.Editor.InstallSize = string.Empty;
+            viewModel.Editor.ApplyVersion = true;
+            viewModel.Editor.Version = "2.0-bulk";
+            viewModel.Editor.ApplyPlayCount = true;
+            viewModel.Editor.PlayCount = "99";
+            viewModel.Editor.ApplyLastActivity = true;
+            viewModel.Editor.LastActivity = null;
+            viewModel.Editor.ApplyEnableSystemHdr = true;
+            viewModel.Editor.EnableSystemHdr = false;
+            viewModel.Editor.ApplyPreScript = true;
+            viewModel.Editor.PreScript = "$env:PLAYNITE_BULK = 'pre'";
+            viewModel.Editor.ApplyUseGlobalPreScript = true;
+            viewModel.Editor.UseGlobalPreScript = false;
             viewModel.Editor.SaveCommand.Execute(null);
         }, DispatcherPriority.Background);
         var bulkEditResult = window.RuntimeHost.PluginApi.MainView.OpenEditDialog(bulkGameIds);
@@ -467,6 +542,26 @@ internal static class DesktopPilotSelfTest
                     ? "the SDK list overload copied action and ROM collections without sharing mutable instances"
                     : throw new InvalidOperationException("Bulk actions or ROM records were not independently applied.");
         });
+
+        Record(results, "Plugin bulk editing applies runtime and script fields selectively", () =>
+            bulkGameIds.All(id =>
+            {
+                var game = library.Database.Games[id];
+                return game.IsInstalled &&
+                    game.InstallSize == null &&
+                    game.Version == "2.0-bulk" &&
+                    game.PlayCount == 99 &&
+                    game.LastActivity == null &&
+                    !game.EnableSystemHdr &&
+                    game.PreScript == "$env:PLAYNITE_BULK = 'pre'" &&
+                    !game.UseGlobalPreScript &&
+                    game.Manual == originalBulkManuals[id] &&
+                    game.PostScript == originalBulkPostScripts[id] &&
+                    game.Added == originalBulkAdded[id];
+            }) &&
+            library.Database.Games[editorGame.Game.Id].LastSizeScanDate > originalSizeScanDate
+                ? "nullable install size/date fields cleared while unselected manual, post-script, and added values stayed intact"
+                : throw new InvalidOperationException("Bulk runtime or script fields overwrote unselected metadata."));
 
         Record(results, "Desktop settings persist atomically", () =>
         {

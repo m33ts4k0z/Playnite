@@ -232,6 +232,10 @@
                                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                                         <TextBlock Text="{Binding SelectedGame.RomsText}" FontSize="11"
                                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedGame.InstallationDetailsText}" FontSize="11"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <TextBlock Text="{Binding SelectedGame.ScriptsText}" FontSize="11"
+                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="16">
                                         <TextBlock Text="{Binding SelectedGame.PlaytimeText}"
@@ -733,6 +737,189 @@
                                             <Button Command="{Binding Editor.AddGameActionCommand}"
                                                     Content="{DynamicResource LOCDesktopAddAction}"
                                                     HorizontalAlignment="Left" />
+                                        </StackPanel>
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="{DynamicResource LOCDesktopInstallationRuntime}" Classes="sectionLabel" />
+                                            <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                                <StackPanel Spacing="5">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopInstallDirectory}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyInstallDirectory, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <TextBox Text="{Binding Editor.InstallDirectory, Mode=TwoWay}"
+                                                             IsEnabled="{Binding Editor.CanEditInstallDirectory}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="5">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopVersion}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyVersion, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <TextBox Text="{Binding Editor.Version, Mode=TwoWay}"
+                                                             IsEnabled="{Binding Editor.CanEditVersion}" />
+                                                </StackPanel>
+                                            </Grid>
+                                            <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                                <StackPanel Spacing="5">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopManual}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyManual, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <TextBox Text="{Binding Editor.Manual, Mode=TwoWay}"
+                                                             IsEnabled="{Binding Editor.CanEditManual}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="5">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopInstallSize}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyInstallSize, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <TextBox Text="{Binding Editor.InstallSize, Mode=TwoWay}"
+                                                             IsEnabled="{Binding Editor.CanEditInstallSize}" />
+                                                </StackPanel>
+                                            </Grid>
+                                            <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                                <StackPanel Spacing="5">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopLastPlayed}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyLastActivity, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <CalendarDatePicker SelectedDate="{Binding Editor.LastActivity, Mode=TwoWay}"
+                                                                        IsEnabled="{Binding Editor.CanEditLastActivity}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="5">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopAdded}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyAdded, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <CalendarDatePicker SelectedDate="{Binding Editor.Added, Mode=TwoWay}"
+                                                                        IsEnabled="{Binding Editor.CanEditAdded}" />
+                                                </StackPanel>
+                                            </Grid>
+                                            <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                                                <StackPanel Spacing="5">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopPlaytimeSeconds}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyPlaytime, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <TextBox Text="{Binding Editor.PlaytimeSeconds, Mode=TwoWay}"
+                                                             IsEnabled="{Binding Editor.CanEditPlaytime}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="5">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopPlayCount}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyPlayCount, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <TextBox Text="{Binding Editor.PlayCount, Mode=TwoWay}"
+                                                             IsEnabled="{Binding Editor.CanEditPlayCount}" />
+                                                </StackPanel>
+                                            </Grid>
+                                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                                                <StackPanel Spacing="5">
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyIsInstalled, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    <CheckBox IsChecked="{Binding Editor.IsInstalled, Mode=TwoWay}"
+                                                              IsEnabled="{Binding Editor.CanEditIsInstalled}"
+                                                              Content="{DynamicResource LOCDesktopIsInstalled}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="5">
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyOverrideInstallState, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    <CheckBox IsChecked="{Binding Editor.OverrideInstallState, Mode=TwoWay}"
+                                                              IsEnabled="{Binding Editor.CanEditOverrideInstallState}"
+                                                              Content="{DynamicResource LOCDesktopOverrideInstallState}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="2" Spacing="5">
+                                                    <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                              IsChecked="{Binding Editor.ApplyEnableSystemHdr, Mode=TwoWay}"
+                                                              Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    <CheckBox IsChecked="{Binding Editor.EnableSystemHdr, Mode=TwoWay}"
+                                                              IsEnabled="{Binding Editor.CanEditEnableSystemHdr}"
+                                                              Content="{DynamicResource LOCDesktopEnableHdr}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="{DynamicResource LOCDesktopScripts}" Classes="sectionLabel" />
+                                            <Border BorderBrush="#394657" BorderThickness="1" CornerRadius="7" Padding="10">
+                                                <StackPanel Spacing="6">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopPreScript}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyPreScript, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <TextBox Text="{Binding Editor.PreScript, Mode=TwoWay}"
+                                                             IsEnabled="{Binding Editor.CanEditPreScript}"
+                                                             AcceptsReturn="True" FontFamily="Consolas" MinHeight="80" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyUseGlobalPreScript, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                        <CheckBox IsChecked="{Binding Editor.UseGlobalPreScript, Mode=TwoWay}"
+                                                                  IsEnabled="{Binding Editor.CanEditUseGlobalPreScript}"
+                                                                  Content="{DynamicResource LOCDesktopUseGlobalScript}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border BorderBrush="#394657" BorderThickness="1" CornerRadius="7" Padding="10">
+                                                <StackPanel Spacing="6">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopGameStartedScript}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyGameStartedScript, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <TextBox Text="{Binding Editor.GameStartedScript, Mode=TwoWay}"
+                                                             IsEnabled="{Binding Editor.CanEditGameStartedScript}"
+                                                             AcceptsReturn="True" FontFamily="Consolas" MinHeight="80" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyUseGlobalGameStartedScript, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                        <CheckBox IsChecked="{Binding Editor.UseGlobalGameStartedScript, Mode=TwoWay}"
+                                                                  IsEnabled="{Binding Editor.CanEditUseGlobalGameStartedScript}"
+                                                                  Content="{DynamicResource LOCDesktopUseGlobalScript}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border BorderBrush="#394657" BorderThickness="1" CornerRadius="7" Padding="10">
+                                                <StackPanel Spacing="6">
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <TextBlock Text="{DynamicResource LOCDesktopPostScript}" Classes="sectionLabel" />
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyPostScript, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                    </StackPanel>
+                                                    <TextBox Text="{Binding Editor.PostScript, Mode=TwoWay}"
+                                                             IsEnabled="{Binding Editor.CanEditPostScript}"
+                                                             AcceptsReturn="True" FontFamily="Consolas" MinHeight="80" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                                        <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
+                                                                  IsChecked="{Binding Editor.ApplyUseGlobalPostScript, Mode=TwoWay}"
+                                                                  Content="{DynamicResource LOCDesktopApplyInBulk}" />
+                                                        <CheckBox IsChecked="{Binding Editor.UseGlobalPostScript, Mode=TwoWay}"
+                                                                  IsEnabled="{Binding Editor.CanEditUseGlobalPostScript}"
+                                                                  Content="{DynamicResource LOCDesktopUseGlobalScript}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
                                         </StackPanel>
                                         <StackPanel Spacing="5">
                                             <StackPanel Orientation="Horizontal" Spacing="10">

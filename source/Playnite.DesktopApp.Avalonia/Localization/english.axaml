@@ -65,4 +65,21 @@
     <x:String x:Key="LOCDesktopAddRom">Add ROM</x:String>
     <x:String x:Key="LOCDesktopRomName">ROM name (optional)</x:String>
     <x:String x:Key="LOCDesktopRomPath">ROM path</x:String>
+    <x:String x:Key="LOCDesktopInstallationRuntime">Installation and runtime</x:String>
+    <x:String x:Key="LOCDesktopInstallDirectory">Install directory</x:String>
+    <x:String x:Key="LOCDesktopIsInstalled">Installed</x:String>
+    <x:String x:Key="LOCDesktopOverrideInstallState">Override library install state</x:String>
+    <x:String x:Key="LOCDesktopInstallSize">Install size (bytes)</x:String>
+    <x:String x:Key="LOCDesktopVersion">Version</x:String>
+    <x:String x:Key="LOCDesktopManual">Manual path or URL</x:String>
+    <x:String x:Key="LOCDesktopEnableHdr">Enable system HDR</x:String>
+    <x:String x:Key="LOCDesktopLastPlayed">Last played</x:String>
+    <x:String x:Key="LOCDesktopPlaytimeSeconds">Playtime (seconds)</x:String>
+    <x:String x:Key="LOCDesktopPlayCount">Play count</x:String>
+    <x:String x:Key="LOCDesktopAdded">Added</x:String>
+    <x:String x:Key="LOCDesktopScripts">Per-game scripts</x:String>
+    <x:String x:Key="LOCDesktopPreScript">Before starting</x:String>
+    <x:String x:Key="LOCDesktopGameStartedScript">After game starts</x:String>
+    <x:String x:Key="LOCDesktopPostScript">After game exits</x:String>
+    <x:String x:Key="LOCDesktopUseGlobalScript">Also run the global script</x:String>
 </ResourceDictionary>

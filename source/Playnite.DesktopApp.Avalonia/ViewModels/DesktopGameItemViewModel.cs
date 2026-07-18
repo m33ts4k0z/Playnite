@@ -50,6 +50,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public string LinksText => FormatLinks(Game.Links);
     public string GameActionsText => FormatGameActions(Game);
     public string RomsText => FormatRoms(Game.Roms);
+    public string InstallationDetailsText => FormatInstallation(Game);
+    public string ScriptsText => FormatScripts(Game);
     public string MetadataLine => BuildMetadataLine(Game, database);
     public string DescriptionText => ToPlainText(Game.Description);
     public string CoverPath => ResolveMediaPath(Game.CoverImage, database);
@@ -104,6 +106,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(LinksText));
         OnPropertyChanged(nameof(GameActionsText));
         OnPropertyChanged(nameof(RomsText));
+        OnPropertyChanged(nameof(InstallationDetailsText));
+        OnPropertyChanged(nameof(ScriptsText));
         OnPropertyChanged(nameof(CoverPath));
     }
 
@@ -206,5 +210,38 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         {
             return path;
         }
+    }
+
+    private static string FormatInstallation(Game game)
+    {
+        var parts = new List<string> { game.IsInstalled ? "Installed" : "Not installed" };
+        if (!string.IsNullOrWhiteSpace(game.Version))
+        {
+            parts.Add($"Version {game.Version}");
+        }
+
+        if (game.InstallSize.HasValue)
+        {
+            parts.Add($"{game.InstallSize.Value / 1024d / 1024d:0.##} MB");
+        }
+
+        if (!string.IsNullOrWhiteSpace(game.InstallDirectory))
+        {
+            parts.Add(game.InstallDirectory);
+        }
+
+        return $"Installation: {string.Join(" • ", parts)}";
+    }
+
+    private static string FormatScripts(Game game)
+    {
+        var scripts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(game.PreScript)) scripts.Add("pre");
+        if (!string.IsNullOrWhiteSpace(game.GameStartedScript)) scripts.Add("started");
+        if (!string.IsNullOrWhiteSpace(game.PostScript)) scripts.Add("post");
+        var scriptText = scripts.Count == 0 ? "none" : string.Join(", ", scripts);
+        return game.EnableSystemHdr
+            ? $"Scripts: {scriptText} • System HDR"
+            : $"Scripts: {scriptText}";
     }
 }
