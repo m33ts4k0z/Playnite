@@ -13,8 +13,6 @@ namespace Playnite.WpfPluginSupport;
 
 public static class WpfPluginSupportRuntime
 {
-    private static System.Windows.Application ownedApplication;
-
     public static IValueConverter ResolveConverter(
         ExtensionFactory extensions,
         string pluginSource,
@@ -37,7 +35,9 @@ public static class WpfPluginSupportRuntime
     {
         if (System.Windows.Application.Current == null)
         {
-            ownedApplication = new System.Windows.Application
+            // System.Windows.Application registers itself as the process-wide
+            // Current on construction, so no reference needs to be held.
+            _ = new System.Windows.Application
             {
                 ShutdownMode = ShutdownMode.OnExplicitShutdown
             };
@@ -96,13 +96,11 @@ public static class WpfPluginSupportRuntime
 
     public static void Shutdown()
     {
-        if (ownedApplication == null)
-        {
-            return;
-        }
-
-        ownedApplication.Shutdown();
-        ownedApplication = null;
+        // Intentionally does not shut down the WPF Application. WPF forbids
+        // creating a second System.Windows.Application per AppDomain even after
+        // Shutdown(), so tearing it down here would break the next runtime host
+        // (e.g. a Desktop/Fullscreen switch in the same process). The hidden
+        // helper Application is a process-lifetime singleton and dies with it.
     }
 
     private sealed class LegacyValueConverterAdapter : IValueConverter
