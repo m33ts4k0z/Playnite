@@ -64,6 +64,12 @@
     <Content Include="Assets\tray-default.png;Assets\tray-bright.png;Assets\tray-dark.png"
              Condition="'$(TargetFramework)' != 'net10.0'"
              CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Playnite\gamecontrollerdb.txt" Link="gamecontrollerdb.txt" CopyToOutputDirectory="PreserveNewest" />
+    <ContentWithTargetPath Include="..\..\references\x64\SDL2.dll"
+                           Condition="'$(TargetFramework)' != 'net10.0'"
+                           Link="Dependencies\SDL2.dll"
+                           CopyToOutputDirectory="PreserveNewest"
+                           TargetPath="SDL2.dll" />
   </ItemGroup>
 
 </Project>

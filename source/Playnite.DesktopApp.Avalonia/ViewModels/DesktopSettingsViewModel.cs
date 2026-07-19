@@ -46,6 +46,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public DevelopmentSettingsSection Development { get; }
     public GeneralAdvancedSettingsSection GeneralAdvanced { get; }
     public PerformanceSettingsSection Performance { get; }
+    public InputSettingsSection Input { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
@@ -88,6 +89,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         Development = new DevelopmentSettingsSection(settings, selectBackupFolder);
         GeneralAdvanced = new GeneralAdvancedSettingsSection(settings, selectBackupFolder);
         Performance = new PerformanceSettingsSection(settings);
+        Input = new InputSettingsSection(settings);
         Sections = new ObservableCollection<ISettingsSection>
         {
             General,
@@ -109,7 +111,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             ClientShutdown,
             Development,
             GeneralAdvanced,
-            Performance
+            Performance,
+            Input
         };
         selectedSection = Sections[0];
         SaveCommand = new AppRelayCommand(Save, () => IsVisible);

@@ -7,7 +7,6 @@ using Playnite.Avalonia.App.Services;
 using Playnite.Avalonia.Input;
 using Playnite.Avalonia.Theming;
 using Playnite.FullscreenApp.Avalonia.Controls;
-using Playnite.FullscreenApp.Avalonia.Input;
 using Playnite.FullscreenApp.Avalonia.Services;
 using Playnite.FullscreenApp.Avalonia.ViewModels;
 
@@ -28,12 +27,17 @@ public sealed class MainWindow : Window
     private FullscreenAudioService audioService;
     private AvaloniaThemePackage activeThemePackage;
     private readonly System.Windows.Input.ICommand focusedActivationCommand;
+    private readonly System.Windows.Input.ICommand focusedGameActivationCommand;
+    private static readonly Cursor hiddenCursor = new(StandardCursorType.None);
+    private int guideFocusRequestCount;
 
     internal GamepadInputBridge GamepadBridge => gamepadBridge;
     internal SdlGamepadInputSource SdlInput => sdlInput;
     internal FullscreenMainView MainView => mainView;
     internal FullscreenRuntimeHost RuntimeHost => runtimeHost;
     internal FullscreenAudioService AudioService => audioService;
+    internal bool IsMouseCursorHidden => ReferenceEquals(Cursor, hiddenCursor);
+    internal int GuideFocusRequestCount => guideFocusRequestCount;
 
     internal MainWindow(
         FullscreenAppViewModel viewModel,
@@ -67,10 +71,10 @@ public sealed class MainWindow : Window
 
         gamepadBridge = new GamepadInputBridge(this);
         focusedActivationCommand = new RelayCommand(ActivateFocusedControl);
-        UpdateConfirmCancelBindings();
+        focusedGameActivationCommand = new RelayCommand(ActivateFocusedControlOrGame);
+        UpdateGamepadBindings();
         gamepadBridge.MapCommand(GamepadButton.Start, viewModel.ToggleMenuCommand);
         gamepadBridge.MapCommand(GamepadButton.Back, viewModel.ToggleMenuCommand);
-        gamepadBridge.MapCommand(GamepadButton.X, viewModel.ActivateCommand);
         gamepadBridge.MapCommand(GamepadButton.Y, viewModel.OpenSearchCommand);
         gamepadBridge.MapCommand(GamepadButton.LeftShoulder, viewModel.SelectPreviousCommand);
         gamepadBridge.MapCommand(GamepadButton.RightShoulder, viewModel.SelectNextCommand);
@@ -80,11 +84,16 @@ public sealed class MainWindow : Window
             gamepadBridge,
             settings.EnableGameControllerSupport,
             settings.DisabledGameControllers);
+        viewModel.Settings.Input.ConfigureControllerSource(
+            () => sdlInput.Devices,
+            (enabled, disabled) => sdlInput.ApplySettings(enabled, disabled));
+        sdlInput.DevicesChanged += (_, _) => viewModel.Settings.Input.RefreshControllers();
+        ApplyCursorSettings();
 
         viewModel.LibraryFocusRequested += (_, _) =>
             Dispatcher.UIThread.Post(mainView.FocusSelectedGame, DispatcherPriority.Input);
         viewModel.SettingsChanged += (_, _) => SaveSettings();
-        viewModel.SettingsChanged += (_, _) => UpdateConfirmCancelBindings();
+        viewModel.SettingsChanged += (_, _) => UpdateInputSettings();
         viewModel.SettingsChanged += (_, _) => audioService?.ApplySettings();
         viewModel.NavigationRequested += (_, _) => audioService?.PlayNavigation();
         viewModel.ActivationRequested += (_, _) => audioService?.PlayActivation();
@@ -195,14 +204,35 @@ public sealed class MainWindow : Window
         }
     }
 
-    private void UpdateConfirmCancelBindings()
+    private void UpdateInputSettings()
     {
+        UpdateGamepadBindings();
+        sdlInput.ApplySettings(settings.EnableGameControllerSupport, settings.DisabledGameControllers);
+        ApplyCursorSettings();
+    }
+
+    private void UpdateGamepadBindings()
+    {
+        var primaryCommand = settings.SwapStartDetailsAction
+            ? focusedGameActivationCommand
+            : focusedActivationCommand;
         gamepadBridge.MapCommand(
             GamepadButton.Confirm,
-            settings.SwapConfirmCancelButtons ? viewModel.BackCommand : focusedActivationCommand);
+            settings.SwapConfirmCancelButtons ? viewModel.BackCommand : primaryCommand);
         gamepadBridge.MapCommand(
             GamepadButton.Cancel,
-            settings.SwapConfirmCancelButtons ? focusedActivationCommand : viewModel.BackCommand);
+            settings.SwapConfirmCancelButtons ? primaryCommand : viewModel.BackCommand);
+        gamepadBridge.MapCommand(
+            GamepadButton.X,
+            settings.SwapStartDetailsAction ? viewModel.ShowDetailsCommand : viewModel.ActivateCommand);
+        if (settings.GuideButtonFocus)
+        {
+            gamepadBridge.MapCommand(GamepadButton.Guide, new RelayCommand(RefocusWindow));
+        }
+        else
+        {
+            gamepadBridge.UnmapCommand(GamepadButton.Guide);
+        }
     }
 
     private void ActivateFocusedControl()
@@ -238,6 +268,44 @@ public sealed class MainWindow : Window
 
         viewModel.ConfirmCommand.Execute(null);
     }
+
+    private void ActivateFocusedControlOrGame()
+    {
+        var focused = FocusManager?.GetFocusedElement() as Control;
+        if (!viewModel.IsDetailsVisible &&
+            !viewModel.IsMenuVisible &&
+            !viewModel.IsSearchVisible &&
+            !viewModel.IsFiltersVisible &&
+            !viewModel.IsSettingsVisible &&
+            !viewModel.IsNotificationsVisible &&
+            !viewModel.IsActionPickerVisible &&
+            !viewModel.IsDialogVisible &&
+            focused != null &&
+            mainView.GameList != null &&
+            (ReferenceEquals(focused, mainView.GameList) ||
+             focused.GetVisualAncestors().Contains(mainView.GameList)))
+        {
+            viewModel.ActivateCommand.Execute(null);
+            return;
+        }
+
+        ActivateFocusedControl();
+    }
+
+    private void RefocusWindow()
+    {
+        guideFocusRequestCount++;
+        Show();
+        if (WindowState == WindowState.Minimized)
+        {
+            WindowState = options.Windowed ? WindowState.Normal : WindowState.FullScreen;
+        }
+
+        Activate();
+        mainView.FocusSelectedGame();
+    }
+
+    private void ApplyCursorSettings() => Cursor = settings.HideMouseCursor ? hiddenCursor : Cursor.Default;
 
     private string GetThemeRoot()
     {

@@ -11,6 +11,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Playnite.Avalonia.Markup;
 using Playnite.Avalonia.App.Services;
+using Playnite.Avalonia.Input;
 using Playnite.Avalonia.Theming;
 using Playnite.Controllers;
 using Playnite.DesktopApp.Avalonia.Services;
@@ -163,6 +164,26 @@ internal static class DesktopPilotSelfTest
             viewModel.SelectedGame != null && window.MainView.GameList.SelectedItem == viewModel.SelectedGame
                 ? $"details bound to {viewModel.SelectedGame.Name}"
                 : throw new InvalidOperationException("The selected tile and details model diverged."));
+
+        window.MainView.GameList.SelectedIndex = 0;
+        window.MainView.FocusSelectedGame();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var controllerSelectionBefore = window.MainView.GameList.SelectedIndex;
+        window.GamepadBridge.ButtonDown(GamepadButton.DPadRight);
+        window.GamepadBridge.ButtonUp(GamepadButton.DPadRight);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Controller navigation reaches the Desktop library", () =>
+            window.MainView.GameList.SelectedIndex != controllerSelectionBefore &&
+            window.MainView.GameList.SelectedIndex >= 0
+                ? $"selection moved {controllerSelectionBefore} → {window.MainView.GameList.SelectedIndex}"
+                : throw new InvalidOperationException(
+                    $"Controller navigation selected index {window.MainView.GameList.SelectedIndex}; " +
+                    $"focus={window.FocusManager?.GetFocusedElement()?.GetType().FullName ?? "none"}; " +
+                    $"listFocus={window.MainView.GameList.IsKeyboardFocusWithin}."));
+        Record(results, "Desktop SDL input source initializes", () =>
+            window.SdlInput.IsAvailable
+                ? window.SdlInput.Status
+                : throw new InvalidOperationException(window.SdlInput.Status));
 
         Record(results, "Shared plugin and game-operation host initializes", () =>
             window.RuntimeHost?.Actions != null &&
@@ -2449,6 +2470,18 @@ internal static class DesktopPilotSelfTest
                 ? "first-run WPF import and authoritative Avalonia renderer preferences were resolved"
                 : throw new InvalidOperationException("Startup renderer preference resolution diverged.");
         });
+
+        viewModel.Settings.Open();
+        viewModel.Settings.Input.EnableGameControllerSupport = false;
+        viewModel.Settings.SaveCommand.Execute(null);
+        var desktopInputDisabled = !window.SdlInput.InputEnabled;
+        viewModel.Settings.Open();
+        viewModel.Settings.Input.EnableGameControllerSupport = true;
+        viewModel.Settings.SaveCommand.Execute(null);
+        Record(results, "Desktop input settings control the live SDL source", () =>
+            desktopInputDisabled && window.SdlInput.InputEnabled && window.SdlInput.IsStarted
+                ? "controller processing disabled and re-enabled without restarting the shell"
+                : throw new InvalidOperationException("Desktop controller settings did not reach SDL."));
 
         var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every desktop settings module supplies a passing self-check", () =>

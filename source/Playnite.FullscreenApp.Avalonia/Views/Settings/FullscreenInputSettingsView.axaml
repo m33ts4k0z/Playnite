@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Playnite.FullscreenApp.Avalonia.ViewModels"
+             xmlns:input="using:Playnite.Avalonia.Input"
              x:Class="Playnite.FullscreenApp.Avalonia.Views.Settings.FullscreenInputSettingsView"
              x:DataType="vm:FullscreenInputSettingsSection">
     <StackPanel Spacing="18">
@@ -8,5 +9,27 @@
                    Foreground="{DynamicResource FullscreenTextBrush}" />
         <CheckBox Content="{DynamicResource LOCFullscreenSwapButtons}"
                   IsChecked="{Binding SwapConfirmCancelButtons, Mode=TwoWay}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenSwapMainButtons}"
+                  IsChecked="{Binding SwapStartDetailsAction, Mode=TwoWay}"
+                  IsEnabled="{Binding EnableGameControllerSupport}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenGuideFocus}"
+                  IsChecked="{Binding GuideButtonFocus, Mode=TwoWay}"
+                  IsEnabled="{Binding EnableGameControllerSupport}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenHideMouseCursor}"
+                  IsChecked="{Binding HideMouseCursor, Mode=TwoWay}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenControllerSupport}"
+                  IsChecked="{Binding EnableGameControllerSupport, Mode=TwoWay}" />
+        <TextBlock Text="{Binding ControllerStatus}"
+                   Foreground="{DynamicResource FullscreenMutedTextBrush}" />
+        <ItemsControl ItemsSource="{Binding Controllers}"
+                      IsEnabled="{Binding EnableGameControllerSupport}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="input:GameControllerSettingsOption">
+                    <CheckBox Content="{Binding Name}"
+                              IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                              Margin="8,4" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </StackPanel>
 </UserControl>

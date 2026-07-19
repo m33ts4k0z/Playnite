@@ -68,6 +68,15 @@ public sealed class GamepadInputBridge : IDisposable
         });
     }
 
+    public void UnmapCommand(GamepadButton button)
+    {
+        RunOnUiThread(() =>
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            commandMap.Remove(button);
+        });
+    }
+
     public void ButtonDown(GamepadButton button)
     {
         RunOnUiThread(() => ButtonDownCore(button));
@@ -139,9 +148,8 @@ public sealed class GamepadInputBridge : IDisposable
             if (command.CanExecute(null))
             {
                 command.Execute(null);
+                return;
             }
-
-            return;
         }
 
         if (navigationKeys.TryGetValue(button, out var key))

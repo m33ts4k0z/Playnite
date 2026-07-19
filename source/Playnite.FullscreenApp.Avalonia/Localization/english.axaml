@@ -15,6 +15,10 @@
     <x:String x:Key="LOCFullscreenNoNotifications">No notifications</x:String>
     <x:String x:Key="LOCFullscreenShowHidden">Show hidden games</x:String>
     <x:String x:Key="LOCFullscreenSwapButtons">Swap confirm and cancel buttons</x:String>
+    <x:String x:Key="LOCFullscreenSwapMainButtons">Swap main-view details and game-action buttons</x:String>
+    <x:String x:Key="LOCFullscreenGuideFocus">Refocus Fullscreen when the Guide button is pressed</x:String>
+    <x:String x:Key="LOCFullscreenHideMouseCursor">Hide the mouse cursor</x:String>
+    <x:String x:Key="LOCFullscreenControllerSupport">Enable game-controller input</x:String>
     <x:String x:Key="LOCFullscreenAudio">Enable interface audio</x:String>
     <x:String x:Key="LOCFullscreenChooseAction">Choose action</x:String>
     <x:String x:Key="LOCFullscreenInstall">Install</x:String>

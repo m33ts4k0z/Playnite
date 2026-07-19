@@ -9,7 +9,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Playnite.Avalonia.Input;
 using Playnite.Controllers;
-using Playnite.FullscreenApp.Avalonia.Input;
 using Playnite.SDK.Models;
 
 namespace Playnite.FullscreenApp.Avalonia;

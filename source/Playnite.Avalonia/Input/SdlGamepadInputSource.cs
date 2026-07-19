@@ -1,20 +1,29 @@
-using Playnite.Avalonia.Input;
-
-namespace Playnite.FullscreenApp.Avalonia.Input;
+namespace Playnite.Avalonia.Input;
 
 /// <summary>
-/// Fullscreen adapter over the shared SDL controller manager. Device inventory,
-/// disabled-device policy and state aggregation remain reusable by Desktop.
+/// Connects the shared SDL controller inventory to routed Avalonia gamepad
+/// input. Both shells use the same live enable/disable and device policy.
 /// </summary>
 public sealed class SdlGamepadInputSource : IDisposable
 {
     private readonly GamepadInputBridge bridge;
     private readonly SdlGameControllerManager manager;
 
+    public event EventHandler DevicesChanged
+    {
+        add => manager.DevicesChanged += value;
+        remove => manager.DevicesChanged -= value;
+    }
+
     public int ControllerCount => manager.Devices.Count;
     public bool IsAvailable => manager.IsAvailable;
-    public string Status => manager.Status;
+    public bool IsStarted => manager.IsStarted;
+    public bool InputEnabled => manager.InputEnabled;
+    public string Status => manager.InputEnabled
+        ? manager.Status
+        : "SDL game-controller input is disabled in settings.";
     public IReadOnlyList<SdlGameControllerDevice> Devices => manager.Devices;
+    public IReadOnlyCollection<string> DisabledControllerIds => manager.DisabledControllerIds;
 
     public SdlGamepadInputSource(
         GamepadInputBridge bridge,
@@ -30,7 +39,23 @@ public sealed class SdlGamepadInputSource : IDisposable
         manager.ButtonStateChanged += Manager_ButtonStateChanged;
     }
 
-    public void Start() => manager.Start();
+    public void Start()
+    {
+        if (manager.InputEnabled)
+        {
+            manager.Start();
+        }
+    }
+
+    public void ApplySettings(bool inputEnabled, IEnumerable<string> disabledControllerIds)
+    {
+        manager.SetDisabledControllerIds(disabledControllerIds);
+        manager.InputEnabled = inputEnabled;
+        if (inputEnabled && !manager.IsStarted)
+        {
+            manager.Start();
+        }
+    }
 
     public void Dispose()
     {

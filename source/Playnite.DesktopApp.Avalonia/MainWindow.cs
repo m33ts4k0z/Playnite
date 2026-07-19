@@ -8,6 +8,7 @@ using Avalonia.Input;
 using System.Diagnostics;
 using Playnite.Avalonia.Theming;
 using Playnite.Avalonia.App.Services;
+using Playnite.Avalonia.Input;
 using Playnite.DesktopApp.Avalonia.Controls;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
@@ -28,6 +29,8 @@ public sealed class MainWindow : Window
     private readonly DesktopTrayService trayService;
     private readonly ISystemHotKeyService systemHotKeyService;
     private readonly global::Playnite.DiscordManager discord;
+    private readonly GamepadInputBridge gamepadBridge;
+    private readonly SdlGamepadInputSource sdlInput;
     private WindowState restoreWindowState = WindowState.Normal;
     private bool hasClosed;
     private bool automatedRunStarted;
@@ -41,6 +44,8 @@ public sealed class MainWindow : Window
     internal bool HasClosed => hasClosed;
     internal AvaloniaThemePackage ActiveThemePackage => activeThemePackage;
     internal HotKey RegisteredSystemHotKey => systemHotKeyService.RegisteredHotKey;
+    internal GamepadInputBridge GamepadBridge => gamepadBridge;
+    internal SdlGamepadInputSource SdlInput => sdlInput;
 
     internal MainWindow(
         DesktopAppViewModel viewModel,
@@ -92,6 +97,27 @@ public sealed class MainWindow : Window
             Content = mainView
         };
         Content = chrome;
+        gamepadBridge = new GamepadInputBridge(this);
+        gamepadBridge.MapCommand(
+            GamepadButton.DPadLeft,
+            CreateLibraryNavigationCommand(() => MoveControllerSelection(-1)));
+        gamepadBridge.MapCommand(
+            GamepadButton.DPadRight,
+            CreateLibraryNavigationCommand(() => MoveControllerSelection(1)));
+        gamepadBridge.MapCommand(
+            GamepadButton.DPadUp,
+            CreateLibraryNavigationCommand(() => MoveControllerSelection(-ControllerRowStep())));
+        gamepadBridge.MapCommand(
+            GamepadButton.DPadDown,
+            CreateLibraryNavigationCommand(() => MoveControllerSelection(ControllerRowStep())));
+        sdlInput = new SdlGamepadInputSource(
+            gamepadBridge,
+            settings.EnableGameControllerSupport,
+            settings.DisabledGameControllers);
+        viewModel.Settings.Input.ConfigureControllerSource(
+            () => sdlInput.Devices,
+            (enabled, disabled) => sdlInput.ApplySettings(enabled, disabled));
+        sdlInput.DevicesChanged += (_, _) => viewModel.Settings.Input.RefreshControllers();
         systemHotKeyService = new SystemHotKeyService(this);
         discord = new global::Playnite.DiscordManager(settings.DiscordPresenceEnabled);
         viewModel.Updates.ConfigureProgramInstaller(LaunchProgramUpdater);
@@ -286,6 +312,45 @@ public sealed class MainWindow : Window
         }
     }
 
+    private System.Windows.Input.ICommand CreateLibraryNavigationCommand(Action execute) =>
+        new global::Playnite.Avalonia.App.ViewModels.RelayCommand(execute, IsLibraryControllerContext);
+
+    private bool IsLibraryControllerContext()
+    {
+        var focused = FocusManager?.GetFocusedElement() as Control;
+        return focused is not TextBox &&
+            !viewModel.Editor.IsVisible &&
+            !viewModel.MetadataDownload.IsVisible &&
+            !viewModel.LibrarySync.IsVisible &&
+            !viewModel.InstalledGameImport.IsVisible &&
+            !viewModel.PluginSettings.IsVisible &&
+            !viewModel.Settings.IsVisible &&
+            !viewModel.PluginSearch.IsVisible &&
+            !viewModel.IsNotificationsVisible &&
+            !viewModel.IsActionPickerVisible &&
+            !viewModel.IsDialogVisible &&
+            !viewModel.IsPluginMenuVisible;
+    }
+
+    private int ControllerRowStep() => viewModel.IsListView
+        ? 1
+        : mainView.TilePanel?.NavigationColumns ?? 1;
+
+    private void MoveControllerSelection(int offset)
+    {
+        var gameList = mainView.GameList;
+        if (gameList == null || gameList.ItemCount == 0)
+        {
+            return;
+        }
+
+        var current = Math.Max(0, gameList.SelectedIndex);
+        var target = Math.Clamp(current + offset, 0, gameList.ItemCount - 1);
+        gameList.SelectedIndex = target;
+        gameList.ScrollIntoView(target);
+        mainView.FocusSelectedGame();
+    }
+
     private void ApplyTypographyResources()
     {
         var interfaceFont = new FontFamily(settings.FontFamilyName);
@@ -327,6 +392,8 @@ public sealed class MainWindow : Window
 
         viewModel.PluginSearch.Dispose();
         viewModel.Updates.Dispose();
+        sdlInput.Dispose();
+        gamepadBridge.Dispose();
         discord.Dispose();
         systemHotKeyService.Dispose();
         trayService.Dispose();
@@ -525,6 +592,7 @@ public sealed class MainWindow : Window
     private async void OnOpened(object sender, EventArgs e)
     {
         mainView.FocusSelectedGame();
+        sdlInput.Start();
         ApplySystemHotKey();
         if (!options.PluginCompatibilityTest && !options.SelfTest)
         {

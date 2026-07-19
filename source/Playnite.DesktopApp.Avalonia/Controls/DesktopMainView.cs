@@ -75,7 +75,14 @@ public sealed class DesktopMainView : TemplatedControl
         if (gameList.SelectedIndex >= 0)
         {
             gameList.ScrollIntoView(gameList.SelectedIndex);
-            (gameList.ContainerFromIndex(gameList.SelectedIndex) as Control)?.Focus();
+            var container = gameList.ContainerFromIndex(gameList.SelectedIndex) as Control;
+            if (container?.Focus() != true)
+            {
+                container?.GetVisualDescendants()
+                    .OfType<Control>()
+                    .FirstOrDefault(control => control.Focusable && control.IsEffectivelyEnabled && control.IsVisible)
+                    ?.Focus();
+            }
         }
     }
 

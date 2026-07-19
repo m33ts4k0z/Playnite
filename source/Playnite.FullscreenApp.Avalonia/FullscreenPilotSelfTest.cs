@@ -114,6 +114,38 @@ internal static class FullscreenPilotSelfTest
                 ? "X dispatched the selected game through GameActionRunner"
                 : throw new InvalidOperationException($"Dispatch count was {viewModel.ActivateCount}."));
 
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.Input.SwapStartDetailsAction = true;
+        viewModel.Settings.Input.GuideButtonFocus = true;
+        viewModel.Settings.Input.HideMouseCursor = true;
+        viewModel.Settings.Input.EnableGameControllerSupport = false;
+        viewModel.Settings.SaveCommand.Execute(null);
+        var liveInputDisabled = !window.SdlInput.InputEnabled;
+        var guideRequestsBefore = window.GuideFocusRequestCount;
+        window.GamepadBridge.ButtonDown(GamepadButton.Guide);
+        window.GamepadBridge.ButtonUp(GamepadButton.Guide);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        window.GamepadBridge.ButtonDown(GamepadButton.Confirm);
+        window.GamepadBridge.ButtonUp(GamepadButton.Confirm);
+        window.GamepadBridge.ButtonDown(GamepadButton.X);
+        window.GamepadBridge.ButtonUp(GamepadButton.X);
+        var swappedInputApplied =
+            viewModel.ActivateCount == 2 &&
+            viewModel.IsDetailsVisible &&
+            window.GuideFocusRequestCount == guideRequestsBefore + 1 &&
+            window.IsMouseCursorHidden;
+        viewModel.BackCommand.Execute(null);
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.Input.SwapStartDetailsAction = false;
+        viewModel.Settings.Input.HideMouseCursor = false;
+        viewModel.Settings.Input.EnableGameControllerSupport = true;
+        viewModel.Settings.SaveCommand.Execute(null);
+        Record(results, "Fullscreen input settings drive live mappings, focus, cursor, and SDL", () =>
+            liveInputDisabled && swappedInputApplied &&
+            window.SdlInput.InputEnabled && !window.IsMouseCursorHidden
+                ? "A/X swapping, Guide refocus, cursor hiding, and controller gating applied without restart"
+                : throw new InvalidOperationException("Fullscreen input settings did not reach the live shell."));
+
         Record(results, "SDL input source initializes", () =>
             window.SdlInput.IsAvailable
                 ? window.SdlInput.Status
@@ -163,6 +195,9 @@ internal static class FullscreenPilotSelfTest
                 GlobalPostScript = "global-post",
                 ShutdownLibraryClients = true,
                 EnableGameControllerSupport = false,
+                SwapStartDetailsAction = true,
+                GuideButtonFocus = false,
+                HideMouseCursor = true,
                 DisabledGameControllers = new List<string> { "pilot-controller" },
                 ClientShutdownGraceSeconds = 45,
                 ClientShutdownMinimumSessionSeconds = 90,
@@ -177,6 +212,9 @@ internal static class FullscreenPilotSelfTest
                 loaded.GlobalPostScript != "global-post" ||
                 !loaded.ShutdownLibraryClients ||
                 loaded.EnableGameControllerSupport ||
+                !loaded.SwapStartDetailsAction ||
+                loaded.GuideButtonFocus ||
+                !loaded.HideMouseCursor ||
                 loaded.DisabledGameControllers.SingleOrDefault() != "pilot-controller" ||
                 loaded.ClientShutdownGraceSeconds != 45 ||
                 loaded.ClientShutdownMinimumSessionSeconds != 90 ||

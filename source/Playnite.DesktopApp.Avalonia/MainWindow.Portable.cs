@@ -1,4 +1,5 @@
 using System.Text;
+using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -7,6 +8,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Playnite.Avalonia.Controls;
+using Playnite.Avalonia.Input;
 using Playnite.Common;
 using Playnite.Controllers;
 using Playnite.SDK.Models;
@@ -22,6 +24,8 @@ public sealed class MainWindow : Window
     private readonly TextBlock summary;
     private readonly TextBlock status;
     private UniformGridVirtualizingPanel tilePanel;
+    private readonly GamepadInputBridge gamepadBridge;
+    private readonly SdlGamepadInputSource sdlInput;
 
     internal PortableTrayService TrayService { get; set; }
 
@@ -114,9 +118,20 @@ public sealed class MainWindow : Window
         content.Children.Add(status);
         content.Children.Add(gameList);
         Content = content;
+        gamepadBridge = new GamepadInputBridge(this);
+        gamepadBridge.MapCommand(GamepadButton.DPadLeft, new PortableCommand(() => MoveControllerSelection(-1)));
+        gamepadBridge.MapCommand(GamepadButton.DPadRight, new PortableCommand(() => MoveControllerSelection(1)));
+        gamepadBridge.MapCommand(
+            GamepadButton.DPadUp,
+            new PortableCommand(() => MoveControllerSelection(-(tilePanel?.NavigationColumns ?? 1))));
+        gamepadBridge.MapCommand(
+            GamepadButton.DPadDown,
+            new PortableCommand(() => MoveControllerSelection(tilePanel?.NavigationColumns ?? 1)));
+        sdlInput = new SdlGamepadInputSource(gamepadBridge);
         ApplySearch(string.Empty);
         Opened += OnOpened;
         Closing += OnClosing;
+        Closed += OnClosed;
     }
 
     internal void RestoreAndActivate()
@@ -208,8 +223,22 @@ public sealed class MainWindow : Window
         }
     }
 
+    private void MoveControllerSelection(int offset)
+    {
+        if (gameList.ItemCount == 0)
+        {
+            return;
+        }
+
+        var target = Math.Clamp(Math.Max(0, gameList.SelectedIndex) + offset, 0, gameList.ItemCount - 1);
+        gameList.SelectedIndex = target;
+        gameList.ScrollIntoView(target);
+        (gameList.ContainerFromIndex(target) as Control)?.Focus();
+    }
+
     private async void OnOpened(object sender, EventArgs e)
     {
+        sdlInput.Start();
         if (startClosedToTray && !selfTest)
         {
             Hide();
@@ -233,6 +262,20 @@ public sealed class MainWindow : Window
                 tilePanel != null && tilePanel.RealizedCount > 0 && tilePanel.RealizedCount < 200
                     ? $"{tilePanel.RealizedCount} of {library.Games.Count:N0} containers realized"
                     : throw new InvalidOperationException($"Realized count was {tilePanel?.RealizedCount ?? 0}."));
+            gameList.SelectedIndex = 0;
+            gameList.Focus();
+            gamepadBridge.ButtonDown(GamepadButton.DPadRight);
+            gamepadBridge.ButtonUp(GamepadButton.DPadRight);
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+            Record(results, "SDL controller navigation reaches the Desktop game grid", () =>
+                gameList.SelectedIndex > 0
+                    ? "routed Avalonia controller input moved the selected game"
+                    : throw new InvalidOperationException(
+                        $"Controller navigation selected index {gameList.SelectedIndex}."));
+            Record(results, "Desktop SDL controller source is active", () =>
+                sdlInput.IsAvailable
+                    ? sdlInput.Status
+                    : throw new InvalidOperationException(sdlInput.Status));
             ApplySearch("Linux Game 999");
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
             Record(results, "Native shell search filters the Core library", () =>
@@ -283,6 +326,12 @@ public sealed class MainWindow : Window
         Hide();
     }
 
+    private void OnClosed(object sender, EventArgs e)
+    {
+        sdlInput.Dispose();
+        gamepadBridge.Dispose();
+    }
+
     private void ApplySearch(string term)
     {
         var games = string.IsNullOrWhiteSpace(term)
@@ -322,5 +371,24 @@ public sealed class MainWindow : Window
         report.AppendLine();
         report.AppendLine($"VERDICT: {results.Count(result => result.Passed)}/{results.Count} checks passed.");
         return report.ToString();
+    }
+
+    private sealed class PortableCommand : ICommand
+    {
+        private readonly Action execute;
+
+        public event EventHandler CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public PortableCommand(Action execute)
+        {
+            this.execute = execute ?? throw new ArgumentNullException(nameof(execute));
+        }
+
+        public bool CanExecute(object parameter) => true;
+        public void Execute(object parameter) => execute();
     }
 }

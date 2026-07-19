@@ -1,0 +1,29 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             xmlns:input="using:Playnite.Avalonia.Input"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.InputSettingsView"
+             x:DataType="vm:InputSettingsSection">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="24" Spacing="14">
+      <TextBlock Text="Game controllers" FontSize="18" FontWeight="SemiBold" />
+      <CheckBox Content="{DynamicResource LOCSettingsXInputProcessing}"
+                IsChecked="{Binding EnableGameControllerSupport, Mode=TwoWay}" />
+      <TextBlock Text="{DynamicResource LOCSettingsXInputProcessingDescription}"
+                 TextWrapping="Wrap" Opacity="0.75" />
+      <Separator Margin="0,4" />
+      <TextBlock Text="Connected controllers" FontWeight="SemiBold" />
+      <TextBlock Text="{Binding ControllerStatus}" Opacity="0.75" />
+      <ItemsControl ItemsSource="{Binding Controllers}"
+                    IsEnabled="{Binding EnableGameControllerSupport}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="input:GameControllerSettingsOption">
+            <CheckBox Content="{Binding Name}"
+                      IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                      Margin="8,4" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

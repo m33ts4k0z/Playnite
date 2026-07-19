@@ -76,6 +76,7 @@ public class UniformGridVirtualizingPanel : VirtualizingPanel
     public int ContainersCreated { get; private set; }
     public int ContainersReused { get; private set; }
     public int RealizedCount => realizedByIndex.Count;
+    public int NavigationColumns => Math.Max(1, lastLayout.Columns);
     public int PooledCount => recyclePool.Values.Sum(pool => pool.Count);
 
     public double ItemWidth
