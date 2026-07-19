@@ -19,6 +19,7 @@ public sealed class FullscreenMainView : TemplatedControl
     private ContentControl settingsContent;
     private Button firstMenuButton;
     private Button detailsPrimaryButton;
+    private IReadOnlyList<Button> configuredMenuButtons = Array.Empty<Button>();
     private FullscreenAppViewModel observedViewModel;
 
     public int TemplateAppliedCount { get; private set; }
@@ -31,6 +32,7 @@ public sealed class FullscreenMainView : TemplatedControl
         gameList?.GetVisualDescendants().OfType<UniformGridVirtualizingPanel>().FirstOrDefault();
     public ScrollViewer GameScrollViewer =>
         gameList?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+    public IReadOnlyList<Button> ConfiguredMenuButtons => configuredMenuButtons;
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
@@ -46,6 +48,19 @@ public sealed class FullscreenMainView : TemplatedControl
         settingsContent = e.NameScope.Find<ContentControl>("PART_SettingsContent");
         firstMenuButton = e.NameScope.Find<Button>("PART_MenuFirstButton");
         detailsPrimaryButton = e.NameScope.Find<Button>("PART_DetailsPrimaryButton");
+        configuredMenuButtons = new[]
+        {
+            e.NameScope.Find<Button>("PART_MenuRestart"),
+            e.NameScope.Find<Button>("PART_MenuShutdown"),
+            e.NameScope.Find<Button>("PART_MenuSuspend"),
+            e.NameScope.Find<Button>("PART_MenuHibernate"),
+            e.NameScope.Find<Button>("PART_MenuMinimize"),
+            e.NameScope.Find<Button>("PART_MenuLogout"),
+            e.NameScope.Find<Button>("PART_MenuLock"),
+            e.NameScope.Find<Button>("PART_MenuTools"),
+            e.NameScope.Find<Button>("PART_MenuExtensions"),
+            e.NameScope.Find<Button>("PART_MenuClients")
+        }.Where(button => button != null).ToList();
         ObserveViewModel();
         ApplyScrollSettings();
         Dispatcher.UIThread.Post(FocusSelectedGame, DispatcherPriority.Loaded);

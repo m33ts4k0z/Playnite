@@ -172,6 +172,38 @@ public class WpfProfileImportTests
     }
 
     [Test]
+    public void Read_FullscreenMenuDefaults()
+    {
+        WriteFile("fullscreenConfig.json", """
+        {
+          "MainMenuShowRestart": false,
+          "MainMenuShowShutdown": false,
+          "MainMenuShowSuspend": false,
+          "MainMenuShowHibernate": false,
+          "MainMenuShowMinimize": false,
+          "MainMenuShowLogout": true,
+          "MainMenuShowLock": true,
+          "MainMenuShowTools": false,
+          "MainMenuShowExtensions": false,
+          "MainMenuShowClients": false
+        }
+        """);
+
+        var defaults = WpfProfileImport.Read(profileDir);
+
+        Assert.That(defaults.FullscreenMainMenuShowRestart, Is.False);
+        Assert.That(defaults.FullscreenMainMenuShowShutdown, Is.False);
+        Assert.That(defaults.FullscreenMainMenuShowSuspend, Is.False);
+        Assert.That(defaults.FullscreenMainMenuShowHibernate, Is.False);
+        Assert.That(defaults.FullscreenMainMenuShowMinimize, Is.False);
+        Assert.That(defaults.FullscreenMainMenuShowLogout, Is.True);
+        Assert.That(defaults.FullscreenMainMenuShowLock, Is.True);
+        Assert.That(defaults.FullscreenMainMenuShowTools, Is.False);
+        Assert.That(defaults.FullscreenMainMenuShowExtensions, Is.False);
+        Assert.That(defaults.FullscreenMainMenuShowClients, Is.False);
+    }
+
+    [Test]
     public void Read_MainWindowPlacement_FromNumericState()
     {
         WriteFile("windowPositions.json", """

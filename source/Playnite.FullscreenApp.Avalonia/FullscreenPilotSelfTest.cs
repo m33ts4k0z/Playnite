@@ -157,6 +157,45 @@ internal static class FullscreenPilotSelfTest
                     : throw new InvalidOperationException("Layout or Visual settings did not reach the runtime theme." );
         });
 
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.Menus.ShowRestart = true;
+        viewModel.Settings.Menus.ShowShutdown = true;
+        viewModel.Settings.Menus.ShowSuspend = true;
+        viewModel.Settings.Menus.ShowHibernate = true;
+        viewModel.Settings.Menus.ShowMinimize = true;
+        viewModel.Settings.Menus.ShowLogout = true;
+        viewModel.Settings.Menus.ShowLock = true;
+        viewModel.Settings.Menus.ShowTools = true;
+        viewModel.Settings.Menus.ShowExtensions = true;
+        viewModel.Settings.Menus.ShowClients = true;
+        viewModel.Settings.SaveCommand.Execute(null);
+        viewModel.ToggleMenuCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "All configurable Fullscreen menu items are built and visible", () =>
+            window.MainView.ConfiguredMenuButtons.Count == 10 &&
+            window.MainView.ConfiguredMenuButtons.All(button => button.IsVisible && button.Command != null)
+                ? "all ten menu policies control concrete, invokable Avalonia buttons"
+                : throw new InvalidOperationException("A configured Fullscreen menu item is missing or inert."));
+        viewModel.OpenToolsCommand.Execute(null);
+        var toolsDialogOpened = viewModel.IsDialogVisible && viewModel.DialogCaption == "Tools";
+        viewModel.CancelDialogCommand.Execute(null);
+        var powerActionRaised = false;
+        void OnPowerAction(SystemPowerAction _) => powerActionRaised = true;
+        viewModel.PowerActionRequested += OnPowerAction;
+        viewModel.RestartCommand.Execute(null);
+        var restartConfirmationOpened = viewModel.IsDialogVisible && viewModel.SelectedDialogOption == "Cancel";
+        viewModel.ConfirmDialogCommand.Execute(null);
+        viewModel.PowerActionRequested -= OnPowerAction;
+        var linuxShutdown = SystemPowerService.CreateLinuxStartInfo(SystemPowerAction.Shutdown, "7");
+        var linuxLock = SystemPowerService.CreateLinuxStartInfo(SystemPowerAction.Lock, "7");
+        Record(results, "Menu actions are safe and the cross-platform power bridge is explicit", () =>
+            toolsDialogOpened && restartConfirmationOpened && !powerActionRaised &&
+            linuxShutdown.FileName == "systemctl" && linuxShutdown.ArgumentList.SequenceEqual(new[] { "poweroff" }) &&
+            linuxLock.FileName == "loginctl" && linuxLock.ArgumentList.SequenceEqual(new[] { "lock-session", "7" }) &&
+            window.PowerService.IsSupported(SystemPowerAction.Shutdown)
+                ? "tools opens a controller dialog, destructive actions confirm, and Linux commands use systemd session APIs"
+                : throw new InvalidOperationException("Menu action safety or platform mapping failed."));
+
         window.GamepadBridge.ButtonDown(GamepadButton.X);
         window.GamepadBridge.ButtonUp(GamepadButton.X);
         Record(results, "Core game action mapping dispatches", () =>
@@ -260,6 +299,16 @@ internal static class FullscreenPilotSelfTest
                 FontSize = 25,
                 FontSizeSmall = 19,
                 ButtonPrompts = FullscreenButtonPrompts.PlayStation,
+                MainMenuShowRestart = false,
+                MainMenuShowShutdown = false,
+                MainMenuShowSuspend = false,
+                MainMenuShowHibernate = false,
+                MainMenuShowMinimize = false,
+                MainMenuShowLogout = true,
+                MainMenuShowLock = true,
+                MainMenuShowTools = false,
+                MainMenuShowExtensions = false,
+                MainMenuShowClients = false,
                 GlobalPreScript = "global-pre",
                 GlobalGameStartedScript = "global-started",
                 GlobalPostScript = "global-post",
@@ -297,6 +346,16 @@ internal static class FullscreenPilotSelfTest
                 loaded.FontSize != 25 ||
                 loaded.FontSizeSmall != 19 ||
                 loaded.ButtonPrompts != FullscreenButtonPrompts.PlayStation ||
+                loaded.MainMenuShowRestart ||
+                loaded.MainMenuShowShutdown ||
+                loaded.MainMenuShowSuspend ||
+                loaded.MainMenuShowHibernate ||
+                loaded.MainMenuShowMinimize ||
+                !loaded.MainMenuShowLogout ||
+                !loaded.MainMenuShowLock ||
+                loaded.MainMenuShowTools ||
+                loaded.MainMenuShowExtensions ||
+                loaded.MainMenuShowClients ||
                 loaded.GlobalPreScript != "global-pre" ||
                 loaded.GlobalGameStartedScript != "global-started" ||
                 loaded.GlobalPostScript != "global-post" ||

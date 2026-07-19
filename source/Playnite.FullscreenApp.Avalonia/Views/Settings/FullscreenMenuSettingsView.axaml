@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.FullscreenApp.Avalonia.ViewModels"
+             x:Class="Playnite.FullscreenApp.Avalonia.Views.Settings.FullscreenMenuSettingsView"
+             x:DataType="vm:FullscreenMenuSettingsSection">
+    <ScrollViewer MaxHeight="470">
+        <StackPanel Spacing="12">
+            <TextBlock Text="Menus" FontSize="24" FontWeight="SemiBold"
+                       Foreground="{DynamicResource FullscreenTextBrush}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuRestart}" IsChecked="{Binding ShowRestart, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuShutdown}" IsChecked="{Binding ShowShutdown, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuSuspend}" IsChecked="{Binding ShowSuspend, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuHibernate}" IsChecked="{Binding ShowHibernate, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuMinimize}" IsChecked="{Binding ShowMinimize, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuLogout}" IsChecked="{Binding ShowLogout, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuLock}" IsChecked="{Binding ShowLock, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuTools}" IsChecked="{Binding ShowTools, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuExtensions}" IsChecked="{Binding ShowExtensions, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuClients}" IsChecked="{Binding ShowClients, Mode=TwoWay}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

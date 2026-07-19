@@ -46,6 +46,16 @@ public sealed class FullscreenSettings : IAvaloniaHostSettings
     public double FontSize { get; set; } = 22;
     public double FontSizeSmall { get; set; } = 18;
     public FullscreenButtonPrompts ButtonPrompts { get; set; } = FullscreenButtonPrompts.Xbox;
+    public bool MainMenuShowRestart { get; set; } = true;
+    public bool MainMenuShowShutdown { get; set; } = true;
+    public bool MainMenuShowSuspend { get; set; } = true;
+    public bool MainMenuShowHibernate { get; set; } = true;
+    public bool MainMenuShowMinimize { get; set; } = true;
+    public bool MainMenuShowLogout { get; set; }
+    public bool MainMenuShowLock { get; set; }
+    public bool MainMenuShowTools { get; set; } = true;
+    public bool MainMenuShowExtensions { get; set; } = true;
+    public bool MainMenuShowClients { get; set; } = true;
     public List<string> DisabledPlugins { get; set; } = new();
     public string GlobalPreScript { get; set; }
     public string GlobalGameStartedScript { get; set; }

@@ -53,6 +53,16 @@ public static class WpfProfileImport
         public double? FullscreenFontSize { get; init; }
         public double? FullscreenFontSizeSmall { get; init; }
         public int? FullscreenButtonPrompts { get; init; }
+        public bool? FullscreenMainMenuShowRestart { get; init; }
+        public bool? FullscreenMainMenuShowShutdown { get; init; }
+        public bool? FullscreenMainMenuShowSuspend { get; init; }
+        public bool? FullscreenMainMenuShowHibernate { get; init; }
+        public bool? FullscreenMainMenuShowMinimize { get; init; }
+        public bool? FullscreenMainMenuShowLogout { get; init; }
+        public bool? FullscreenMainMenuShowLock { get; init; }
+        public bool? FullscreenMainMenuShowTools { get; init; }
+        public bool? FullscreenMainMenuShowExtensions { get; init; }
+        public bool? FullscreenMainMenuShowClients { get; init; }
         public WindowPlacement MainWindow { get; init; }
     }
 
@@ -87,6 +97,16 @@ public static class WpfProfileImport
             FullscreenFontSize = ReadFullscreenDouble(userDataDirectory, "FontSize"),
             FullscreenFontSizeSmall = ReadFullscreenDouble(userDataDirectory, "FontSizeSmall"),
             FullscreenButtonPrompts = ReadFullscreenInt(userDataDirectory, "ButtonPrompts"),
+            FullscreenMainMenuShowRestart = ReadFullscreenBoolean(userDataDirectory, "MainMenuShowRestart"),
+            FullscreenMainMenuShowShutdown = ReadFullscreenBoolean(userDataDirectory, "MainMenuShowShutdown"),
+            FullscreenMainMenuShowSuspend = ReadFullscreenBoolean(userDataDirectory, "MainMenuShowSuspend"),
+            FullscreenMainMenuShowHibernate = ReadFullscreenBoolean(userDataDirectory, "MainMenuShowHibernate"),
+            FullscreenMainMenuShowMinimize = ReadFullscreenBoolean(userDataDirectory, "MainMenuShowMinimize"),
+            FullscreenMainMenuShowLogout = ReadFullscreenBoolean(userDataDirectory, "MainMenuShowLogout"),
+            FullscreenMainMenuShowLock = ReadFullscreenBoolean(userDataDirectory, "MainMenuShowLock"),
+            FullscreenMainMenuShowTools = ReadFullscreenBoolean(userDataDirectory, "MainMenuShowTools"),
+            FullscreenMainMenuShowExtensions = ReadFullscreenBoolean(userDataDirectory, "MainMenuShowExtensions"),
+            FullscreenMainMenuShowClients = ReadFullscreenBoolean(userDataDirectory, "MainMenuShowClients"),
             MainWindow = ReadMainWindowPlacement(userDataDirectory)
         };
     }

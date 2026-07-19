@@ -208,28 +208,60 @@
 
                     <Grid Grid.RowSpan="3" IsVisible="{Binding IsMenuVisible}"
                           Background="#B8000000">
-                        <Border Width="440" Padding="38" CornerRadius="16"
+                        <Border Width="500" MaxHeight="700" Padding="38" CornerRadius="16"
                                 Background="{DynamicResource FullscreenSurfaceStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="Playnite" FontSize="36" FontWeight="Bold"
-                                           Margin="0,0,0,12"
-                                           Foreground="{DynamicResource FullscreenTextBrush}" />
-                                <Button Name="PART_MenuFirstButton" Classes="primary" Command="{Binding BackCommand}"
-                                        Content="{DynamicResource LOCFullscreenReturn}" />
-                                <Button Command="{Binding OpenSearchCommand}"
-                                        Content="{DynamicResource LOCFullscreenSearch}" />
-                                <Button Command="{Binding ToggleFiltersCommand}"
-                                        Content="{DynamicResource LOCFullscreenFilters}" />
-                                <Button Command="{Binding ToggleNotificationsCommand}"
-                                        Content="{DynamicResource LOCFullscreenNotifications}" />
-                                <Button Command="{Binding OpenSettingsCommand}"
-                                        Content="{DynamicResource LOCFullscreenSettings}" />
-                                <Button Command="{Binding ToggleFullscreenCommand}"
-                                        Content="{DynamicResource LOCFullscreenToggleFullscreen}" />
-                                <Button Command="{Binding ExitCommand}"
-                                        Content="{DynamicResource LOCFullscreenExit}" />
-                            </StackPanel>
+                            <ScrollViewer>
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Playnite" FontSize="36" FontWeight="Bold"
+                                               Margin="0,0,0,12"
+                                               Foreground="{DynamicResource FullscreenTextBrush}" />
+                                    <Button Name="PART_MenuFirstButton" Classes="primary" Command="{Binding BackCommand}"
+                                            Content="{DynamicResource LOCFullscreenReturn}" />
+                                    <Button Command="{Binding OpenSearchCommand}"
+                                            Content="{DynamicResource LOCFullscreenSearch}" />
+                                    <Button Command="{Binding ToggleFiltersCommand}"
+                                            Content="{DynamicResource LOCFullscreenFilters}" />
+                                    <Button Command="{Binding ToggleNotificationsCommand}"
+                                            Content="{DynamicResource LOCFullscreenNotifications}" />
+                                    <Button Command="{Binding OpenSettingsCommand}"
+                                            Content="{DynamicResource LOCFullscreenSettings}" />
+                                    <Button Command="{Binding ToggleFullscreenCommand}"
+                                            Content="{DynamicResource LOCFullscreenToggleFullscreen}" />
+                                    <Button Name="PART_MenuTools" Command="{Binding OpenToolsCommand}"
+                                            IsVisible="{Binding MainMenuShowTools}"
+                                            Content="{DynamicResource LOCFullscreenTools}" />
+                                    <Button Name="PART_MenuExtensions" Command="{Binding OpenExtensionsCommand}"
+                                            IsVisible="{Binding MainMenuShowExtensions}"
+                                            Content="{DynamicResource LOCFullscreenExtensions}" />
+                                    <Button Name="PART_MenuClients" Command="{Binding OpenClientsCommand}"
+                                            IsVisible="{Binding MainMenuShowClients}"
+                                            Content="{DynamicResource LOCFullscreenClients}" />
+                                    <Button Name="PART_MenuMinimize" Command="{Binding MinimizeCommand}"
+                                            IsVisible="{Binding MainMenuShowMinimize}"
+                                            Content="{DynamicResource LOCFullscreenMinimize}" />
+                                    <Button Name="PART_MenuLock" Command="{Binding LockCommand}"
+                                            IsVisible="{Binding MainMenuShowLock}"
+                                            Content="{DynamicResource LOCFullscreenLock}" />
+                                    <Button Name="PART_MenuLogout" Command="{Binding LogoutCommand}"
+                                            IsVisible="{Binding MainMenuShowLogout}"
+                                            Content="{DynamicResource LOCFullscreenLogout}" />
+                                    <Button Name="PART_MenuSuspend" Command="{Binding SuspendCommand}"
+                                            IsVisible="{Binding MainMenuShowSuspend}"
+                                            Content="{DynamicResource LOCFullscreenSuspend}" />
+                                    <Button Name="PART_MenuHibernate" Command="{Binding HibernateCommand}"
+                                            IsVisible="{Binding MainMenuShowHibernate}"
+                                            Content="{DynamicResource LOCFullscreenHibernate}" />
+                                    <Button Name="PART_MenuRestart" Command="{Binding RestartCommand}"
+                                            IsVisible="{Binding MainMenuShowRestart}"
+                                            Content="{DynamicResource LOCFullscreenRestart}" />
+                                    <Button Name="PART_MenuShutdown" Command="{Binding ShutdownCommand}"
+                                            IsVisible="{Binding MainMenuShowShutdown}"
+                                            Content="{DynamicResource LOCFullscreenShutdown}" />
+                                    <Button Command="{Binding ExitCommand}"
+                                            Content="{DynamicResource LOCFullscreenExit}" />
+                                </StackPanel>
+                            </ScrollViewer>
                         </Border>
                     </Grid>
 

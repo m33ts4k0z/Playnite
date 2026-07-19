@@ -53,6 +53,8 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     public event EventHandler NavigationRequested;
     public event EventHandler ActivationRequested;
     public event EventHandler GameLaunchSucceeded;
+    public event EventHandler MinimizeRequested;
+    public event Action<SystemPowerAction> PowerActionRequested;
 
     public IReadOnlyList<GameItemViewModel> Games
     {
@@ -106,6 +108,16 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     public string PlayPromptGlyph => settings.SwapStartDetailsAction ? ConfirmPromptGlyphCore : ActionPromptGlyphCore;
     private string ConfirmPromptGlyphCore => settings.ButtonPrompts == FullscreenButtonPrompts.PlayStation ? "×" : "A";
     private string ActionPromptGlyphCore => settings.ButtonPrompts == FullscreenButtonPrompts.PlayStation ? "□" : "X";
+    public bool MainMenuShowRestart => settings.MainMenuShowRestart;
+    public bool MainMenuShowShutdown => settings.MainMenuShowShutdown;
+    public bool MainMenuShowSuspend => settings.MainMenuShowSuspend;
+    public bool MainMenuShowHibernate => settings.MainMenuShowHibernate;
+    public bool MainMenuShowMinimize => settings.MainMenuShowMinimize;
+    public bool MainMenuShowLogout => settings.MainMenuShowLogout;
+    public bool MainMenuShowLock => settings.MainMenuShowLock;
+    public bool MainMenuShowTools => settings.MainMenuShowTools;
+    public bool MainMenuShowExtensions => settings.MainMenuShowExtensions;
+    public bool MainMenuShowClients => settings.MainMenuShowClients;
 
     public GameItemViewModel SelectedGame
     {
@@ -255,6 +267,16 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     public ICommand DismissNotificationCommand { get; }
     public ICommand ConfirmDialogCommand { get; }
     public ICommand CancelDialogCommand { get; }
+    public ICommand MinimizeCommand { get; }
+    public ICommand RestartCommand { get; }
+    public ICommand ShutdownCommand { get; }
+    public ICommand SuspendCommand { get; }
+    public ICommand HibernateCommand { get; }
+    public ICommand LockCommand { get; }
+    public ICommand LogoutCommand { get; }
+    public ICommand OpenToolsCommand { get; }
+    public ICommand OpenExtensionsCommand { get; }
+    public ICommand OpenClientsCommand { get; }
 
     public FullscreenAppViewModel(
         IReadOnlyList<GameItemViewModel> sourceGames,
@@ -336,6 +358,22 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
                 runtimeHost?.Notifications.Remove(message.Id);
             }
         });
+        MinimizeCommand = new RelayCommand(() => MinimizeRequested?.Invoke(this, EventArgs.Empty));
+        RestartCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Restart));
+        ShutdownCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Shutdown));
+        SuspendCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Suspend));
+        HibernateCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Hibernate));
+        LockCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Lock));
+        LogoutCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Logout));
+        OpenToolsCommand = new RelayCommand(() => OpenMenuInformation(
+            "Tools",
+            "Library search, filters, notifications, settings, and display controls are available from this Fullscreen menu."));
+        OpenExtensionsCommand = new RelayCommand(() => OpenMenuInformation(
+            "Extensions",
+            PluginSummary));
+        OpenClientsCommand = new RelayCommand(() => OpenMenuInformation(
+            "Library clients",
+            "Library-client lifecycle and shutdown policy are managed by the loaded library extensions."));
 
         ApplyFilters();
         ApplyGameVisualSettings();
@@ -647,10 +685,40 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(MainBackgroundDarkOpacity));
         OnPropertyChanged(nameof(DetailsPromptGlyph));
         OnPropertyChanged(nameof(PlayPromptGlyph));
+        OnPropertyChanged(nameof(MainMenuShowRestart));
+        OnPropertyChanged(nameof(MainMenuShowShutdown));
+        OnPropertyChanged(nameof(MainMenuShowSuspend));
+        OnPropertyChanged(nameof(MainMenuShowHibernate));
+        OnPropertyChanged(nameof(MainMenuShowMinimize));
+        OnPropertyChanged(nameof(MainMenuShowLogout));
+        OnPropertyChanged(nameof(MainMenuShowLock));
+        OnPropertyChanged(nameof(MainMenuShowTools));
+        OnPropertyChanged(nameof(MainMenuShowExtensions));
+        OnPropertyChanged(nameof(MainMenuShowClients));
         ApplyGameVisualSettings();
         ApplyFilters();
         SettingsChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    private void RequestPowerAction(SystemPowerAction action)
+    {
+        OpenDialog(
+            action.ToString(),
+            $"Are you sure you want to {action.ToString().ToLowerInvariant()}?",
+            new[] { "Yes", "Cancel" },
+            1,
+            1,
+            result =>
+            {
+                if (result == "Yes")
+                {
+                    PowerActionRequested?.Invoke(action);
+                }
+            });
+    }
+
+    private void OpenMenuInformation(string caption, string message) =>
+        OpenDialog(caption, message, new[] { "OK" }, 0, 0, _ => { });
 
     private void ApplyGameVisualSettings()
     {

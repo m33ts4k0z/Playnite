@@ -192,6 +192,16 @@ public sealed class App : Application
         {
             settings.ButtonPrompts = (FullscreenButtonPrompts)prompts;
         }
+        settings.MainMenuShowRestart = defaults.FullscreenMainMenuShowRestart ?? settings.MainMenuShowRestart;
+        settings.MainMenuShowShutdown = defaults.FullscreenMainMenuShowShutdown ?? settings.MainMenuShowShutdown;
+        settings.MainMenuShowSuspend = defaults.FullscreenMainMenuShowSuspend ?? settings.MainMenuShowSuspend;
+        settings.MainMenuShowHibernate = defaults.FullscreenMainMenuShowHibernate ?? settings.MainMenuShowHibernate;
+        settings.MainMenuShowMinimize = defaults.FullscreenMainMenuShowMinimize ?? settings.MainMenuShowMinimize;
+        settings.MainMenuShowLogout = defaults.FullscreenMainMenuShowLogout ?? settings.MainMenuShowLogout;
+        settings.MainMenuShowLock = defaults.FullscreenMainMenuShowLock ?? settings.MainMenuShowLock;
+        settings.MainMenuShowTools = defaults.FullscreenMainMenuShowTools ?? settings.MainMenuShowTools;
+        settings.MainMenuShowExtensions = defaults.FullscreenMainMenuShowExtensions ?? settings.MainMenuShowExtensions;
+        settings.MainMenuShowClients = defaults.FullscreenMainMenuShowClients ?? settings.MainMenuShowClients;
 
         settingsStore.Save(settings);
         return settings;

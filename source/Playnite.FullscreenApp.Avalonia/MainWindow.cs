@@ -31,6 +31,7 @@ public sealed class MainWindow : Window
     private static readonly Cursor hiddenCursor = new(StandardCursorType.None);
     private int guideFocusRequestCount;
     private readonly DispatcherTimer statusTimer;
+    private readonly SystemPowerService powerService = new();
 
     internal GamepadInputBridge GamepadBridge => gamepadBridge;
     internal SdlGamepadInputSource SdlInput => sdlInput;
@@ -39,6 +40,7 @@ public sealed class MainWindow : Window
     internal FullscreenAudioService AudioService => audioService;
     internal bool IsMouseCursorHidden => ReferenceEquals(Cursor, hiddenCursor);
     internal int GuideFocusRequestCount => guideFocusRequestCount;
+    internal SystemPowerService PowerService => powerService;
 
     internal MainWindow(
         FullscreenAppViewModel viewModel,
@@ -100,6 +102,8 @@ public sealed class MainWindow : Window
         viewModel.SettingsChanged += (_, _) => ApplyGeneralSettings();
         viewModel.SettingsChanged += (_, _) => ApplyVisualResources();
         viewModel.GameLaunchSucceeded += (_, _) => MinimizeAfterGameLaunch();
+        viewModel.MinimizeRequested += (_, _) => WindowState = WindowState.Minimized;
+        viewModel.PowerActionRequested += ExecutePowerAction;
         viewModel.NavigationRequested += (_, _) => audioService?.PlayNavigation();
         viewModel.ActivationRequested += (_, _) => audioService?.PlayActivation();
         statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
@@ -236,6 +240,12 @@ public sealed class MainWindow : Window
         {
             WindowState = WindowState.Minimized;
         }
+    }
+
+    private void ExecutePowerAction(SystemPowerAction action)
+    {
+        var result = powerService.Execute(action);
+        viewModel.SetStatusMessage(result.Message);
     }
 
     private void SaveSettings()
