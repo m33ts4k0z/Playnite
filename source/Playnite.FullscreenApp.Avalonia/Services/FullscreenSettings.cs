@@ -2,6 +2,12 @@ using Playnite.Avalonia.App.Services;
 
 namespace Playnite.FullscreenApp.Avalonia.Services;
 
+public enum FullscreenButtonPrompts
+{
+    Xbox,
+    PlayStation
+}
+
 public sealed class FullscreenSettings : IAvaloniaHostSettings
 {
     public int Version { get; set; } = 1;
@@ -27,6 +33,19 @@ public sealed class FullscreenSettings : IAvaloniaHostSettings
     public bool ShowBattery { get; set; }
     public bool ShowBatteryPercentage { get; set; }
     public bool MinimizeAfterGameStartup { get; set; } = true;
+    public int Rows { get; set; } = 2;
+    public int Columns { get; set; } = 4;
+    public bool HorizontalLayout { get; set; }
+    public int FullscreenItemSpacing { get; set; } = 14;
+    public bool SmoothScrolling { get; set; } = true;
+    public bool DarkenUninstalledGamesGrid { get; set; }
+    public bool EnableMainBackgroundImage { get; set; }
+    public int MainBackgroundImageBlurAmount { get; set; }
+    public double MainBackgroundImageDarkAmount { get; set; } = 30;
+    public bool ShowGameTitles { get; set; }
+    public double FontSize { get; set; } = 22;
+    public double FontSizeSmall { get; set; } = 18;
+    public FullscreenButtonPrompts ButtonPrompts { get; set; } = FullscreenButtonPrompts.Xbox;
     public List<string> DisabledPlugins { get; set; } = new();
     public string GlobalPreScript { get; set; }
     public string GlobalGameStartedScript { get; set; }

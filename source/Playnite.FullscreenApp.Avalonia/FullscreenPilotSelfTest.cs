@@ -125,6 +125,38 @@ internal static class FullscreenPilotSelfTest
                     "; ",
                     fullscreenSectionChecks.Select(check => $"{check.SectionKey}={check.Passed}: {check.Detail}"))));
 
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.Layout.Rows = 3;
+        viewModel.Settings.Layout.Columns = 5;
+        viewModel.Settings.Layout.HorizontalLayout = true;
+        viewModel.Settings.Layout.ItemSpacing = 22;
+        viewModel.Settings.Layout.SmoothScrolling = false;
+        viewModel.Settings.Visuals.DarkenUninstalledGamesGrid = true;
+        viewModel.Settings.Visuals.EnableMainBackgroundImage = true;
+        viewModel.Settings.Visuals.MainBackgroundImageBlurAmount = 12;
+        viewModel.Settings.Visuals.MainBackgroundImageDarkAmount = 44;
+        viewModel.Settings.Visuals.ShowGameTitles = true;
+        viewModel.Settings.Visuals.FontSize = 25;
+        viewModel.Settings.Visuals.FontSizeSmall = 19;
+        viewModel.Settings.Visuals.ButtonPrompts = FullscreenButtonPrompts.PlayStation;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Fullscreen Layout and Visual settings drive the live theme surface", () =>
+        {
+            var panel = window.MainView.TilePanel;
+            var scroll = window.MainView.GameScrollViewer;
+            var uninstalled = viewModel.Games.FirstOrDefault(game => !game.IsInstalled);
+            var fontSize = Application.Current.Resources["FullscreenFontSize"];
+            return panel?.Rows == 3 && panel.Columns == 5 && panel.ItemSpacing == 22 &&
+                panel.Orientation == global::Avalonia.Layout.Orientation.Horizontal &&
+                scroll != null && !Playnite.Avalonia.Controls.ScrollBehavior.GetSmoothScrollingEnabled(scroll) &&
+                uninstalled?.TileOpacity == 0.45 && uninstalled.ShowTitle &&
+                viewModel.DetailsPromptGlyph == "×" && viewModel.PlayPromptGlyph == "□" &&
+                fontSize is double value && value == 25
+                    ? "panel geometry, scrolling, tile visuals, font resources, and PlayStation prompts applied live"
+                    : throw new InvalidOperationException("Layout or Visual settings did not reach the runtime theme." );
+        });
+
         window.GamepadBridge.ButtonDown(GamepadButton.X);
         window.GamepadBridge.ButtonUp(GamepadButton.X);
         Record(results, "Core game action mapping dispatches", () =>
@@ -215,6 +247,19 @@ internal static class FullscreenPilotSelfTest
                 ShowBattery = true,
                 ShowBatteryPercentage = true,
                 MinimizeAfterGameStartup = false,
+                Rows = 3,
+                Columns = 5,
+                HorizontalLayout = true,
+                FullscreenItemSpacing = 22,
+                SmoothScrolling = false,
+                DarkenUninstalledGamesGrid = true,
+                EnableMainBackgroundImage = true,
+                MainBackgroundImageBlurAmount = 12,
+                MainBackgroundImageDarkAmount = 44,
+                ShowGameTitles = true,
+                FontSize = 25,
+                FontSizeSmall = 19,
+                ButtonPrompts = FullscreenButtonPrompts.PlayStation,
                 GlobalPreScript = "global-pre",
                 GlobalGameStartedScript = "global-started",
                 GlobalPostScript = "global-post",
@@ -239,6 +284,19 @@ internal static class FullscreenPilotSelfTest
                 !loaded.ShowBattery ||
                 !loaded.ShowBatteryPercentage ||
                 loaded.MinimizeAfterGameStartup ||
+                loaded.Rows != 3 ||
+                loaded.Columns != 5 ||
+                !loaded.HorizontalLayout ||
+                loaded.FullscreenItemSpacing != 22 ||
+                loaded.SmoothScrolling ||
+                !loaded.DarkenUninstalledGamesGrid ||
+                !loaded.EnableMainBackgroundImage ||
+                loaded.MainBackgroundImageBlurAmount != 12 ||
+                loaded.MainBackgroundImageDarkAmount != 44 ||
+                !loaded.ShowGameTitles ||
+                loaded.FontSize != 25 ||
+                loaded.FontSizeSmall != 19 ||
+                loaded.ButtonPrompts != FullscreenButtonPrompts.PlayStation ||
                 loaded.GlobalPreScript != "global-pre" ||
                 loaded.GlobalGameStartedScript != "global-started" ||
                 loaded.GlobalPostScript != "global-post" ||

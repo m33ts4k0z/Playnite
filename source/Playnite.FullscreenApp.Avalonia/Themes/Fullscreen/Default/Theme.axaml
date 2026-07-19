@@ -11,6 +11,8 @@
     <SolidColorBrush x:Key="FullscreenMutedTextBrush" Color="#AAB6C4" />
     <SolidColorBrush x:Key="FullscreenTileBrush" Color="#202733" />
     <SolidColorBrush x:Key="FullscreenTileSelectedBrush" Color="#29465F" />
+    <x:Double x:Key="FullscreenFontSize">22</x:Double>
+    <x:Double x:Key="FullscreenFontSizeSmall">18</x:Double>
 
     <ControlTheme x:Key="{x:Type local:FullscreenMainView}"
                   TargetType="local:FullscreenMainView">
@@ -22,6 +24,13 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="72" />
                     </Grid.RowDefinitions>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding ShowMainBackground}" ClipToBounds="True">
+                        <foundation:GameCoverImage SourcePath="{Binding MainBackgroundPath}"
+                                                   Stretch="UniformToFill"
+                                                   Effect="{Binding MainBackgroundBlurEffect}" />
+                        <Border Background="Black" Opacity="{Binding MainBackgroundDarkOpacity}" />
+                    </Grid>
 
                     <Border Grid.Row="0"
                             Background="{DynamicResource FullscreenSurfaceBrush}"
@@ -68,13 +77,17 @@
                              SelectedItem="{Binding SelectedGame, Mode=TwoWay}">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <foundation:UniformGridVirtualizingPanel ItemWidth="230" ItemHeight="318" />
+                                <foundation:UniformGridVirtualizingPanel ItemWidth="230" ItemHeight="318"
+                                                                          Columns="{Binding Columns}"
+                                                                          Rows="{Binding Rows}"
+                                                                          ItemSpacing="{Binding ItemSpacing}"
+                                                                          Orientation="{Binding LayoutOrientation}" />
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Border Classes="gameTile"
-                                        Margin="7"
+                                        Opacity="{Binding TileOpacity}"
                                         CornerRadius="9"
                                         Background="{DynamicResource FullscreenTileBrush}"
                                         BorderBrush="Transparent"
@@ -106,6 +119,7 @@
                                         </Border>
                                         <StackPanel Grid.Row="1" Margin="14,11" Spacing="3">
                                             <TextBlock Text="{Binding Name}"
+                                                       IsVisible="{Binding ShowTitle}"
                                                        FontSize="18"
                                                        FontWeight="SemiBold"
                                                        TextTrimming="CharacterEllipsis"
@@ -129,22 +143,28 @@
                                        FontSize="16" VerticalAlignment="Center" />
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="28">
                                 <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <TextBlock Text="A" FontWeight="Bold"
-                                               Foreground="{DynamicResource FullscreenAccentBrush}" FontSize="16" />
+                                    <TextBlock Text="{Binding DetailsPromptGlyph}" FontWeight="Bold"
+                                               Foreground="{DynamicResource FullscreenAccentBrush}"
+                                               FontSize="{DynamicResource FullscreenFontSizeSmall}" />
                                     <TextBlock Text="{DynamicResource LOCFullscreenDetails}"
-                                               Foreground="{DynamicResource FullscreenTextBrush}" FontSize="16" />
+                                               Foreground="{DynamicResource FullscreenTextBrush}"
+                                               FontSize="{DynamicResource FullscreenFontSizeSmall}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <TextBlock Text="X" FontWeight="Bold"
-                                               Foreground="{DynamicResource FullscreenAccentBrush}" FontSize="16" />
+                                    <TextBlock Text="{Binding PlayPromptGlyph}" FontWeight="Bold"
+                                               Foreground="{DynamicResource FullscreenAccentBrush}"
+                                               FontSize="{DynamicResource FullscreenFontSizeSmall}" />
                                     <TextBlock Text="{DynamicResource LOCFullscreenPlay}"
-                                               Foreground="{DynamicResource FullscreenTextBrush}" FontSize="16" />
+                                               Foreground="{DynamicResource FullscreenTextBrush}"
+                                               FontSize="{DynamicResource FullscreenFontSizeSmall}" />
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal" Spacing="7">
                                     <TextBlock Text="☰" FontWeight="Bold"
-                                               Foreground="{DynamicResource FullscreenAccentBrush}" FontSize="16" />
+                                               Foreground="{DynamicResource FullscreenAccentBrush}"
+                                               FontSize="{DynamicResource FullscreenFontSizeSmall}" />
                                     <TextBlock Text="{DynamicResource LOCFullscreenMenu}"
-                                               Foreground="{DynamicResource FullscreenTextBrush}" FontSize="16" />
+                                               Foreground="{DynamicResource FullscreenTextBrush}"
+                                               FontSize="{DynamicResource FullscreenFontSizeSmall}" />
                                 </StackPanel>
                             </StackPanel>
                         </Grid>

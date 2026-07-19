@@ -138,7 +138,11 @@ public sealed class App : Application
 
         if (settingsStore.Exists)
         {
-            return settingsStore.Load();
+            var existing = settingsStore.Load();
+            existing.ThemePath = ThemeCatalog.ResolveFullscreenThemeReference(
+                existing.ThemePath,
+                FullscreenThemeRoots());
+            return existing;
         }
 
         // First launch against this profile: carry the WPF language and target
@@ -164,8 +168,38 @@ public sealed class App : Application
         settings.ShowBatteryPercentage = defaults.FullscreenShowBatteryPercentage ?? settings.ShowBatteryPercentage;
         settings.MinimizeAfterGameStartup =
             defaults.FullscreenMinimizeAfterGameStartup ?? settings.MinimizeAfterGameStartup;
+        settings.ThemePath = ThemeCatalog.ResolveFullscreenThemeReference(
+            defaults.FullscreenTheme,
+            FullscreenThemeRoots());
+        settings.Rows = defaults.FullscreenRows ?? settings.Rows;
+        settings.Columns = defaults.FullscreenColumns ?? settings.Columns;
+        settings.HorizontalLayout = defaults.FullscreenHorizontalLayout ?? settings.HorizontalLayout;
+        settings.FullscreenItemSpacing = defaults.FullscreenItemSpacing ?? settings.FullscreenItemSpacing;
+        settings.SmoothScrolling = defaults.FullscreenSmoothScrolling ?? settings.SmoothScrolling;
+        settings.DarkenUninstalledGamesGrid =
+            defaults.FullscreenDarkenUninstalledGamesGrid ?? settings.DarkenUninstalledGamesGrid;
+        settings.EnableMainBackgroundImage =
+            defaults.FullscreenEnableMainBackgroundImage ?? settings.EnableMainBackgroundImage;
+        settings.MainBackgroundImageBlurAmount =
+            defaults.FullscreenMainBackgroundImageBlurAmount ?? settings.MainBackgroundImageBlurAmount;
+        settings.MainBackgroundImageDarkAmount =
+            defaults.FullscreenMainBackgroundImageDarkAmount ?? settings.MainBackgroundImageDarkAmount;
+        settings.ShowGameTitles = defaults.FullscreenShowGameTitles ?? settings.ShowGameTitles;
+        settings.FontSize = defaults.FullscreenFontSize ?? settings.FontSize;
+        settings.FontSizeSmall = defaults.FullscreenFontSizeSmall ?? settings.FontSizeSmall;
+        if (defaults.FullscreenButtonPrompts is int prompts &&
+            Enum.IsDefined(typeof(FullscreenButtonPrompts), prompts))
+        {
+            settings.ButtonPrompts = (FullscreenButtonPrompts)prompts;
+        }
 
         settingsStore.Save(settings);
         return settings;
     }
+
+    internal static IReadOnlyList<string> FullscreenThemeRoots() => new[]
+    {
+        Path.Combine(AppContext.BaseDirectory, "Themes", "Fullscreen"),
+        Path.Combine(global::Playnite.PlaynitePaths.ThemesUserDataPath, "Fullscreen")
+    };
 }

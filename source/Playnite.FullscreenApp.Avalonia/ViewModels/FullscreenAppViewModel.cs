@@ -8,6 +8,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using Avalonia.Layout;
+using Avalonia.Media;
 
 namespace Playnite.FullscreenApp.Avalonia.ViewModels;
 
@@ -88,6 +90,22 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
             }
         }
     }
+    public int Rows => settings.Rows;
+    public int Columns => settings.Columns;
+    public double ItemSpacing => settings.FullscreenItemSpacing;
+    public Orientation LayoutOrientation => settings.HorizontalLayout ? Orientation.Horizontal : Orientation.Vertical;
+    public bool SmoothScrolling => settings.SmoothScrolling;
+    public bool ShowMainBackground => settings.EnableMainBackgroundImage &&
+        !string.IsNullOrWhiteSpace(SelectedGame?.BackgroundPath);
+    public string MainBackgroundPath => SelectedGame?.BackgroundPath;
+    public IEffect MainBackgroundBlurEffect => settings.MainBackgroundImageBlurAmount > 0
+        ? new BlurEffect { Radius = settings.MainBackgroundImageBlurAmount }
+        : null;
+    public double MainBackgroundDarkOpacity => settings.MainBackgroundImageDarkAmount / 100;
+    public string DetailsPromptGlyph => settings.SwapStartDetailsAction ? ActionPromptGlyphCore : ConfirmPromptGlyphCore;
+    public string PlayPromptGlyph => settings.SwapStartDetailsAction ? ConfirmPromptGlyphCore : ActionPromptGlyphCore;
+    private string ConfirmPromptGlyphCore => settings.ButtonPrompts == FullscreenButtonPrompts.PlayStation ? "×" : "A";
+    private string ActionPromptGlyphCore => settings.ButtonPrompts == FullscreenButtonPrompts.PlayStation ? "□" : "X";
 
     public GameItemViewModel SelectedGame
     {
@@ -101,6 +119,8 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
 
             selectedGame = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowMainBackground));
+            OnPropertyChanged(nameof(MainBackgroundPath));
             if (selectedGame != null)
             {
                 NavigationRequested?.Invoke(this, EventArgs.Empty);
@@ -318,6 +338,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         });
 
         ApplyFilters();
+        ApplyGameVisualSettings();
     }
 
     public void AttachRuntime(FullscreenRuntimeHost host)
@@ -615,8 +636,28 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(AudioEnabled));
         OnPropertyChanged(nameof(ShowClock));
         OnPropertyChanged(nameof(ShowBattery));
+        OnPropertyChanged(nameof(Rows));
+        OnPropertyChanged(nameof(Columns));
+        OnPropertyChanged(nameof(ItemSpacing));
+        OnPropertyChanged(nameof(LayoutOrientation));
+        OnPropertyChanged(nameof(SmoothScrolling));
+        OnPropertyChanged(nameof(ShowMainBackground));
+        OnPropertyChanged(nameof(MainBackgroundPath));
+        OnPropertyChanged(nameof(MainBackgroundBlurEffect));
+        OnPropertyChanged(nameof(MainBackgroundDarkOpacity));
+        OnPropertyChanged(nameof(DetailsPromptGlyph));
+        OnPropertyChanged(nameof(PlayPromptGlyph));
+        ApplyGameVisualSettings();
         ApplyFilters();
         SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ApplyGameVisualSettings()
+    {
+        foreach (var game in allGames)
+        {
+            game.ApplyVisualSettings(settings.ShowGameTitles, settings.DarkenUninstalledGamesGrid);
+        }
     }
 
     internal void UpdateStatusWidgets(DateTime now, BatteryStatus battery)

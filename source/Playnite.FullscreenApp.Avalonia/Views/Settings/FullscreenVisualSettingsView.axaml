@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.FullscreenApp.Avalonia.ViewModels"
+             x:Class="Playnite.FullscreenApp.Avalonia.Views.Settings.FullscreenVisualSettingsView"
+             x:DataType="vm:FullscreenVisualSettingsSection">
+    <ScrollViewer MaxHeight="470">
+        <StackPanel Spacing="16">
+            <TextBlock Text="Visuals" FontSize="24" FontWeight="SemiBold"
+                       Foreground="{DynamicResource FullscreenTextBrush}" />
+            <TextBlock Text="{DynamicResource LOCFullscreenTheme}" />
+            <ComboBox ItemsSource="{Binding AvailableThemes}"
+                      SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenDarkenUninstalled}"
+                      IsChecked="{Binding DarkenUninstalledGamesGrid, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenBackgroundImage}"
+                      IsChecked="{Binding EnableMainBackgroundImage, Mode=TwoWay}" />
+            <Grid ColumnDefinitions="220,140" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+                <TextBlock Text="{DynamicResource LOCFullscreenBackgroundBlur}" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Column="1" Minimum="0" Maximum="100"
+                               Value="{Binding MainBackgroundImageBlurAmount, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Text="{DynamicResource LOCFullscreenBackgroundDarken}" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="100"
+                               Value="{Binding MainBackgroundImageDarkAmount, Mode=TwoWay}" />
+                <TextBlock Grid.Row="2" Text="{DynamicResource LOCFullscreenFontSize}" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="8" Maximum="72"
+                               Value="{Binding FontSize, Mode=TwoWay}" />
+                <TextBlock Grid.Row="3" Text="{DynamicResource LOCFullscreenSmallFontSize}" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="3" Grid.Column="1" Minimum="8" Maximum="72"
+                               Value="{Binding FontSizeSmall, Mode=TwoWay}" />
+            </Grid>
+            <CheckBox Content="{DynamicResource LOCFullscreenShowGameTitles}"
+                      IsChecked="{Binding ShowGameTitles, Mode=TwoWay}" />
+            <TextBlock Text="{DynamicResource LOCFullscreenButtonPrompts}" />
+            <ComboBox ItemsSource="{Binding ButtonPromptOptions}"
+                      SelectedItem="{Binding ButtonPrompts, Mode=TwoWay}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -36,6 +36,9 @@ public sealed class GameItemViewModel : INotifyPropertyChanged
     public string DescriptionText { get; }
     public string CoverPath { get; }
     public string BackgroundPath { get; }
+    public bool ShowTitle { get; private set; }
+    public bool DarkenUninstalled { get; private set; }
+    public double TileOpacity => !IsInstalled && DarkenUninstalled ? 0.45 : 1;
 
     public GameItemViewModel(Game game, GameDatabase database)
     {
@@ -63,6 +66,15 @@ public sealed class GameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ActivityText));
         OnPropertyChanged(nameof(PlaytimeText));
         OnPropertyChanged(nameof(LastPlayedText));
+        OnPropertyChanged(nameof(TileOpacity));
+    }
+
+    internal void ApplyVisualSettings(bool showTitle, bool darkenUninstalled)
+    {
+        ShowTitle = showTitle;
+        DarkenUninstalled = darkenUninstalled;
+        OnPropertyChanged(nameof(ShowTitle));
+        OnPropertyChanged(nameof(TileOpacity));
     }
 
     private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>

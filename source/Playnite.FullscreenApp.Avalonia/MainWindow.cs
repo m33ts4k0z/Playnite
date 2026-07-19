@@ -65,6 +65,7 @@ public sealed class MainWindow : Window
 
         themeManager = new RuntimeThemeManager(Application.Current, typeof(FullscreenMainView).Assembly);
         ApplyRuntimeTheme();
+        ApplyVisualResources();
         themeManager.ApplyLanguage(ContentPath("Localization", "english.axaml"));
 
         mainView = new FullscreenMainView();
@@ -97,6 +98,7 @@ public sealed class MainWindow : Window
         viewModel.SettingsChanged += (_, _) => UpdateInputSettings();
         viewModel.SettingsChanged += (_, _) => audioService?.ApplySettings();
         viewModel.SettingsChanged += (_, _) => ApplyGeneralSettings();
+        viewModel.SettingsChanged += (_, _) => ApplyVisualResources();
         viewModel.GameLaunchSucceeded += (_, _) => MinimizeAfterGameLaunch();
         viewModel.NavigationRequested += (_, _) => audioService?.PlayNavigation();
         viewModel.ActivationRequested += (_, _) => audioService?.PlayActivation();
@@ -212,6 +214,17 @@ public sealed class MainWindow : Window
     {
         UpdateStatusWidgets();
         ApplyMonitorPlacement();
+    }
+
+    private void ApplyVisualResources()
+    {
+        if (Application.Current == null)
+        {
+            return;
+        }
+
+        Application.Current.Resources["FullscreenFontSize"] = settings.FontSize;
+        Application.Current.Resources["FullscreenFontSizeSmall"] = settings.FontSizeSmall;
     }
 
     private void UpdateStatusWidgets() =>

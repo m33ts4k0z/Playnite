@@ -37,6 +37,17 @@ public sealed class FullscreenSettingsStore
                 settings.DisabledGameControllers ??= new List<string>();
                 settings.InterfaceVolume = Math.Clamp(settings.InterfaceVolume, 0, 100);
                 settings.BackgroundVolume = Math.Clamp(settings.BackgroundVolume, 0, 100);
+                settings.Rows = Math.Clamp(settings.Rows, 1, 10);
+                settings.Columns = Math.Clamp(settings.Columns, 1, 20);
+                settings.FullscreenItemSpacing = Math.Clamp(settings.FullscreenItemSpacing, 0, 100);
+                settings.MainBackgroundImageBlurAmount = Math.Clamp(settings.MainBackgroundImageBlurAmount, 0, 100);
+                settings.MainBackgroundImageDarkAmount = Math.Clamp(settings.MainBackgroundImageDarkAmount, 0, 100);
+                settings.FontSize = Math.Clamp(settings.FontSize, 8, 72);
+                settings.FontSizeSmall = Math.Clamp(settings.FontSizeSmall, 8, 72);
+                if (!Enum.IsDefined(settings.ButtonPrompts))
+                {
+                    settings.ButtonPrompts = FullscreenButtonPrompts.Xbox;
+                }
                 return settings;
             }
         }

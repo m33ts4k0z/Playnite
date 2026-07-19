@@ -18,6 +18,8 @@ public sealed class FullscreenSettingsViewModel : INotifyPropertyChanged
     public FullscreenGeneralSettingsSection General { get; }
     public FullscreenInputSettingsSection Input { get; }
     public FullscreenAudioSettingsSection Audio { get; }
+    public FullscreenLayoutSettingsSection Layout { get; }
+    public FullscreenVisualSettingsSection Visuals { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
@@ -28,7 +30,12 @@ public sealed class FullscreenSettingsViewModel : INotifyPropertyChanged
         General = new FullscreenGeneralSettingsSection(settings);
         Input = new FullscreenInputSettingsSection(settings);
         Audio = new FullscreenAudioSettingsSection(settings);
-        Sections = new ObservableCollection<IFullscreenSettingsSection> { General, Input, Audio };
+        Layout = new FullscreenLayoutSettingsSection(settings);
+        Visuals = new FullscreenVisualSettingsSection(settings);
+        Sections = new ObservableCollection<IFullscreenSettingsSection>
+        {
+            General, Input, Audio, Layout, Visuals
+        };
         selectedSection = Sections[0];
         SaveCommand = new RelayCommand(Save, () => IsVisible);
         CancelCommand = new RelayCommand(Close, () => IsVisible);

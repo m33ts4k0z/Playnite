@@ -29,6 +29,8 @@ public sealed class FullscreenMainView : TemplatedControl
     public TextBox PluginSearchBox => pluginSearchBox;
     public UniformGridVirtualizingPanel TilePanel =>
         gameList?.GetVisualDescendants().OfType<UniformGridVirtualizingPanel>().FirstOrDefault();
+    public ScrollViewer GameScrollViewer =>
+        gameList?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
@@ -45,6 +47,7 @@ public sealed class FullscreenMainView : TemplatedControl
         firstMenuButton = e.NameScope.Find<Button>("PART_MenuFirstButton");
         detailsPrimaryButton = e.NameScope.Find<Button>("PART_DetailsPrimaryButton");
         ObserveViewModel();
+        ApplyScrollSettings();
         Dispatcher.UIThread.Post(FocusSelectedGame, DispatcherPriority.Loaded);
     }
 
@@ -94,6 +97,11 @@ public sealed class FullscreenMainView : TemplatedControl
 
     private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(FullscreenAppViewModel.SmoothScrolling))
+        {
+            ApplyScrollSettings();
+        }
+
         Control target = e.PropertyName switch
         {
             nameof(FullscreenAppViewModel.IsSearchVisible) when observedViewModel.IsSearchVisible => searchBox,
@@ -140,5 +148,18 @@ public sealed class FullscreenMainView : TemplatedControl
                 }
             }, DispatcherPriority.Input);
         }
+    }
+
+    private void ApplyScrollSettings()
+    {
+        var viewer = GameScrollViewer;
+        if (viewer == null || observedViewModel == null)
+        {
+            return;
+        }
+
+        ScrollBehavior.SetIsEnabled(viewer, true);
+        ScrollBehavior.SetWheelSensitivity(viewer, 1);
+        ScrollBehavior.SetSmoothScrollingEnabled(viewer, observedViewModel.SmoothScrolling);
     }
 }

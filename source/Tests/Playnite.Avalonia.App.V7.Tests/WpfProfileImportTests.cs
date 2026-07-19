@@ -132,6 +132,46 @@ public class WpfProfileImportTests
     }
 
     [Test]
+    public void Read_FullscreenLayoutAndVisualDefaults()
+    {
+        WriteFile("config.json", """{ "FullscreenItemSpacing": 24 }""");
+        WriteFile("fullscreenConfig.json", """
+        {
+          "Theme": "theme-id",
+          "Rows": 3,
+          "Columns": 6,
+          "HorizontalLayout": true,
+          "SmoothScrolling": false,
+          "DarkenUninstalledGamesGrid": true,
+          "EnableMainBackgroundImage": true,
+          "MainBackgroundImageBlurAmount": 17,
+          "MainBackgroundImageDarkAmount": 45.5,
+          "ShowGameTitles": true,
+          "FontSize": 25,
+          "FontSizeSmall": 19,
+          "ButtonPrompts": 1
+        }
+        """);
+
+        var defaults = WpfProfileImport.Read(profileDir);
+
+        Assert.That(defaults.FullscreenTheme, Is.EqualTo("theme-id"));
+        Assert.That(defaults.FullscreenRows, Is.EqualTo(3));
+        Assert.That(defaults.FullscreenColumns, Is.EqualTo(6));
+        Assert.That(defaults.FullscreenHorizontalLayout, Is.True);
+        Assert.That(defaults.FullscreenItemSpacing, Is.EqualTo(24));
+        Assert.That(defaults.FullscreenSmoothScrolling, Is.False);
+        Assert.That(defaults.FullscreenDarkenUninstalledGamesGrid, Is.True);
+        Assert.That(defaults.FullscreenEnableMainBackgroundImage, Is.True);
+        Assert.That(defaults.FullscreenMainBackgroundImageBlurAmount, Is.EqualTo(17));
+        Assert.That(defaults.FullscreenMainBackgroundImageDarkAmount, Is.EqualTo(45.5));
+        Assert.That(defaults.FullscreenShowGameTitles, Is.True);
+        Assert.That(defaults.FullscreenFontSize, Is.EqualTo(25));
+        Assert.That(defaults.FullscreenFontSizeSmall, Is.EqualTo(19));
+        Assert.That(defaults.FullscreenButtonPrompts, Is.EqualTo(1));
+    }
+
+    [Test]
     public void Read_MainWindowPlacement_FromNumericState()
     {
         WriteFile("windowPositions.json", """

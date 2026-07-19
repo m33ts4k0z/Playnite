@@ -7,6 +7,7 @@ namespace Playnite.Avalonia.App.Services;
 // directory assigned to the shell's ThemePath setting.
 public sealed class ThemeOption
 {
+    public string Id { get; init; }
     public string Name { get; init; }
     public string Path { get; init; }
 
@@ -22,10 +23,48 @@ public static class ThemeCatalog
     private const string DefaultThemeName = "Default";
 
     public static IReadOnlyList<ThemeOption> DiscoverDesktopThemes(IEnumerable<string> themeRootDirectories)
+        => DiscoverThemes(themeRootDirectories, AvaloniaThemeMode.Desktop);
+
+    public static IReadOnlyList<ThemeOption> DiscoverFullscreenThemes(IEnumerable<string> themeRootDirectories)
+        => DiscoverThemes(themeRootDirectories, AvaloniaThemeMode.Fullscreen);
+
+    public static string ResolveFullscreenThemeReference(
+        string reference,
+        IEnumerable<string> themeRootDirectories)
+    {
+        if (string.IsNullOrWhiteSpace(reference))
+        {
+            return string.Empty;
+        }
+
+        if (Directory.Exists(reference))
+        {
+            try
+            {
+                var package = AvaloniaThemePackage.Load(reference, AvaloniaThemeMode.Fullscreen);
+                return package.RootDirectory;
+            }
+            catch (Exception exception) when (
+                exception is InvalidDataException or FileNotFoundException or ArgumentException)
+            {
+                return string.Empty;
+            }
+        }
+
+        var themes = DiscoverFullscreenThemes(themeRootDirectories);
+        var match = themes.FirstOrDefault(option =>
+            string.Equals(option.Path, reference, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(option.Id, reference, StringComparison.OrdinalIgnoreCase));
+        return match?.Path ?? string.Empty;
+    }
+
+    private static IReadOnlyList<ThemeOption> DiscoverThemes(
+        IEnumerable<string> themeRootDirectories,
+        AvaloniaThemeMode mode)
     {
         var options = new List<ThemeOption>
         {
-            new() { Name = DefaultThemeName, Path = string.Empty }
+            new() { Id = string.Empty, Name = DefaultThemeName, Path = string.Empty }
         };
 
         foreach (var root in themeRootDirectories ?? Enumerable.Empty<string>())
@@ -46,9 +85,10 @@ public static class ThemeCatalog
 
                 try
                 {
-                    var package = AvaloniaThemePackage.Load(directory, AvaloniaThemeMode.Desktop);
+                    var package = AvaloniaThemePackage.Load(directory, mode);
                     options.Add(new ThemeOption
                     {
+                        Id = package.Manifest?.Id ?? string.Empty,
                         Name = string.IsNullOrWhiteSpace(package.Name) ? folderName : package.Name,
                         Path = System.IO.Path.GetFullPath(directory)
                     });
@@ -56,7 +96,7 @@ public static class ThemeCatalog
                 catch (Exception exception) when (
                     exception is InvalidDataException or FileNotFoundException or ArgumentException)
                 {
-                    // Skip malformed or non-Desktop theme packages.
+                    // Skip malformed packages and themes for the other shell mode.
                 }
             }
         }

@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.FullscreenApp.Avalonia.ViewModels"
+             x:Class="Playnite.FullscreenApp.Avalonia.Views.Settings.FullscreenLayoutSettingsView"
+             x:DataType="vm:FullscreenLayoutSettingsSection">
+    <StackPanel Spacing="18">
+        <TextBlock Text="Layout" FontSize="24" FontWeight="SemiBold"
+                   Foreground="{DynamicResource FullscreenTextBrush}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenHorizontalLayout}"
+                  IsChecked="{Binding HorizontalLayout, Mode=TwoWay}" />
+        <Grid ColumnDefinitions="220,140" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+            <TextBlock Text="{DynamicResource LOCFullscreenColumns}" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Column="1" Minimum="1" Maximum="20"
+                           Value="{Binding Columns, Mode=TwoWay}" />
+            <TextBlock Grid.Row="1" Text="{DynamicResource LOCFullscreenRows}" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="1" Maximum="10"
+                           Value="{Binding Rows, Mode=TwoWay}" />
+            <TextBlock Grid.Row="2" Text="{DynamicResource LOCFullscreenItemSpacing}" VerticalAlignment="Center" />
+            <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="100"
+                           Value="{Binding ItemSpacing, Mode=TwoWay}" />
+        </Grid>
+        <CheckBox Content="{DynamicResource LOCFullscreenSmoothScrolling}"
+                  IsChecked="{Binding SmoothScrolling, Mode=TwoWay}" />
+    </StackPanel>
+</UserControl>

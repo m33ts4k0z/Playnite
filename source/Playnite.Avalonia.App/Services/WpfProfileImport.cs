@@ -39,6 +39,20 @@ public static class WpfProfileImport
         public bool? FullscreenShowBattery { get; init; }
         public bool? FullscreenShowBatteryPercentage { get; init; }
         public bool? FullscreenMinimizeAfterGameStartup { get; init; }
+        public string FullscreenTheme { get; init; }
+        public int? FullscreenRows { get; init; }
+        public int? FullscreenColumns { get; init; }
+        public bool? FullscreenHorizontalLayout { get; init; }
+        public int? FullscreenItemSpacing { get; init; }
+        public bool? FullscreenSmoothScrolling { get; init; }
+        public bool? FullscreenDarkenUninstalledGamesGrid { get; init; }
+        public bool? FullscreenEnableMainBackgroundImage { get; init; }
+        public int? FullscreenMainBackgroundImageBlurAmount { get; init; }
+        public double? FullscreenMainBackgroundImageDarkAmount { get; init; }
+        public bool? FullscreenShowGameTitles { get; init; }
+        public double? FullscreenFontSize { get; init; }
+        public double? FullscreenFontSizeSmall { get; init; }
+        public int? FullscreenButtonPrompts { get; init; }
         public WindowPlacement MainWindow { get; init; }
     }
 
@@ -59,6 +73,20 @@ public static class WpfProfileImport
             FullscreenShowBattery = ReadFullscreenBoolean(userDataDirectory, "ShowBattery"),
             FullscreenShowBatteryPercentage = ReadFullscreenBoolean(userDataDirectory, "ShowBatteryPercentage"),
             FullscreenMinimizeAfterGameStartup = ReadFullscreenBoolean(userDataDirectory, "MinimizeAfterGameStartup"),
+            FullscreenTheme = ReadFullscreenString(userDataDirectory, "Theme"),
+            FullscreenRows = ReadFullscreenInt(userDataDirectory, "Rows"),
+            FullscreenColumns = ReadFullscreenInt(userDataDirectory, "Columns"),
+            FullscreenHorizontalLayout = ReadFullscreenBoolean(userDataDirectory, "HorizontalLayout"),
+            FullscreenItemSpacing = ReadDesktopInt(userDataDirectory, "FullscreenItemSpacing"),
+            FullscreenSmoothScrolling = ReadFullscreenBoolean(userDataDirectory, "SmoothScrolling"),
+            FullscreenDarkenUninstalledGamesGrid = ReadFullscreenBoolean(userDataDirectory, "DarkenUninstalledGamesGrid"),
+            FullscreenEnableMainBackgroundImage = ReadFullscreenBoolean(userDataDirectory, "EnableMainBackgroundImage"),
+            FullscreenMainBackgroundImageBlurAmount = ReadFullscreenInt(userDataDirectory, "MainBackgroundImageBlurAmount"),
+            FullscreenMainBackgroundImageDarkAmount = ReadFullscreenDouble(userDataDirectory, "MainBackgroundImageDarkAmount"),
+            FullscreenShowGameTitles = ReadFullscreenBoolean(userDataDirectory, "ShowGameTitles"),
+            FullscreenFontSize = ReadFullscreenDouble(userDataDirectory, "FontSize"),
+            FullscreenFontSizeSmall = ReadFullscreenDouble(userDataDirectory, "FontSizeSmall"),
+            FullscreenButtonPrompts = ReadFullscreenInt(userDataDirectory, "ButtonPrompts"),
             MainWindow = ReadMainWindowPlacement(userDataDirectory)
         };
     }
@@ -75,6 +103,13 @@ public static class WpfProfileImport
         {
             var token = root[propertyName];
             return token?.Type == JTokenType.Boolean ? token.Value<bool>() : null;
+        });
+
+    private static int? ReadDesktopInt(string userDataDirectory, string propertyName) =>
+        ReadJson<int?>(Path.Combine(userDataDirectory, "config.json"), root =>
+        {
+            var token = root[propertyName];
+            return token?.Type == JTokenType.Integer ? token.Value<int>() : null;
         });
 
     private static int? ReadFullscreenInt(string userDataDirectory, string propertyName, bool nonNegative = false) =>
@@ -95,6 +130,22 @@ public static class WpfProfileImport
         {
             var token = root[propertyName];
             return token?.Type == JTokenType.Boolean ? token.Value<bool>() : null;
+        });
+
+    private static string ReadFullscreenString(string userDataDirectory, string propertyName) =>
+        ReadJson<string>(Path.Combine(userDataDirectory, "fullscreenConfig.json"), root =>
+        {
+            var value = root.Value<string>(propertyName);
+            return string.IsNullOrWhiteSpace(value) ? null : value;
+        });
+
+    private static double? ReadFullscreenDouble(string userDataDirectory, string propertyName) =>
+        ReadJson<double?>(Path.Combine(userDataDirectory, "fullscreenConfig.json"), root =>
+        {
+            var token = root[propertyName];
+            return token != null && (token.Type == JTokenType.Integer || token.Type == JTokenType.Float)
+                ? token.Value<double>()
+                : null;
         });
 
     private static int? ReadFullscreenVolume(string userDataDirectory, string propertyName) =>
