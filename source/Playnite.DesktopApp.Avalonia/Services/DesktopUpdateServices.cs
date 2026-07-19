@@ -230,7 +230,8 @@ internal sealed class DesktopAddonUpdateService : IDesktopAddonUpdateService
                 continue;
             }
 
-            if (package.IsRawDictionary || package.Manifest == null)
+            if (package.IsRawDictionary || package.Manifest == null ||
+                !Version.TryParse(package.Manifest.Version, out var version))
             {
                 continue;
             }
@@ -238,7 +239,7 @@ internal sealed class DesktopAddonUpdateService : IDesktopAddonUpdateService
             yield return new InstalledAddon(
                 package.Manifest.Id,
                 package.Name,
-                Version.Parse(package.Manifest.Version),
+                version,
                 AvaloniaThemePackage.CurrentApiVersion);
         }
     }
@@ -256,24 +257,33 @@ internal sealed class DesktopAddonUpdateService : IDesktopAddonUpdateService
             return SdkVersions.SDKVersion;
         }
 
-        using var stream = File.OpenRead(assemblyPath);
-        using var peReader = new PEReader(stream);
-        if (!peReader.HasMetadata)
+        // A corrupt, locked, or non-.NET module must not fail the whole update
+        // check; such an addon simply keeps the default v6 API version.
+        try
         {
-            throw new InvalidDataException($"Extension module '{manifest.Module}' has no .NET metadata.");
-        }
-
-        var metadata = peReader.GetMetadataReader();
-        foreach (var referenceHandle in metadata.AssemblyReferences)
-        {
-            var reference = metadata.GetAssemblyReference(referenceHandle);
-            if (string.Equals(
-                    metadata.GetString(reference.Name),
-                    "Playnite.SDK",
-                    StringComparison.OrdinalIgnoreCase))
+            using var stream = File.OpenRead(assemblyPath);
+            using var peReader = new PEReader(stream);
+            if (!peReader.HasMetadata)
             {
-                return reference.Version.Major == 7 ? new Version(7, 0) : SdkVersions.SDKVersion;
+                return SdkVersions.SDKVersion;
             }
+
+            var metadata = peReader.GetMetadataReader();
+            foreach (var referenceHandle in metadata.AssemblyReferences)
+            {
+                var reference = metadata.GetAssemblyReference(referenceHandle);
+                if (string.Equals(
+                        metadata.GetString(reference.Name),
+                        "Playnite.SDK",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return reference.Version.Major == 7 ? new Version(7, 0) : SdkVersions.SDKVersion;
+                }
+            }
+        }
+        catch (Exception exception) when (
+            exception is BadImageFormatException or InvalidDataException or IOException or UnauthorizedAccessException)
+        {
         }
 
         return SdkVersions.SDKVersion;
