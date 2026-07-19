@@ -1566,8 +1566,9 @@ internal static class DesktopPilotSelfTest
         viewModel.EnableTray = false;
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         viewModel.OpenSettingsCommand.Execute(null);
-        var settingsOpened = viewModel.Settings.IsVisible && viewModel.Settings.IsGeneralSelected;
-        viewModel.Settings.EnableTray = true;
+        var settingsOpened = viewModel.Settings.IsVisible &&
+            ReferenceEquals(viewModel.Settings.SelectedSection, viewModel.Settings.General);
+        viewModel.Settings.General.EnableTray = true;
         var settingsDeferred = !viewModel.EnableTray;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
@@ -1578,7 +1579,7 @@ internal static class DesktopPilotSelfTest
                     $"opened={settingsOpened}, deferred={settingsDeferred}, applied={viewModel.EnableTray}, visible={viewModel.Settings.IsVisible}"));
 
         viewModel.OpenSettingsCommand.Execute(null);
-        viewModel.Settings.EnableTray = false;
+        viewModel.Settings.General.EnableTray = false;
         viewModel.Settings.CancelCommand.Execute(null);
         Record(results, "Settings overlay Cancel discards the working copy", () =>
             !viewModel.Settings.IsVisible && viewModel.EnableTray
@@ -1587,10 +1588,10 @@ internal static class DesktopPilotSelfTest
                     $"visible={viewModel.Settings.IsVisible}, enableTray={viewModel.EnableTray}"));
 
         viewModel.OpenSettingsCommand.Execute(null);
-        var availableLanguages = viewModel.Settings.AvailableLanguages;
+        var availableLanguages = viewModel.Settings.General.AvailableLanguages;
         var hasEnglish = availableLanguages.Any(option => option.Id == "english");
         var germanOption = availableLanguages.FirstOrDefault(option => option.Id == "de_DE");
-        viewModel.Settings.SelectedLanguage = germanOption;
+        viewModel.Settings.General.SelectedLanguage = germanOption;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         Record(results, "Language catalog bundles English plus translations and flags a restart on change", () =>
@@ -1605,14 +1606,14 @@ internal static class DesktopPilotSelfTest
         // (StartOnBoot is intentionally not exercised here — its save writes a real
         // Startup shortcut via SystemIntegration.)
         viewModel.OpenSettingsCommand.Execute(null);
-        viewModel.Settings.StartMinimized = true;
-        viewModel.Settings.StartInFullscreen = true;
+        viewModel.Settings.General.StartMinimized = true;
+        viewModel.Settings.General.StartInFullscreen = true;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         viewModel.OpenSettingsCommand.Execute(null);
-        var startMinimizedPersisted = viewModel.Settings.StartMinimized;
-        var startInFullscreenPersisted = viewModel.Settings.StartInFullscreen;
-        viewModel.Settings.StartInFullscreen = false;
+        var startMinimizedPersisted = viewModel.Settings.General.StartMinimized;
+        var startInFullscreenPersisted = viewModel.Settings.General.StartInFullscreen;
+        viewModel.Settings.General.StartInFullscreen = false;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         Record(results, "Settings overlay persists startup options through the shared settings", () =>
@@ -1625,9 +1626,9 @@ internal static class DesktopPilotSelfTest
         // exercised (Close/Exit would shut the application down).
         window.RestoreFromTray();
         viewModel.OpenSettingsCommand.Execute(null);
-        viewModel.Settings.EnableTray = false;
-        viewModel.Settings.AfterLaunch = Playnite.Avalonia.App.Services.AfterLaunchOption.Minimize;
-        viewModel.Settings.AfterGameClose = Playnite.Avalonia.App.Services.AfterGameCloseOption.Restore;
+        viewModel.Settings.General.EnableTray = false;
+        viewModel.Settings.General.AfterLaunch = Playnite.Avalonia.App.Services.AfterLaunchOption.Minimize;
+        viewModel.Settings.General.AfterGameClose = Playnite.Avalonia.App.Services.AfterGameCloseOption.Restore;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         window.ApplyAfterLaunch();
@@ -1643,15 +1644,15 @@ internal static class DesktopPilotSelfTest
                     $"minimizedAfterLaunch={minimizedAfterLaunch}, restoredAfterClose={restoredAfterClose}"));
 
         viewModel.OpenSettingsCommand.Execute(null);
-        viewModel.Settings.FuzzyMatchingInNameFilter = false;
-        viewModel.Settings.ScanLibInstallSizeOnLibUpdate = true;
+        viewModel.Settings.General.FuzzyMatchingInNameFilter = false;
+        viewModel.Settings.General.ScanLibInstallSizeOnLibUpdate = true;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         viewModel.OpenSettingsCommand.Execute(null);
-        var fuzzyPersisted = !viewModel.Settings.FuzzyMatchingInNameFilter;
-        var scanSizePersisted = viewModel.Settings.ScanLibInstallSizeOnLibUpdate;
-        viewModel.Settings.FuzzyMatchingInNameFilter = true;
-        viewModel.Settings.ScanLibInstallSizeOnLibUpdate = false;
+        var fuzzyPersisted = !viewModel.Settings.General.FuzzyMatchingInNameFilter;
+        var scanSizePersisted = viewModel.Settings.General.ScanLibInstallSizeOnLibUpdate;
+        viewModel.Settings.General.FuzzyMatchingInNameFilter = true;
+        viewModel.Settings.General.ScanLibInstallSizeOnLibUpdate = false;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         Record(results, "Library preferences (fuzzy match, install-size scan) round-trip", () =>
@@ -1665,12 +1666,12 @@ internal static class DesktopPilotSelfTest
         var trayDark = window.ResolveTrayIconPath(Playnite.Avalonia.App.Services.TrayIconOption.Dark);
         var trayIconsExist = File.Exists(trayDefault) && File.Exists(trayBright) && File.Exists(trayDark);
         viewModel.OpenSettingsCommand.Execute(null);
-        viewModel.Settings.TrayIcon = Playnite.Avalonia.App.Services.TrayIconOption.Dark;
+        viewModel.Settings.General.TrayIcon = Playnite.Avalonia.App.Services.TrayIconOption.Dark;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         viewModel.OpenSettingsCommand.Execute(null);
-        var trayPersisted = viewModel.Settings.TrayIcon == Playnite.Avalonia.App.Services.TrayIconOption.Dark;
-        viewModel.Settings.TrayIcon = Playnite.Avalonia.App.Services.TrayIconOption.Default;
+        var trayPersisted = viewModel.Settings.General.TrayIcon == Playnite.Avalonia.App.Services.TrayIconOption.Dark;
+        viewModel.Settings.General.TrayIcon = Playnite.Avalonia.App.Services.TrayIconOption.Default;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         Record(results, "Tray-icon variants are bundled and the picker round-trips", () =>
@@ -1682,15 +1683,25 @@ internal static class DesktopPilotSelfTest
         viewModel.OpenSettingsCommand.Execute(null);
         var appearanceSection = viewModel.Settings.Sections.FirstOrDefault(section => section.Key == "Appearance");
         viewModel.Settings.SelectedSection = appearanceSection;
-        var appearanceSelectable = appearanceSection != null && viewModel.Settings.IsAppearanceSelected;
-        var hasDefaultTheme = viewModel.Settings.AvailableThemes.Any(theme => string.IsNullOrEmpty(theme.Path));
-        var themeCount = viewModel.Settings.AvailableThemes.Count;
+        var appearanceSelectable = appearanceSection != null &&
+            ReferenceEquals(viewModel.Settings.SelectedSection, viewModel.Settings.Appearance);
+        var hasDefaultTheme = viewModel.Settings.Appearance.AvailableThemes.Any(theme => string.IsNullOrEmpty(theme.Path));
+        var themeCount = viewModel.Settings.Appearance.AvailableThemes.Count;
         viewModel.Settings.CancelCommand.Execute(null);
         Record(results, "Appearance section is selectable and lists the Default theme", () =>
             appearanceSelectable && hasDefaultTheme
                 ? $"appearance nav works; {themeCount} theme(s) available"
                 : throw new InvalidOperationException(
                     $"appearanceSelectable={appearanceSelectable}, hasDefaultTheme={hasDefaultTheme}"));
+
+        var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
+        Record(results, "Every desktop settings module supplies a passing self-check", () =>
+            settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
+            settingsSectionChecks.All(check => check.Passed)
+                ? string.Join("; ", settingsSectionChecks.Select(check => $"{check.SectionKey}: {check.Detail}"))
+                : throw new InvalidOperationException(string.Join(
+                    "; ",
+                    settingsSectionChecks.Select(check => $"{check.SectionKey}={check.Passed}: {check.Detail}"))));
 
         var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(

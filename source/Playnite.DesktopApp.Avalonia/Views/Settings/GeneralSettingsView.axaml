@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.GeneralSettingsView"
+             x:DataType="vm:GeneralSettingsSection">
+    <ScrollViewer MaxHeight="470" Padding="18,0,4,0">
+        <StackPanel Spacing="14">
+            <TextBlock Text="{DynamicResource LOCLanguageSettingsLabel}" Classes="sectionLabel" />
+            <ComboBox MinWidth="220" HorizontalAlignment="Left"
+                      ItemsSource="{Binding AvailableLanguages}"
+                      SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}" />
+
+            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <TextBlock Text="Window &amp; tray" Classes="sectionLabel" />
+            <CheckBox Content="{DynamicResource LOCSettingsShowTray}"
+                      IsChecked="{Binding EnableTray, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCSettingsMinimizeToTray}" Margin="18,0,0,0"
+                      IsEnabled="{Binding TrayOptionsEnabled}"
+                      IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCSettingsCloseToTray}" Margin="18,0,0,0"
+                      IsEnabled="{Binding TrayOptionsEnabled}"
+                      IsChecked="{Binding CloseToTray, Mode=TwoWay}" />
+            <StackPanel Orientation="Horizontal" Spacing="10" Margin="18,0,0,0"
+                        IsEnabled="{Binding TrayOptionsEnabled}">
+                <TextBlock Text="Tray icon" VerticalAlignment="Center"
+                           Foreground="{DynamicResource DesktopTextBrush}" />
+                <ComboBox MinWidth="140" ItemsSource="{Binding TrayIconOptions}"
+                          SelectedItem="{Binding TrayIcon, Mode=TwoWay}" />
+            </StackPanel>
+
+            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <TextBlock Text="Library" Classes="sectionLabel" />
+            <CheckBox Content="{DynamicResource LOCSettingsDownloadMetadataOnImport}"
+                      IsChecked="{Binding DownloadMetadataOnImport, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource NameFilterUseFuzzyMatching}"
+                      IsChecked="{Binding FuzzyMatchingInNameFilter, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCSettingsScanLibInstallSizeOnLibUpdate}"
+                      IsChecked="{Binding ScanLibInstallSizeOnLibUpdate, Mode=TwoWay}" />
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="{DynamicResource LOCSettingsPlaytimeImportMode}" VerticalAlignment="Center"
+                           Foreground="{DynamicResource DesktopTextBrush}" />
+                <ComboBox MinWidth="180" ItemsSource="{Binding PlaytimeImportModes}"
+                          SelectedItem="{Binding PlaytimeImportMode, Mode=TwoWay}" />
+            </StackPanel>
+
+            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <TextBlock Text="When a game runs" Classes="sectionLabel" />
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="{DynamicResource LOCSettingsAfterGameStart}" VerticalAlignment="Center"
+                           Foreground="{DynamicResource DesktopTextBrush}" />
+                <ComboBox MinWidth="180" ItemsSource="{Binding AfterLaunchOptions}"
+                          SelectedItem="{Binding AfterLaunch, Mode=TwoWay}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Text="{DynamicResource LOCSettingsAfterGameClose}" VerticalAlignment="Center"
+                           Foreground="{DynamicResource DesktopTextBrush}" />
+                <ComboBox MinWidth="180" ItemsSource="{Binding AfterGameCloseOptions}"
+                          SelectedItem="{Binding AfterGameClose, Mode=TwoWay}" />
+            </StackPanel>
+
+            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <TextBlock Text="Startup" Classes="sectionLabel" />
+            <CheckBox Content="{DynamicResource LOCSettingsStartOnBoot}"
+                      IsChecked="{Binding StartOnBoot, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCSettingsStartOnBootClosedToTray}" Margin="18,0,0,0"
+                      IsEnabled="{Binding StartOnBootOptionsEnabled}"
+                      IsChecked="{Binding StartOnBootClosedToTray, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCSettingsStartMinimized}"
+                      IsChecked="{Binding StartMinimized, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCSettingsStartInFullscreen}"
+                      IsChecked="{Binding StartInFullscreen, Mode=TwoWay}" />
+
+            <StackPanel IsVisible="{Binding CanSwitchShells}" Spacing="6">
+                <Border Height="1" Background="#303A49" Margin="0,4" />
+                <TextBlock Text="Interface" Classes="sectionLabel" />
+                <CheckBox Content="Use the new Playnite interface (restart required)"
+                          IsChecked="{Binding UseAvaloniaShell, Mode=TwoWay}" />
+                <TextBlock Text="Switches Playnite to the modernized interface. You can switch back here at any time."
+                           TextWrapping="Wrap" FontSize="11"
+                           Foreground="{DynamicResource DesktopMutedBrush}" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -2,88 +2,28 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
-using Playnite.Avalonia.App.Services;
 using Playnite.DesktopApp.Avalonia.Services;
-using Playnite.SDK;
 using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
-// The application settings overlay. This is the foundation of the settings port:
-// a working copy of the shared DesktopSettings edited behind Save/Cancel, a
-// section navigation, and restart tracking. Sections are added incrementally;
-// General is the first. Save writes the working copy back into the shared
-// settings and raises the onSaved callback — the shell persists and re-applies
-// on that signal (DesktopAppViewModel.SettingsChanged → MainWindow), so no
-// store is threaded through here.
+/// <summary>
+/// Composes independent settings sections and owns only overlay-level state.
+/// Section working copies, persistence and validation live in their modules.
+/// </summary>
 public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
 {
-    private readonly DesktopSettings settings;
     private readonly Action onSaved;
     private readonly Action<string, bool> showMessage;
-
     private bool isVisible;
-    private DesktopSettingsSection selectedSection;
+    private ISettingsSection selectedSection;
     private bool restartRequired;
-
-    // General section working copy.
-    private LanguageOption selectedLanguage;
-    private string originalLanguageId;
-    private ThemeOption selectedTheme;
-    private string originalThemePath;
-    private bool enableTray;
-    private bool minimizeToTray;
-    private bool closeToTray;
-    private TrayIconOption trayIcon;
-    private bool startOnBoot;
-    private bool startOnBootClosedToTray;
-    private bool startMinimized;
-    private bool startInFullscreen;
-    private bool originalStartOnBoot;
-    private bool originalStartOnBootClosedToTray;
-    private AfterLaunchOption afterLaunch;
-    private AfterGameCloseOption afterGameClose;
-    private bool fuzzyMatchingInNameFilter;
-    private bool scanLibInstallSizeOnLibUpdate;
-    private bool downloadMetadataOnImport;
-    private PlaytimeImportMode playtimeImportMode;
-    private bool useAvaloniaShell;
 
     public event PropertyChangedEventHandler PropertyChanged;
 
-    public ObservableCollection<DesktopSettingsSection> Sections { get; } = new()
-    {
-        new DesktopSettingsSection("General", "General"),
-        new DesktopSettingsSection("Appearance", "Appearance")
-    };
-
-    public IReadOnlyList<PlaytimeImportMode> PlaytimeImportModes { get; } =
-        Enum.GetValues<PlaytimeImportMode>();
-
-    public IReadOnlyList<AfterLaunchOption> AfterLaunchOptions { get; } =
-        Enum.GetValues<AfterLaunchOption>();
-
-    public IReadOnlyList<AfterGameCloseOption> AfterGameCloseOptions { get; } =
-        Enum.GetValues<AfterGameCloseOption>();
-
-    public IReadOnlyList<TrayIconOption> TrayIconOptions { get; } =
-        Enum.GetValues<TrayIconOption>();
-
-    public IReadOnlyList<LanguageOption> AvailableLanguages { get; } =
-        LanguageCatalog.Discover(Path.Combine(AppContext.BaseDirectory, "Localization"));
-
-    public IReadOnlyList<ThemeOption> AvailableThemes { get; } =
-        ThemeCatalog.DiscoverDesktopThemes(new[]
-        {
-            Path.Combine(AppContext.BaseDirectory, "Themes", "Desktop"),
-            Path.Combine(global::Playnite.PlaynitePaths.ThemesUserDataPath, "Desktop")
-        });
-
-    // The shell switch is offered only when both the WPF and Avalonia executables
-    // are present next to each other (a packaged install), so a dev or partial
-    // layout does not show a toggle that cannot take effect.
-    public bool CanSwitchShells => global::Playnite.PlaynitePaths.CanSwitchShells;
-
+    public ObservableCollection<ISettingsSection> Sections { get; }
+    public GeneralSettingsSection General { get; }
+    public AppearanceSettingsSection Appearance { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
@@ -92,9 +32,13 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         Action onSaved,
         Action<string, bool> showMessage)
     {
-        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        ArgumentNullException.ThrowIfNull(settings);
         this.onSaved = onSaved ?? (() => { });
         this.showMessage = showMessage ?? ((_, _) => { });
+
+        General = new GeneralSettingsSection(settings, this.showMessage);
+        Appearance = new AppearanceSettingsSection(settings);
+        Sections = new ObservableCollection<ISettingsSection> { General, Appearance };
         selectedSection = Sections[0];
         SaveCommand = new AppRelayCommand(Save, () => IsVisible);
         CancelCommand = new AppRelayCommand(Close, () => IsVisible);
@@ -112,80 +56,17 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         }
     }
 
-    public DesktopSettingsSection SelectedSection
+    public ISettingsSection SelectedSection
     {
         get => selectedSection;
-        set
-        {
-            if (SetField(ref selectedSection, value))
-            {
-                OnPropertyChanged(nameof(IsGeneralSelected));
-                OnPropertyChanged(nameof(IsAppearanceSelected));
-            }
-        }
+        set => SetField(ref selectedSection, value);
     }
-
-    public bool IsGeneralSelected => SelectedSection?.Key == "General";
-    public bool IsAppearanceSelected => SelectedSection?.Key == "Appearance";
 
     public bool RestartRequired
     {
         get => restartRequired;
         private set => SetField(ref restartRequired, value);
     }
-
-    public LanguageOption SelectedLanguage
-    {
-        get => selectedLanguage;
-        set => SetField(ref selectedLanguage, value);
-    }
-
-    public ThemeOption SelectedTheme
-    {
-        get => selectedTheme;
-        set => SetField(ref selectedTheme, value);
-    }
-
-    public bool EnableTray
-    {
-        get => enableTray;
-        set
-        {
-            if (SetField(ref enableTray, value))
-            {
-                OnPropertyChanged(nameof(TrayOptionsEnabled));
-            }
-        }
-    }
-
-    public bool TrayOptionsEnabled => EnableTray;
-    public bool MinimizeToTray { get => minimizeToTray; set => SetField(ref minimizeToTray, value); }
-    public bool CloseToTray { get => closeToTray; set => SetField(ref closeToTray, value); }
-    public TrayIconOption TrayIcon { get => trayIcon; set => SetField(ref trayIcon, value); }
-
-    public bool StartOnBoot
-    {
-        get => startOnBoot;
-        set
-        {
-            if (SetField(ref startOnBoot, value))
-            {
-                OnPropertyChanged(nameof(StartOnBootOptionsEnabled));
-            }
-        }
-    }
-
-    public bool StartOnBootOptionsEnabled => StartOnBoot;
-    public bool StartOnBootClosedToTray { get => startOnBootClosedToTray; set => SetField(ref startOnBootClosedToTray, value); }
-    public bool StartMinimized { get => startMinimized; set => SetField(ref startMinimized, value); }
-    public bool StartInFullscreen { get => startInFullscreen; set => SetField(ref startInFullscreen, value); }
-    public AfterLaunchOption AfterLaunch { get => afterLaunch; set => SetField(ref afterLaunch, value); }
-    public AfterGameCloseOption AfterGameClose { get => afterGameClose; set => SetField(ref afterGameClose, value); }
-    public bool FuzzyMatchingInNameFilter { get => fuzzyMatchingInNameFilter; set => SetField(ref fuzzyMatchingInNameFilter, value); }
-    public bool ScanLibInstallSizeOnLibUpdate { get => scanLibInstallSizeOnLibUpdate; set => SetField(ref scanLibInstallSizeOnLibUpdate, value); }
-    public bool DownloadMetadataOnImport { get => downloadMetadataOnImport; set => SetField(ref downloadMetadataOnImport, value); }
-    public PlaytimeImportMode PlaytimeImportMode { get => playtimeImportMode; set => SetField(ref playtimeImportMode, value); }
-    public bool UseAvaloniaShell { get => useAvaloniaShell; set => SetField(ref useAvaloniaShell, value); }
 
     public bool Open()
     {
@@ -194,38 +75,12 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             return false;
         }
 
-        // Snapshot the live settings into the working copy.
-        originalLanguageId = string.IsNullOrWhiteSpace(settings.Language)
-            ? LanguageCatalog.SourceLanguageId
-            : settings.Language;
-        selectedLanguage =
-            AvailableLanguages.FirstOrDefault(option =>
-                string.Equals(option.Id, originalLanguageId, StringComparison.OrdinalIgnoreCase))
-            ?? AvailableLanguages.FirstOrDefault();
-        originalThemePath = settings.ThemePath ?? string.Empty;
-        selectedTheme =
-            AvailableThemes.FirstOrDefault(option =>
-                string.Equals(option.Path, originalThemePath, StringComparison.OrdinalIgnoreCase))
-            ?? AvailableThemes.FirstOrDefault();
-        enableTray = settings.EnableTray;
-        minimizeToTray = settings.MinimizeToTray;
-        closeToTray = settings.CloseToTray;
-        trayIcon = settings.TrayIcon;
-        startOnBoot = settings.StartOnBoot;
-        startOnBootClosedToTray = settings.StartOnBootClosedToTray;
-        startMinimized = settings.StartMinimized;
-        startInFullscreen = settings.StartInFullscreen;
-        originalStartOnBoot = settings.StartOnBoot;
-        originalStartOnBootClosedToTray = settings.StartOnBootClosedToTray;
-        afterLaunch = settings.AfterLaunch;
-        afterGameClose = settings.AfterGameClose;
-        fuzzyMatchingInNameFilter = settings.FuzzyMatchingInNameFilter;
-        scanLibInstallSizeOnLibUpdate = settings.ScanLibInstallSizeOnLibUpdate;
-        downloadMetadataOnImport = settings.DownloadMetadataOnImport;
-        playtimeImportMode = settings.LibraryPlaytimeImportMode;
-        useAvaloniaShell = global::Playnite.PlaynitePaths.IsAvaloniaShellPreferred;
+        foreach (var section in Sections)
+        {
+            section.Open();
+        }
+
         RestartRequired = false;
-        RaiseAllFieldChanges();
         SelectedSection = Sections[0];
         IsVisible = true;
         return true;
@@ -238,73 +93,9 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             return;
         }
 
-        settings.EnableTray = EnableTray;
-        settings.MinimizeToTray = MinimizeToTray;
-        settings.CloseToTray = CloseToTray;
-        settings.TrayIcon = TrayIcon;
-        settings.StartOnBoot = StartOnBoot;
-        settings.StartOnBootClosedToTray = StartOnBootClosedToTray;
-        settings.StartMinimized = StartMinimized;
-        settings.StartInFullscreen = StartInFullscreen;
-        settings.AfterLaunch = AfterLaunch;
-        settings.AfterGameClose = AfterGameClose;
-        settings.FuzzyMatchingInNameFilter = FuzzyMatchingInNameFilter;
-        settings.ScanLibInstallSizeOnLibUpdate = ScanLibInstallSizeOnLibUpdate;
-        settings.DownloadMetadataOnImport = DownloadMetadataOnImport;
-        settings.LibraryPlaytimeImportMode = PlaytimeImportMode;
-
-        // Run-on-boot registers a Startup shortcut immediately (no restart). Only
-        // touch it when it changed so an unrelated Save does not rewrite it.
-        if (StartOnBoot != originalStartOnBoot ||
-            StartOnBootClosedToTray != originalStartOnBootClosedToTray)
-        {
-            try
-            {
-                global::Playnite.SystemIntegration.SetBootupStateRegistration(
-                    StartOnBoot, StartOnBootClosedToTray);
-                originalStartOnBoot = StartOnBoot;
-                originalStartOnBootClosedToTray = StartOnBootClosedToTray;
-            }
-            catch (Exception exception)
-            {
-                showMessage($"The run-on-startup setting could not be applied: {exception.Message}", true);
-            }
-        }
-
-        // Language is applied on the next launch, so a change flags a restart.
-        var newLanguageId = SelectedLanguage?.Id ?? LanguageCatalog.SourceLanguageId;
-        if (!string.Equals(newLanguageId, originalLanguageId, StringComparison.OrdinalIgnoreCase))
-        {
-            settings.Language = newLanguageId;
-            RestartRequired = true;
-        }
-
-        // The theme is applied at window construction, so a change needs a restart.
-        var newThemePath = SelectedTheme?.Path ?? string.Empty;
-        if (!string.Equals(newThemePath, originalThemePath, StringComparison.OrdinalIgnoreCase))
-        {
-            settings.ThemePath = newThemePath;
-            RestartRequired = true;
-        }
-
-        // The shell preference is a marker next to the executables, not part of the
-        // settings file, so apply it directly and flag a restart when it changes.
-        if (CanSwitchShells && UseAvaloniaShell != global::Playnite.PlaynitePaths.IsAvaloniaShellPreferred)
-        {
-            if (global::Playnite.PlaynitePaths.SetAvaloniaShellPreferred(UseAvaloniaShell))
-            {
-                RestartRequired = true;
-            }
-            else
-            {
-                showMessage(
-                    "The interface preference could not be saved. Run Playnite from a writable location and try again.",
-                    true);
-            }
-        }
-
-        // The shell persists the settings file and re-applies live state (e.g. the
-        // tray) in response to this callback.
+        RestartRequired = Sections.Aggregate(
+            false,
+            (required, section) => section.Save().RestartRequired || required);
         onSaved();
         showMessage(
             RestartRequired
@@ -322,29 +113,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         }
     }
 
-    private void RaiseAllFieldChanges()
-    {
-        OnPropertyChanged(nameof(SelectedLanguage));
-        OnPropertyChanged(nameof(SelectedTheme));
-        OnPropertyChanged(nameof(EnableTray));
-        OnPropertyChanged(nameof(TrayOptionsEnabled));
-        OnPropertyChanged(nameof(MinimizeToTray));
-        OnPropertyChanged(nameof(CloseToTray));
-        OnPropertyChanged(nameof(TrayIcon));
-        OnPropertyChanged(nameof(StartOnBoot));
-        OnPropertyChanged(nameof(StartOnBootOptionsEnabled));
-        OnPropertyChanged(nameof(StartOnBootClosedToTray));
-        OnPropertyChanged(nameof(StartMinimized));
-        OnPropertyChanged(nameof(StartInFullscreen));
-        OnPropertyChanged(nameof(AfterLaunch));
-        OnPropertyChanged(nameof(AfterGameClose));
-        OnPropertyChanged(nameof(FuzzyMatchingInNameFilter));
-        OnPropertyChanged(nameof(ScanLibInstallSizeOnLibUpdate));
-        OnPropertyChanged(nameof(DownloadMetadataOnImport));
-        OnPropertyChanged(nameof(PlaytimeImportMode));
-        OnPropertyChanged(nameof(UseAvaloniaShell));
-        OnPropertyChanged(nameof(CanSwitchShells));
-    }
+    public IReadOnlyList<SettingsSectionSelfCheckResult> RunSelfChecks() =>
+        Sections.Select(section => section.SelfCheck()).ToList();
 
     private void RaiseCommandStates()
     {
@@ -360,22 +130,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         }
 
         field = value;
-        OnPropertyChanged(propertyName);
-        return true;
-    }
-
-    private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-}
-
-public sealed class DesktopSettingsSection
-{
-    public string Key { get; }
-    public string Title { get; }
-
-    public DesktopSettingsSection(string key, string title)
-    {
-        Key = key;
-        Title = title;
+        return true;
     }
 }
