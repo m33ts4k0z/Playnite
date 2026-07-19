@@ -27,6 +27,7 @@ public sealed class MainWindow : Window
     private readonly DesktopTrayService trayService;
     private WindowState restoreWindowState = WindowState.Normal;
     private bool hasClosed;
+    private bool automatedRunStarted;
     private AvaloniaThemePackage activeThemePackage;
     private readonly HashSet<Guid> runningGames = new();
 
@@ -465,11 +466,22 @@ public sealed class MainWindow : Window
     private async void OnOpened(object sender, EventArgs e)
     {
         mainView.FocusSelectedGame();
+        if (!options.PluginCompatibilityTest && !options.SelfTest)
+        {
+            return;
+        }
+
+        if (automatedRunStarted)
+        {
+            return;
+        }
+
+        automatedRunStarted = true;
         if (options.PluginCompatibilityTest)
         {
             await InstalledPluginCompatibilityTest.Run(this, library, options);
         }
-        else if (options.SelfTest)
+        else
         {
             await DesktopPilotSelfTest.Run(this, viewModel, library);
         }

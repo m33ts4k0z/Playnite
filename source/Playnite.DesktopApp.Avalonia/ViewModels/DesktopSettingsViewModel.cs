@@ -3,6 +3,8 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Playnite.DesktopApp.Avalonia.Services;
+using Playnite.Database;
+using Playnite.SDK.Plugins;
 using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
@@ -31,11 +33,17 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public AppearanceLayoutSettingsSection AppearanceLayout { get; }
     public AppearanceAdvancedSettingsSection AppearanceAdvanced { get; }
     public AppearanceTopPanelSettingsSection AppearanceTopPanel { get; }
+    public MetadataSettingsSection Metadata { get; }
+    public SortingSettingsSection Sorting { get; }
+    public ImportExclusionsSettingsSection ImportExclusions { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
     public DesktopSettingsViewModel(
         DesktopSettings settings,
+        GameDatabase database,
+        Func<IReadOnlyList<MetadataPlugin>> metadataPlugins,
+        Action libraryUpdated,
         Action onSaved,
         Action<string, bool> showMessage)
     {
@@ -52,6 +60,9 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         AppearanceLayout = new AppearanceLayoutSettingsSection(settings);
         AppearanceAdvanced = new AppearanceAdvancedSettingsSection(settings);
         AppearanceTopPanel = new AppearanceTopPanelSettingsSection(settings);
+        Metadata = new MetadataSettingsSection(settings, metadataPlugins);
+        Sorting = new SortingSettingsSection(settings, database, libraryUpdated, this.showMessage);
+        ImportExclusions = new ImportExclusionsSettingsSection(database);
         Sections = new ObservableCollection<ISettingsSection>
         {
             General,
@@ -62,7 +73,10 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             AppearanceDetailsView,
             AppearanceLayout,
             AppearanceAdvanced,
-            AppearanceTopPanel
+            AppearanceTopPanel,
+            Metadata,
+            Sorting,
+            ImportExclusions
         };
         selectedSection = Sections[0];
         SaveCommand = new AppRelayCommand(Save, () => IsVisible);

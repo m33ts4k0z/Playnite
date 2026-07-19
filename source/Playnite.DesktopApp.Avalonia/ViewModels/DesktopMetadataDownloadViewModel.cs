@@ -296,26 +296,44 @@ public sealed class DesktopMetadataDownloadViewModel : INotifyPropertyChanged
         Action<Game, int, int> progressCallback,
         CancellationToken cancelToken)
     {
-        var selectedFields = settings.MetadataFields ?? new List<MetadataField>();
-        if (selectedFields.Count == 0)
+        MetadataDownloaderSettings fieldSettings;
+        if (settings.UsePerFieldMetadataSettings)
         {
-            return false;
+            fieldSettings = MetadataSettingsUtilities.Clone(settings.MetadataSettings);
+            fieldSettings.GamesSource = settings.MetadataGamesSource;
+            fieldSettings.SkipExistingValues = settings.MetadataSkipExistingValues;
+            var configured = MetadataSettingsUtilities.SupportedFields
+                .Select(field => MetadataSettingsUtilities.GetField(fieldSettings, field))
+                .Any(field => field.Import && field.Sources?.Count > 0);
+            if (!configured)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            var selectedFields = settings.MetadataFields ?? new List<MetadataField>();
+            if (selectedFields.Count == 0)
+            {
+                return false;
+            }
+
+            var sourceIds = settings.MetadataSourceIds?.Count > 0
+                ? settings.MetadataSourceIds.ToList()
+                : new[] { Guid.Empty }
+                    .Concat((metadataPlugins() ?? new List<MetadataPlugin>())
+                        .Where(plugin => plugin != null)
+                        .Select(plugin => plugin.Id))
+                    .Distinct()
+                    .ToList();
+            if (sourceIds.Count == 0)
+            {
+                return false;
+            }
+
+            fieldSettings = BuildSettings(sourceIds, selectedFields);
         }
 
-        var sourceIds = settings.MetadataSourceIds?.Count > 0
-            ? settings.MetadataSourceIds.ToList()
-            : new[] { Guid.Empty }
-                .Concat((metadataPlugins() ?? new List<MetadataPlugin>())
-                    .Where(plugin => plugin != null)
-                    .Select(plugin => plugin.Id))
-                .Distinct()
-                .ToList();
-        if (sourceIds.Count == 0)
-        {
-            return false;
-        }
-
-        var fieldSettings = BuildSettings(sourceIds, selectedFields);
         await DownloadGamesAsync(games, fieldSettings, progressCallback, cancelToken);
         return true;
     }

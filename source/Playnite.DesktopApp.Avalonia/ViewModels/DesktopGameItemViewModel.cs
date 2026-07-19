@@ -93,7 +93,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public string PublishersText => FormatNames("Publishers", Game.PublisherIds, id => database.Companies[id]?.Name);
     public string FeaturesText => FormatNames("Features", Game.FeatureIds, id => database.Features[id]?.Name);
     public string SeriesText => FormatNames("Series", Game.SeriesIds, id => database.Series[id]?.Name);
-    public string AgeRatingsText => FormatNames("Age ratings", Game.AgeRatingIds, id => database.AgeRatings[id]?.Name);
+    public string AgeRatingsText => FormatAgeRatings();
     public string RegionsText => FormatNames("Regions", Game.RegionIds, id => database.Regions[id]?.Name);
     public string LinksText => FormatLinks(Game.Links);
     public string GameActionsText => FormatGameActions(Game);
@@ -366,6 +366,19 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .ToList();
         return names.Count == 0 ? "Links: None" : $"Links: {string.Join(", ", names)}";
+    }
+
+    private string FormatAgeRatings()
+    {
+        var preferredPrefix = appearanceSettings.AgeRatingOrgPriority.ToString();
+        var names = (Game.AgeRatingIds ?? new List<Guid>())
+            .Select(id => database.AgeRatings[id]?.Name)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.CurrentCultureIgnoreCase)
+            .OrderByDescending(name => name.StartsWith(preferredPrefix, StringComparison.CurrentCultureIgnoreCase))
+            .ThenBy(name => name, StringComparer.CurrentCultureIgnoreCase)
+            .ToList();
+        return names.Count == 0 ? "Age ratings: None" : $"Age ratings: {string.Join(", ", names)}";
     }
 
     private static string FormatGameActions(Game game)

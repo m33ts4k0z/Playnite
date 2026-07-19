@@ -10,6 +10,7 @@ using Playnite.Database;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK;
 using Playnite.SDK.Models;
+using Playnite.SDK.Plugins;
 using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
@@ -558,6 +559,9 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         PluginSettings.PropertyChanged += PluginSettings_PropertyChanged;
         Settings = new DesktopSettingsViewModel(
             this.settings,
+            database,
+            () => runtimeHost?.MetadataPlugins.ToList() ?? new List<MetadataPlugin>(),
+            SynchronizeLibrary,
             () =>
             {
                 ApplyAppearanceSettings();
@@ -1271,7 +1275,13 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         var databaseIds = databaseGames.Select(game => game.Id).ToHashSet();
         allGames.RemoveAll(game => !databaseIds.Contains(game.Game.Id));
         var existingIds = allGames.Select(game => game.Game.Id).ToHashSet();
-        foreach (var game in databaseGames.Where(game => !existingIds.Contains(game.Id)))
+        var newGames = databaseGames.Where(game => !existingIds.Contains(game.Id)).ToList();
+        if (settings.GameSortingNameAutofill && newGames.Count > 0)
+        {
+            SortingNameService.FillMissing(database, newGames, settings.GameSortingNameRemovedArticles);
+        }
+
+        foreach (var game in newGames)
         {
             var wrapper = new DesktopGameItemViewModel(game, database);
             wrapper.ApplyAppearance(settings);

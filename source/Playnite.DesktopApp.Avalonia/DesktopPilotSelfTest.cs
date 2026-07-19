@@ -1890,6 +1890,138 @@ internal static class DesktopPilotSelfTest
                 ? "invalid .NET date formats kept the settings overlay open and selected the failing module"
                 : throw new InvalidOperationException("An invalid date format was saved."));
 
+        window.RuntimeHost.Extensions.Plugins.Add(
+            metadataPlugin.Id,
+            new LoadedPlugin(metadataPlugin, new ExtensionManifest
+            {
+                Id = metadataPlugin.Id.ToString(),
+                Name = metadataPlugin.Name,
+                Version = "1.0.0",
+                Type = ExtensionType.MetadataProvider,
+                DescriptionPath = Path.Combine(
+                    library.ActiveUserDataDirectory,
+                    "track-w-metadata",
+                    "extension.yaml")
+            }));
+        var richMetadataTarget = library.Database.Games[metadataGame.Id];
+        var richMetadataTargetCopy = richMetadataTarget.GetCopy();
+        richMetadataTargetCopy.Description = null;
+        library.Database.Games.Update(richMetadataTargetCopy);
+        metadataPlugin.Description = "Track W ordered-source metadata";
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("Metadata settings could not be opened for the Track W self-test.");
+        }
+        var metadataSettingsSection = viewModel.Settings.Metadata;
+        foreach (var field in metadataSettingsSection.Fields)
+        {
+            field.Import = false;
+            foreach (var source in field.Sources)
+            {
+                source.IsEnabled = false;
+            }
+        }
+
+        var descriptionField = metadataSettingsSection.Fields.Single(field => field.Field == MetadataField.Description);
+        var pilotMetadataSource = descriptionField.Sources.FirstOrDefault(source => source.Id == metadataPlugin.Id) ??
+            throw new InvalidOperationException(
+                $"The Track W metadata provider was not offered by settings. Runtime providers: " +
+                $"{string.Join(",", window.RuntimeHost.MetadataPlugins.Select(plugin => plugin.Id))}; " +
+                $"field providers: {string.Join(",", descriptionField.Sources.Select(source => source.Id))}.");
+        descriptionField.Import = true;
+        pilotMetadataSource.IsEnabled = true;
+        metadataSettingsSection.SelectedField = descriptionField;
+        metadataSettingsSection.SelectedSource = pilotMetadataSource;
+        metadataSettingsSection.MoveSourceUpCommand.Execute(null);
+        metadataSettingsSection.DownloadBackgroundsImmediately = false;
+        metadataSettingsSection.AgeRatingOrgPriority = AgeRatingOrg.ESRB;
+        metadataSettingsSection.WebImageSearchIconTerm = "{Name} square icon";
+        metadataSettingsSection.WebImageSearchCoverTerm = "{Name} vertical cover";
+        metadataSettingsSection.WebImageSearchBackgroundTerm = "{Name} landscape background";
+        metadataSettingsSection.DefaultWebImageSource = global::Playnite.WebImageSearchSource.DuckDuckGo;
+        viewModel.Settings.SaveCommand.Execute(null);
+        var providersBeforeRichMetadata = metadataPlugin.ProviderCreationCount;
+        var richMetadataDownloaded = await viewModel.MetadataDownload.DownloadConfiguredGamesAsync(
+            new[] { richMetadataTargetCopy },
+            (_, _, _) => { },
+            CancellationToken.None);
+        var richMetadataResult = library.Database.Games[richMetadataTarget.Id];
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("Metadata settings could not be reopened for the Track W self-test.");
+        }
+        descriptionField = viewModel.Settings.Metadata.Fields.Single(field => field.Field == MetadataField.Description);
+        var richSettingsReopened = descriptionField.Import &&
+            descriptionField.Sources.First().Id == metadataPlugin.Id &&
+            descriptionField.Sources.First().IsEnabled &&
+            viewModel.Settings.Metadata.AgeRatingOrgPriority == AgeRatingOrg.ESRB &&
+            viewModel.Settings.Metadata.DefaultWebImageSource == global::Playnite.WebImageSearchSource.DuckDuckGo &&
+            viewModel.Settings.Metadata.WebImageSearchIconTerm == "{Name} square icon" &&
+            viewModel.Settings.Metadata.WebImageSearchCoverTerm == "{Name} vertical cover" &&
+            viewModel.Settings.Metadata.WebImageSearchBackgroundTerm == "{Name} landscape background";
+        viewModel.Settings.CancelCommand.Execute(null);
+        Record(results, "Per-field metadata priorities drive automatic Core downloads", () =>
+            richMetadataDownloaded &&
+            richMetadataResult.Description == metadataPlugin.Description &&
+            metadataPlugin.ProviderCreationCount == providersBeforeRichMetadata + 1 &&
+            richSettingsReopened
+                ? "the ordered plugin source, metadata policy, age-rating priority, and image-search defaults saved and executed"
+                : throw new InvalidOperationException(
+                    $"downloaded={richMetadataDownloaded}, description={richMetadataResult.Description}, " +
+                    $"providers={metadataPlugin.ProviderCreationCount}/{providersBeforeRichMetadata + 1}, reopened={richSettingsReopened}"));
+        window.RuntimeHost.Extensions.Plugins.Remove(metadataPlugin.Id);
+
+        var sortingPilotGame = new Game("The Track W Sorting Pilot")
+        {
+            GameId = "track-w-sorting-pilot",
+            IsInstalled = true
+        };
+        library.Database.Games.Add(sortingPilotGame);
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("Sorting settings could not be opened for the Track W self-test.");
+        }
+        viewModel.Settings.Sorting.ArticleText = "Le";
+        viewModel.Settings.Sorting.AddArticleCommand.Execute(null);
+        viewModel.Settings.Sorting.GameSortingNameAutofill = true;
+        viewModel.Settings.Sorting.FillSortingNamesCommand.Execute(null);
+        var sortingNameFilled = library.Database.Games[sortingPilotGame.Id]?.SortingName == "Track W Sorting Pilot";
+        viewModel.Settings.SaveCommand.Execute(null);
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("Sorting settings could not be reopened for the Track W self-test.");
+        }
+        var sortingSettingsReopened = viewModel.Settings.Sorting.GameSortingNameAutofill &&
+            viewModel.Settings.Sorting.RemovedArticles.Contains("Le", StringComparer.CurrentCultureIgnoreCase);
+        viewModel.Settings.CancelCommand.Execute(null);
+        Record(results, "Sorting settings edit articles and fill missing Core sorting names", () =>
+            sortingNameFilled && sortingSettingsReopened
+                ? "article edits round-tripped and the buffered bulk command removed the leading article"
+                : throw new InvalidOperationException(
+                    $"sortingName={library.Database.Games[sortingPilotGame.Id]?.SortingName}, reopened={sortingSettingsReopened}"));
+
+        var exclusionPilot = new global::Playnite.ImportExclusionItem(
+            "track-w-exclusion",
+            "Track W exclusion pilot",
+            libraryPlugin.Id,
+            libraryPlugin.Name);
+        library.Database.ImportExclusions.Add(exclusionPilot);
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("Import-exclusion settings could not be opened for the Track W self-test.");
+        }
+        var exclusionRow = viewModel.Settings.ImportExclusions.Exclusions.Single(item => item.Id == exclusionPilot.Id);
+        viewModel.Settings.ImportExclusions.SelectedExclusion = exclusionRow;
+        viewModel.Settings.ImportExclusions.RemoveCommand.Execute(null);
+        var exclusionDeferred = library.Database.ImportExclusions[exclusionPilot.Id] != null &&
+            viewModel.Settings.ImportExclusions.Exclusions.All(item => item.Id != exclusionPilot.Id);
+        viewModel.Settings.SaveCommand.Execute(null);
+        Record(results, "Import exclusions are removed only when settings are saved", () =>
+            exclusionDeferred && library.Database.ImportExclusions[exclusionPilot.Id] == null
+                ? "the compiled exclusion row deferred its Core database removal until Save"
+                : throw new InvalidOperationException(
+                    $"deferred={exclusionDeferred}, persisted={library.Database.ImportExclusions[exclusionPilot.Id] != null}"));
+
         var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every desktop settings module supplies a passing self-check", () =>
             settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
@@ -2036,6 +2168,16 @@ internal static class DesktopPilotSelfTest
         Record(results, "Desktop settings persist atomically", () =>
         {
             var store = new DesktopSettingsStore(library.ActiveUserDataDirectory);
+            var persistedMetadataSettings = Playnite.Metadata.MetadataDownloaderSettings.GetDefaultSettings();
+            foreach (var field in MetadataSettingsUtilities.SupportedFields)
+            {
+                var fieldSettings = MetadataSettingsUtilities.GetField(persistedMetadataSettings, field);
+                fieldSettings.Import = false;
+                fieldSettings.Sources = new List<Guid>();
+            }
+
+            persistedMetadataSettings.Description.Import = true;
+            persistedMetadataSettings.Description.Sources = new List<Guid> { metadataPlugin.Id, Guid.Empty };
             store.Save(new DesktopSettings
             {
                 ViewMode = "List",
@@ -2048,6 +2190,15 @@ internal static class DesktopPilotSelfTest
                 DownloadBackgroundsImmediately = false,
                 MetadataSourceIds = new List<Guid> { metadataPlugin.Id },
                 MetadataFields = new List<MetadataField> { MetadataField.Description, MetadataField.CoverImage },
+                UsePerFieldMetadataSettings = true,
+                MetadataSettings = persistedMetadataSettings,
+                AgeRatingOrgPriority = AgeRatingOrg.ESRB,
+                WebImageSearchIconTerm = "{Name} persisted icon",
+                WebImageSearchCoverTerm = "{Name} persisted cover",
+                WebImageSearchBackgroundTerm = "{Name} persisted background",
+                DefaultWebImageSource = global::Playnite.WebImageSearchSource.DuckDuckGo,
+                GameSortingNameAutofill = false,
+                GameSortingNameRemovedArticles = new List<string> { "The", "Le" },
                 LibraryPluginIds = new List<Guid> { libraryPlugin.Id },
                 LibraryPluginSelectionConfigured = true,
                 GameScannerIds = new List<Guid> { scannerConfig.Id },
@@ -2147,6 +2298,17 @@ internal static class DesktopPilotSelfTest
                 loaded.DownloadBackgroundsImmediately ||
                 !loaded.MetadataSourceIds.SequenceEqual(new[] { metadataPlugin.Id }) ||
                 !loaded.MetadataFields.SequenceEqual(new[] { MetadataField.Description, MetadataField.CoverImage }) ||
+                !loaded.UsePerFieldMetadataSettings ||
+                !loaded.MetadataSettings.Description.Import ||
+                !loaded.MetadataSettings.Description.Sources.SequenceEqual(new[] { metadataPlugin.Id, Guid.Empty }) ||
+                loaded.MetadataSettings.Name.Import ||
+                loaded.AgeRatingOrgPriority != AgeRatingOrg.ESRB ||
+                loaded.WebImageSearchIconTerm != "{Name} persisted icon" ||
+                loaded.WebImageSearchCoverTerm != "{Name} persisted cover" ||
+                loaded.WebImageSearchBackgroundTerm != "{Name} persisted background" ||
+                loaded.DefaultWebImageSource != global::Playnite.WebImageSearchSource.DuckDuckGo ||
+                loaded.GameSortingNameAutofill ||
+                !loaded.GameSortingNameRemovedArticles.SequenceEqual(new[] { "The", "Le" }) ||
                 !loaded.LibraryPluginIds.SequenceEqual(new[] { libraryPlugin.Id }) ||
                 !loaded.LibraryPluginSelectionConfigured ||
                 !loaded.GameScannerIds.SequenceEqual(new[] { scannerConfig.Id }) ||

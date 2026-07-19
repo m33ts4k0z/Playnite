@@ -50,6 +50,24 @@ public sealed class DesktopSettingsStore
                 settings.MetadataSourceIds ??= new List<Guid>();
                 settings.MetadataFields ??= DesktopSettings.GetDefaultMetadataFields();
                 settings.LibraryPluginIds ??= new List<Guid>();
+                settings.MetadataSettings = MetadataSettingsUtilities.EnsureInitialized(settings.MetadataSettings);
+                settings.GameSortingNameRemovedArticles ??= new List<string> { "The", "A", "An" };
+                settings.GameSortingNameRemovedArticles = settings.GameSortingNameRemovedArticles
+                    .Where(article => !string.IsNullOrWhiteSpace(article))
+                    .Select(article => article.Trim())
+                    .Distinct(StringComparer.CurrentCultureIgnoreCase)
+                    .ToList();
+                settings.WebImageSearchIconTerm ??= "{Name} icon";
+                settings.WebImageSearchCoverTerm ??= "{Name} cover";
+                settings.WebImageSearchBackgroundTerm ??= "{Name} background";
+                if (!Enum.IsDefined(settings.AgeRatingOrgPriority))
+                {
+                    settings.AgeRatingOrgPriority = Playnite.SDK.Models.AgeRatingOrg.PEGI;
+                }
+                if (!Enum.IsDefined(settings.DefaultWebImageSource))
+                {
+                    settings.DefaultWebImageSource = global::Playnite.WebImageSearchSource.Google;
+                }
                 settings.GameScannerIds ??= new List<Guid>();
                 if (!Enum.IsDefined(settings.MetadataGamesSource))
                 {

@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.ImportExclusionsSettingsView"
+             x:DataType="vm:ImportExclusionsSettingsSection">
+    <ScrollViewer MaxHeight="470" Padding="18,0,4,0">
+        <StackPanel Spacing="14">
+            <TextBlock Text="Import exclusions" Classes="sectionLabel" />
+            <TextBlock Text="Games in this list are ignored when their library plugin imports them again. Removals are applied only when settings are saved."
+                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource DesktopMutedBrush}" />
+            <Grid ColumnDefinitions="2*,*,*,*" ColumnSpacing="10" Margin="8,0">
+                <TextBlock Text="Name" FontWeight="Bold" />
+                <TextBlock Grid.Column="1" Text="Game ID" FontWeight="Bold" />
+                <TextBlock Grid.Column="2" Text="Library" FontWeight="Bold" />
+                <TextBlock Grid.Column="3" Text="Extension ID" FontWeight="Bold" />
+            </Grid>
+            <ListBox MinHeight="280" ItemsSource="{Binding Exclusions}"
+                     SelectedItem="{Binding SelectedExclusion, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ImportExclusionRow">
+                        <Grid ColumnDefinitions="2*,*,*,*" ColumnSpacing="10" Margin="8,6">
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="1" Text="{Binding GameId}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="2" Text="{Binding LibraryName}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="3" Text="{Binding LibraryId}" TextTrimming="CharacterEllipsis" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <Button Content="Remove selected exclusion" Command="{Binding RemoveCommand}" HorizontalAlignment="Left" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

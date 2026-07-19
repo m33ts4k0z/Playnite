@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.MetadataSettingsView"
+             x:DataType="vm:MetadataSettingsSection">
+    <ScrollViewer MaxHeight="470" Padding="18,0,4,0">
+        <StackPanel Spacing="14">
+            <TextBlock Text="Metadata defaults" Classes="sectionLabel" />
+            <CheckBox Content="Download background images immediately"
+                      IsChecked="{Binding DownloadBackgroundsImmediately, Mode=TwoWay}" />
+            <Grid ColumnDefinitions="190,*" ColumnSpacing="10">
+                <TextBlock Text="Preferred age-rating organization" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" Width="180" HorizontalAlignment="Left"
+                          ItemsSource="{Binding AgeRatingOrganizations}"
+                          SelectedItem="{Binding AgeRatingOrgPriority, Mode=TwoWay}" />
+            </Grid>
+
+            <TextBlock Text="Field source priority" Classes="sectionLabel" Margin="0,8,0,0" />
+            <TextBlock Text="Enable fields, select their metadata sources, and move sources into the order Playnite should try them."
+                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource DesktopMutedBrush}" />
+            <Grid ColumnDefinitions="220,*" ColumnSpacing="12" MinHeight="260">
+                <ListBox ItemsSource="{Binding Fields}" SelectedItem="{Binding SelectedField, Mode=TwoWay}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:MetadataFieldSourceRow">
+                            <CheckBox Content="{Binding Name}" IsChecked="{Binding Import, Mode=TwoWay}" Padding="7" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Grid Grid.Column="1" RowDefinitions="*,Auto" RowSpacing="8">
+                    <ListBox ItemsSource="{Binding SelectedField.Sources}"
+                             SelectedItem="{Binding SelectedSource, Mode=TwoWay}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MetadataSourceChoice">
+                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsEnabled, Mode=TwoWay}" Padding="7" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+                        <Button Content="Move up" Command="{Binding MoveSourceUpCommand}" />
+                        <Button Content="Move down" Command="{Binding MoveSourceDownCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
+            <TextBlock Text="Web image search" Classes="sectionLabel" Margin="0,8,0,0" />
+            <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="10">
+                <TextBlock Text="Icon query" VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" Text="{Binding WebImageSearchIconTerm, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Text="Cover query" VerticalAlignment="Center" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding WebImageSearchCoverTerm, Mode=TwoWay}" />
+                <TextBlock Grid.Row="2" Text="Background query" VerticalAlignment="Center" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding WebImageSearchBackgroundTerm, Mode=TwoWay}" />
+                <TextBlock Grid.Row="3" Text="Search provider" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding WebImageSources}"
+                          SelectedItem="{Binding DefaultWebImageSource, Mode=TwoWay}" />
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -388,6 +388,14 @@ public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
                 }
             }
 
+            if (!token.IsCancellationRequested && settings.GameSortingNameAutofill && addedGames.Count > 0)
+            {
+                SortingNameService.FillMissing(
+                    database,
+                    addedGames,
+                    settings.GameSortingNameRemovedArticles);
+            }
+
             if (!token.IsCancellationRequested && DownloadMetadataOnImport && addedGames.Count > 0)
             {
                 ProgressValue = 0;

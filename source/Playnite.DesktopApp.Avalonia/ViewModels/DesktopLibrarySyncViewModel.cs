@@ -321,6 +321,13 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
                 .GroupBy(game => game.Id)
                 .Select(group => database.Games[group.Key])
                 .ToList();
+            if (!token.IsCancellationRequested && settings.GameSortingNameAutofill && addedGames.Count > 0)
+            {
+                SortingNameService.FillMissing(
+                    database,
+                    addedGames,
+                    settings.GameSortingNameRemovedArticles);
+            }
             if (!token.IsCancellationRequested && DownloadMetadataOnImport && addedGames.Count > 0)
             {
                 ProgressValue = 0;
