@@ -29,6 +29,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     // General section working copy.
     private LanguageOption selectedLanguage;
     private string originalLanguageId;
+    private ThemeOption selectedTheme;
+    private string originalThemePath;
     private bool enableTray;
     private bool minimizeToTray;
     private bool closeToTray;
@@ -51,7 +53,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
 
     public ObservableCollection<DesktopSettingsSection> Sections { get; } = new()
     {
-        new DesktopSettingsSection("General", "General")
+        new DesktopSettingsSection("General", "General"),
+        new DesktopSettingsSection("Appearance", "Appearance")
     };
 
     public IReadOnlyList<PlaytimeImportMode> PlaytimeImportModes { get; } =
@@ -68,6 +71,13 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
 
     public IReadOnlyList<LanguageOption> AvailableLanguages { get; } =
         LanguageCatalog.Discover(Path.Combine(AppContext.BaseDirectory, "Localization"));
+
+    public IReadOnlyList<ThemeOption> AvailableThemes { get; } =
+        ThemeCatalog.DiscoverDesktopThemes(new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "Themes", "Desktop"),
+            Path.Combine(global::Playnite.PlaynitePaths.ThemesUserDataPath, "Desktop")
+        });
 
     // The shell switch is offered only when both the WPF and Avalonia executables
     // are present next to each other (a packaged install), so a dev or partial
@@ -110,11 +120,13 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             if (SetField(ref selectedSection, value))
             {
                 OnPropertyChanged(nameof(IsGeneralSelected));
+                OnPropertyChanged(nameof(IsAppearanceSelected));
             }
         }
     }
 
     public bool IsGeneralSelected => SelectedSection?.Key == "General";
+    public bool IsAppearanceSelected => SelectedSection?.Key == "Appearance";
 
     public bool RestartRequired
     {
@@ -126,6 +138,12 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     {
         get => selectedLanguage;
         set => SetField(ref selectedLanguage, value);
+    }
+
+    public ThemeOption SelectedTheme
+    {
+        get => selectedTheme;
+        set => SetField(ref selectedTheme, value);
     }
 
     public bool EnableTray
@@ -184,6 +202,11 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             AvailableLanguages.FirstOrDefault(option =>
                 string.Equals(option.Id, originalLanguageId, StringComparison.OrdinalIgnoreCase))
             ?? AvailableLanguages.FirstOrDefault();
+        originalThemePath = settings.ThemePath ?? string.Empty;
+        selectedTheme =
+            AvailableThemes.FirstOrDefault(option =>
+                string.Equals(option.Path, originalThemePath, StringComparison.OrdinalIgnoreCase))
+            ?? AvailableThemes.FirstOrDefault();
         enableTray = settings.EnableTray;
         minimizeToTray = settings.MinimizeToTray;
         closeToTray = settings.CloseToTray;
@@ -256,6 +279,14 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             RestartRequired = true;
         }
 
+        // The theme is applied at window construction, so a change needs a restart.
+        var newThemePath = SelectedTheme?.Path ?? string.Empty;
+        if (!string.Equals(newThemePath, originalThemePath, StringComparison.OrdinalIgnoreCase))
+        {
+            settings.ThemePath = newThemePath;
+            RestartRequired = true;
+        }
+
         // The shell preference is a marker next to the executables, not part of the
         // settings file, so apply it directly and flag a restart when it changes.
         if (CanSwitchShells && UseAvaloniaShell != global::Playnite.PlaynitePaths.IsAvaloniaShellPreferred)
@@ -294,6 +325,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     private void RaiseAllFieldChanges()
     {
         OnPropertyChanged(nameof(SelectedLanguage));
+        OnPropertyChanged(nameof(SelectedTheme));
         OnPropertyChanged(nameof(EnableTray));
         OnPropertyChanged(nameof(TrayOptionsEnabled));
         OnPropertyChanged(nameof(MinimizeToTray));

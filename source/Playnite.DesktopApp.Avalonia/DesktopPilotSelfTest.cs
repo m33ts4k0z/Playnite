@@ -1679,6 +1679,19 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException(
                     $"trayIconsExist={trayIconsExist}, trayPersisted={trayPersisted}"));
 
+        viewModel.OpenSettingsCommand.Execute(null);
+        var appearanceSection = viewModel.Settings.Sections.FirstOrDefault(section => section.Key == "Appearance");
+        viewModel.Settings.SelectedSection = appearanceSection;
+        var appearanceSelectable = appearanceSection != null && viewModel.Settings.IsAppearanceSelected;
+        var hasDefaultTheme = viewModel.Settings.AvailableThemes.Any(theme => string.IsNullOrEmpty(theme.Path));
+        var themeCount = viewModel.Settings.AvailableThemes.Count;
+        viewModel.Settings.CancelCommand.Execute(null);
+        Record(results, "Appearance section is selectable and lists the Default theme", () =>
+            appearanceSelectable && hasDefaultTheme
+                ? $"appearance nav works; {themeCount} theme(s) available"
+                : throw new InvalidOperationException(
+                    $"appearanceSelectable={appearanceSelectable}, hasDefaultTheme={hasDefaultTheme}"));
+
         var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(
             policyPlugin.Id,

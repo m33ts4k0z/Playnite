@@ -637,6 +637,7 @@
                                     </ListBox>
 
                                     <ScrollViewer Grid.Column="1" MaxHeight="470" Padding="18,0,4,0">
+                                        <Panel>
                                         <StackPanel IsVisible="{Binding Settings.IsGeneralSelected}" Spacing="14">
                                             <TextBlock Text="{DynamicResource LOCLanguageSettingsLabel}" Classes="sectionLabel" />
                                             <ComboBox MinWidth="220"
@@ -717,6 +718,17 @@
                                                            Foreground="{DynamicResource DesktopMutedBrush}" />
                                             </StackPanel>
                                         </StackPanel>
+
+                                        <StackPanel IsVisible="{Binding Settings.IsAppearanceSelected}" Spacing="14">
+                                            <TextBlock Text="{DynamicResource LOCThemes}" Classes="sectionLabel" />
+                                            <ComboBox MinWidth="260"
+                                                      ItemsSource="{Binding Settings.AvailableThemes}"
+                                                      SelectedItem="{Binding Settings.SelectedTheme, Mode=TwoWay}" />
+                                            <TextBlock Text="Additional themes appear here once installed to your Themes\Desktop folder. Changing the theme restarts Playnite."
+                                                       TextWrapping="Wrap" FontSize="11"
+                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        </StackPanel>
+                                        </Panel>
                                     </ScrollViewer>
                                 </Grid>
 
