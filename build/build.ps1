@@ -72,7 +72,43 @@ function PackExtensionTemplate()
 
     New-ZipFromDirectory $templateOutDir $targetZip
     Remove-Item $templateOutDir -Recurse -Force
-} 
+}
+
+function StageAvaloniaShell()
+{
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectName,
+        [Parameter(Mandatory = $true)]
+        [string]$OutputDir
+    )
+
+    # The Avalonia shells ship co-located with the WPF applications so the launch
+    # path switch (PlaynitePaths.SelectShellExecutable) can select them. They are
+    # built to their own bin and copied in — NOT compiled into the flat package
+    # OutputPath — for two reasons: the SDK v7 host bundle emits a second
+    # Playnite.SDK.dll (v7) that must stay isolated in SdkV7Host\ and would
+    # otherwise collide with the v6 Playnite.SDK.dll in the package root, and a
+    # shared global OutputPath breaks reference resolution for the multi-targeted
+    # Playnite.Core. The shells are x64-only (win-x64 RID).
+    $projectPath = "..\source\$ProjectName\$ProjectName.csproj"
+    $msbuildPath = Get-MsBuildPath
+    $arguments = "`"$projectPath`" /t:Restore`;Build /p:Configuration=$Configuration;Platform=x64 /m"
+    $shellResult = StartAndWait $msbuildPath $arguments
+    if ($shellResult -ne 0)
+    {
+        throw "Avalonia shell build failed: $ProjectName"
+    }
+
+    $binRoot = "..\source\$ProjectName\bin\x64\$Configuration"
+    $tfmDir = Get-ChildItem $binRoot -Directory | Select-Object -First 1
+    if (!$tfmDir)
+    {
+        throw "Avalonia shell output not found under $binRoot for $ProjectName."
+    }
+
+    Copy-Item "$($tfmDir.FullName)\*" $OutputDir -Recurse -Force
+}
 
 # -------------------------------------------
 #            Verify various non-build files
@@ -166,6 +202,10 @@ if (!$SkipBuild)
     PackExtensionTemplate "CustomMetadataPluginV7" $OutputDir
     PackExtensionTemplate "GenericPluginV7" $OutputDir
     PackExtensionTemplate "PowerShellScript" $OutputDir
+
+    # Co-locate the Avalonia shells with the WPF applications (see StageAvaloniaShell).
+    StageAvaloniaShell "Playnite.DesktopApp.Avalonia" $OutputDir
+    StageAvaloniaShell "Playnite.FullscreenApp.Avalonia" $OutputDir
 }
 
 New-Folder $InstallerDir
