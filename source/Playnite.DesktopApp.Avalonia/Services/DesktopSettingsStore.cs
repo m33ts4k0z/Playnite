@@ -46,6 +46,14 @@ public sealed class DesktopSettingsStore
                 {
                     settings.LibraryPlaytimeImportMode = Playnite.SDK.PlaytimeImportMode.NewImportsOnly;
                 }
+                if (!Enum.IsDefined(settings.AfterLaunch))
+                {
+                    settings.AfterLaunch = Playnite.Avalonia.App.Services.AfterLaunchOption.Minimize;
+                }
+                if (!Enum.IsDefined(settings.AfterGameClose))
+                {
+                    settings.AfterGameClose = Playnite.Avalonia.App.Services.AfterGameCloseOption.Restore;
+                }
                 return settings;
             }
         }

@@ -1616,6 +1616,27 @@ internal static class DesktopPilotSelfTest
                 ? "start-minimized survived save and reopen"
                 : throw new InvalidOperationException("StartMinimized did not persist through save/reopen."));
 
+        // After-launch/after-game-close window behavior. Only the safe options are
+        // exercised (Close/Exit would shut the application down).
+        window.RestoreFromTray();
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.EnableTray = false;
+        viewModel.Settings.AfterLaunch = Playnite.Avalonia.App.Services.AfterLaunchOption.Minimize;
+        viewModel.Settings.AfterGameClose = Playnite.Avalonia.App.Services.AfterGameCloseOption.Restore;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        window.ApplyAfterLaunch();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var minimizedAfterLaunch = window.WindowState == WindowState.Minimized;
+        window.ApplyAfterGameClose();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var restoredAfterClose = window.WindowState != WindowState.Minimized && window.IsVisible;
+        Record(results, "After-launch minimizes and after-game-close restores the window", () =>
+            minimizedAfterLaunch && restoredAfterClose
+                ? "game start minimized the window and game close restored it"
+                : throw new InvalidOperationException(
+                    $"minimizedAfterLaunch={minimizedAfterLaunch}, restoredAfterClose={restoredAfterClose}"));
+
         var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(
             policyPlugin.Id,

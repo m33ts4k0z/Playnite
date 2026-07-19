@@ -48,6 +48,8 @@ public sealed class DesktopSettings : IAvaloniaHostSettings
     public bool StartOnBoot { get; set; }
     public bool StartOnBootClosedToTray { get; set; }
     public bool StartMinimized { get; set; }
+    public AfterLaunchOption AfterLaunch { get; set; } = AfterLaunchOption.Minimize;
+    public AfterGameCloseOption AfterGameClose { get; set; } = AfterGameCloseOption.Restore;
     public double WindowWidth { get; set; } = 1440;
     public double WindowHeight { get; set; } = 900;
     public int? WindowX { get; set; }

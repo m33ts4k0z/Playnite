@@ -667,6 +667,23 @@
                                             </StackPanel>
 
                                             <Border Height="1" Background="#303A49" Margin="0,4" />
+                                            <TextBlock Text="When a game runs" Classes="sectionLabel" />
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{DynamicResource LOCSettingsAfterGameStart}" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource DesktopTextBrush}" />
+                                                <ComboBox MinWidth="180"
+                                                          ItemsSource="{Binding Settings.AfterLaunchOptions}"
+                                                          SelectedItem="{Binding Settings.AfterLaunch, Mode=TwoWay}" />
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="{DynamicResource LOCSettingsAfterGameClose}" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource DesktopTextBrush}" />
+                                                <ComboBox MinWidth="180"
+                                                          ItemsSource="{Binding Settings.AfterGameCloseOptions}"
+                                                          SelectedItem="{Binding Settings.AfterGameClose, Mode=TwoWay}" />
+                                            </StackPanel>
+
+                                            <Border Height="1" Background="#303A49" Margin="0,4" />
                                             <TextBlock Text="Startup" Classes="sectionLabel" />
                                             <CheckBox Content="{DynamicResource LOCSettingsStartOnBoot}"
                                                       IsChecked="{Binding Settings.StartOnBoot, Mode=TwoWay}" />

@@ -27,6 +27,7 @@ public sealed class MainWindow : Window
     private WindowState restoreWindowState = WindowState.Normal;
     private bool hasClosed;
     private AvaloniaThemePackage activeThemePackage;
+    private readonly HashSet<Guid> runningGames = new();
 
     internal DesktopMainView MainView => mainView;
     internal AvaloniaRuntimeHost RuntimeHost => runtimeHost;
@@ -96,6 +97,11 @@ public sealed class MainWindow : Window
             () => TryGetPlatformHandle()?.Handle ?? IntPtr.Zero);
         viewModel.InstalledGameImport.ConfigureFilePickers(PickImportFolderAsync, PickExecutableAsync);
         viewModel.SettingsChanged += ViewModel_SettingsChanged;
+        if (runtimeHost != null)
+        {
+            runtimeHost.Actions.GameStateChanged += OnGameRunStateChanged;
+        }
+
         Opened += OnOpened;
         Closing += OnClosing;
         PositionChanged += OnPositionChanged;
@@ -238,9 +244,87 @@ public sealed class MainWindow : Window
     {
         hasClosed = true;
         viewModel.SettingsChanged -= ViewModel_SettingsChanged;
+        if (runtimeHost != null)
+        {
+            runtimeHost.Actions.GameStateChanged -= OnGameRunStateChanged;
+        }
+
         viewModel.PluginSearch.Dispose();
         trayService.Dispose();
         SaveSettings();
+    }
+
+    // The runner raises GameStateChanged for many reasons; act only on running
+    // transitions, tracked per game id, to drive the after-launch/after-close
+    // window behavior.
+    private void OnGameRunStateChanged(object sender, global::Playnite.SDK.Models.Game game)
+    {
+        if (game == null)
+        {
+            return;
+        }
+
+        bool started;
+        if (game.IsRunning && runningGames.Add(game.Id))
+        {
+            started = true;
+        }
+        else if (!game.IsRunning && runningGames.Remove(game.Id))
+        {
+            started = false;
+        }
+        else
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (started)
+            {
+                ApplyAfterLaunch();
+            }
+            else
+            {
+                ApplyAfterGameClose();
+            }
+        });
+    }
+
+    internal void ApplyAfterLaunch()
+    {
+        if (hasClosed)
+        {
+            return;
+        }
+
+        switch (settings.AfterLaunch)
+        {
+            case AfterLaunchOption.Minimize:
+                WindowState = WindowState.Minimized;
+                break;
+            case AfterLaunchOption.Close when !options.SelfTest:
+                RequestExit();
+                break;
+        }
+    }
+
+    internal void ApplyAfterGameClose()
+    {
+        if (hasClosed)
+        {
+            return;
+        }
+
+        switch (settings.AfterGameClose)
+        {
+            case AfterGameCloseOption.Restore:
+                RestoreFromTray();
+                break;
+            case AfterGameCloseOption.Exit when !options.SelfTest:
+                RequestExit();
+                break;
+        }
     }
 
     private void OnPositionChanged(object sender, PixelPointEventArgs e)
