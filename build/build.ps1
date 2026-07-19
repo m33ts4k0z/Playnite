@@ -189,8 +189,19 @@ if (!$SkipBuild)
     }
 
     $solutionDir = Join-Path $pwd "..\source"
-    Invoke-Nuget "restore ..\source\Playnite.sln"
     $msbuildpath = Get-MsBuildPath
+    # Restore with the target platform. Platform-conditional PackageReferences
+    # (e.g. Magick.NET-Q8-x64, gated on '$(Platform)' == 'x64') are only written
+    # into project.assets.json when the restore evaluates that condition true.
+    # nuget.exe restore evaluates at the default AnyCPU and would omit them,
+    # which later breaks the build with missing ImageMagick types.
+    $restoreArgs = "`"..\source\Playnite.sln`" /t:Restore /p:Configuration=$configuration`;Platform=$Platform"
+    $restoreResult = StartAndWait $msbuildPath $restoreArgs
+    if ($restoreResult -ne 0)
+    {
+        throw "Restore failed."
+    }
+
     $arguments = "build.xml /p:SolutionDir=`"$solutionDir\\`" /p:OutputPath=`"$OutputDir`";Configuration=$configuration /property:Platform=$Platform /t:Build"
     $compilerResult = StartAndWait $msbuildPath $arguments
     if ($compilerResult -ne 0)

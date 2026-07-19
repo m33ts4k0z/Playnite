@@ -4,18 +4,21 @@
         <MakeDir Directories="$(OutputPath)" />
     </Target>  
     <Target Name="Build">
+        <!-- Platform must flow to these projects: their Magick.NET-Q8 (x86/x64)
+             package references are conditioned on $(Platform), so without it the
+             ImageMagick types (MagickImage) do not resolve. -->
         <MSBuild
             Projects="../source/tools/Playnite.Toolbox/Playnite.Toolbox.csproj"
             Targets="Build"
-            Properties="OutputPath=$(OutputPath); Configuration=$(Configuration); AllowedReferenceRelatedFileExtensions=none;" />
+            Properties="OutputPath=$(OutputPath); Configuration=$(Configuration); Platform=$(Platform); AllowedReferenceRelatedFileExtensions=none;" />
         <MSBuild
             Projects="../source/Playnite.DesktopApp/Playnite.DesktopApp.csproj"
             Targets="Build"
-            Properties="OutputPath=$(OutputPath); Configuration=$(Configuration); AllowedReferenceRelatedFileExtensions=none;" />
+            Properties="OutputPath=$(OutputPath); Configuration=$(Configuration); Platform=$(Platform); AllowedReferenceRelatedFileExtensions=none;" />
         <MSBuild
             Projects="../source/Playnite.FullscreenApp/Playnite.FullscreenApp.csproj"
             Targets="Build"
-            Properties="OutputPath=$(OutputPath); Configuration=$(Configuration); AllowedReferenceRelatedFileExtensions=none;" />
+            Properties="OutputPath=$(OutputPath); Configuration=$(Configuration); Platform=$(Platform); AllowedReferenceRelatedFileExtensions=none;" />
         <MSBuild
             Projects="../source/PlayniteSDK/Playnite.SDK.csproj"
             Targets="Build"
