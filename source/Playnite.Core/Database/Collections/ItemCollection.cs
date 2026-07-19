@@ -10,14 +10,12 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Playnite.Database
 {
-    // We currently use LiteDB for permanent storage.
-    // We don't use latest LiteDB 5, but instead latest LiteDB 4, because V5 has some issues:
-    //  - doesn't allow disabling of memory cache (which in our case just wastes memory)
-    //  - write speeds are slower
+    // LiteDB is used for permanent collection storage. Existing v4 datafiles are
+    // migrated transactionally before LiteDB 5 opens them; the original file is
+    // retained as a recovery backup.
     public class ItemCollection<TItem> : IItemCollection<TItem> where TItem : DatabaseObject
     {
         class EventBufferHandler<T> : IDisposable where T : DatabaseObject
@@ -47,7 +45,7 @@ namespace Playnite.Database
         private Dictionary<Guid, ItemUpdateEvent<TItem>> ItemUpdatesEventBuffer = new Dictionary<Guid, ItemUpdateEvent<TItem>>();
         private readonly bool isPersistent = true;
         internal LiteDatabase liteDb { get; private set; }
-        private LiteCollection<TItem> liteCollection;
+        private ILiteCollection<TItem> liteCollection;
         private BsonMapper mapper;
 
         public ConcurrentDictionary<Guid, TItem> Items { get; }
@@ -116,26 +114,28 @@ namespace Playnite.Database
             }
 
             var dbPath = path + ".db";
-            void openDb()
+            void openDb(string databasePath, bool autoRebuild = false)
             {
-                liteDb = new LiteDatabase($"Filename={dbPath};Mode=Exclusive;Cache Size=0", mapper);
+                liteDb = new LiteDatabase(new ConnectionString
+                {
+                    Filename = databasePath,
+                    Connection = ConnectionType.Direct,
+                    AutoRebuild = autoRebuild
+                }, mapper);
                 liteCollection = liteDb.GetCollection<TItem>();
                 liteCollection.EnsureIndex(a => a.Id, true);
             }
 
             void loadCollections()
             {
-                Parallel.ForEach(
-                    liteCollection.FindAll(),
-                    new ParallelOptions { MaxDegreeOfParallelism = 4 },
-                    (objectFile) =>
+                foreach (var objectFile in liteCollection.FindAll())
+                {
+                    if (objectFile != null)
                     {
-                        if (objectFile != null)
-                        {
-                            initMethod?.Invoke(objectFile);
-                            Items.TryAdd(objectFile.Id, objectFile);
-                        }
-                    });
+                        initMethod?.Invoke(objectFile);
+                        Items.TryAdd(objectFile.Id, objectFile);
+                    }
+                }
 
                 // Also try to load other collection to see if db is corrupted
                 foreach (var collName in liteDb.GetCollectionNames().Where(a => a != liteCollection.Name))
@@ -147,53 +147,145 @@ namespace Playnite.Database
                 }
             }
 
-            openDb();
+            MigrateV4DatabaseIfNeeded(dbPath);
 
             try
             {
+                openDb(dbPath);
                 loadCollections();
             }
             catch (Exception liteEx) when (!PlayniteEnvironment.ThrowAllErrors)
             {
-                logger.Error(liteEx, $"DB file {dbPath} is most likely damaged, trying to repair.");
+                logger.Error(liteEx, $"DB file {dbPath} is most likely damaged, trying LiteDB recovery.");
                 Items.Clear();
-                liteDb.Dispose();
+                liteDb?.Dispose();
 
                 var backupPath = dbPath + ".backup";
-                File.Copy(dbPath, backupPath, true);
+                var recoveryPath = dbPath + ".v5-recovery";
+                File.Delete(recoveryPath);
 
                 try
                 {
-                    var oldData = new Dictionary<string, List<BsonDocument>>();
-                    using (var dbStream = File.OpenRead(dbPath))
+                    File.Copy(dbPath, recoveryPath, true);
+                    using (var recovered = new LiteDatabase(new ConnectionString
                     {
-                        var reader = new LiteDBConversion.FileReaderV7(dbStream, null);
-                        foreach (var coll in reader.GetCollections())
+                        Filename = recoveryPath,
+                        Connection = ConnectionType.Direct,
+                        AutoRebuild = true
+                    }, mapper))
+                    {
+                        foreach (var collectionName in recovered.GetCollectionNames())
                         {
-                            oldData.Add(coll, reader.GetDocuments(coll).ToList());
+                            var collection = recovered.GetCollection(collectionName);
+                            collection.Count();
+                            collection.FindAll().ToList();
                         }
                     }
 
-                    File.Delete(dbPath);
-                    using (var db = new LiteDatabase($"Filename={dbPath};Mode=Exclusive;Cache Size=0"))
-                    {
-                        foreach (var collName in oldData.Keys)
-                        {
-                            db.GetCollection(collName).InsertBulk(oldData[collName]);
-                        }
-                    }
-
-                    openDb();
+                    File.Replace(recoveryPath, dbPath, backupPath, true);
+                    openDb(dbPath);
                     loadCollections();
-                    logger.Debug($"{dbPath} restored successfully.");
+                    logger.Info($"{dbPath} restored successfully; damaged original saved to {backupPath}.");
                 }
                 catch (Exception resExc)
                 {
                     logger.Error(resExc, "Failed to restore data from damaged db file.");
-                    File.Delete(dbPath);
-                    File.Move(backupPath, dbPath);
+                    liteDb?.Dispose();
+                    File.Delete(recoveryPath);
+                    throw new AggregateException(
+                        $"LiteDB database '{dbPath}' is damaged and automatic recovery failed.",
+                        liteEx,
+                        resExc);
                 }
             }
+        }
+
+        private void MigrateV4DatabaseIfNeeded(string dbPath)
+        {
+            if (!File.Exists(dbPath) || !IsV4DataFile(dbPath))
+            {
+                return;
+            }
+
+            logger.Info($"Migrating LiteDB v4 collection {dbPath} to LiteDB v5.");
+            var migrationPath = dbPath + ".v5-migration";
+            var backupPath = GetAvailableV4BackupPath(dbPath);
+            File.Delete(migrationPath);
+
+            try
+            {
+                File.Copy(dbPath, migrationPath, true);
+                using (var migrated = new LiteDatabase(new ConnectionString
+                {
+                    Filename = migrationPath,
+                    Upgrade = true
+                }))
+                {
+                    foreach (var collectionName in migrated.GetCollectionNames())
+                    {
+                        var collection = migrated.GetCollection(collectionName);
+                        collection.Count();
+                        collection.FindAll().ToList();
+                    }
+                }
+
+                using (var validation = new LiteDatabase(new ConnectionString
+                {
+                    Filename = migrationPath,
+                    Connection = ConnectionType.Direct,
+                    ReadOnly = true
+                }))
+                {
+                    foreach (var collectionName in validation.GetCollectionNames())
+                    {
+                        var collection = validation.GetCollection(collectionName);
+                        collection.Count();
+                        collection.FindAll().ToList();
+                    }
+                }
+
+                File.Replace(migrationPath, dbPath, backupPath, true);
+                logger.Info($"LiteDB migration completed; v4 backup saved to {backupPath}.");
+            }
+            catch
+            {
+                File.Delete(migrationPath);
+                throw;
+            }
+        }
+
+        private static bool IsV4DataFile(string path)
+        {
+            const int headerOffset = 25;
+            const int headerLength = 27;
+            var header = new byte[headerLength];
+            using (var stream = File.OpenRead(path))
+            {
+                if (stream.Length < headerOffset + headerLength + 1)
+                {
+                    return false;
+                }
+
+                stream.Position = headerOffset;
+                stream.ReadExactly(header, 0, header.Length);
+                var version = stream.ReadByte();
+                return version == 7 &&
+                    string.Equals(
+                        Encoding.UTF8.GetString(header),
+                        "** This is a LiteDB file **",
+                        StringComparison.Ordinal);
+            }
+        }
+
+        private static string GetAvailableV4BackupPath(string dbPath)
+        {
+            var backupPath = dbPath + ".v4.backup";
+            if (!File.Exists(backupPath))
+            {
+                return backupPath;
+            }
+
+            return dbPath + ".v4-" + DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + ".backup";
         }
 
         internal string GetItemFilePath(Guid id)

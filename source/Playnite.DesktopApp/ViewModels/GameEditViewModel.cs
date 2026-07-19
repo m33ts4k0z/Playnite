@@ -1335,7 +1335,7 @@ namespace Playnite.DesktopApp.ViewModels
 
         public void AddNewItemToDb<TItem>(ObservableCollection<TItem> sourceList, Guid itemToAdd, IItemCollection<TItem> targetCollection) where TItem : DatabaseObject
         {
-            if (itemToAdd == Guid.Empty || itemToAdd == null)
+            if (itemToAdd == Guid.Empty)
             {
                 return;
             }

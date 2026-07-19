@@ -8,8 +8,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
@@ -23,24 +25,13 @@ namespace PlayniteInstaller
         Installing
     }
 
-    public class CustomWebClient : WebClient
-    {
-        protected override WebRequest GetWebRequest(Uri address)
-        {
-            var request = base.GetWebRequest(address);
-            if (request != null)
-                request.Timeout = 10 * 1000;
-
-            return request;
-        }
-    }
-
     public class MainViewModel : ObservableObject
     {
         private static readonly ILogger logger = LogManager.GetLogger();
         private readonly Window windowHost;
         private readonly List<string> UrlMirrors;
-        private CustomWebClient webClient;
+        private HttpClient httpClient;
+        private CancellationTokenSource downloadCancellation;
 
         private InstallStatus status;
         public InstallStatus Status
@@ -178,16 +169,13 @@ namespace PlayniteInstaller
             try
             {
                 FileSystem.DeleteFile(App.InstallerDownloadPath);
-                if (webClient != null)
-                {
-                    webClient.Dispose();
-                    webClient = null;
-                }
-
-                webClient = new CustomWebClient();
-                var installerUrls = await TryDownloadManifest(UrlMirrors);
-                webClient.DownloadProgressChanged += WebClient_DownloadProgressChanged;
-                if (await TryDownloadInstaller(installerUrls) == false)
+                downloadCancellation?.Dispose();
+                downloadCancellation = new CancellationTokenSource();
+                httpClient?.Dispose();
+                httpClient = CreateHttpClient();
+                var progress = new Progress<int>(value => ProgressValue = value);
+                var installerUrls = await TryDownloadManifest(UrlMirrors, downloadCancellation.Token);
+                if (await TryDownloadInstaller(installerUrls, progress, downloadCancellation.Token) == false)
                 {
                     return;
                 }
@@ -225,6 +213,10 @@ namespace PlayniteInstaller
                     windowHost.Close();
                 }
             }
+            catch (OperationCanceledException) when (downloadCancellation?.IsCancellationRequested == true)
+            {
+                Status = InstallStatus.Idle;
+            }
             catch (Exception e) when (!Debugger.IsAttached)
             {
                 logger.Error(e, "Failed to download and install Playnite.");
@@ -236,18 +228,28 @@ namespace PlayniteInstaller
             }
             finally
             {
-                webClient?.Dispose();
-                webClient = null;
+                httpClient?.Dispose();
+                httpClient = null;
+                downloadCancellation?.Dispose();
+                downloadCancellation = null;
             }
         }
 
-        private async Task<List<string>> TryDownloadManifest(List<string> urls)
+        private async Task<List<string>> TryDownloadManifest(List<string> urls, CancellationToken cancelToken)
         {
             foreach (var url in urls)
             {
                 try
                 {
-                    return ParseList(await webClient.DownloadStringTaskAsync(url));
+                    using (var response = await httpClient.GetAsync(url, cancelToken))
+                    {
+                        response.EnsureSuccessStatusCode();
+                        return ParseList(await response.Content.ReadAsStringAsync(cancelToken));
+                    }
+                }
+                catch (OperationCanceledException) when (cancelToken.IsCancellationRequested)
+                {
+                    throw;
                 }
                 catch (Exception e)
                 {
@@ -258,25 +260,21 @@ namespace PlayniteInstaller
             throw new Exception("Failed to download installer manifest.");
         }
 
-        private async Task<bool> TryDownloadInstaller(List<string> urls)
+        private async Task<bool> TryDownloadInstaller(
+            List<string> urls,
+            IProgress<int> progress,
+            CancellationToken cancelToken)
         {
             foreach (var url in urls)
             {
                 try
                 {
-                    await webClient.DownloadFileTaskAsync(url, App.InstallerDownloadPath);
+                    await DownloadInstaller(url, progress, cancelToken);
                     return true;
                 }
-                catch (WebException webExp)
+                catch (OperationCanceledException) when (cancelToken.IsCancellationRequested)
                 {
-                    if (webExp.Status == WebExceptionStatus.RequestCanceled)
-                    {
-                        return false;
-                    }
-                    else
-                    {
-                        logger.Error(webExp, $"Failed to download installer file from {url}");
-                    }
+                    return false;
                 }
                 catch (Exception e)
                 {
@@ -287,24 +285,71 @@ namespace PlayniteInstaller
             throw new Exception("Failed to download installer file.");
         }
 
-        private void WebClient_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        private async Task DownloadInstaller(
+            string url,
+            IProgress<int> progress,
+            CancellationToken cancelToken)
         {
-            ProgressValue = e.ProgressPercentage;
+            using (var response = await httpClient.GetAsync(
+                url,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancelToken).ConfigureAwait(false))
+            {
+                response.EnsureSuccessStatusCode();
+                var totalBytes = response.Content.Headers.ContentLength;
+                using (var input = await response.Content.ReadAsStreamAsync(cancelToken).ConfigureAwait(false))
+                using (var output = new FileStream(
+                    App.InstallerDownloadPath,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None,
+                    81920,
+                    true))
+                {
+                    var buffer = new byte[81920];
+                    long received = 0;
+                    int read;
+                    while ((read = await input.ReadAsync(
+                        buffer,
+                        0,
+                        buffer.Length,
+                        cancelToken).ConfigureAwait(false)) > 0)
+                    {
+                        await output.WriteAsync(buffer, 0, read, cancelToken).ConfigureAwait(false);
+                        received += read;
+                        if (totalBytes > 0)
+                        {
+                            progress.Report((int)Math.Min(100, received * 100 / totalBytes.Value));
+                        }
+                    }
+                }
+            }
         }
 
         public void Cancel()
         {
             if (Status == InstallStatus.Downloading)
             {
-                webClient.CancelAsync();
-                webClient.Dispose();
-                webClient = null;
+                downloadCancellation?.Cancel();
                 Status = InstallStatus.Idle;
             }
             else
             {
                 windowHost.Close();
             }
+        }
+
+        private static HttpClient CreateHttpClient()
+        {
+            var handler = new SocketsHttpHandler
+            {
+                ConnectTimeout = TimeSpan.FromSeconds(10),
+                AutomaticDecompression = DecompressionMethods.All
+            };
+            return new HttpClient(handler)
+            {
+                Timeout = Timeout.InfiniteTimeSpan
+            };
         }
     }
 }

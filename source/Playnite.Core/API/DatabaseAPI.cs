@@ -17,9 +17,11 @@ namespace Playnite.API
     {
         private GameDatabase database;
 
-#pragma warning disable CS0067
-        public event EventHandler DatabaseOpened;
-#pragma warning restore CS0067
+        public event EventHandler DatabaseOpened
+        {
+            add => database.DatabaseOpened += value;
+            remove => database.DatabaseOpened -= value;
+        }
 
         public IItemCollection<Game> Games => database.Games;
         public IItemCollection<Platform> Platforms => database.Platforms;

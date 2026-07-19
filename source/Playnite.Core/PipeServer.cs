@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.IO.Pipes;
-using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,6 +70,7 @@ namespace Playnite
         private static readonly ILogger logger = LogManager.GetLogger();
 
         private readonly string pipeName;
+        private const int MaximumMessageLength = 64 * 1024;
         private CancellationTokenSource cancelSource;
         private Task serverTask;
         private IPipeService service;
@@ -81,9 +82,14 @@ namespace Playnite
 
         internal static string GetPipeName(string endpoint)
         {
-            // Endpoint is historically a net.pipe:// URI from app config; reduce
-            // it to a valid pipe name while keeping it unique per endpoint.
-            return "Playnite_" + string.Concat((endpoint ?? string.Empty).ToLowerInvariant().Where(char.IsLetterOrDigit));
+            if (string.IsNullOrWhiteSpace(endpoint))
+            {
+                throw new ArgumentException("A pipe endpoint is required.", nameof(endpoint));
+            }
+
+            var normalizedEndpoint = endpoint.Trim().ToLowerInvariant();
+            var endpointHash = SHA256.HashData(Encoding.UTF8.GetBytes(normalizedEndpoint));
+            return "Playnite_" + Convert.ToHexString(endpointHash);
         }
 
         public void StartServer(IPipeService service)
@@ -105,12 +111,12 @@ namespace Playnite
                         PipeDirection.In,
                         NamedPipeServerStream.MaxAllowedServerInstances,
                         PipeTransmissionMode.Byte,
-                        PipeOptions.Asynchronous))
+                        PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly))
                     {
                         await server.WaitForConnectionAsync(token).ConfigureAwait(false);
                         using (var reader = new StreamReader(server, Encoding.UTF8))
                         {
-                            var line = await reader.ReadLineAsync().ConfigureAwait(false);
+                            var line = await ReadLineWithLimitAsync(reader, token).ConfigureAwait(false);
                             if (!string.IsNullOrWhiteSpace(line))
                             {
                                 DispatchMessage(line);
@@ -153,7 +159,14 @@ namespace Playnite
                     return;
                 }
 
-                var command = (CmdlineCommand)int.Parse(line.Substring(0, separator));
+                if (!int.TryParse(line.Substring(0, separator), out var commandValue) ||
+                    !Enum.IsDefined(typeof(CmdlineCommand), commandValue))
+                {
+                    logger.Error($"Unknown pipe command: {line.Substring(0, separator)}");
+                    return;
+                }
+
+                var command = (CmdlineCommand)commandValue;
                 var encodedArgs = line.Substring(separator + 1);
                 var args = encodedArgs.Length == 0
                     ? null
@@ -163,6 +176,39 @@ namespace Playnite
             catch (Exception e)
             {
                 logger.Error(e, $"Failed to process pipe message: {line}");
+            }
+        }
+
+        private static async Task<string> ReadLineWithLimitAsync(StreamReader reader, CancellationToken token)
+        {
+            var builder = new StringBuilder();
+            var buffer = new char[1024];
+            while (true)
+            {
+                var charsRead = await reader.ReadAsync(buffer.AsMemory(), token).ConfigureAwait(false);
+                if (charsRead == 0)
+                {
+                    return builder.ToString();
+                }
+
+                var newlineIndex = Array.IndexOf(buffer, '\n', 0, charsRead);
+                var charsToAppend = newlineIndex >= 0 ? newlineIndex : charsRead;
+                if (newlineIndex >= 0 && charsToAppend > 0 && buffer[charsToAppend - 1] == '\r')
+                {
+                    charsToAppend--;
+                }
+
+                if (builder.Length + charsToAppend > MaximumMessageLength)
+                {
+                    throw new InvalidDataException(
+                        $"Pipe message exceeded the {MaximumMessageLength}-character limit.");
+                }
+
+                builder.Append(buffer, 0, charsToAppend);
+                if (newlineIndex >= 0)
+                {
+                    return builder.ToString();
+                }
             }
         }
 
@@ -196,7 +242,11 @@ namespace Playnite
 
         public void InvokeCommand(CmdlineCommand command, string args)
         {
-            using (var client = new NamedPipeClientStream(".", pipeName, PipeDirection.Out))
+            using (var client = new NamedPipeClientStream(
+                ".",
+                pipeName,
+                PipeDirection.Out,
+                PipeOptions.CurrentUserOnly))
             {
                 client.Connect(3000);
                 using (var writer = new StreamWriter(client, new UTF8Encoding(false)) { AutoFlush = true })

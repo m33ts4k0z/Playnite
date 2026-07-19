@@ -15,7 +15,6 @@
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
     <!-- Deferred net10 modernization work: SYSLIB0013/0014 (WebClient/EscapeUriString -> HttpClient migration), CA1416 (false positive from WPF temp project, app is windows-only). -->
-    <NoWarn>$(NoWarn);SYSLIB0013;SYSLIB0014;CA1416;CA2022</NoWarn>
     <!-- AssemblyInfo.cs uses a wildcard version (10.56.0.*), which the SDK's
          deterministic default rejects. Same behavior as the legacy project. -->
     <Deterministic>false</Deterministic>
@@ -36,7 +35,7 @@
     <PackageReference Include="chromiumembeddedframework.runtime.win-x86" Version="147.0.10" />
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
     <PackageReference Include="Flurl" Version="2.7.1" />
-    <PackageReference Include="LiteDB" Version="4.1.4" />
+    <PackageReference Include="LiteDB" Version="5.0.21" />
     <PackageReference Include="Magick.NET.Core" Version="14.14.0" />
     <PackageReference Include="Magick.NET.SystemWindowsMedia" Version="8.0.23" />
     <PackageReference Include="Magick.NET-Q8-x86" Version="14.14.0" Condition="'$(Platform)' == 'x86'" />

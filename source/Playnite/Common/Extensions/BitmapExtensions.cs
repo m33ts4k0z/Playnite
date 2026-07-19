@@ -193,14 +193,14 @@ namespace System.Drawing.Imaging
             // WEBP
             stream.Seek(8, SeekOrigin.Begin);
             var buffer = new byte[4];
-            stream.Read(buffer, 0, 4);
+            stream.ReadExactly(buffer, 0, 4);
             if (buffer.SequenceEqual(webpSig))
                 return true;
 
             // AVIF
             stream.Seek(4, SeekOrigin.Begin);
             buffer = new byte[8];
-            stream.Read(buffer, 0, 8);
+            stream.ReadExactly(buffer, 0, 8);
             if (buffer.SequenceEqual(avif1))
                 return true;
 

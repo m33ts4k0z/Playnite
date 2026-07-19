@@ -6,6 +6,7 @@ using Playnite.SDK.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,49 @@ namespace Playnite.Tests.Database
     [TestFixture]
     public class ItemCollectionTests
     {
+        private const string LiteDbV4Database =
+            "H4sIAAAAAAACCu3ZPU7DMBTA8ec4CCFQqRAHsBBTJNg6slQdK1hYEXKLKUEwNQwwMXEKTgDscA9OwgmCnY+mtAwVQlWH/0+x5Tw7HhJleH4iIiqvKGkkiTm9SsfGX9b008z1uuYyvXEmSdaVhNWxLEq1fNezmR3YsTsZXLthFgkAAAAAAAAAAAAAAPgvoQ4f/Vb/ny/Z17Oh7r/h23l6cbR/6Huli3joleh6g3LLZkxw4SAAAAAAAH+kZlVxXbUi+dTyuNU8YiSfMslVS7o4O8ixdGruw7T4JKsgEvXj7bdlc+/p4et996378Xywc3f2+RpP/rn6uAwAAAAAliWumpSp5ct2MxUiHen40Zov8ks7rJxNaKJje+skHBr03cgO780o3AMAAAAAgJXyDTyfjL4AUAAA";
+
+        [Test]
+        public void MigratesLiteDbV4DatabaseAndRetainsBackup()
+        {
+            using (var temp = TempDirectory.Create())
+            {
+                var collectionPath = Path.Combine(temp.TempPath, "legacy");
+                var databasePath = collectionPath + ".db";
+                using (var compressed = new MemoryStream(Convert.FromBase64String(LiteDbV4Database)))
+                using (var gzip = new GZipStream(compressed, CompressionMode.Decompress))
+                using (var database = File.Create(databasePath))
+                {
+                    gzip.CopyTo(database);
+                }
+
+                int migratedCount;
+                using (var collection = new ItemCollection<DatabaseObject>(collectionPath, null))
+                {
+                    migratedCount = collection.Count;
+                }
+
+                Assert.IsTrue(File.Exists(databasePath + ".v4.backup"));
+                using (var database = new LiteDB.LiteDatabase(databasePath))
+                {
+                    Assert.AreEqual(
+                        1,
+                        database.GetCollection("DatabaseObject").Count(),
+                        "Migrated collections: " + string.Join(", ", database.GetCollectionNames()));
+                    Assert.AreEqual(1, database.GetCollection<DatabaseObject>().FindAll().Count());
+                }
+
+                Assert.AreEqual(1, migratedCount, "The migrated item was not loaded into memory.");
+
+                using (var reopened = new ItemCollection<DatabaseObject>(collectionPath, null))
+                {
+                    Assert.AreEqual(1, reopened.Count);
+                    Assert.AreEqual("Legacy game", reopened[Guid.Parse("f17a8622-14b7-42ac-b89c-2d12755dd3ab")].Name);
+                }
+            }
+        }
+
         [Test]
         public void AddTest()
         {

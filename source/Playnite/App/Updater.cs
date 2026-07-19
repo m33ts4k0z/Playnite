@@ -134,7 +134,7 @@ namespace Playnite
             return true;
         }
 
-        public async Task DownloadUpdate(Action<DownloadProgressChangedEventArgs> progressHandler)
+        public async Task DownloadUpdate(Action<DownloadProgress> progressHandler)
         {
             if (updateManifest == null)
             {

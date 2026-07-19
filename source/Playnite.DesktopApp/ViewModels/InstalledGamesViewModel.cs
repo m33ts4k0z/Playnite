@@ -277,9 +277,7 @@ namespace Playnite.DesktopApp.ViewModels
         {
             if (!string.IsNullOrEmpty(directory))
             {
-#pragma warning disable CS4014
                 ScanFolder(directory);
-#pragma warning restore CS4014
             }
 
             return window.CreateAndOpenDialog(this);

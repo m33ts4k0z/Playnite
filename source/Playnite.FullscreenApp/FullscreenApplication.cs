@@ -94,13 +94,11 @@ namespace Playnite.FullscreenApp
             InstantiateApp();
             AppUriHandler = MainModel.ProcessUriRequest;
             MigrateDatabase();
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             InitSDL();
             SetupInputs();
             InitializeAudio();
             OpenMainViewAsync();
-            StartUpdateCheckerAsync();
-#pragma warning restore CS4014
+            StartUpdateCheckerAsync().Observe("start fullscreen update checker");
             ProcessArguments();
             PropertyChanged += FullscreenApplication_PropertyChanged;
             return true;

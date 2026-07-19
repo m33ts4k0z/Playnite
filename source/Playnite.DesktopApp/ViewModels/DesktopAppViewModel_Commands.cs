@@ -1,4 +1,5 @@
 ﻿using Playnite.DesktopApp.Windows;
+using Playnite.Common;
 using Playnite.SDK;
 using Playnite.SDK.Exceptions;
 using Playnite.SDK.Models;
@@ -131,9 +132,7 @@ namespace Playnite.DesktopApp.ViewModels
 
             UpdateGamesCommand = new RelayCommand<object>((a) =>
             {
-#pragma warning disable CS4014
-                UpdateLibrary(AppSettings.DownloadMetadataOnImport, true, true);
-#pragma warning restore CS4014
+                UpdateLibrary(AppSettings.DownloadMetadataOnImport, true, true).Observe("update all libraries");
             }, (a) => GameAdditionAllowed,
             new KeyGesture(Key.F5));
 
@@ -287,9 +286,7 @@ namespace Playnite.DesktopApp.ViewModels
 
             UpdateLibraryCommand = new RelayCommand<LibraryPlugin>((a) =>
             {
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                UpdateLibrary(a);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                UpdateLibrary(a).Observe("update selected library");
             }, (a) => GameAdditionAllowed);
 
             RemoveGameSelectionCommand = new RelayCommand<object>((a) =>
@@ -583,16 +580,12 @@ namespace Playnite.DesktopApp.ViewModels
 
             UpdateEmulationDirCommand = new RelayCommand<GameScannerConfig>((a) =>
             {
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                UpdateEmulationLibrary(a);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                UpdateEmulationLibrary(a).Observe("update selected emulation folder");
             }, (a) => GameAdditionAllowed);
 
             UpdateEmulationDirsCommand = new RelayCommand(() =>
             {
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                UpdateEmulationLibrary();
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                UpdateEmulationLibrary().Observe("update all emulation folders");
             }, () => GameAdditionAllowed);
 
             OpenPluginSettingsCommand = new RelayCommand<Guid>((pluginId) => OpenPluginSettings(pluginId));

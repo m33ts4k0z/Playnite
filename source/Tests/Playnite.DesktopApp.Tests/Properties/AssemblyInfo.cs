@@ -1,6 +1,9 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+
+[assembly: SupportedOSPlatform("windows10.0.19041.0")]
 
 [assembly: AssemblyTitle("Playnite.DesktopApp.Tests")]
 [assembly: AssemblyDescription("")]

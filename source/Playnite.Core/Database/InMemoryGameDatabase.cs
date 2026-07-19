@@ -33,9 +33,9 @@ namespace Playnite.Database
         public IItemCollection<GameSource> Sources { get; } = new InMemoryItemCollection<GameSource>();
         public IItemCollection<GameFeature> Features { get; } = new InMemoryItemCollection<GameFeature>();
         public IItemCollection<GameScannerConfig> GameScanners { get; } = new InMemoryItemCollection<GameScannerConfig>();
-        public IItemCollection<CompletionStatus> CompletionStatuses => new InMemoryItemCollection<CompletionStatus>();
-        public IItemCollection<ImportExclusionItem> ImportExclusions => new InMemoryItemCollection<ImportExclusionItem>();
-        public IItemCollection<FilterPreset> FilterPresets => new InMemoryItemCollection<FilterPreset>();
+        public IItemCollection<CompletionStatus> CompletionStatuses { get; } = new InMemoryItemCollection<CompletionStatus>();
+        public IItemCollection<ImportExclusionItem> ImportExclusions { get; } = new InMemoryItemCollection<ImportExclusionItem>();
+        public IItemCollection<FilterPreset> FilterPresets { get; } = new InMemoryItemCollection<FilterPreset>();
         public bool IsOpen => true;
 
         public AppSoftwareCollection SoftwareApps => throw new NotImplementedException();
@@ -64,9 +64,13 @@ namespace Playnite.Database
 
         public List<Guid> UsedCompletionStatuses => throw new NotImplementedException();
 
-#pragma warning disable CS0067
         public event EventHandler DatabaseOpened;
-        public event EventHandler<DatabaseFileEventArgs> DatabaseFileChanged;
+        private EventHandler<DatabaseFileEventArgs> databaseFileChanged;
+        public event EventHandler<DatabaseFileEventArgs> DatabaseFileChanged
+        {
+            add => databaseFileChanged += value;
+            remove => databaseFileChanged -= value;
+        }
         public event EventHandler PlatformsInUseUpdated;
         public event EventHandler GenresInUseUpdated;
         public event EventHandler DevelopersInUseUpdated;
@@ -79,10 +83,25 @@ namespace Playnite.Database
         public event EventHandler SourcesInUseUpdated;
         public event EventHandler FeaturesInUseUpdated;
         public event EventHandler CompletionStatusesInUseUpdated;
-#pragma warning restore CS0067
 
         public InMemoryGameDatabase()
         {
+            Platforms.ItemCollectionChanged += (_, __) => PlatformsInUseUpdated?.Invoke(this, EventArgs.Empty);
+            Genres.ItemCollectionChanged += (_, __) => GenresInUseUpdated?.Invoke(this, EventArgs.Empty);
+            Companies.ItemCollectionChanged += (_, __) =>
+            {
+                DevelopersInUseUpdated?.Invoke(this, EventArgs.Empty);
+                PublishersInUseUpdated?.Invoke(this, EventArgs.Empty);
+            };
+            Tags.ItemCollectionChanged += (_, __) => TagsInUseUpdated?.Invoke(this, EventArgs.Empty);
+            Categories.ItemCollectionChanged += (_, __) => CategoriesInUseUpdated?.Invoke(this, EventArgs.Empty);
+            AgeRatings.ItemCollectionChanged += (_, __) => AgeRatingsInUseUpdated?.Invoke(this, EventArgs.Empty);
+            Series.ItemCollectionChanged += (_, __) => SeriesInUseUpdated?.Invoke(this, EventArgs.Empty);
+            Regions.ItemCollectionChanged += (_, __) => RegionsInUseUpdated?.Invoke(this, EventArgs.Empty);
+            Sources.ItemCollectionChanged += (_, __) => SourcesInUseUpdated?.Invoke(this, EventArgs.Empty);
+            Features.ItemCollectionChanged += (_, __) => FeaturesInUseUpdated?.Invoke(this, EventArgs.Empty);
+            CompletionStatuses.ItemCollectionChanged += (_, __) =>
+                CompletionStatusesInUseUpdated?.Invoke(this, EventArgs.Empty);
         }
 
         public Game ImportGame(GameMetadata game)
@@ -102,6 +121,7 @@ namespace Playnite.Database
 
         public void OpenDatabase()
         {
+            DatabaseOpened?.Invoke(this, EventArgs.Empty);
         }
 
         public string GetFileStoragePath(Guid parentId)

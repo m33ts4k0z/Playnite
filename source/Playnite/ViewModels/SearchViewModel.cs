@@ -1,4 +1,5 @@
 ﻿using Playnite.Converters;
+using Playnite.Common;
 using Playnite.Database;
 using Playnite.Plugins;
 using Playnite.SDK;
@@ -394,9 +395,7 @@ namespace Playnite.ViewModels
 
                 if (currentSearchDelay == 0)
                 {
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                    PerformSearch();
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                    PerformSearch().Observe("perform immediate search");
                 }
                 else
                 {
@@ -503,9 +502,7 @@ namespace Playnite.ViewModels
             syncContext = SynchronizationContext.Current;
             searchDelayTimer.Elapsed += (_, __) => syncContext.Post((___) =>
             {
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                PerformSearch();
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                PerformSearch().Observe("perform delayed search");
             }, null);
 
             longSearchTimer.Elapsed += (_, __) =>

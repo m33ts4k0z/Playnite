@@ -90,7 +90,6 @@ namespace Playnite.DesktopApp
             AppUriHandler = MainModel.ProcessUriRequest;
             var isFirstStart = ProcessStartupWizard();
             MigrateDatabase();
-#pragma warning disable CS4014
             if (AppSettings.EnableGameControllerSupport)
             {
                 InitSDL();
@@ -98,8 +97,7 @@ namespace Playnite.DesktopApp
             }
             OpenMainViewAsync(isFirstStart);
             LoadTrayIcon();
-            StartUpdateCheckerAsync();
-#pragma warning restore CS4014
+            StartUpdateCheckerAsync().Observe("start desktop update checker");
             ProcessArguments();
             splashScreen?.Close(new TimeSpan(0));
             return true;

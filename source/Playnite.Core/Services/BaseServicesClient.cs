@@ -30,7 +30,7 @@ namespace Playnite.Services
 
         public T ExecuteGetRequest<T>(string subUrl)
         {
-            var url = Uri.EscapeUriString(Endpoint + subUrl);
+            var url = new Uri(Endpoint + subUrl, UriKind.Absolute);
             var strResult = HttpClient.GetStringAsync(url).GetAwaiter().GetResult();
             var result = Serialization.FromJson<ServicesResponse<T>>(strResult);
 
@@ -45,19 +45,22 @@ namespace Playnite.Services
 
         public T ExecutePostRequest<T>(string subUrl, string jsonContent)
         {
-            var url = Uri.EscapeUriString(Endpoint + subUrl);
-            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-            var response = HttpClient.PostAsync(url, content).GetAwaiter().GetResult();
-            var strResult = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            var result = Serialization.FromJson<ServicesResponse<T>>(strResult);
-
-            if (!string.IsNullOrEmpty(result.Error))
+            var url = new Uri(Endpoint + subUrl, UriKind.Absolute);
+            using (var content = new StringContent(jsonContent, Encoding.UTF8, "application/json"))
+            using (var response = HttpClient.PostAsync(url, content).GetAwaiter().GetResult())
             {
-                logger.Error("Service request error by proxy: " + result.Error);
-                throw new Exception(result.Error);
-            }
+                response.EnsureSuccessStatusCode();
+                var strResult = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                var result = Serialization.FromJson<ServicesResponse<T>>(strResult);
 
-            return result.Data;
+                if (!string.IsNullOrEmpty(result.Error))
+                {
+                    logger.Error("Service request error by proxy: " + result.Error);
+                    throw new Exception(result.Error);
+                }
+
+                return result.Data;
+            }
         }
     }
 }
