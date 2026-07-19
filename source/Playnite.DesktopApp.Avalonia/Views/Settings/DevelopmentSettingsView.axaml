@@ -1,0 +1,30 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.DevelopmentSettingsView"
+             x:DataType="vm:DevelopmentSettingsSection">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="24" Spacing="14">
+      <TextBlock Text="Development" FontSize="18" FontWeight="SemiBold" />
+      <CheckBox Content="Log trace-level messages"
+                IsChecked="{Binding TraceLogEnabled, Mode=TwoWay}" />
+      <TextBlock Text="External extension folders" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <TextBlock Text="Enabled folders are scanned before installed extensions and take precedence by extension ID. Changes require restart."
+                 TextWrapping="Wrap" Opacity="0.75" />
+      <Button Content="Add folder…" Command="{Binding AddExtensionCommand}" HorizontalAlignment="Left" />
+      <ItemsControl ItemsSource="{Binding Extensions}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:DevelopmentExtensionOption">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="0,4">
+              <CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}" VerticalAlignment="Center" />
+              <TextBox Grid.Column="1" Text="{Binding Path, Mode=TwoWay}" />
+              <Button Grid.Column="2" Content="Remove"
+                      Command="{Binding $parent[UserControl].DataContext.RemoveExtensionCommand}"
+                      CommandParameter="{Binding}" />
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

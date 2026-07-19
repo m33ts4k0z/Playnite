@@ -42,12 +42,30 @@ public sealed class App : Application
 
             var settingsStore = new DesktopSettingsStore(library.ActiveUserDataDirectory);
             var settings = LoadOrImportSettings(settingsStore, library.ActiveUserDataDirectory, options);
+            global::Playnite.Common.NLogLogger.IsTraceEnabled = settings.TraceLogEnabled;
+            if (options.SelfTest && library.Database != null)
+            {
+                settings.DatabasePath = library.Database.DatabasePath;
+            }
+            else
+            {
+                var resolvedDatabasePath = string.IsNullOrWhiteSpace(settings.DatabasePath)
+                    ? options.LibraryPath
+                    : Path.GetFullPath(settings.DatabasePath);
+                if (!string.Equals(settings.DatabasePath, resolvedDatabasePath, StringComparison.Ordinal))
+                {
+                    settings.DatabasePath = resolvedDatabasePath;
+                    if (!options.PluginCompatibilityTest)
+                    {
+                        settingsStore.Save(settings);
+                    }
+                }
+                library = new DesktopLibrary(options.UserDataDirectory, resolvedDatabasePath);
+            }
             var backupCoordinator = new DesktopBackupCoordinator(
                 settings,
                 library.ActiveUserDataDirectory,
-                options.SelfTest && library.Database != null
-                    ? library.Database.DatabasePath
-                    : options.LibraryPath,
+                settings.DatabasePath,
                 () => settingsStore.Save(settings));
             if (!options.SelfTest)
             {
@@ -74,6 +92,24 @@ public sealed class App : Application
                         : $"{startupError} Library unavailable: {exception.Message}";
                 }
             }
+            if (!options.SelfTest && settings.ClearWebCacheOnNextStartup)
+            {
+                try
+                {
+                    DesktopWebCacheService.Clear();
+                    settings.ClearWebCacheOnNextStartup = false;
+                    if (!options.PluginCompatibilityTest)
+                    {
+                        settingsStore.Save(settings);
+                    }
+                }
+                catch (Exception exception)
+                {
+                    startupError = startupError == null
+                        ? $"Web cache could not be cleared: {exception.Message}"
+                        : $"{startupError} Web cache could not be cleared: {exception.Message}";
+                }
+            }
             string extensionUpdateError = null;
             if (!options.SelfTest && !options.PluginCompatibilityTest)
             {
@@ -93,7 +129,7 @@ public sealed class App : Application
             // safe; if the Fullscreen executable is not co-located (e.g. a dev
             // build) the handoff is skipped and the desktop opens normally.
             if (!options.SelfTest && !options.PluginCompatibilityTest &&
-                settings.StartInFullscreen && TryStartFullscreen(options))
+                settings.StartInFullscreen && TryStartFullscreen(options, settings.DatabasePath))
             {
                 desktop.Shutdown();
                 return;
@@ -166,7 +202,11 @@ public sealed class App : Application
             desktop.MainWindow = window;
             // Parse the loose theme before third-party assemblies enter the process. A plugin
             // with an incompatible dependency must not interfere with Avalonia's XAML discovery.
-            runtimeHost?.InitializePlugins(!options.SelfTest);
+            var externalExtensions = (settings.DevelopmentExtensions ?? new List<DevelopmentExtensionPath>())
+                .Where(extension => extension?.IsEnabled == true && !string.IsNullOrWhiteSpace(extension.Path))
+                .Select(extension => extension.Path)
+                .ToList();
+            runtimeHost?.InitializePlugins(!options.SelfTest, externalExtensions);
             Program.InstanceCoordinator?.SetCommandHandler(command =>
                 Dispatcher.UIThread.Post(() =>
                     ProcessCommand(command, window, desktop, runtimeHost, viewModel)));
@@ -180,6 +220,12 @@ public sealed class App : Application
             {
                 Dispatcher.UIThread.Post(() =>
                 {
+                    if (global::Playnite.PlayniteEnvironment.IsElevated && settings.ShowElevatedRightsWarning)
+                    {
+                        runtimeHost?.ShowMessage(
+                            "Playnite is running with elevated rights. Games and extensions will inherit those privileges.",
+                            true);
+                    }
                     var result = viewModel.Scripts.RunApplicationScript(settings.AppStartupScript, "startup");
                     if (!result.Success)
                     {
@@ -246,7 +292,7 @@ public sealed class App : Application
         }
     }
 
-    private static bool TryStartFullscreen(StartupOptions options)
+    private static bool TryStartFullscreen(StartupOptions options, string libraryPath)
     {
         var fullscreenExe = global::Playnite.PlaynitePaths.FullscreenExecutablePath;
         if (string.IsNullOrEmpty(fullscreenExe) || !File.Exists(fullscreenExe))
@@ -260,9 +306,9 @@ public sealed class App : Application
             arguments.Add($"--userdatadir \"{options.UserDataDirectory}\"");
         }
 
-        if (!string.IsNullOrWhiteSpace(options.LibraryPath))
+        if (!string.IsNullOrWhiteSpace(libraryPath))
         {
-            arguments.Add($"--library-path \"{options.LibraryPath}\"");
+            arguments.Add($"--library-path \"{libraryPath}\"");
         }
 
         try

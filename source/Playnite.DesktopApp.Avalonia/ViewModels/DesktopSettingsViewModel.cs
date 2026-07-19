@@ -43,6 +43,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public BackupSettingsSection Backup { get; }
     public ScriptingSettingsSection Scripting { get; }
     public ClientShutdownSettingsSection ClientShutdown { get; }
+    public DevelopmentSettingsSection Development { get; }
+    public GeneralAdvancedSettingsSection GeneralAdvanced { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
@@ -82,6 +84,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         Backup = new BackupSettingsSection(settings, backups, selectBackupFolder);
         Scripting = new ScriptingSettingsSection(settings, testScript, this.showMessage);
         ClientShutdown = new ClientShutdownSettingsSection(settings, libraryPlugins);
+        Development = new DevelopmentSettingsSection(settings, selectBackupFolder);
+        GeneralAdvanced = new GeneralAdvancedSettingsSection(settings, selectBackupFolder);
         Sections = new ObservableCollection<ISettingsSection>
         {
             General,
@@ -100,7 +104,9 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             Updates,
             Backup,
             Scripting,
-            ClientShutdown
+            ClientShutdown,
+            Development,
+            GeneralAdvanced
         };
         selectedSection = Sections[0];
         SaveCommand = new AppRelayCommand(Save, () => IsVisible);

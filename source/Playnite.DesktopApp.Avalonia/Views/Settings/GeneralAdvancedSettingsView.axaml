@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.GeneralAdvancedSettingsView"
+             x:DataType="vm:GeneralAdvancedSettingsSection">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="24" Spacing="14">
+      <TextBlock Text="Advanced system behavior" FontSize="18" FontWeight="SemiBold" />
+      <CheckBox Content="Publish the running game through Discord Rich Presence"
+                IsChecked="{Binding DiscordPresenceEnabled, Mode=TwoWay}" />
+      <CheckBox Content="Warn when Playnite runs with elevated rights"
+                IsChecked="{Binding ShowElevatedRightsWarning, Mode=TwoWay}" />
+      <CheckBox Content="Use allocated size on disk when scanning install sizes"
+                IsChecked="{Binding InstallSizeScanUseSizeOnDisk, Mode=TwoWay}" />
+      <TextBlock Text="Allocated size is slower to calculate and may differ from file length on compressed or sparse files."
+                 TextWrapping="Wrap" Opacity="0.75" />
+
+      <Separator Margin="0,4" />
+      <TextBlock Text="Directory opening" FontWeight="SemiBold" />
+      <TextBox Text="{Binding DirectoryOpenCommand, Mode=TwoWay}"
+               PlaceholderText="Optional command containing {Dir}" />
+      <TextBlock Text="Leave empty to use Explorer, xdg-open, or open. Custom commands must include {Dir}."
+                 TextWrapping="Wrap" Opacity="0.75" />
+
+      <Separator Margin="0,4" />
+      <TextBlock Text="Library database folder" FontWeight="SemiBold" />
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+        <TextBox Text="{Binding DatabasePath, Mode=TwoWay}" IsReadOnly="True" />
+        <Button Grid.Column="1" Content="Change…" Command="{Binding SelectDatabaseFolderCommand}" />
+      </Grid>
+      <TextBlock Text="Changing this path requires restart and does not move the existing library automatically."
+                 TextWrapping="Wrap" Opacity="0.75" />
+
+      <WrapPanel Orientation="Horizontal">
+        <Button Content="Clear web cache on restart" Command="{Binding ClearWebCacheCommand}" Margin="0,0,8,8" />
+        <Button Content="Reset advanced options" Command="{Binding SetDefaultsCommand}" Margin="0,0,8,8" />
+      </WrapPanel>
+      <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" />
+
+      <Border BorderBrush="#446A6A6A" BorderThickness="1" Padding="10" Margin="0,8,0,0">
+        <TextBlock Text="AccessibilityInterface is not ported: Avalonia exposes native automation peers directly and has no WPF automation-mode switch."
+                   TextWrapping="Wrap" Opacity="0.75" />
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

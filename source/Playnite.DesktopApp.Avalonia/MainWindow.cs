@@ -27,6 +27,7 @@ public sealed class MainWindow : Window
     private readonly DesktopWindowChrome chrome;
     private readonly DesktopTrayService trayService;
     private readonly ISystemHotKeyService systemHotKeyService;
+    private readonly global::Playnite.DiscordManager discord;
     private WindowState restoreWindowState = WindowState.Normal;
     private bool hasClosed;
     private bool automatedRunStarted;
@@ -92,6 +93,7 @@ public sealed class MainWindow : Window
         };
         Content = chrome;
         systemHotKeyService = new SystemHotKeyService(this);
+        discord = new global::Playnite.DiscordManager(settings.DiscordPresenceEnabled);
         viewModel.Updates.ConfigureProgramInstaller(LaunchProgramUpdater);
         trayService = new DesktopTrayService(
             viewModel,
@@ -257,6 +259,12 @@ public sealed class MainWindow : Window
 
     private void ViewModel_SettingsChanged(object sender, EventArgs e)
     {
+        global::Playnite.Common.NLogLogger.IsTraceEnabled = settings.TraceLogEnabled;
+        if (discord.IsPresenceEnabled && !settings.DiscordPresenceEnabled)
+        {
+            discord.ClearPresence();
+        }
+        discord.IsPresenceEnabled = settings.DiscordPresenceEnabled;
         ApplyTypographyResources();
         trayService.ApplySettings(settings.EnableTray, ResolveTrayIconPath(settings.TrayIcon));
         ApplySystemHotKey();
@@ -319,6 +327,7 @@ public sealed class MainWindow : Window
 
         viewModel.PluginSearch.Dispose();
         viewModel.Updates.Dispose();
+        discord.Dispose();
         systemHotKeyService.Dispose();
         trayService.Dispose();
         SaveSettings();
@@ -348,14 +357,20 @@ public sealed class MainWindow : Window
             return;
         }
 
+        var clearDiscord = !started && runningGames.Count == 0;
         Dispatcher.UIThread.Post(() =>
         {
             if (started)
             {
+                discord.SetPresence(game.Name);
                 ApplyAfterLaunch();
             }
             else
             {
+                if (clearDiscord)
+                {
+                    discord.ClearPresence();
+                }
                 ApplyAfterGameClose();
             }
         });

@@ -444,6 +444,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand OpenGlobalSearchCommand { get; }
     public ICommand OpenPluginMainMenuCommand { get; }
     public ICommand OpenPluginGameMenuCommand { get; }
+    public ICommand OpenInstallDirectoryCommand { get; }
     public ICommand InvokePluginMenuItemCommand { get; }
     public ICommand ClosePluginSidebarCommand { get; }
     public ICommand SetGridViewCommand { get; }
@@ -725,6 +726,11 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
                 !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+        OpenInstallDirectoryCommand = new AppRelayCommand(
+            OpenInstallDirectory,
+            () => SelectedGame != null &&
+                !string.IsNullOrWhiteSpace(SelectedGame.Game.InstallDirectory) &&
+                Directory.Exists(SelectedGame.Game.InstallDirectory));
         InvokePluginMenuItemCommand = new AppRelayCommand(
             InvokeSelectedPluginMenuItem,
             () => IsPluginMenuVisible && SelectedPluginMenuItem != null);
@@ -817,6 +823,34 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     }
 
     public void SwitchToLibraryView() => CloseOverlays();
+
+    private void OpenInstallDirectory()
+    {
+        var path = SelectedGame?.Game.InstallDirectory;
+        if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
+        {
+            return;
+        }
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(settings.DirectoryOpenCommand))
+            {
+                Playnite.Common.Explorer.OpenDirectory(path);
+            }
+            else
+            {
+                Playnite.Common.ProcessStarter.ShellExecute(
+                    settings.DirectoryOpenCommand.Replace("{Dir}", path, StringComparison.Ordinal));
+            }
+        }
+        catch (Exception exception)
+        {
+            var message = $"The install directory could not be opened: {exception.Message}";
+            runtimeHost?.ShowMessage(message, true);
+            StatusText = message;
+        }
+    }
 
     internal void ActivateGame(Guid gameId)
     {
@@ -1396,6 +1430,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)OpenGlobalSearchCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginMainMenuCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginGameMenuCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenInstallDirectoryCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)InvokePluginMenuItemCommand).RaiseCanExecuteChanged();
     }
 

@@ -21,6 +21,11 @@
     <StartupObject>Playnite.DesktopApp.ProgramEntry</StartupObject>
     <ApplicationIcon>Themes\Desktop\Default\Images\applogo.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- The .NET 10 package-aware WPF temporary-project path loses pass-one
+         BAML when this project is built through the solution graph. The
+         supported legacy path consumes the already resolved references and
+         keeps clean solution builds deterministic. -->
+    <IncludePackageReferencesDuringMarkupCompilation>false</IncludePackageReferencesDuringMarkupCompilation>
     <PostBuildEvent Condition="'$(SolutionDir)' != '' and '$(SolutionDir)' != '*Undefined*'">SETX PLAYNITE_SLN $(SolutionDir)</PostBuildEvent>
   </PropertyGroup>
 

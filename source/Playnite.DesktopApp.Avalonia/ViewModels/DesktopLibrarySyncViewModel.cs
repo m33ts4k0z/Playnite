@@ -428,7 +428,7 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
                                 if (Directory.Exists(game.InstallDirectory))
                                 {
                                     var size = (ulong)Playnite.Common.FileSystem.GetDirectorySize(
-                                        game.InstallDirectory, false);
+                                        game.InstallDirectory, settings.InstallSizeScanUseSizeOnDisk);
                                     results.Add(new KeyValuePair<Game, ulong>(game, size));
                                 }
                             }

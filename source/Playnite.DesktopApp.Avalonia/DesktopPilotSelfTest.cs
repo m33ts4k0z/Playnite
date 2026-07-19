@@ -2356,6 +2356,57 @@ internal static class DesktopPilotSelfTest
                 ? "folder, frequency, rotation, and all optional data groups saved and reopened"
                 : throw new InvalidOperationException("Backup settings did not round-trip."));
 
+        var developmentExtensionRoot = Path.Combine(library.ActiveUserDataDirectory, "track-w-development-extension");
+        Directory.CreateDirectory(developmentExtensionRoot);
+        File.WriteAllText(
+            Path.Combine(developmentExtensionRoot, PlaynitePaths.ExtensionManifestFileName),
+            "Id: track-w-development-plugin\n" +
+            "Name: Track W development plugin\n" +
+            "Author: Playnite pilot\n" +
+            "Version: 1.0\n" +
+            "Module: TrackW.dll\n" +
+            "Type: GenericPlugin\n");
+        var externalManifest = ExtensionFactory.GetInstalledManifests(
+            new List<string> { developmentExtensionRoot }).Single(manifest =>
+                manifest.Id == "track-w-development-plugin");
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("System settings could not be opened for the Track W self-test.");
+        }
+        viewModel.Settings.Development.TraceLogEnabled = true;
+        viewModel.Settings.Development.Extensions.Add(
+            new DevelopmentExtensionOption(developmentExtensionRoot, true));
+        viewModel.Settings.GeneralAdvanced.DiscordPresenceEnabled = true;
+        viewModel.Settings.GeneralAdvanced.ShowElevatedRightsWarning = false;
+        viewModel.Settings.GeneralAdvanced.InstallSizeScanUseSizeOnDisk = true;
+        viewModel.Settings.GeneralAdvanced.DirectoryOpenCommand = "open-folder \"{Dir}\"";
+        var relocatedDatabasePath = Path.Combine(library.ActiveUserDataDirectory, "relocated-library");
+        viewModel.Settings.GeneralAdvanced.DatabasePath = relocatedDatabasePath;
+        viewModel.Settings.GeneralAdvanced.ClearWebCacheCommand.Execute(null);
+        viewModel.Settings.SaveCommand.Execute(null);
+        var systemSettingsRequestedRestart = viewModel.Settings.RestartRequired;
+        viewModel.Settings.Open();
+        var systemSettingsReopened =
+            viewModel.Settings.Development.TraceLogEnabled &&
+            viewModel.Settings.Development.Extensions.Single().Path == Path.GetFullPath(developmentExtensionRoot) &&
+            viewModel.Settings.Development.Extensions.Single().IsEnabled &&
+            viewModel.Settings.GeneralAdvanced.DiscordPresenceEnabled &&
+            !viewModel.Settings.GeneralAdvanced.ShowElevatedRightsWarning &&
+            viewModel.Settings.GeneralAdvanced.InstallSizeScanUseSizeOnDisk &&
+            viewModel.Settings.GeneralAdvanced.DirectoryOpenCommand == "open-folder \"{Dir}\"" &&
+            viewModel.Settings.GeneralAdvanced.DatabasePath == Path.GetFullPath(relocatedDatabasePath) &&
+            viewModel.Settings.GeneralAdvanced.StatusText.Contains("queued", StringComparison.OrdinalIgnoreCase);
+        viewModel.Settings.GeneralAdvanced.SetDefaultsCommand.Execute(null);
+        viewModel.Settings.GeneralAdvanced.DatabasePath = library.Database.DatabasePath;
+        viewModel.Settings.Development.TraceLogEnabled = false;
+        viewModel.Settings.SaveCommand.Execute(null);
+        Record(results, "Development and advanced system settings drive real startup policies", () =>
+            externalManifest.IsExternalDev && systemSettingsRequestedRestart && systemSettingsReopened &&
+            DesktopWebCacheService.GetCacheDirectories().Count > 0 &&
+            !global::Playnite.Common.NLogLogger.IsTraceEnabled
+                ? "external manifest precedence, trace updates, restart flags, cache queue, database path, and advanced defaults passed"
+                : throw new InvalidOperationException("Development or advanced system policies diverged."));
+
         var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every desktop settings module supplies a passing self-check", () =>
             settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
@@ -2561,6 +2612,17 @@ internal static class DesktopPilotSelfTest
                 AutoBackupIncludeThemes = true,
                 AutoBackupIncludeExtensionsData = false,
                 LastAutoBackup = new DateTime(2026, 7, 14, 12, 0, 0),
+                TraceLogEnabled = true,
+                DevelopmentExtensions = new List<DevelopmentExtensionPath>
+                {
+                    new() { Path = developmentExtensionRoot, IsEnabled = true }
+                },
+                DiscordPresenceEnabled = true,
+                ShowElevatedRightsWarning = false,
+                InstallSizeScanUseSizeOnDisk = true,
+                DirectoryOpenCommand = "open-folder \"{Dir}\"",
+                DatabasePath = relocatedDatabasePath,
+                ClearWebCacheOnNextStartup = true,
                 LibraryPluginIds = new List<Guid> { libraryPlugin.Id },
                 LibraryPluginSelectionConfigured = true,
                 GameScannerIds = new List<Guid> { scannerConfig.Id },
@@ -2707,6 +2769,16 @@ internal static class DesktopPilotSelfTest
                 !loaded.AutoBackupIncludeThemes ||
                 loaded.AutoBackupIncludeExtensionsData ||
                 loaded.LastAutoBackup != new DateTime(2026, 7, 14, 12, 0, 0) ||
+                !loaded.TraceLogEnabled ||
+                loaded.DevelopmentExtensions.Count != 1 ||
+                loaded.DevelopmentExtensions[0].Path != developmentExtensionRoot ||
+                !loaded.DevelopmentExtensions[0].IsEnabled ||
+                !loaded.DiscordPresenceEnabled ||
+                loaded.ShowElevatedRightsWarning ||
+                !loaded.InstallSizeScanUseSizeOnDisk ||
+                loaded.DirectoryOpenCommand != "open-folder \"{Dir}\"" ||
+                loaded.DatabasePath != relocatedDatabasePath ||
+                !loaded.ClearWebCacheOnNextStartup ||
                 !loaded.LibraryPluginIds.SequenceEqual(new[] { libraryPlugin.Id }) ||
                 !loaded.LibraryPluginSelectionConfigured ||
                 !loaded.GameScannerIds.SequenceEqual(new[] { scannerConfig.Id }) ||

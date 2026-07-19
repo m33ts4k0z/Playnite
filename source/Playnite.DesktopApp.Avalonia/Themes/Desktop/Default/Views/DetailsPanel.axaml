@@ -137,6 +137,8 @@
                                 Command="{Binding OpenMetadataDownloadCommand}" />
                         <Button Content="{DynamicResource LOCDesktopPluginCommands}"
                                 Command="{Binding OpenPluginGameMenuCommand}" />
+                        <Button Content="Open install folder"
+                                Command="{Binding OpenInstallDirectoryCommand}" />
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>

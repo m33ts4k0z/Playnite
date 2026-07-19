@@ -171,7 +171,9 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
             true);
     }
 
-    public void InitializePlugins(bool loadUserPlugins)
+    public void InitializePlugins(
+        bool loadUserPlugins,
+        IReadOnlyList<string> externalExtensionDirectories = null)
     {
         if (!loadUserPlugins)
         {
@@ -181,11 +183,16 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
 
         ExtensionFactory.CreatePluginFolders();
         var disabled = callbacks.Settings.DisabledPlugins ?? new List<string>();
-        var manifests = ExtensionFactory.GetInstalledManifests();
+        var externals = (externalExtensionDirectories ?? Array.Empty<string>())
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Select(Path.GetFullPath)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var manifests = ExtensionFactory.GetInstalledManifests(externals);
         var v7ManifestIds = v7Plugins.Load(manifests, disabled);
         var v6IgnoreList = disabled.Concat(v7ManifestIds).Distinct().ToList();
-        extensions.LoadPlugins(v6IgnoreList, false, new List<string>());
-        extensions.LoadScripts(disabled, false, new List<string>());
+        extensions.LoadPlugins(v6IgnoreList, false, externals);
+        extensions.LoadScripts(disabled, false, externals);
         callbacks.SetPluginSummary(
             $"{LoadedPluginCount} plugins loaded" +
             (FailedPluginCount == 0 ? string.Empty : $", {FailedPluginCount} failed"));
