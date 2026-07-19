@@ -73,7 +73,7 @@ public sealed class App : Application
                     FilteredGames = () => viewModel.Games.Select(game => game.Game).ToList(),
                     SelectedGame = () => viewModel.SelectedGame?.Game,
                     SelectGame = viewModel.SelectGame,
-                    OpenSearch = term => viewModel.SearchText = term,
+                    OpenSearch = viewModel.OpenGlobalSearch,
                     OpenSearchContext = viewModel.PluginSearch.Open,
                     OpenPluginSettings = viewModel.OpenPluginSettings,
                     OpenEditDialog = gameEditor.Show,

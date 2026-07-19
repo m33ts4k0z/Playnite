@@ -112,7 +112,7 @@
                         <Border Width="820" MaxHeight="760" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="12">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" RowSpacing="12">
                                 <TextBlock Text="{Binding PluginSearch.Label, FallbackValue=Plugin search}"
                                            FontSize="30" FontWeight="Bold"
                                            Foreground="{DynamicResource DesktopTextBrush}" />
@@ -123,13 +123,21 @@
                                          Text="{Binding PluginSearch.SearchText, Mode=TwoWay}"
                                          Watermark="{Binding PluginSearch.Hint}"
                                          Padding="12,9" />
-                                <ListBox Grid.Row="3" MaxHeight="470"
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="14">
+                                    <CheckBox Content="Include uninstalled"
+                                              IsChecked="{Binding PluginSearch.IncludeUninstalled, Mode=TwoWay}" />
+                                    <CheckBox Content="Include hidden"
+                                              IsChecked="{Binding PluginSearch.IncludeHidden, Mode=TwoWay}" />
+                                </StackPanel>
+                                <ListBox Grid.Row="4" MaxHeight="470"
                                          ItemsSource="{Binding PluginSearch.Results}"
                                          SelectedItem="{Binding PluginSearch.SelectedResult, Mode=TwoWay}">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <Border Margin="3" Padding="13" CornerRadius="7" Background="#263140">
                                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                                    <Image Source="{Binding IconPath}" Width="26" Height="26"
+                                                           IsVisible="{Binding HasIconPath}" />
                                                     <ContentPresenter Content="{Binding Icon}"
                                                                       Width="26" Height="26" />
                                                     <StackPanel Grid.Column="1" Spacing="3">
@@ -144,7 +152,7 @@
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
-                                <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="10">
+                                <StackPanel Grid.Row="5" Orientation="Horizontal" Spacing="10">
                                     <Button Classes="primary" Command="{Binding PluginSearch.PrimaryCommand}"
                                             Content="{Binding PluginSearch.PrimaryActionName}"
                                             IsVisible="{Binding PluginSearch.HasPrimaryAction}" />

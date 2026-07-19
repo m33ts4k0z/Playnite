@@ -122,6 +122,25 @@ public sealed class SearchWindowVisibilitySettings : SettingsValueObject
     public bool PlayTime { get => playTime; set => SetField(ref playTime, value); }
     public bool CompletionStatus { get => completionStatus; set => SetField(ref completionStatus, value); }
     public bool ReleaseDate { get => releaseDate; set => SetField(ref releaseDate, value); }
+
+    public SearchWindowVisibilitySettings Clone()
+    {
+        var clone = new SearchWindowVisibilitySettings();
+        clone.CopyFrom(this);
+        return clone;
+    }
+
+    public void CopyFrom(SearchWindowVisibilitySettings source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        GameIcon = source.GameIcon;
+        LibraryIcon = source.LibraryIcon;
+        HiddenStatus = source.HiddenStatus;
+        Platform = source.Platform;
+        PlayTime = source.PlayTime;
+        CompletionStatus = source.CompletionStatus;
+        ReleaseDate = source.ReleaseDate;
+    }
 }
 
 public sealed class DetailsVisibilitySettings : SettingsValueObject

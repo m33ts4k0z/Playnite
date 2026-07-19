@@ -57,6 +57,23 @@ public sealed class DesktopSettingsStore
                     .Select(article => article.Trim())
                     .Distinct(StringComparer.CurrentCultureIgnoreCase)
                     .ToList();
+                settings.CustomSearchKeywords ??= new Dictionary<string, string>();
+                settings.CustomSearchKeywords = settings.CustomSearchKeywords
+                    .Where(pair => !string.IsNullOrWhiteSpace(pair.Key) && !string.IsNullOrWhiteSpace(pair.Value))
+                    .GroupBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group.Last().Value.Trim(),
+                        StringComparer.OrdinalIgnoreCase);
+                settings.SearchWindowVisibility ??= new Playnite.Avalonia.App.Services.SearchWindowVisibilitySettings();
+                if (!Enum.IsDefined(settings.PrimaryGameSearchItemAction))
+                {
+                    settings.PrimaryGameSearchItemAction = Playnite.Avalonia.App.Services.GameSearchItemAction.SwitchTo;
+                }
+                if (!Enum.IsDefined(settings.SecondaryGameSearchItemAction))
+                {
+                    settings.SecondaryGameSearchItemAction = Playnite.Avalonia.App.Services.GameSearchItemAction.Play;
+                }
                 settings.WebImageSearchIconTerm ??= "{Name} icon";
                 settings.WebImageSearchCoverTerm ??= "{Name} cover";
                 settings.WebImageSearchBackgroundTerm ??= "{Name} background";

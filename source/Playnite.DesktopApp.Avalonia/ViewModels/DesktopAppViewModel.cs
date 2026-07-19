@@ -8,6 +8,7 @@ using Playnite.Avalonia.App.Services;
 using Playnite.Controllers;
 using Playnite.Database;
 using Playnite.DesktopApp.Avalonia.Services;
+using Playnite.Plugins;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
@@ -46,6 +47,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     private readonly List<DesktopGameItemViewModel> allGames;
     private readonly GameDatabase database;
     private readonly DesktopSettings settings;
+    private readonly DesktopGlobalSearchService globalSearch;
     private IReadOnlyList<DesktopGameItemViewModel> games;
     private DesktopGameItemViewModel selectedGame;
     private string searchText = string.Empty;
@@ -435,6 +437,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand AddManualGameCommand { get; }
     public ICommand OpenPluginSettingsListCommand { get; }
     public ICommand OpenSettingsCommand { get; }
+    public ICommand OpenGlobalSearchCommand { get; }
     public ICommand OpenPluginMainMenuCommand { get; }
     public ICommand OpenPluginGameMenuCommand { get; }
     public ICommand InvokePluginMenuItemCommand { get; }
@@ -476,19 +479,46 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             ? "Phase 5 Desktop runtime ready"
             : $"Library unavailable: {startupError}";
         PluginSearch = new AvaloniaSearchSession(
-            () => (true, false),
+            () => settings.SaveGlobalSearchFilterSettings
+                ? (settings.GlobalSearchIncludeUninstalled, settings.GlobalSearchIncludeHidden)
+                : (true, false),
             (message, exception) =>
             {
                 var failure = $"{message} {exception.Message}";
                 runtimeHost?.ShowMessage(failure, true);
                 StatusText = failure;
             });
+        if (database != null)
+        {
+            globalSearch = new DesktopGlobalSearchService(
+                database,
+                this.settings,
+                () => runtimeHost?.Extensions.Plugins.Values.ToList() ?? new List<LoadedPlugin>(),
+                () => runtimeHost?.V7Plugins ?? Array.Empty<V7LoadedPlugin>(),
+                GetGlobalSearchCommands,
+                InvokeGlobalSearchGameAction,
+                game => allGames.FirstOrDefault(item => item.Game.Id == game.Id)?.IconPath,
+                pluginId => runtimeHost?.Extensions.Plugins.TryGetValue(pluginId, out var plugin) == true
+                    ? plugin.PluginIcon
+                    : null);
+        }
         PluginSearch.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(AvaloniaSearchSession.IsVisible))
             {
                 OnPropertyChanged(nameof(IsPluginSearchVisible));
             }
+        };
+        PluginSearch.FiltersChanged += (_, _) =>
+        {
+            if (!this.settings.SaveGlobalSearchFilterSettings)
+            {
+                return;
+            }
+
+            this.settings.GlobalSearchIncludeUninstalled = PluginSearch.IncludeUninstalled;
+            this.settings.GlobalSearchIncludeHidden = PluginSearch.IncludeHidden;
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
         };
         Editor = new DesktopGameEditorViewModel(database, RefreshGames, SetStatusMessage);
         MetadataDownload = new DesktopMetadataDownloadViewModel(
@@ -561,6 +591,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             this.settings,
             database,
             () => runtimeHost?.MetadataPlugins.ToList() ?? new List<MetadataPlugin>(),
+            () => runtimeHost?.Extensions.Plugins.Values.ToList() ?? new List<LoadedPlugin>(),
+            () => runtimeHost?.V7Plugins ?? Array.Empty<V7LoadedPlugin>(),
             SynchronizeLibrary,
             () =>
             {
@@ -630,6 +662,11 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             () => !Editor.IsVisible &&
                 !MetadataDownload.IsRunning && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsRunning && !PluginSettings.IsRunning &&
+                !Settings.IsVisible);
+        OpenGlobalSearchCommand = new AppRelayCommand(
+            () => OpenGlobalSearch(string.Empty),
+            () => database != null && !Editor.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsRunning && !InstalledGameImport.IsRunning && !PluginSettings.IsRunning &&
                 !Settings.IsVisible);
         OpenPluginMainMenuCommand = new AppRelayCommand(
             () => OpenPluginMenu(false),
@@ -941,6 +978,57 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         CloseOverlays();
         Settings.Open();
         RaiseGameCommandStates();
+    }
+
+    public void OpenGlobalSearch(string initialTerm)
+    {
+        if (globalSearch == null)
+        {
+            StatusText = "Global search is unavailable because the library database is not open.";
+            return;
+        }
+
+        CloseOverlays();
+        PluginSearch.Open(globalSearch.CreateContext(), initialTerm ?? string.Empty);
+        RaiseGameCommandStates();
+    }
+
+    private IReadOnlyList<DesktopSearchCommand> GetGlobalSearchCommands() =>
+    [
+        new("Open settings", "Configure Playnite", OpenSettings),
+        new("Update libraries", "Import changes from library plugins and scanners", OpenLibrarySync),
+        new("Import installed games", "Discover installed desktop applications", OpenInstalledGameImport),
+        new("Add game manually", "Create a new library game", AddManualGame),
+        new("Switch to grid view", "Show library covers", () => SelectedViewMode = "Grid"),
+        new("Switch to list view", "Show the compact game list", () => SelectedViewMode = "List")
+    ];
+
+    private void InvokeGlobalSearchGameAction(Guid gameId, GameSearchItemAction action)
+    {
+        SelectGame(gameId);
+        if (SelectedGame?.Game.Id != gameId)
+        {
+            return;
+        }
+
+        switch (action)
+        {
+            case GameSearchItemAction.Play:
+                RunOperation(SelectedGame.IsInstalled ? GameOperationKind.Play : GameOperationKind.Install);
+                break;
+            case GameSearchItemAction.SwitchTo:
+                break;
+            case GameSearchItemAction.OpenMenu:
+                OpenPluginMenu(true);
+                break;
+            case GameSearchItemAction.Edit:
+                OpenGameEditor(gameId);
+                break;
+            case GameSearchItemAction.None:
+                break;
+            default:
+                throw new NotSupportedException($"Unsupported game search action {action}.");
+        }
     }
 
     private void OpenPluginSettingsList()
@@ -1259,6 +1347,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)AddManualGameCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginSettingsListCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenSettingsCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenGlobalSearchCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginMainMenuCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginGameMenuCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)InvokePluginMenuItemCommand).RaiseCanExecuteChanged();

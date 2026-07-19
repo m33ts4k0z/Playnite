@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             xmlns:controls="using:Playnite.Avalonia.Controls"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.SearchSettingsView"
+             x:DataType="vm:SearchSettingsSection">
+    <ScrollViewer MaxHeight="470" Padding="18,0,4,0">
+        <StackPanel Spacing="14">
+            <TextBlock Text="Global search" Classes="sectionLabel" />
+            <Grid ColumnDefinitions="210,*" RowDefinitions="Auto,Auto" RowSpacing="8" ColumnSpacing="10">
+                <TextBlock Text="Primary game action" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding GameActions}"
+                          SelectedItem="{Binding PrimaryGameSearchItemAction, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Text="Secondary game action" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding GameActions}"
+                          SelectedItem="{Binding SecondaryGameSearchItemAction, Mode=TwoWay}" />
+            </Grid>
+            <CheckBox Content="Ctrl+F opens global search instead of focusing the library search box"
+                      IsChecked="{Binding GlobalSearchOpenWithLegacySearch, Mode=TwoWay}" />
+            <CheckBox Content="Remember include-uninstalled and include-hidden filters"
+                      IsChecked="{Binding SaveGlobalSearchFilterSettings, Mode=TwoWay}" />
+            <CheckBox Content="Include Playnite commands in ordinary search results"
+                      IsChecked="{Binding IncludeCommandsInDefaultSearch, Mode=TwoWay}" />
+            <Grid ColumnDefinitions="210,*" ColumnSpacing="10">
+                <TextBlock Text="System-wide shortcut" VerticalAlignment="Center" />
+                <controls:HotKeyCaptureBox Grid.Column="1" Width="220" HorizontalAlignment="Left"
+                                           HotKey="{Binding SystemSearchHotkey, Mode=TwoWay}" />
+            </Grid>
+            <TextBlock Text="{Binding SystemHotkeySupportText}" TextWrapping="Wrap" FontSize="11"
+                       Foreground="{DynamicResource DesktopMutedBrush}" />
+
+            <TextBlock Text="Search providers" Classes="sectionLabel" Margin="0,8,0,0" />
+            <Grid ColumnDefinitions="2*,*,*" ColumnSpacing="10" Margin="8,0">
+                <TextBlock Text="Name" FontWeight="Bold" />
+                <TextBlock Grid.Column="1" Text="Default keyword" FontWeight="Bold" />
+                <TextBlock Grid.Column="2" Text="Custom keyword" FontWeight="Bold" />
+            </Grid>
+            <ItemsControl ItemsSource="{Binding SearchProviders}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:SearchProviderSettingsRow">
+                        <Grid ColumnDefinitions="2*,*,*" ColumnSpacing="10" Margin="8,4">
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding DefaultKeyword}" VerticalAlignment="Center" />
+                            <TextBox Grid.Column="2" Text="{Binding CustomKeyword, Mode=TwoWay}"
+                                     PlaceholderText="Use default" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <TextBlock Text="Result fields" Classes="sectionLabel" Margin="0,8,0,0" />
+            <WrapPanel Orientation="Horizontal">
+                <CheckBox Content="Game icon" Margin="0,0,16,8" IsChecked="{Binding Visibility.GameIcon, Mode=TwoWay}" />
+                <CheckBox Content="Library icon" Margin="0,0,16,8" IsChecked="{Binding Visibility.LibraryIcon, Mode=TwoWay}" />
+                <CheckBox Content="Hidden status" Margin="0,0,16,8" IsChecked="{Binding Visibility.HiddenStatus, Mode=TwoWay}" />
+                <CheckBox Content="Platform" Margin="0,0,16,8" IsChecked="{Binding Visibility.Platform, Mode=TwoWay}" />
+                <CheckBox Content="Play time" Margin="0,0,16,8" IsChecked="{Binding Visibility.PlayTime, Mode=TwoWay}" />
+                <CheckBox Content="Completion status" Margin="0,0,16,8" IsChecked="{Binding Visibility.CompletionStatus, Mode=TwoWay}" />
+                <CheckBox Content="Release date" Margin="0,0,16,8" IsChecked="{Binding Visibility.ReleaseDate, Mode=TwoWay}" />
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

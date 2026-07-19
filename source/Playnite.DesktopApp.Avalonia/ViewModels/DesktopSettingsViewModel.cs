@@ -3,7 +3,9 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Playnite.DesktopApp.Avalonia.Services;
+using Playnite.Avalonia.App.Services;
 using Playnite.Database;
+using Playnite.Plugins;
 using Playnite.SDK.Plugins;
 using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
 
@@ -36,6 +38,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public MetadataSettingsSection Metadata { get; }
     public SortingSettingsSection Sorting { get; }
     public ImportExclusionsSettingsSection ImportExclusions { get; }
+    public SearchSettingsSection Search { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
@@ -43,6 +46,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         DesktopSettings settings,
         GameDatabase database,
         Func<IReadOnlyList<MetadataPlugin>> metadataPlugins,
+        Func<IReadOnlyList<LoadedPlugin>> plugins,
+        Func<IReadOnlyList<V7LoadedPlugin>> v7Plugins,
         Action libraryUpdated,
         Action onSaved,
         Action<string, bool> showMessage)
@@ -63,6 +68,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         Metadata = new MetadataSettingsSection(settings, metadataPlugins);
         Sorting = new SortingSettingsSection(settings, database, libraryUpdated, this.showMessage);
         ImportExclusions = new ImportExclusionsSettingsSection(database);
+        Search = new SearchSettingsSection(settings, plugins, v7Plugins);
         Sections = new ObservableCollection<ISettingsSection>
         {
             General,
@@ -76,7 +82,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             AppearanceTopPanel,
             Metadata,
             Sorting,
-            ImportExclusions
+            ImportExclusions,
+            Search
         };
         selectedSection = Sections[0];
         SaveCommand = new AppRelayCommand(Save, () => IsVisible);

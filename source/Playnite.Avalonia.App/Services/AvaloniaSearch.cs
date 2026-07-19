@@ -1,6 +1,7 @@
 using Avalonia.Threading;
 using Playnite.Avalonia.App.ViewModels;
 using Playnite.Common;
+using Playnite.SDK.Plugins;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -44,7 +45,7 @@ public sealed class AvaloniaSearchContext
     public bool UseAutoSearch { get; }
     public bool CacheAutoSearchResults { get; }
 
-    internal AvaloniaSearchContext(
+    public AvaloniaSearchContext(
         string description,
         string hint,
         string label,
@@ -70,6 +71,12 @@ public sealed class AvaloniaSearchContext
     public AvaloniaSearchBatch GetSearchResults(AvaloniaSearchRequest request) =>
         search(request ?? throw new ArgumentNullException(nameof(request)))
         ?? throw new InvalidDataException("A plugin search context returned no result batch.");
+
+    public static AvaloniaSearchContext FromSdk(SearchContext context) =>
+        V6SearchContextAdapter.Create(context);
+
+    public static AvaloniaSearchContext FromSdkV7(object context) =>
+        V7SearchContextAdapter.Create(context);
 }
 
 public sealed class AvaloniaSearchItem
@@ -77,21 +84,25 @@ public sealed class AvaloniaSearchItem
     public string Name { get; }
     public string Description { get; }
     public object Icon { get; }
+    public string IconPath { get; }
+    public bool HasIconPath => !string.IsNullOrWhiteSpace(IconPath);
     public AvaloniaSearchAction PrimaryAction { get; }
     public AvaloniaSearchAction SecondaryAction { get; }
     public AvaloniaSearchAction MenuAction { get; }
 
-    internal AvaloniaSearchItem(
+    public AvaloniaSearchItem(
         string name,
         string description,
         object icon,
         AvaloniaSearchAction primaryAction,
         AvaloniaSearchAction secondaryAction,
-        AvaloniaSearchAction menuAction)
+        AvaloniaSearchAction menuAction,
+        string iconPath = null)
     {
         Name = name;
         Description = description;
         Icon = icon;
+        IconPath = iconPath;
         PrimaryAction = primaryAction;
         SecondaryAction = secondaryAction;
         MenuAction = menuAction;
@@ -106,7 +117,7 @@ public sealed class AvaloniaSearchAction
     public bool CloseSearch { get; }
     public AvaloniaSearchContext Context { get; }
 
-    internal AvaloniaSearchAction(
+    public AvaloniaSearchAction(
         string name,
         bool closeSearch,
         AvaloniaSearchContext context,
@@ -128,6 +139,72 @@ public sealed class AvaloniaSearchAction
 
         (invoke ?? throw new InvalidOperationException(
             $"Search action '{Name}' has no callback."))();
+    }
+}
+
+internal static class V6SearchContextAdapter
+{
+    public static AvaloniaSearchContext Create(SearchContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        return new AvaloniaSearchContext(
+            context.Description,
+            context.Hint,
+            context.Label,
+            context.Delay,
+            context.UseAutoSearch,
+            context.CacheAutoSearchResults,
+            request => ConvertBatch(context, request));
+    }
+
+    private static AvaloniaSearchBatch ConvertBatch(
+        SearchContext context,
+        AvaloniaSearchRequest request)
+    {
+        SearchContext switchedContext = null;
+        var arguments = new GetSearchResultsArgs
+        {
+            SearchTerm = request.SearchTerm ?? string.Empty,
+            CancelToken = request.CancellationToken,
+            GameFilterSettings = new GameSearchFilterSettings
+            {
+                Uninstalled = request.IncludeUninstalled,
+                Hidden = request.IncludeHidden
+            },
+            SwitchContextAction = value => switchedContext = value
+        };
+        var items = (context.GetSearchResults(arguments) ?? Array.Empty<SearchItem>())
+            .Where(item => item != null)
+            .Select(ConvertItem)
+            .ToList();
+        return new AvaloniaSearchBatch(
+            items,
+            switchedContext == null ? null : Create(switchedContext));
+    }
+
+    private static AvaloniaSearchItem ConvertItem(SearchItem item) => new(
+        item.Name,
+        item.Description,
+        item.Icon,
+        ConvertAction(item.PrimaryAction),
+        ConvertAction(item.SecondaryAction),
+        ConvertAction(item.MenuAction));
+
+    private static AvaloniaSearchAction ConvertAction(SearchItemAction action)
+    {
+        if (action == null)
+        {
+            return null;
+        }
+
+        var context = action is ContextSwitchSearchItemAction contextAction
+            ? Create(contextAction.Context)
+            : null;
+        return new AvaloniaSearchAction(
+            action.Name,
+            action.CloseSearch,
+            context,
+            action.Action);
     }
 }
 
@@ -246,11 +323,14 @@ public sealed class AvaloniaSearchSession : INotifyPropertyChanged, IDisposable
     private string searchText = string.Empty;
     private bool isVisible;
     private bool isSearching;
+    private bool includeUninstalled;
+    private bool includeHidden;
     private AvaloniaSearchItem selectedResult;
     private int generation;
     private bool disposed;
 
     public event PropertyChangedEventHandler PropertyChanged;
+    public event EventHandler FiltersChanged;
 
     public ObservableCollection<AvaloniaSearchItem> Results { get; } = [];
     public ICommand PrimaryCommand => primaryCommand;
@@ -269,6 +349,18 @@ public sealed class AvaloniaSearchSession : INotifyPropertyChanged, IDisposable
     {
         get => isSearching;
         private set => SetField(ref isSearching, value);
+    }
+
+    public bool IncludeUninstalled
+    {
+        get => includeUninstalled;
+        set => SetFilter(ref includeUninstalled, value, nameof(IncludeUninstalled));
+    }
+
+    public bool IncludeHidden
+    {
+        get => includeHidden;
+        set => SetFilter(ref includeHidden, value, nameof(IncludeHidden));
     }
 
     public string SearchText
@@ -332,6 +424,11 @@ public sealed class AvaloniaSearchSession : INotifyPropertyChanged, IDisposable
         contexts.Push(new ContextState(context));
         searchText = initialSearchTerm ?? string.Empty;
         OnPropertyChanged(nameof(SearchText));
+        var filters = getFilters();
+        includeUninstalled = filters.IncludeUninstalled;
+        includeHidden = filters.IncludeHidden;
+        OnPropertyChanged(nameof(IncludeUninstalled));
+        OnPropertyChanged(nameof(IncludeHidden));
         IsVisible = true;
         NotifyContextChanged();
         _ = RefreshAsync(true);
@@ -358,7 +455,7 @@ public sealed class AvaloniaSearchSession : INotifyPropertyChanged, IDisposable
                 await Task.Delay(state.Context.Delay, cancellation.Token);
             }
 
-            var filters = getFilters();
+            var filters = (IncludeUninstalled, IncludeHidden);
             var term = SearchText;
             var batch = await Task.Run(
                 () => GetResults(state, term, filters, cancellation.Token),
@@ -592,6 +689,20 @@ public sealed class AvaloniaSearchSession : INotifyPropertyChanged, IDisposable
         field = value;
         OnPropertyChanged(propertyName);
         return true;
+    }
+
+    private void SetFilter(ref bool field, bool value, string propertyName)
+    {
+        if (!SetField(ref field, value, propertyName))
+        {
+            return;
+        }
+
+        FiltersChanged?.Invoke(this, EventArgs.Empty);
+        if (IsVisible)
+        {
+            _ = RefreshAsync(false);
+        }
     }
 
     private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>

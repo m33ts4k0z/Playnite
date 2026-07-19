@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.Media;
+using Avalonia.Input;
 using System.Diagnostics;
 using Playnite.Avalonia.Theming;
 using Playnite.Avalonia.App.Services;
@@ -25,6 +26,7 @@ public sealed class MainWindow : Window
     private readonly DesktopMainView mainView;
     private readonly DesktopWindowChrome chrome;
     private readonly DesktopTrayService trayService;
+    private readonly ISystemHotKeyService systemHotKeyService;
     private WindowState restoreWindowState = WindowState.Normal;
     private bool hasClosed;
     private bool automatedRunStarted;
@@ -37,6 +39,7 @@ public sealed class MainWindow : Window
     internal DesktopTrayService TrayService => trayService;
     internal bool HasClosed => hasClosed;
     internal AvaloniaThemePackage ActiveThemePackage => activeThemePackage;
+    internal HotKey RegisteredSystemHotKey => systemHotKeyService.RegisteredHotKey;
 
     internal MainWindow(
         DesktopAppViewModel viewModel,
@@ -88,6 +91,7 @@ public sealed class MainWindow : Window
             Content = mainView
         };
         Content = chrome;
+        systemHotKeyService = new SystemHotKeyService(this);
         trayService = new DesktopTrayService(
             viewModel,
             iconPath,
@@ -175,6 +179,27 @@ public sealed class MainWindow : Window
         mainView.FocusSelectedGame();
     }
 
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        if (e.Key != Key.F || !e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            return;
+        }
+
+        if (settings.GlobalSearchOpenWithLegacySearch)
+        {
+            viewModel.OpenGlobalSearch(string.Empty);
+        }
+        else
+        {
+            mainView.SearchBox?.Focus();
+            mainView.SearchBox?.SelectAll();
+        }
+
+        e.Handled = true;
+    }
+
     internal void RequestExit()
     {
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -233,7 +258,23 @@ public sealed class MainWindow : Window
     {
         ApplyTypographyResources();
         trayService.ApplySettings(settings.EnableTray, ResolveTrayIconPath(settings.TrayIcon));
+        ApplySystemHotKey();
         SaveSettings();
+    }
+
+    private void ApplySystemHotKey()
+    {
+        if (!systemHotKeyService.Register(
+                settings.SystemSearchHotkey,
+                () =>
+                {
+                    RestoreFromTray();
+                    viewModel.OpenGlobalSearch(string.Empty);
+                },
+                out var error))
+        {
+            viewModel.SetStatusMessage(error);
+        }
     }
 
     private void ApplyTypographyResources()
@@ -276,6 +317,7 @@ public sealed class MainWindow : Window
         }
 
         viewModel.PluginSearch.Dispose();
+        systemHotKeyService.Dispose();
         trayService.Dispose();
         SaveSettings();
     }
@@ -466,6 +508,7 @@ public sealed class MainWindow : Window
     private async void OnOpened(object sender, EventArgs e)
     {
         mainView.FocusSelectedGame();
+        ApplySystemHotKey();
         if (!options.PluginCompatibilityTest && !options.SelfTest)
         {
             return;

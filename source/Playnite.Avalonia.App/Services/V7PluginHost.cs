@@ -46,6 +46,7 @@ public sealed class V7LoadedPlugin
     private readonly MethodInfo getConverter;
     private readonly MethodInfo getSidebarItems;
     private readonly MethodInfo getTopPanelItems;
+    private readonly MethodInfo getSearches;
     private readonly MethodInfo invokeUri;
     private readonly MethodInfo invokeNotificationAction;
     private readonly MethodInfo dispose;
@@ -104,6 +105,7 @@ public sealed class V7LoadedPlugin
         getConverter = GetRequiredMethod(type, "GetConverter");
         getSidebarItems = GetRequiredMethod(type, "GetSidebarItems");
         getTopPanelItems = GetRequiredMethod(type, "GetTopPanelItems");
+        getSearches = GetRequiredMethod(type, "GetSearches");
         invokeUri = GetRequiredMethod(type, "InvokeUri");
         invokeNotificationAction = GetRequiredMethod(type, "InvokeNotificationAction");
         dispose = GetRequiredMethod(type, nameof(IDisposable.Dispose));
@@ -154,6 +156,13 @@ public sealed class V7LoadedPlugin
         (IValueConverter)InvokeWithResult(getConverter, sourceName, converterName);
     internal object[] GetSidebarItems() => (object[])InvokeWithResult(getSidebarItems);
     internal object[] GetTopPanelItems() => (object[])InvokeWithResult(getTopPanelItems);
+    public IReadOnlyList<V7SearchSupport> GetSearches() =>
+        ((object[])InvokeWithResult(getSearches))
+        .Select(search => new V7SearchSupport(
+            ReadInstanceProperty<string>(search, "DefaultKeyword"),
+            ReadInstanceProperty<string>(search, "Name"),
+            ReadInstanceProperty<object>(search, "Context")))
+        .ToList();
     internal void InvokeUri(string source, string[] arguments) => Invoke(invokeUri, source, arguments);
     internal void InvokeNotificationAction(Guid actionToken) =>
         Invoke(invokeNotificationAction, actionToken);
@@ -163,6 +172,14 @@ public sealed class V7LoadedPlugin
         var property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public)
             ?? throw new MissingMemberException(type.FullName, name);
         return (T)property.GetValue(instance);
+    }
+
+    private static T ReadInstanceProperty<T>(object value, string name)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        var property = value.GetType().GetProperty(name, BindingFlags.Instance | BindingFlags.Public)
+            ?? throw new MissingMemberException(value.GetType().FullName, name);
+        return (T)property.GetValue(value);
     }
 
     private static MethodInfo GetRequiredMethod(Type type, string name) =>
@@ -189,6 +206,7 @@ public sealed class V7LoadedPlugin
 }
 
 public sealed record V7SettingsValidationResult(bool IsValid, IReadOnlyList<string> Errors);
+public sealed record V7SearchSupport(string DefaultKeyword, string Name, object Context);
 
 public sealed class V7PluginLoadFailure
 {

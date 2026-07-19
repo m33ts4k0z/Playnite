@@ -10,6 +10,7 @@ using Avalonia.Controls.Chrome;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Playnite.Avalonia.Markup;
+using Playnite.Avalonia.App.Services;
 using Playnite.Avalonia.Theming;
 using Playnite.Controllers;
 using Playnite.DesktopApp.Avalonia.Services;
@@ -2022,6 +2023,109 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException(
                     $"deferred={exclusionDeferred}, persisted={library.Database.ImportExclusions[exclusionPilot.Id] != null}"));
 
+        var pilotSearchPlugin = new PilotSearchPlugin(window.RuntimeHost.PluginApi);
+        window.RuntimeHost.Extensions.Plugins.Add(
+            pilotSearchPlugin.Id,
+            new LoadedPlugin(pilotSearchPlugin, new ExtensionManifest
+            {
+                Id = pilotSearchPlugin.Id.ToString(),
+                Name = PilotSearchPlugin.DisplayName,
+                Version = "1.0.0",
+                Type = ExtensionType.GenericPlugin,
+                DescriptionPath = Path.Combine(
+                    library.ActiveUserDataDirectory,
+                    "track-w-search",
+                    "extension.yaml")
+            }));
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("Search settings could not be opened for the Track W self-test.");
+        }
+
+        var searchSettingsSection = viewModel.Settings.Search;
+        var pilotSearchProvider = searchSettingsSection.SearchProviders.Single(provider =>
+            provider.Name == "Pilot provider");
+        pilotSearchProvider.CustomKeyword = "trackw";
+        searchSettingsSection.PrimaryGameSearchItemAction = GameSearchItemAction.SwitchTo;
+        searchSettingsSection.SecondaryGameSearchItemAction = GameSearchItemAction.Play;
+        searchSettingsSection.IncludeCommandsInDefaultSearch = true;
+        searchSettingsSection.SaveGlobalSearchFilterSettings = true;
+        searchSettingsSection.GlobalSearchOpenWithLegacySearch = true;
+        searchSettingsSection.Visibility.Platform = false;
+        searchSettingsSection.Visibility.PlayTime = false;
+        searchSettingsSection.Visibility.CompletionStatus = false;
+        searchSettingsSection.Visibility.ReleaseDate = false;
+        searchSettingsSection.SystemSearchHotkey = new Playnite.Avalonia.App.Services.HotKey(
+            Key.F12,
+            KeyModifiers.Control | KeyModifiers.Shift);
+        viewModel.Settings.SaveCommand.Execute(null);
+        var searchHotkeyRegistered = window.RegisteredSystemHotKey == searchSettingsSection.SystemSearchHotkey;
+
+        var globalSearchGame = viewModel.LibraryGames.First(game =>
+            !game.Game.Hidden && !string.IsNullOrWhiteSpace(game.Name));
+        viewModel.OpenGlobalSearch(globalSearchGame.Name);
+        var searchDeadline = DateTime.UtcNow.AddSeconds(3);
+        while (viewModel.PluginSearch.IsSearching && DateTime.UtcNow < searchDeadline)
+        {
+            await Task.Delay(10);
+        }
+        var globalGameResult = viewModel.PluginSearch.Results.FirstOrDefault(result =>
+            result.Name == globalSearchGame.Name);
+        var gameSearchWorked = globalGameResult != null &&
+            globalGameResult.PrimaryAction?.Name == "Switch to game" &&
+            (globalGameResult.SecondaryAction?.Name is "Play" or "Install") &&
+            string.IsNullOrEmpty(globalGameResult.Description);
+
+        viewModel.OpenGlobalSearch("#settings");
+        searchDeadline = DateTime.UtcNow.AddSeconds(3);
+        while (viewModel.PluginSearch.IsSearching && DateTime.UtcNow < searchDeadline)
+        {
+            await Task.Delay(10);
+        }
+        var commandSearchWorked = viewModel.PluginSearch.Results.Any(result => result.Name == "Open settings");
+
+        viewModel.OpenGlobalSearch("/trackw ");
+        searchDeadline = DateTime.UtcNow.AddSeconds(3);
+        while ((viewModel.PluginSearch.IsSearching || viewModel.PluginSearch.Label != "Pilot provider") &&
+               DateTime.UtcNow < searchDeadline)
+        {
+            await Task.Delay(10);
+        }
+        var providerSearchWorked = viewModel.PluginSearch.Label == "Pilot provider" &&
+            viewModel.PluginSearch.Results.Any(result => result.Name == "Pilot provider result");
+        viewModel.PluginSearch.PrimaryCommand.Execute(null);
+        var providerActionWorked = pilotSearchPlugin.InvocationCount == 1;
+
+        viewModel.OpenGlobalSearch(string.Empty);
+        viewModel.PluginSearch.IncludeHidden = true;
+        viewModel.PluginSearch.Close();
+        viewModel.OpenGlobalSearch(string.Empty);
+        var searchFiltersPersisted = viewModel.PluginSearch.IncludeHidden;
+        viewModel.PluginSearch.Close();
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("Search settings could not be reopened for the Track W self-test.");
+        }
+        var searchSettingsReopened = viewModel.Settings.Search.SearchProviders.Single(provider =>
+                provider.Name == "Pilot provider").CustomKeyword == "trackw" &&
+            viewModel.Settings.Search.PrimaryGameSearchItemAction == GameSearchItemAction.SwitchTo &&
+            !viewModel.Settings.Search.Visibility.Platform;
+        viewModel.Settings.Search.SystemSearchHotkey = null;
+        viewModel.Settings.SaveCommand.Execute(null);
+
+        Record(results, "Global search honors actions, commands, result fields, filters, and the system hotkey", () =>
+            searchHotkeyRegistered && gameSearchWorked && commandSearchWorked && searchFiltersPersisted &&
+            searchSettingsReopened && window.RegisteredSystemHotKey == null
+                ? "game/command search, result visibility, persistent filters, Ctrl+F policy, and the Windows hotkey adapter are active"
+                : throw new InvalidOperationException(
+                    $"hotkey={searchHotkeyRegistered}/{window.RegisteredSystemHotKey}, game={gameSearchWorked}, " +
+                    $"command={commandSearchWorked}, filters={searchFiltersPersisted}, reopened={searchSettingsReopened}"));
+        Record(results, "Custom provider keywords switch into SDK search contexts", () =>
+            providerSearchWorked && providerActionWorked
+                ? "the /trackw keyword entered the SDK v6 context and invoked its selected action"
+                : throw new InvalidOperationException(
+                    $"provider={providerSearchWorked}, action={providerActionWorked}, count={pilotSearchPlugin.InvocationCount}"));
+
         var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every desktop settings module supplies a passing self-check", () =>
             settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
@@ -2030,6 +2134,8 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException(string.Join(
                     "; ",
                     settingsSectionChecks.Select(check => $"{check.SectionKey}={check.Passed}: {check.Detail}"))));
+        window.RuntimeHost.Extensions.Plugins.Remove(pilotSearchPlugin.Id);
+        pilotSearchPlugin.Dispose();
 
         var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(
@@ -2199,6 +2305,28 @@ internal static class DesktopPilotSelfTest
                 DefaultWebImageSource = global::Playnite.WebImageSearchSource.DuckDuckGo,
                 GameSortingNameAutofill = false,
                 GameSortingNameRemovedArticles = new List<string> { "The", "Le" },
+                PrimaryGameSearchItemAction = GameSearchItemAction.Edit,
+                SecondaryGameSearchItemAction = GameSearchItemAction.None,
+                GlobalSearchOpenWithLegacySearch = false,
+                SaveGlobalSearchFilterSettings = false,
+                IncludeCommandsInDefaultSearch = false,
+                CustomSearchKeywords = new Dictionary<string, string>
+                {
+                    ["pilot-provider"] = "persisted"
+                },
+                SystemSearchHotkey = new HotKey(Key.F11, KeyModifiers.Control | KeyModifiers.Alt),
+                SearchWindowVisibility = new SearchWindowVisibilitySettings
+                {
+                    GameIcon = false,
+                    LibraryIcon = true,
+                    HiddenStatus = false,
+                    Platform = false,
+                    PlayTime = true,
+                    CompletionStatus = false,
+                    ReleaseDate = true
+                },
+                GlobalSearchIncludeUninstalled = false,
+                GlobalSearchIncludeHidden = true,
                 LibraryPluginIds = new List<Guid> { libraryPlugin.Id },
                 LibraryPluginSelectionConfigured = true,
                 GameScannerIds = new List<Guid> { scannerConfig.Id },
@@ -2309,6 +2437,22 @@ internal static class DesktopPilotSelfTest
                 loaded.DefaultWebImageSource != global::Playnite.WebImageSearchSource.DuckDuckGo ||
                 loaded.GameSortingNameAutofill ||
                 !loaded.GameSortingNameRemovedArticles.SequenceEqual(new[] { "The", "Le" }) ||
+                loaded.PrimaryGameSearchItemAction != GameSearchItemAction.Edit ||
+                loaded.SecondaryGameSearchItemAction != GameSearchItemAction.None ||
+                loaded.GlobalSearchOpenWithLegacySearch ||
+                loaded.SaveGlobalSearchFilterSettings ||
+                loaded.IncludeCommandsInDefaultSearch ||
+                loaded.CustomSearchKeywords.GetValueOrDefault("pilot-provider") != "persisted" ||
+                loaded.SystemSearchHotkey != new HotKey(Key.F11, KeyModifiers.Control | KeyModifiers.Alt) ||
+                loaded.SearchWindowVisibility.GameIcon ||
+                !loaded.SearchWindowVisibility.LibraryIcon ||
+                loaded.SearchWindowVisibility.HiddenStatus ||
+                loaded.SearchWindowVisibility.Platform ||
+                !loaded.SearchWindowVisibility.PlayTime ||
+                loaded.SearchWindowVisibility.CompletionStatus ||
+                !loaded.SearchWindowVisibility.ReleaseDate ||
+                loaded.GlobalSearchIncludeUninstalled ||
+                !loaded.GlobalSearchIncludeHidden ||
                 !loaded.LibraryPluginIds.SequenceEqual(new[] { libraryPlugin.Id }) ||
                 !loaded.LibraryPluginSelectionConfigured ||
                 !loaded.GameScannerIds.SequenceEqual(new[] { scannerConfig.Id }) ||
@@ -2564,6 +2708,49 @@ internal static class DesktopPilotSelfTest
         public override void OnGameUninstalled(Playnite.SDK.Events.OnGameUninstalledEventArgs args) { }
         public override void OnGameSelected(Playnite.SDK.Events.OnGameSelectedEventArgs args) { }
         public override void OnGameStartupCancelled(Playnite.SDK.Events.OnGameStartupCancelledEventArgs args) { }
+    }
+
+    private sealed class PilotSearchPlugin : GenericPlugin
+    {
+        public const string DisplayName = "Pilot search plugin";
+
+        private static readonly Guid pluginId =
+            Guid.Parse("7c975fe0-5938-41ea-89b8-ff5982db9ed9");
+        private readonly PilotSearchContext context;
+
+        public override Guid Id => pluginId;
+        public int InvocationCount => context.InvocationCount;
+
+        public PilotSearchPlugin(IPlayniteAPI playniteApi) : base(playniteApi)
+        {
+            context = new PilotSearchContext();
+            Searches =
+            [
+                new SearchSupport("pilot", "Pilot provider", context)
+            ];
+        }
+
+        private sealed class PilotSearchContext : SearchContext
+        {
+            public int InvocationCount { get; private set; }
+
+            public PilotSearchContext()
+            {
+                Label = "Pilot provider";
+                Description = "Track W SDK v6 search provider";
+            }
+
+            public override IEnumerable<SearchItem> GetSearchResults(GetSearchResultsArgs args)
+            {
+                args.CancelToken.ThrowIfCancellationRequested();
+                yield return new SearchItem(
+                    "Pilot provider result",
+                    new SearchItemAction("Activate pilot result", () => InvocationCount++))
+                {
+                    Description = args.SearchTerm
+                };
+            }
+        }
     }
 
     private sealed class PilotActionPolicyPlugin : LibraryPlugin

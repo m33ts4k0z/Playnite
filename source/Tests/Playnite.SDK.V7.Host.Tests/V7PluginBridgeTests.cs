@@ -53,6 +53,18 @@ public class V7PluginBridgeTests
         Assert.That(plugin.HasLibraryClient, Is.True);
         Assert.That(plugin.IsLibraryClientInstalled, Is.True);
         Assert.That(plugin.LibraryClientIcon, Is.EqualTo("client-icon.png"));
+        var searchSupport = plugin.GetSearches().Single();
+        Assert.That(searchSupport, Is.TypeOf<V7SearchSupportInstance>());
+        var typedSearchSupport = (V7SearchSupportInstance)searchSupport;
+        Assert.That(typedSearchSupport.DefaultKeyword, Is.EqualTo("v7probe"));
+        Assert.That(typedSearchSupport.Name, Is.EqualTo("SDK v7 provider"));
+        var searchBatch = ((V7SearchContextInstance)typedSearchSupport.Context).GetSearchResults(
+            "bridge",
+            true,
+            false,
+            CancellationToken.None);
+        Assert.That(searchBatch.Items, Has.Length.EqualTo(1));
+        Assert.That(((V7SearchItemInstance)searchBatch.Items[0]).Name, Is.EqualTo("SDK v7 result bridge"));
         var notificationCall = calls.Single(call => call.Operation == "NotificationAdd");
         var notificationPayload = JObject.Parse(notificationCall.Payload);
         Assert.That(Guid.Parse(notificationPayload.Value<string>("OwnerToken")), Is.Not.EqualTo(Guid.Empty));

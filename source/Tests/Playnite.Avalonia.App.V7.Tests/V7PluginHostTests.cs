@@ -395,6 +395,18 @@ public class V7PluginHostTests
 
         Assert.That(runtime.V7Plugins, Has.Count.EqualTo(1));
         Assert.That(runtime.V7PluginFailures, Is.Empty);
+        var registeredSearch = runtime.V7Plugins[0].GetSearches().Single();
+        Assert.That(registeredSearch.DefaultKeyword, Is.EqualTo("v7probe"));
+        Assert.That(registeredSearch.Name, Is.EqualTo("SDK v7 provider"));
+        var registeredSearchBatch = AvaloniaSearchContext.FromSdkV7(registeredSearch.Context)
+            .GetSearchResults(new AvaloniaSearchRequest
+            {
+                SearchTerm = "registered",
+                IncludeUninstalled = false,
+                IncludeHidden = true,
+                CancellationToken = CancellationToken.None
+            });
+        Assert.That(registeredSearchBatch.Items.Single().Name, Is.EqualTo("SDK v7 result registered"));
         Assert.That(runtime.LibraryPlugins, Has.Count.EqualTo(1));
         var runtimeNotification = runtime.Notifications.Messages.Single(message => message.Id == "test-v7-loaded");
         runtimeNotification.ActivateCommand.Execute(null);

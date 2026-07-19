@@ -2,6 +2,21 @@ using Playnite.SDK.Plugins;
 
 namespace Playnite.SDK.V7.Host;
 
+public sealed class V7SearchSupportInstance
+{
+    public string DefaultKeyword { get; }
+    public string Name { get; }
+    public object Context { get; }
+
+    public V7SearchSupportInstance(SearchSupport support)
+    {
+        ArgumentNullException.ThrowIfNull(support);
+        DefaultKeyword = support.DefaultKeyword;
+        Name = support.Name;
+        Context = new V7SearchContextInstance(support.Context);
+    }
+}
+
 public sealed class V7SearchContextInstance
 {
     private readonly SearchContext context;

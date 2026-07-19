@@ -13,6 +13,8 @@
                              Text="{Binding SearchText, Mode=TwoWay}"
                              Watermark="Search games"
                              Padding="12,9" />
+                    <Button Content="Global search (Ctrl+F)"
+                            Command="{Binding OpenGlobalSearchCommand}" />
                     <TextBlock Text="{Binding LibrarySummary}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <Border Height="1" Background="#303A49" Margin="0,5" />

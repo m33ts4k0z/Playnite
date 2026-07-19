@@ -212,6 +212,10 @@ public sealed class V7PluginInstance : IDisposable
 
     public object GetSettings() => plugin.GetSettings(false);
     public Control GetSettingsView() => plugin.GetSettingsView(false);
+    public object[] GetSearches() => (plugin.Searches ?? [])
+        .Where(search => search?.Context != null && !string.IsNullOrWhiteSpace(search.DefaultKeyword))
+        .Select(search => (object)new V7SearchSupportInstance(search))
+        .ToArray();
 
     public Control BeginSettingsEdit()
     {

@@ -39,6 +39,10 @@ public sealed class TestPlugin : LibraryPlugin
             CanShutdownClient = true,
             HasCustomizedGameImport = false
         };
+        Searches =
+        [
+            new SearchSupport("v7probe", "SDK v7 provider", new ProbeSearchContext(EventPath))
+        ];
         AddCustomElementSupport(new AddCustomElementSupportArgs
         {
             SourceName = "TestSdkV7",
