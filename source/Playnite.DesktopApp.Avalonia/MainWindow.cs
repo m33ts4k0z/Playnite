@@ -65,6 +65,13 @@ public sealed class MainWindow : Window
         RestoreWindowPosition();
         restoreWindowState = WindowState;
 
+        // Launch minimized when requested; the tray/minimize handlers then hide it
+        // to the tray if that is also configured (matching the WPF behavior).
+        if (!options.SelfTest && settings.StartMinimized)
+        {
+            WindowState = WindowState.Minimized;
+        }
+
         themeManager = new RuntimeThemeManager(Application.Current, typeof(DesktopMainView).Assembly);
         ApplyRuntimeTheme();
         themeManager.ApplyLanguage(

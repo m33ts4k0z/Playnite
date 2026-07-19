@@ -45,6 +45,9 @@ public sealed class DesktopSettings : IAvaloniaHostSettings
     public bool EnableTray { get; set; } = true;
     public bool MinimizeToTray { get; set; }
     public bool CloseToTray { get; set; } = true;
+    public bool StartOnBoot { get; set; }
+    public bool StartOnBootClosedToTray { get; set; }
+    public bool StartMinimized { get; set; }
     public double WindowWidth { get; set; } = 1440;
     public double WindowHeight { get; set; } = 900;
     public int? WindowX { get; set; }

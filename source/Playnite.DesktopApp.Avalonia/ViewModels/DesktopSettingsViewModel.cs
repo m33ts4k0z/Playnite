@@ -32,6 +32,11 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     private bool enableTray;
     private bool minimizeToTray;
     private bool closeToTray;
+    private bool startOnBoot;
+    private bool startOnBootClosedToTray;
+    private bool startMinimized;
+    private bool originalStartOnBoot;
+    private bool originalStartOnBootClosedToTray;
     private bool downloadMetadataOnImport;
     private PlaytimeImportMode playtimeImportMode;
     private bool useAvaloniaShell;
@@ -123,6 +128,22 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public bool TrayOptionsEnabled => EnableTray;
     public bool MinimizeToTray { get => minimizeToTray; set => SetField(ref minimizeToTray, value); }
     public bool CloseToTray { get => closeToTray; set => SetField(ref closeToTray, value); }
+
+    public bool StartOnBoot
+    {
+        get => startOnBoot;
+        set
+        {
+            if (SetField(ref startOnBoot, value))
+            {
+                OnPropertyChanged(nameof(StartOnBootOptionsEnabled));
+            }
+        }
+    }
+
+    public bool StartOnBootOptionsEnabled => StartOnBoot;
+    public bool StartOnBootClosedToTray { get => startOnBootClosedToTray; set => SetField(ref startOnBootClosedToTray, value); }
+    public bool StartMinimized { get => startMinimized; set => SetField(ref startMinimized, value); }
     public bool DownloadMetadataOnImport { get => downloadMetadataOnImport; set => SetField(ref downloadMetadataOnImport, value); }
     public PlaytimeImportMode PlaytimeImportMode { get => playtimeImportMode; set => SetField(ref playtimeImportMode, value); }
     public bool UseAvaloniaShell { get => useAvaloniaShell; set => SetField(ref useAvaloniaShell, value); }
@@ -145,6 +166,11 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         enableTray = settings.EnableTray;
         minimizeToTray = settings.MinimizeToTray;
         closeToTray = settings.CloseToTray;
+        startOnBoot = settings.StartOnBoot;
+        startOnBootClosedToTray = settings.StartOnBootClosedToTray;
+        startMinimized = settings.StartMinimized;
+        originalStartOnBoot = settings.StartOnBoot;
+        originalStartOnBootClosedToTray = settings.StartOnBootClosedToTray;
         downloadMetadataOnImport = settings.DownloadMetadataOnImport;
         playtimeImportMode = settings.LibraryPlaytimeImportMode;
         useAvaloniaShell = global::Playnite.PlaynitePaths.IsAvaloniaShellPreferred;
@@ -165,8 +191,29 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         settings.EnableTray = EnableTray;
         settings.MinimizeToTray = MinimizeToTray;
         settings.CloseToTray = CloseToTray;
+        settings.StartOnBoot = StartOnBoot;
+        settings.StartOnBootClosedToTray = StartOnBootClosedToTray;
+        settings.StartMinimized = StartMinimized;
         settings.DownloadMetadataOnImport = DownloadMetadataOnImport;
         settings.LibraryPlaytimeImportMode = PlaytimeImportMode;
+
+        // Run-on-boot registers a Startup shortcut immediately (no restart). Only
+        // touch it when it changed so an unrelated Save does not rewrite it.
+        if (StartOnBoot != originalStartOnBoot ||
+            StartOnBootClosedToTray != originalStartOnBootClosedToTray)
+        {
+            try
+            {
+                global::Playnite.SystemIntegration.SetBootupStateRegistration(
+                    StartOnBoot, StartOnBootClosedToTray);
+                originalStartOnBoot = StartOnBoot;
+                originalStartOnBootClosedToTray = StartOnBootClosedToTray;
+            }
+            catch (Exception exception)
+            {
+                showMessage($"The run-on-startup setting could not be applied: {exception.Message}", true);
+            }
+        }
 
         // Language is applied on the next launch, so a change flags a restart.
         var newLanguageId = SelectedLanguage?.Id ?? LanguageCatalog.SourceLanguageId;
@@ -218,6 +265,10 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(TrayOptionsEnabled));
         OnPropertyChanged(nameof(MinimizeToTray));
         OnPropertyChanged(nameof(CloseToTray));
+        OnPropertyChanged(nameof(StartOnBoot));
+        OnPropertyChanged(nameof(StartOnBootOptionsEnabled));
+        OnPropertyChanged(nameof(StartOnBootClosedToTray));
+        OnPropertyChanged(nameof(StartMinimized));
         OnPropertyChanged(nameof(DownloadMetadataOnImport));
         OnPropertyChanged(nameof(PlaytimeImportMode));
         OnPropertyChanged(nameof(UseAvaloniaShell));

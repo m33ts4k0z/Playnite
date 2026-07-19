@@ -1601,6 +1601,21 @@ internal static class DesktopPilotSelfTest
                     $"count={availableLanguages.Count}, english={hasEnglish}, " +
                     $"german={germanOption != null}, restart={viewModel.Settings.RestartRequired}"));
 
+        // Start-minimized round-trips through the shared settings on save/reopen.
+        // (StartOnBoot is intentionally not exercised here — its save writes a real
+        // Startup shortcut via SystemIntegration.)
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.StartMinimized = true;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        viewModel.OpenSettingsCommand.Execute(null);
+        var startMinimizedPersisted = viewModel.Settings.StartMinimized;
+        viewModel.Settings.CancelCommand.Execute(null);
+        Record(results, "Settings overlay persists startup options through the shared settings", () =>
+            startMinimizedPersisted
+                ? "start-minimized survived save and reopen"
+                : throw new InvalidOperationException("StartMinimized did not persist through save/reopen."));
+
         var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(
             policyPlugin.Id,

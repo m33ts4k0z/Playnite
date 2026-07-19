@@ -666,6 +666,16 @@
                                                           SelectedItem="{Binding Settings.PlaytimeImportMode, Mode=TwoWay}" />
                                             </StackPanel>
 
+                                            <Border Height="1" Background="#303A49" Margin="0,4" />
+                                            <TextBlock Text="Startup" Classes="sectionLabel" />
+                                            <CheckBox Content="{DynamicResource LOCSettingsStartOnBoot}"
+                                                      IsChecked="{Binding Settings.StartOnBoot, Mode=TwoWay}" />
+                                            <CheckBox Content="{DynamicResource LOCSettingsStartOnBootClosedToTray}" Margin="18,0,0,0"
+                                                      IsEnabled="{Binding Settings.StartOnBootOptionsEnabled}"
+                                                      IsChecked="{Binding Settings.StartOnBootClosedToTray, Mode=TwoWay}" />
+                                            <CheckBox Content="{DynamicResource LOCSettingsStartMinimized}"
+                                                      IsChecked="{Binding Settings.StartMinimized, Mode=TwoWay}" />
+
                                             <StackPanel IsVisible="{Binding Settings.CanSwitchShells}" Spacing="6">
                                                 <Border Height="1" Background="#303A49" Margin="0,4" />
                                                 <TextBlock Text="Interface" Classes="sectionLabel" />
