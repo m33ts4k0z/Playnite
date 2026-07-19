@@ -119,7 +119,7 @@ function StageAvaloniaShell()
 # -------------------------------------------
 .\VerifyLanguageFiles.ps1
 
-$platforms = Get-Content "..\source\Playnite\Emulation\Platforms.yaml" -Raw | ConvertFrom-Yaml
+$platforms = Get-Content "..\source\Playnite.Core\Emulation\Platforms.yaml" -Raw | ConvertFrom-Yaml
 if (!($platforms.Count -gt 0))
 {
     throw "Platforms definition file is not valid."
@@ -127,7 +127,7 @@ if (!($platforms.Count -gt 0))
 
 Write-OperationLog "Platforms definitions are OK"
 
-$regions = Get-Content "..\source\Playnite\Emulation\Regions.yaml" -Raw | ConvertFrom-Yaml
+$regions = Get-Content "..\source\Playnite.Core\Emulation\Regions.yaml" -Raw | ConvertFrom-Yaml
 if (!($regions.Count -gt 0))
 {
     throw "Regions definition file is not valid."
@@ -135,7 +135,7 @@ if (!($regions.Count -gt 0))
 
 Write-OperationLog "Regions definitions are OK"
 
-Get-ChildItem "..\source\Playnite\Emulation\" -Filter "*.yaml" -Recurse | ForEach {
+Get-ChildItem "..\source\Playnite.Core\Emulation\" -Filter "*.yaml" -Recurse | ForEach {
     $emuDef = Get-Content $_.FullName -Raw | ConvertFrom-Yaml
     if (!$emuDef.Id)
     {
