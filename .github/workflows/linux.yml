@@ -40,6 +40,7 @@ jobs:
             appstream \
             dbus-x11 \
             desktop-file-utils \
+            elfutils \
             flatpak \
             flatpak-builder \
             libfuse2 \
