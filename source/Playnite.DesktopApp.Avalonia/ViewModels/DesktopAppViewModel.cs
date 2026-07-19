@@ -527,7 +527,18 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             this.settings.GlobalSearchIncludeHidden = PluginSearch.IncludeHidden;
             SettingsChanged?.Invoke(this, EventArgs.Empty);
         };
-        Editor = new DesktopGameEditorViewModel(database, RefreshGames, SetStatusMessage);
+        Editor = new DesktopGameEditorViewModel(
+            database,
+            RefreshGames,
+            SetStatusMessage,
+            this.settings,
+            (caption, message) => dialogService?.ShowMessage(
+                message,
+                caption,
+                new[] { "OK", "Don't show again" },
+                0,
+                0) == "Don't show again",
+            () => SettingsChanged?.Invoke(this, EventArgs.Empty));
         MetadataDownload = new DesktopMetadataDownloadViewModel(
             database,
             this.settings,

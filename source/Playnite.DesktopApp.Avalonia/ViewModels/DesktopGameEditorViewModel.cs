@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Playnite.Avalonia.App.ViewModels;
 using Playnite.Database;
+using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK.Models;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
@@ -14,6 +15,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private readonly GameDatabase database;
     private readonly Action<IReadOnlyList<Guid>> refreshGames;
     private readonly Action<string> setStatus;
+    private readonly DesktopSettings settings;
+    private readonly Func<string, string, bool> showImagePerformanceWarning;
+    private readonly Action settingsChanged;
     private IReadOnlyList<Guid> editingGameIds = Array.Empty<Guid>();
     private Action<bool?> completed;
     private bool isVisible;
@@ -53,6 +57,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private string coverImage;
     private string backgroundImage;
     private string icon;
+    private string originalCoverImage;
+    private string originalBackgroundImage;
+    private string originalIcon;
     private bool applyCoverImage;
     private bool applyBackgroundImage;
     private bool applyIcon;
@@ -546,11 +553,17 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public DesktopGameEditorViewModel(
         GameDatabase database,
         Action<IReadOnlyList<Guid>> refreshGames,
-        Action<string> setStatus)
+        Action<string> setStatus,
+        DesktopSettings settings,
+        Func<string, string, bool> showImagePerformanceWarning,
+        Action settingsChanged)
     {
         this.database = database;
         this.refreshGames = refreshGames ?? (_ => { });
         this.setStatus = setStatus ?? (_ => { });
+        this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+        this.showImagePerformanceWarning = showImagePerformanceWarning ?? ((_, _) => false);
+        this.settingsChanged = settingsChanged ?? (() => { });
         Sources = BuildOptions(
             database?.Sources?.Select(source => new DesktopMetadataOption(source.Id, source.Name)),
             "No source");
@@ -659,6 +672,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         CoverImage = CommonValue(games, game => game.CoverImage ?? string.Empty);
         BackgroundImage = CommonValue(games, game => game.BackgroundImage ?? string.Empty);
         Icon = CommonValue(games, game => game.Icon ?? string.Empty);
+        originalCoverImage = CoverImage;
+        originalBackgroundImage = BackgroundImage;
+        originalIcon = Icon;
         Links.Clear();
         foreach (var link in CommonLinks(games))
         {
@@ -707,6 +723,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         {
             return;
         }
+
+        CheckImagePerformanceLimits();
 
         if (!TryBuildLinks(out var preparedLinks))
         {
@@ -1431,6 +1449,75 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         }
 
         return Path.IsPathFullyQualified(value) ? value : database?.GetFullFilePath(value);
+    }
+
+    private void CheckImagePerformanceLimits()
+    {
+        if (!settings.ShowImagePerformanceWarning)
+        {
+            return;
+        }
+
+        var oversized =
+            HasOversizedImage(CoverImage, originalCoverImage, GameDatabase.MaximumRecommendedCoverSize) ||
+            HasOversizedImage(
+                BackgroundImage,
+                originalBackgroundImage,
+                GameDatabase.MaximumRecommendedBackgroundSize) ||
+            HasOversizedImage(Icon, originalIcon, GameDatabase.MaximumRecommendedIconSize);
+        if (!oversized)
+        {
+            return;
+        }
+
+        var message = Playnite.SDK.ResourceProvider.GetString("LOCGameImageSizeWarning");
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            message = "The selected image may be too large for optimal performance. " +
+                "Very large images can reduce UI responsiveness and increase memory usage.";
+        }
+
+        var caption = Playnite.SDK.ResourceProvider.GetString("LOCPerformanceWarningTitle");
+        if (string.IsNullOrWhiteSpace(caption))
+        {
+            caption = "Performance Warning";
+        }
+
+        if (showImagePerformanceWarning(caption, message))
+        {
+            settings.ShowImagePerformanceWarning = false;
+            settingsChanged();
+        }
+    }
+
+    private bool HasOversizedImage(string value, string originalValue, double maximumMegapixels)
+    {
+        if (string.IsNullOrWhiteSpace(value) ||
+            string.Equals(value, originalValue, StringComparison.Ordinal) ||
+            (Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+             (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)))
+        {
+            return false;
+        }
+
+        var path = ResolvePreviewPath(value);
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            using var image = new global::Avalonia.Media.Imaging.Bitmap(path);
+            var megapixels = image.PixelSize.Width * (double)image.PixelSize.Height / 1_000_000;
+            return megapixels > maximumMegapixels;
+        }
+        catch (Exception exception) when (
+            exception is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            setStatus($"Image dimensions could not be inspected for '{path}': {exception.Message}");
+            return false;
+        }
     }
 
     private static T CommonValue<T>(IReadOnlyList<Game> games, Func<Game, T> selector)

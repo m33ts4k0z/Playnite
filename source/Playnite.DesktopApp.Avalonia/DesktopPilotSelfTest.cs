@@ -2407,6 +2407,49 @@ internal static class DesktopPilotSelfTest
                 ? "external manifest precedence, trace updates, restart flags, cache queue, database path, and advanced defaults passed"
                 : throw new InvalidOperationException("Development or advanced system policies diverged."));
 
+        viewModel.Settings.Open();
+        viewModel.Settings.Performance.DisableHwAcceleration = true;
+        viewModel.Settings.Performance.AsyncImageLoading = false;
+        viewModel.Settings.Performance.ShowImagePerformanceWarning = false;
+        viewModel.Settings.SaveCommand.Execute(null);
+        var performanceSettingsRequestedRestart = viewModel.Settings.RestartRequired;
+        viewModel.Settings.Open();
+        var performanceSettingsReopened =
+            viewModel.Settings.Performance.DisableHwAcceleration &&
+            !viewModel.Settings.Performance.AsyncImageLoading &&
+            !viewModel.Settings.Performance.ShowImagePerformanceWarning &&
+            !global::Playnite.Avalonia.Controls.GameCoverImage.AsyncLoadingEnabled;
+        viewModel.Settings.Performance.DisableHwAcceleration = false;
+        viewModel.Settings.Performance.AsyncImageLoading = true;
+        viewModel.Settings.Performance.ShowImagePerformanceWarning = true;
+        viewModel.Settings.SaveCommand.Execute(null);
+        Record(results, "Performance settings drive Avalonia rendering and image policies", () =>
+            performanceSettingsRequestedRestart &&
+            performanceSettingsReopened &&
+            global::Playnite.Avalonia.Controls.GameCoverImage.AsyncLoadingEnabled
+                ? "software rendering is restart-scoped while image decoding and media warnings persist"
+                : throw new InvalidOperationException("Performance settings did not apply or round-trip."));
+
+        Record(results, "Software rendering is selected before Avalonia starts", () =>
+        {
+            var rendererProfile = Path.Combine(
+                library.ActiveUserDataDirectory,
+                "track-w-renderer-profile");
+            Directory.CreateDirectory(rendererProfile);
+            File.WriteAllText(
+                Path.Combine(rendererProfile, "config.json"),
+                "{ \"DisableHwAcceleration\": true }");
+            var imported = Program.ReadDisableHwAcceleration(rendererProfile);
+            File.WriteAllText(
+                Path.Combine(rendererProfile, "avaloniaDesktop.json"),
+                "{ \"DisableHwAcceleration\": false }");
+            var overridden = Program.ReadDisableHwAcceleration(rendererProfile);
+            Directory.Delete(rendererProfile, true);
+            return imported && !overridden
+                ? "first-run WPF import and authoritative Avalonia renderer preferences were resolved"
+                : throw new InvalidOperationException("Startup renderer preference resolution diverged.");
+        });
+
         var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every desktop settings module supplies a passing self-check", () =>
             settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
@@ -2613,6 +2656,9 @@ internal static class DesktopPilotSelfTest
                 AutoBackupIncludeExtensionsData = false,
                 LastAutoBackup = new DateTime(2026, 7, 14, 12, 0, 0),
                 TraceLogEnabled = true,
+                DisableHwAcceleration = true,
+                AsyncImageLoading = false,
+                ShowImagePerformanceWarning = false,
                 DevelopmentExtensions = new List<DevelopmentExtensionPath>
                 {
                     new() { Path = developmentExtensionRoot, IsEnabled = true }
@@ -2770,6 +2816,9 @@ internal static class DesktopPilotSelfTest
                 loaded.AutoBackupIncludeExtensionsData ||
                 loaded.LastAutoBackup != new DateTime(2026, 7, 14, 12, 0, 0) ||
                 !loaded.TraceLogEnabled ||
+                !loaded.DisableHwAcceleration ||
+                loaded.AsyncImageLoading ||
+                loaded.ShowImagePerformanceWarning ||
                 loaded.DevelopmentExtensions.Count != 1 ||
                 loaded.DevelopmentExtensions[0].Path != developmentExtensionRoot ||
                 !loaded.DevelopmentExtensions[0].IsEnabled ||

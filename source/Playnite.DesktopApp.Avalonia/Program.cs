@@ -1,6 +1,7 @@
 using Avalonia;
 using Playnite.Common;
 using Playnite.SDK;
+using System.Text.Json;
 
 namespace Playnite.DesktopApp.Avalonia;
 
@@ -73,9 +74,10 @@ internal static class Program
                 }
             }
 
-            return AppBuilder.Configure<App>()
-                .UsePlatformDetect()
-                .LogToTrace()
+            var disableHwAcceleration = Options.SelfTest || Options.PluginCompatibilityTest
+                ? false
+                : ReadDisableHwAcceleration(Options.UserDataDirectory);
+            return ConfigureAppBuilder(disableHwAcceleration)
                 .StartWithClassicDesktopLifetime(args);
         }
         finally
@@ -83,6 +85,65 @@ internal static class Program
             InstanceCoordinator?.Dispose();
             InstanceCoordinator = null;
         }
+    }
+
+    internal static AppBuilder ConfigureAppBuilder(bool disableHwAcceleration)
+    {
+        var builder = AppBuilder.Configure<App>().UsePlatformDetect();
+        if (disableHwAcceleration)
+        {
+            builder = builder
+                .With(new Win32PlatformOptions
+                {
+                    RenderingMode = new[] { Win32RenderingMode.Software }
+                })
+                .With(new X11PlatformOptions
+                {
+                    RenderingMode = new[] { X11RenderingMode.Software }
+                });
+        }
+
+        return builder.LogToTrace();
+    }
+
+    internal static bool ReadDisableHwAcceleration(string userDataDirectory)
+    {
+        foreach (var fileName in new[] { "avaloniaDesktop.json", "config.json" })
+        {
+            try
+            {
+                var path = Path.Combine(userDataDirectory, fileName);
+                if (!File.Exists(path))
+                {
+                    continue;
+                }
+
+                using var document = JsonDocument.Parse(File.ReadAllText(path));
+                if (document.RootElement.TryGetProperty(
+                        "DisableHwAcceleration",
+                        out var value) &&
+                    value.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                {
+                    return value.GetBoolean();
+                }
+
+                // Once an Avalonia settings file exists it is authoritative;
+                // do not revive an older WPF preference when the value is absent.
+                if (fileName == "avaloniaDesktop.json")
+                {
+                    return false;
+                }
+            }
+            catch (Exception exception) when (
+                exception is IOException or JsonException or UnauthorizedAccessException)
+            {
+                // Startup remains usable with a locked or malformed profile and
+                // follows the normal hardware-accelerated default.
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private static void ApplyLinuxIntegrationCommand(StartupOptions.LinuxIntegrationCommand command)

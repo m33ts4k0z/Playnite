@@ -42,6 +42,7 @@ public sealed class App : Application
 
             var settingsStore = new DesktopSettingsStore(library.ActiveUserDataDirectory);
             var settings = LoadOrImportSettings(settingsStore, library.ActiveUserDataDirectory, options);
+            global::Playnite.Avalonia.Controls.GameCoverImage.AsyncLoadingEnabled = settings.AsyncImageLoading;
             global::Playnite.Common.NLogLogger.IsTraceEnabled = settings.TraceLogEnabled;
             if (options.SelfTest && library.Database != null)
             {
@@ -354,6 +355,19 @@ public sealed class App : Application
         if (!string.IsNullOrWhiteSpace(defaults.Language))
         {
             settings.Language = defaults.Language;
+        }
+
+        if (defaults.DisableHwAcceleration.HasValue)
+        {
+            settings.DisableHwAcceleration = defaults.DisableHwAcceleration.Value;
+        }
+        if (defaults.AsyncImageLoading.HasValue)
+        {
+            settings.AsyncImageLoading = defaults.AsyncImageLoading.Value;
+        }
+        if (defaults.ShowImagePerformanceWarning.HasValue)
+        {
+            settings.ShowImagePerformanceWarning = defaults.ShowImagePerformanceWarning.Value;
         }
 
         var placement = defaults.MainWindow;

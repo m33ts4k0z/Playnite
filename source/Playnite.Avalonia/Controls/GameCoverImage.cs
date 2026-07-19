@@ -26,6 +26,14 @@ public sealed class GameCoverImage : Image
     private CancellationTokenSource loadCancellation;
     private Bitmap ownedBitmap;
 
+    /// <summary>
+    /// Controls whether bitmap decoding is moved off the UI thread. Shells set
+    /// this once from their persisted performance settings before creating a
+    /// window; separate Desktop and Fullscreen processes therefore keep their
+    /// own policy without imposing it on themes.
+    /// </summary>
+    public static bool AsyncLoadingEnabled { get; set; } = true;
+
     public string SourcePath
     {
         get => GetValue(SourcePathProperty);
@@ -73,7 +81,9 @@ public sealed class GameCoverImage : Image
 
         try
         {
-            loadedBitmap = await Task.Run(() => LoadBitmap(path, token), token).ConfigureAwait(false);
+            loadedBitmap = AsyncLoadingEnabled
+                ? await Task.Run(() => LoadBitmap(path, token), token).ConfigureAwait(false)
+                : await LoadBitmap(path, token);
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 if (token.IsCancellationRequested || !ReferenceEquals(loadCancellation, cancellation))

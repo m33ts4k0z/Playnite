@@ -324,7 +324,7 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
         {
             "get_Version" => settings.Version,
             "get_FirstTimeWizardComplete" => true,
-            "get_AsyncImageLoading" => true,
+            "get_AsyncImageLoading" => settings.AsyncImageLoading,
             "get_DatabasePath" => databasePath,
             "get_Language" => settings.Language,
             "get_DesktopTheme" => settings.DesktopTheme ?? string.Empty,

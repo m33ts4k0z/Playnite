@@ -27,6 +27,9 @@ public static class WpfProfileImport
     public sealed class Defaults
     {
         public string Language { get; init; }
+        public bool? DisableHwAcceleration { get; init; }
+        public bool? AsyncImageLoading { get; init; }
+        public bool? ShowImagePerformanceWarning { get; init; }
         public int? FullscreenMonitor { get; init; }
         public WindowPlacement MainWindow { get; init; }
     }
@@ -36,6 +39,9 @@ public static class WpfProfileImport
         return new Defaults
         {
             Language = ReadLanguage(userDataDirectory),
+            DisableHwAcceleration = ReadDesktopBoolean(userDataDirectory, "DisableHwAcceleration"),
+            AsyncImageLoading = ReadDesktopBoolean(userDataDirectory, "AsyncImageLoading"),
+            ShowImagePerformanceWarning = ReadDesktopBoolean(userDataDirectory, "ShowImagePerformanceWarning"),
             FullscreenMonitor = ReadFullscreenMonitor(userDataDirectory),
             MainWindow = ReadMainWindowPlacement(userDataDirectory)
         };
@@ -46,6 +52,13 @@ public static class WpfProfileImport
         {
             var language = root.Value<string>("Language");
             return string.IsNullOrWhiteSpace(language) ? null : language;
+        });
+
+    private static bool? ReadDesktopBoolean(string userDataDirectory, string propertyName) =>
+        ReadJson<bool?>(Path.Combine(userDataDirectory, "config.json"), root =>
+        {
+            var token = root[propertyName];
+            return token?.Type == JTokenType.Boolean ? token.Value<bool>() : null;
         });
 
     private static int? ReadFullscreenMonitor(string userDataDirectory) =>

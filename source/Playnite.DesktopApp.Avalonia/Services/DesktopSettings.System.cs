@@ -2,6 +2,9 @@ namespace Playnite.DesktopApp.Avalonia.Services;
 
 public sealed partial class DesktopSettings
 {
+    public bool DisableHwAcceleration { get; set; }
+    public bool AsyncImageLoading { get; set; } = true;
+    public bool ShowImagePerformanceWarning { get; set; } = true;
     public bool TraceLogEnabled { get; set; }
     public List<DevelopmentExtensionPath> DevelopmentExtensions { get; set; } = new();
     public bool DiscordPresenceEnabled { get; set; }

@@ -43,6 +43,9 @@ public class WpfProfileImportTests
         var defaults = WpfProfileImport.Read(profileDir);
 
         Assert.That(defaults.Language, Is.Null);
+        Assert.That(defaults.DisableHwAcceleration, Is.Null);
+        Assert.That(defaults.AsyncImageLoading, Is.Null);
+        Assert.That(defaults.ShowImagePerformanceWarning, Is.Null);
         Assert.That(defaults.FullscreenMonitor, Is.Null);
         Assert.That(defaults.MainWindow, Is.Null);
     }
@@ -61,6 +64,24 @@ public class WpfProfileImportTests
         WriteFile("config.json", """{ "Language": "   " }""");
 
         Assert.That(WpfProfileImport.Read(profileDir).Language, Is.Null);
+    }
+
+    [Test]
+    public void Read_PerformanceDefaults_FromConfig()
+    {
+        WriteFile("config.json", """
+        {
+          "DisableHwAcceleration": true,
+          "AsyncImageLoading": false,
+          "ShowImagePerformanceWarning": false
+        }
+        """);
+
+        var defaults = WpfProfileImport.Read(profileDir);
+
+        Assert.That(defaults.DisableHwAcceleration, Is.True);
+        Assert.That(defaults.AsyncImageLoading, Is.False);
+        Assert.That(defaults.ShowImagePerformanceWarning, Is.False);
     }
 
     [Test]
