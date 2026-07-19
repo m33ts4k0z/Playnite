@@ -67,7 +67,9 @@ public sealed class MainWindow : Window
 
         themeManager = new RuntimeThemeManager(Application.Current, typeof(DesktopMainView).Assembly);
         ApplyRuntimeTheme();
-        themeManager.ApplyLanguage(ContentPath("Localization", "english.axaml"));
+        themeManager.ApplyLanguage(
+            Playnite.Avalonia.App.Services.LanguageCatalog.ResolveLanguagePaths(
+                ContentPath("Localization"), settings.Language));
 
         mainView = new DesktopMainView();
         chrome = new DesktopWindowChrome(this)

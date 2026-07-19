@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:String x:Key="LanguageName">Esperanto</x:String>
+    <x:String x:Key="LOCExitAppLabel">Eliri</x:String>
+    <x:String x:Key="LOCFilters">Filtriloj</x:String>
+    <x:String x:Key="LOCFilter">Filtrilo</x:String>
+    <x:String x:Key="LOCAboutWindowTitle">Pri Playnite</x:String>
+    <x:String x:Key="LOCAboutAuthor">Farita de Josef Němec</x:String>
+    <x:String x:Key="LOCCrashReportIssue">Raporti kraŝon</x:String>
+    <x:String x:Key="LOCGameRemoveAskTitle">Forigu ludo(j)n?</x:String>
+    <x:String x:Key="LOCEnabledTitle">Ebligita</x:String>
+    <x:String x:Key="LOCRemoveTitle">Forigu</x:String>
+    <x:String x:Key="LOCCopyTitle">Kopii</x:String>
+    <x:String x:Key="LOCAddTitle">Aldonu</x:String>
+    <x:String x:Key="LOCFinishLabel">Finas</x:String>
+    <x:String x:Key="LOCNameLabel">Nomo</x:String>
+    <x:String x:Key="LOCAuthorLabel">Aŭtoro</x:String>
+    <x:String x:Key="LOCModuleLabel">Modulo</x:String>
+    <x:String x:Key="LOCSeriesLabel">Serioj</x:String>
+    <x:String x:Key="LOCSearchLabel">Serĉi</x:String>
+</ResourceDictionary>

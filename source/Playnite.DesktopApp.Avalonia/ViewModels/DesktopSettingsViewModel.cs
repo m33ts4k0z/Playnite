@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using Playnite.Avalonia.App.Services;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK;
 using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
@@ -26,6 +27,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     private bool restartRequired;
 
     // General section working copy.
+    private LanguageOption selectedLanguage;
+    private string originalLanguageId;
     private bool enableTray;
     private bool minimizeToTray;
     private bool closeToTray;
@@ -42,6 +45,9 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
 
     public IReadOnlyList<PlaytimeImportMode> PlaytimeImportModes { get; } =
         Enum.GetValues<PlaytimeImportMode>();
+
+    public IReadOnlyList<LanguageOption> AvailableLanguages { get; } =
+        LanguageCatalog.Discover(Path.Combine(AppContext.BaseDirectory, "Localization"));
 
     // The shell switch is offered only when both the WPF and Avalonia executables
     // are present next to each other (a packaged install), so a dev or partial
@@ -96,6 +102,12 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         private set => SetField(ref restartRequired, value);
     }
 
+    public LanguageOption SelectedLanguage
+    {
+        get => selectedLanguage;
+        set => SetField(ref selectedLanguage, value);
+    }
+
     public bool EnableTray
     {
         get => enableTray;
@@ -123,6 +135,13 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         }
 
         // Snapshot the live settings into the working copy.
+        originalLanguageId = string.IsNullOrWhiteSpace(settings.Language)
+            ? LanguageCatalog.SourceLanguageId
+            : settings.Language;
+        selectedLanguage =
+            AvailableLanguages.FirstOrDefault(option =>
+                string.Equals(option.Id, originalLanguageId, StringComparison.OrdinalIgnoreCase))
+            ?? AvailableLanguages.FirstOrDefault();
         enableTray = settings.EnableTray;
         minimizeToTray = settings.MinimizeToTray;
         closeToTray = settings.CloseToTray;
@@ -148,6 +167,14 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         settings.CloseToTray = CloseToTray;
         settings.DownloadMetadataOnImport = DownloadMetadataOnImport;
         settings.LibraryPlaytimeImportMode = PlaytimeImportMode;
+
+        // Language is applied on the next launch, so a change flags a restart.
+        var newLanguageId = SelectedLanguage?.Id ?? LanguageCatalog.SourceLanguageId;
+        if (!string.Equals(newLanguageId, originalLanguageId, StringComparison.OrdinalIgnoreCase))
+        {
+            settings.Language = newLanguageId;
+            RestartRequired = true;
+        }
 
         // The shell preference is a marker next to the executables, not part of the
         // settings file, so apply it directly and flag a restart when it changes.
@@ -186,6 +213,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
 
     private void RaiseAllFieldChanges()
     {
+        OnPropertyChanged(nameof(SelectedLanguage));
         OnPropertyChanged(nameof(EnableTray));
         OnPropertyChanged(nameof(TrayOptionsEnabled));
         OnPropertyChanged(nameof(MinimizeToTray));

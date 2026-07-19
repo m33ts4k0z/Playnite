@@ -1,0 +1,1263 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:String x:Key="LanguageName">Dutch</x:String>
+    <x:String x:Key="LOCLanguageSettingsLabel">Playnite Taal</x:String>
+    <x:String x:Key="LOCExitAppLabel">Afsluiten</x:String>
+    <x:String x:Key="LOCFilterActiveLabel">Filter Actief</x:String>
+    <x:String x:Key="LOCFilterInactiveLabel">Filter Uitgeschakeld</x:String>
+    <x:String x:Key="LOCAditionalFilters">Aanvullende filters</x:String>
+    <x:String x:Key="LOCFilters">Filters</x:String>
+    <x:String x:Key="LOCFilter">Filter</x:String>
+    <x:String x:Key="LOCInvalidDataTitle">Ongeldige Data</x:String>
+    <x:String x:Key="LOCSaveChangesAskTitle">Wijzigingen Opslaan?</x:String>
+    <x:String x:Key="LOCAboutHomePageLink">Homepagina op www.playnite.link</x:String>
+    <x:String x:Key="LOCAboutSourceLink">Source Code op GitHub</x:String>
+    <x:String x:Key="LOCAboutCreateDiagButton">Maak diag. package</x:String>
+    <x:String x:Key="LOCAboutSendDiagButton">Diagnostische informatie verzenden</x:String>
+    <x:String x:Key="LOCAboutWindowTitle">Over Playnite</x:String>
+    <x:String x:Key="LOCAboutAuthor">Gemaakt door Josef Němec</x:String>
+    <x:String x:Key="LOCCategoryWindowTitle">Wijs Categorie Toe</x:String>
+    <x:String x:Key="LOCCategorySetButton">Stel Categorieën In</x:String>
+    <x:String x:Key="LOCCategoryAddCatButton">Categorie Toevoegen</x:String>
+    <x:String x:Key="LOCCategoryTooltip">Aangevinkt - Wijs categorie toe
+Uitgevinkt - Verwijder categorie
+Er tussenin - Geen wijzigingen (bij bewerken van meerdere spellen)</x:String>
+    <x:String x:Key="LOCNoCategory">Geen Categorie</x:String>
+    <x:String x:Key="LOCNoPlatform">Geen Platform</x:String>
+    <x:String x:Key="LOCCrashWindowTitle">Oops! Er ging iets fout...</x:String>
+    <x:String x:Key="LOCCrashDescription">Er onherstelbare fout heeft opgetreden.
+
+Als je ons wilt helpen dit probleem op te lossen, omschrijf dan alsjeblieft kort welke acties je hebt ondernomen vóór de crash, en maak dan een diagnose pakket. Als je online bent wordt dit pakket geüpload naar de Playnite server voor analyse.
+
+Als alternatief kan je de &apos;Rapporteer Crash&apos; knop gebruiken om een nieuw probleem topic aan te maken op GitHub en de crash handmatig te rapporteren.
+
+Bedankt voor je hulp.</x:String>
+    <x:String x:Key="LOCExtCrashDescription">Extensie {0} veroorzaakte een onherstelbare fout.
+
+We raden aan om het log bestand op te slaan en het probleem te rapporteren aan extensie ontwikkelaar. Als het probleem zich blijft voordoen. Schakel de extensie dan uit.</x:String>
+    <x:String x:Key="LOCExtCrashDescriptionFS">Extensie {0} heeft een onherstelbare fout veroorzaakt.
+
+We raden aan om het probleem te rapporteren aan de extensie ontwikkelaar. Als het probleem zich blijft voordoen, schakel de extensie dan uit.</x:String>
+    <x:String x:Key="LOCExtCrashDescriptionUknown">Onbekende extensie of thema veroorzaakte een onherstelbare fout.
+
+We bevelen aan extensies van derde partijen uit te schakelen, de problematische extensie te isoleren en het probleem te rapporteren aan de ontwikkelaar van die extensie.</x:String>
+    <x:String x:Key="LOCCrashDescriptionFullscreen">Onherstelbare fout opgetreden.
+
+Als je ons wilt helpen dit probleem op te lossen, stuur ons dan alsjeblieft diagnostische informatie. Bedankt.</x:String>
+    <x:String x:Key="LOCCrashDisableExtension">Schakel de extensie uit.</x:String>
+    <x:String x:Key="LOCCrashSaveLog">Sla het log bestand op.</x:String>
+    <x:String x:Key="LOCCrashSendDiag">Verstuur diag. info</x:String>
+    <x:String x:Key="LOCCrashReportIssue">Rapporteer Probleem</x:String>
+    <x:String x:Key="LOCCrashRestartPlaynite">Herstart Playnite</x:String>
+    <x:String x:Key="LOCCrashRestartSafe">Herstart in Veilige modus</x:String>
+    <x:String x:Key="LOCCrashRestartSafeTooltip">Schakel alle 3de partij extensies uit en gebruik het standaard thema.</x:String>
+    <x:String x:Key="LOCCrashClosePlaynite">Sluit Playnite af</x:String>
+    <x:String x:Key="LOCCrashUserActionsDescription">Acties ondernomen vóór de crash (in Engels):</x:String>
+    <x:String x:Key="LOCLibraryManager">Bibliotheek Beheerder</x:String>
+    <x:String x:Key="LOCGameRemoveAskTitle">Verwijder Spel(len)?</x:String>
+    <x:String x:Key="LOCGameRemoveRunningError">Kan niet verwijderen - Game of de installer is bezig.</x:String>
+    <x:String x:Key="LOCGameUninstallRunningError">Kan niet de-installeren - Game is bezig.</x:String>
+    <x:String x:Key="LOCGameRemoveAskMessage">Weet u zeker dat u {0} wilt verwijderen?</x:String>
+    <x:String x:Key="LOCGamesRemoveAskMessage">Weet u zeker dat u {0} spellen wilt verwijderen?</x:String>
+    <x:String x:Key="LOCGameRemoveAskMessageIgnoreOption">Weet u zeker dat u {0} wilt verwijderen?
+
+Het selecteren van de &quot;Ja (voeg toe aan uitsluitingslijst)&quot; optie zorgt ervoor dat bij het updaten van de bibliotheek, deze game niet opnieuw wordt geïmporteerd.
+
+
+</x:String>
+    <x:String x:Key="LOCGamesRemoveAskMessageIgnoreOption">Weet u zeker dat u {0} spellen wilt verwijderen?
+
+Als u de optie &quot;toevoegen aan uitsluitingslijst&quot; selecteert, wordt voorkomen dat de game de volgende keer dat de bibliotheek wordt bijgewerkt, opnieuw wordt geïmporteerd.
+</x:String>
+    <x:String x:Key="LOCRemoveUnusedFieldsAskMessage">Weet je zeker dat je {0} entries wilt verwijderen die momenteel niet worden gebruikt?</x:String>
+    <x:String x:Key="LOCRemoveUnusedFieldsNoUnusedMessage">Geen ongebruikte velden gevonden.</x:String>
+    <x:String x:Key="LOCRemoveAskAddToExlusionListYesResponse">Ja (voeg toe aan uitsluitingslijst)</x:String>
+    <x:String x:Key="LOCGameEditChangeNotif">Er zijn niet-opgeslagen wijzigingen in deze sectie</x:String>
+    <x:String x:Key="LOCDBUpgradeProgress">Database versie aan het updaten…</x:String>
+    <x:String x:Key="LOCDBUpgradeFail">Database update mislukt.</x:String>
+    <x:String x:Key="LOCDBUpgradeEmptySpaceFail">Kan de spelbibliotheek niet bijwerken. {0} MB vrije ruimte is vereist.</x:String>
+    <x:String x:Key="LOCGameError">Spel Error</x:String>
+    <x:String x:Key="LOCGameStartErrorNoGame">Kan het spel niet starten. &apos;{0}&apos; kon niet worden gevonden in de database.</x:String>
+    <x:String x:Key="LOCGameStartError">Kan het spel niet starten: {0}</x:String>
+    <x:String x:Key="LOCGameStartActionError">Kan de actie niet starten: {0}</x:String>
+    <x:String x:Key="LOCGameOpenLocationError">Kan de spellocatie niet openen: {0}</x:String>
+    <x:String x:Key="LOCCalculateGameSizeError">Kon de installatiegrootte van het spel niet detecteren: {0}</x:String>
+    <x:String x:Key="LOCCalculateGameSizeErrorCaption">Fout bij installatiegrootte scan</x:String>
+    <x:String x:Key="LOCCalculateGamesSizeErrorMessage">Er waren {0} fouten tijdens het scannen van de installatiegrootte</x:String>
+    <x:String x:Key="LOCGameShortcutError">Snelkoppeling maken mislukt: {0}</x:String>
+    <x:String x:Key="LOCManualOpenError">Kan handleiding niet openen: {0}</x:String>
+    <x:String x:Key="LOCGameInstallError">Kan het spel niet installeren: {0}</x:String>
+    <x:String x:Key="LOCGameUninstallError">Kan het spel niet deïnstalleren: {0}</x:String>
+    <x:String x:Key="LOCErrorNoPlayAction">Geen geldige spelstartup acties gevonden. Zorg ervoor dat platformdefinities overeenkomen tussen het spel en de emulator configuratie.</x:String>
+    <x:String x:Key="LOCErrorNoInstallAction">Installatie implementatie is niet beschikbaar</x:String>
+    <x:String x:Key="LOCErrorLibraryPluginNotFound">De bibliotheek plug-in die verantwoordelijk is voor deze game is uitgeschakeld of niet geïnstalleerd.</x:String>
+    <x:String x:Key="LOCErrorNoMetadataDownloader">Officiële metadata download is niet beschikbaar.</x:String>
+    <x:String x:Key="LOCErrorNoGameSelected">Er is geen spel geselecteerd.</x:String>
+    <x:String x:Key="LOCErrorGameScriptAction">Game&apos;s script actie executie is gefaald.</x:String>
+    <x:String x:Key="LOCErrorApplicationScript">Uitvoering van applicatiescript is mislukt.</x:String>
+    <x:String x:Key="LOCErrorGlobalScriptAction">Globale script actie executie is gefaald.</x:String>
+    <x:String x:Key="LOCErrorEmulatorScriptAction">Emulator Script uitvoering is mislukt.</x:String>
+    <x:String x:Key="LOCErrorPlayScriptAction">Speel script actie is mislukt.</x:String>
+    <x:String x:Key="LOCErrorPowerShellNotInstalled">PowerShell 3.0 of nieuwer is niet geïnstalleerd.</x:String>
+    <x:String x:Key="LOCErrorStartupNoController">Kon niet bepalen hoe de game te starten.</x:String>
+    <x:String x:Key="LOCEnabledTitle">Ingeschakeld</x:String>
+    <x:String x:Key="LOCDisabledTitle">Uitgeschakeld</x:String>
+    <x:String x:Key="LOCRemoveTitle">Verwijderen</x:String>
+    <x:String x:Key="LOCRemoveUnusedTitle">Verwijder ongebruikt</x:String>
+    <x:String x:Key="LOCRenameTitle">Hernoemen</x:String>
+    <x:String x:Key="LOCCopyTitle">Kopiëren</x:String>
+    <x:String x:Key="LOCAddTitle">Toevoegen</x:String>
+    <x:String x:Key="LOCDefaultIconTitle">Standaard Icoon</x:String>
+    <x:String x:Key="LOCDefaultCoverTitle">Standaard Cover Afbeelding</x:String>
+    <x:String x:Key="LOCDefaultBackgroundTitle">Standaard achtergrondafbeelding</x:String>
+    <x:String x:Key="LOCFinishLabel">Klaar</x:String>
+    <x:String x:Key="LOCNextLabel">Volgende</x:String>
+    <x:String x:Key="LOCBackLabel">Vorige</x:String>
+    <x:String x:Key="LOCDoneCapLabel">GEREED</x:String>
+    <x:String x:Key="LOCBackCapLabel">TERUG</x:String>
+    <x:String x:Key="LOCClearCapLabel">WISSEN</x:String>
+    <x:String x:Key="LOCClearLabel">Wissen</x:String>
+    <x:String x:Key="LOCDismiss">Negeren</x:String>
+    <x:String x:Key="LOCDismissAll">Negeer alles</x:String>
+    <x:String x:Key="LOCImportLabel">Importeren</x:String>
+    <x:String x:Key="LOCNameLabel">Naam</x:String>
+    <x:String x:Key="LOCAuthorLabel">Auteur</x:String>
+    <x:String x:Key="LOCModuleLabel">Module</x:String>
+    <x:String x:Key="LOCSeriesLabel">Series</x:String>
+    <x:String x:Key="LOCVersionLabel">Versie</x:String>
+    <x:String x:Key="LOCLastPlayedLabel">Laatst Gespeeld</x:String>
+    <x:String x:Key="LOCMostPlayedLabel">Meest gespeeld</x:String>
+    <x:String x:Key="LOCPlayCountLabel">Aantal Keer Gespeeld</x:String>
+    <x:String x:Key="LOCInstallSizeLabel">Installatiegrootte</x:String>
+    <x:String x:Key="LOCFolderLabel">Map</x:String>
+    <x:String x:Key="LOCNotesLabel">Notities</x:String>
+    <x:String x:Key="LOCAddedLabel">Toegevoegd</x:String>
+    <x:String x:Key="LOCDateAddedLabel">Datum Toegevoegd</x:String>
+    <x:String x:Key="LOCModifiedLabel">Bewerkt</x:String>
+    <x:String x:Key="LOCDateModifiedLabel">Datum Gewijzigd</x:String>
+    <x:String x:Key="LOCWebsiteLabel">Website</x:String>
+    <x:String x:Key="LOCPathLabel">Pad</x:String>
+    <x:String x:Key="LOCOKLabel">Oké</x:String>
+    <x:String x:Key="LOCSaveLabel">Opslaan</x:String>
+    <x:String x:Key="LOCCloseLabel">Sluiten</x:String>
+    <x:String x:Key="LOCCancelLabel">Annuleren</x:String>
+    <x:String x:Key="LOCConfirmLabel">Bevestigen</x:String>
+    <x:String x:Key="LOCResetLabel">Reset</x:String>
+    <x:String x:Key="LOCYesLabel">Ja</x:String>
+    <x:String x:Key="LOCNoLabel">Nee</x:String>
+    <x:String x:Key="LOCWelcomeLabel">Welkom</x:String>
+    <x:String x:Key="LOCLocalUserLabel">Lokale Gebruiker</x:String>
+    <x:String x:Key="LOCGeneralLabel">Algemeen</x:String>
+    <x:String x:Key="LOCMediaLabel">Media</x:String>
+    <x:String x:Key="LOCLinksLabel">Links</x:String>
+    <x:String x:Key="LOCInstallationLabel">Installatie</x:String>
+    <x:String x:Key="LOCActionsLabel">Acties</x:String>
+    <x:String x:Key="LOCDownloadingLabel">Downloaden…</x:String>
+    <x:String x:Key="LOCDownloadingMediaLabel">Downloaden media…</x:String>
+    <x:String x:Key="LOCLoadingLabel">Laden…</x:String>
+    <x:String x:Key="LOCTypeLabel">Type</x:String>
+    <x:String x:Key="LOCProfileLabel">Profiel</x:String>
+    <x:String x:Key="LOCProfilesLabel">Profielen</x:String>
+    <x:String x:Key="LOCRemoveLabel">Verwijderen</x:String>
+    <x:String x:Key="LOCDownloadLabel">Download</x:String>
+    <x:String x:Key="LOCSearchLabel">Zoeken</x:String>
+    <x:String x:Key="LOCSearchResolutionLabel">Resolutie:</x:String>
+    <x:String x:Key="LOCSearchResolutionAnyLabel">Alle</x:String>
+    <x:String x:Key="LOCZoomLabel">Zoom</x:String>
+    <x:String x:Key="LOCListViewLabel">Lijstweergave</x:String>
+    <x:String x:Key="LOCCoversLabel">Covers</x:String>
+    <x:String x:Key="LOCGridViewLabel">Rasterweergave</x:String>
+    <x:String x:Key="LOCDetailsViewLabel">Details-weergave</x:String>
+    <x:String x:Key="LOCCustomLabel">Aangepast</x:String>
+    <x:String x:Key="LOCURLLabel">URL</x:String>
+    <x:String x:Key="LOCSpecialThanks">Speciale dank aan</x:String>
+    <x:String x:Key="LOCLicenseLabel">Licentie</x:String>
+    <x:String x:Key="LOCContributorsLabel">Bijdragers</x:String>
+    <x:String x:Key="LOCClosingPlaynite">Playnite wordt afgesloten…</x:String>
+    <x:String x:Key="LOCToday">Vandaag</x:String>
+    <x:String x:Key="LOCYesterday">Gisteren</x:String>
+    <x:String x:Key="LOCMonday">Maandag</x:String>
+    <x:String x:Key="LOCTuesday">Dinsdag</x:String>
+    <x:String x:Key="LOCWednesday">Woensdag</x:String>
+    <x:String x:Key="LOCThursday">Donderdag</x:String>
+    <x:String x:Key="LOCFriday">Vrijdag</x:String>
+    <x:String x:Key="LOCSaturday">Zaterdag</x:String>
+    <x:String x:Key="LOCSunday">Zondag</x:String>
+    <x:String x:Key="LOCPastWeek">Afgelopen Week</x:String>
+    <x:String x:Key="LOCPastMonth">Afgelopen Maand</x:String>
+    <x:String x:Key="LOCPastYear">Afgelopen Jaar</x:String>
+    <x:String x:Key="LOCMoreThenYear">Meer dan 1 jaar geleden</x:String>
+    <x:String x:Key="LOCSizeZeroTo100Mb">0 tot 100MB</x:String>
+    <x:String x:Key="LOCSize100MbTo1Gb">100MB tot 1GB</x:String>
+    <x:String x:Key="LOCSize1GbTo5Gb">1GB tot 5GB</x:String>
+    <x:String x:Key="LOCSize5GbTo10Gb">5GB tot 10GB</x:String>
+    <x:String x:Key="LOCSize10GbTo20Gb">10GB tot 20GB</x:String>
+    <x:String x:Key="LOCSize20GbTo40Gb">20GB tot 40GB</x:String>
+    <x:String x:Key="LOCSize40GbTo100Gb">40GB tot 100GB</x:String>
+    <x:String x:Key="LOCSizeMoreThan100Gb">100GB of meer</x:String>
+    <x:String x:Key="LOCImportCompleted">Importeren succesvol voltooid.</x:String>
+    <x:String x:Key="LOCAllGames">Alle Spellen</x:String>
+    <x:String x:Key="LOCGameId">Spel Id</x:String>
+    <x:String x:Key="LOCDatabaseId">Database-ID</x:String>
+    <x:String x:Key="LOCPresets">Voorinstellingen</x:String>
+    <x:String x:Key="LOCColumn">Kolom</x:String>
+    <x:String x:Key="LOCColumns">Kolommen</x:String>
+    <x:String x:Key="LOCRow">Rij</x:String>
+    <x:String x:Key="LOCRows">Rijen</x:String>
+    <x:String x:Key="LOCExecIconMissingPlayAction">Kon geen icoon uit Speel actie halen. Er is geen actie met het type bestand aanwezig.</x:String>
+    <x:String x:Key="LOCMetaSkipNonEmpty">Download alleen missende metadata</x:String>
+    <x:String x:Key="LOCMetaSkipNonEmptyTooltip">Het inschakelen van deze optie zal het downloaden van metadata overslaan voor gegevensvelden die al informatie bevatten.</x:String>
+    <x:String x:Key="LOCMetaGamesSourceIntro">Spellen selectie</x:String>
+    <x:String x:Key="LOCMetaGamesSourceDescription">Selecteer alsjeblieft de spellen die moeten worden geüpdatet met nieuwe metadata:</x:String>
+    <x:String x:Key="LOCMetaGameSourceAll">Alle spellen uit de database</x:String>
+    <x:String x:Key="LOCMetaGameSourceFiltered">Alle huidig gefilterde spellen</x:String>
+    <x:String x:Key="LOCMetaGameSourceSelected">Alleen geselecteerde spellen</x:String>
+    <x:String x:Key="LOCMetaNoFieldsSelectedErrorCaption">Geen metadata velden geselecteerd</x:String>
+    <x:String x:Key="LOCMetaNoFieldsSelectedErrorMessage">Er zijn geen metadata velden geselecteerd om te downloaden. Selecteer er ten minste één en schakel ten minste één metadata aanbieder in.</x:String>
+    <x:String x:Key="LOCMetaSourceStore">Officiële Winkel</x:String>
+    <x:String x:Key="LOCMetaSourceIGDB">IGDB</x:String>
+    <x:String x:Key="LOCMetaDescriptionFields">Selecteer alsjeblieft welke velden Playnite automatisch moet invullen en welke bronnen gebruikt moeten worden om deze data te verkrijgen.</x:String>
+    <x:String x:Key="LOCMetaIgdbContribNotif">Overweeg om op het bovenstaande logo te klikken en updates bij te dragen aan de igdb.com database om de gegevens waar Playnite gebruik van maakt te verbeteren.</x:String>
+    <x:String x:Key="LOCProgressMetadata">Metadata aan het downloaden…</x:String>
+    <x:String x:Key="LOCProgressInstalledGames">Geïnstalleerde spellen aan het importeren…</x:String>
+    <x:String x:Key="LOCProgressImportinGames">{0} spellen aan het importeren…</x:String>
+    <x:String x:Key="LOCProgressImportinEmulatedGames">Importeer geemuleerde games van {0}…</x:String>
+    <x:String x:Key="LOCProgressLibraryGames">Bibliotheek updates aan het downloaden…</x:String>
+    <x:String x:Key="LOCProgressScanningGamesInstallSize">Scannen van spelgrootte in bibliotheek…</x:String>
+    <x:String x:Key="LOCProgressScanningImportedGamesInstallSize">Grootte van geïmporteerde spellen scannen…</x:String>
+    <x:String x:Key="LOCProgressLibImportFinish">Biblotheekupdate afgerond</x:String>
+    <x:String x:Key="LOCProgressReleasingResources">Bronnen vrijgeven…</x:String>
+    <x:String x:Key="LOCMenuConfigurationTitle">Configuratie</x:String>
+    <x:String x:Key="LOCMenuPlayniteSettingsTitle">Instellingen…</x:String>
+    <x:String x:Key="LOCMenuPlatformEmulatorSettingsTitle">Platforms en Emulators</x:String>
+    <x:String x:Key="LOCMenuConfigureEmulatorsMenuTitle">Emulators configureren</x:String>
+    <x:String x:Key="LOCMenuLibraryManagerTitle">Bibliotheekbeheer…</x:String>
+    <x:String x:Key="LOCMenuTools">Gereedschappen</x:String>
+    <x:String x:Key="LOCMenuDownloadMetadata">Download Metadata...</x:String>
+    <x:String x:Key="LOCMenuSoftwareTools">Softwaretools</x:String>
+    <x:String x:Key="LOCMenuConfigureIntegrations">Configureer Integraties</x:String>
+    <x:String x:Key="LOCMenuOpenClient">Open Cient van derde Partij</x:String>
+    <x:String x:Key="LOCMenuClients">3de Partij Clients</x:String>
+    <x:String x:Key="LOCMenuReloadLibrary">Herlaad Spellen Lijst</x:String>
+    <x:String x:Key="LOCMenuCancelLibraryUpdate">Annuleer bibliotheek update</x:String>
+    <x:String x:Key="LOCMenuUpdateEmulatedDirs">Update Geemuleerde mappen</x:String>
+    <x:String x:Key="LOCMenuAddGame">Voeg Spel Toe</x:String>
+    <x:String x:Key="LOCMenuAddGameManual">Handmatig…</x:String>
+    <x:String x:Key="LOCMenuAddGameInstalled">Scan Automatisch...</x:String>
+    <x:String x:Key="LOCMenuAddGameEmulated">Geëmuleerd Spel...</x:String>
+    <x:String x:Key="LOCMenuAddWindowsStore">Microsoft Store applicatie…</x:String>
+    <x:String x:Key="LOCMenuAbout">Over Playnite</x:String>
+    <x:String x:Key="LOCMenuIssues">Stuur Feedback</x:String>
+    <x:String x:Key="LOCMenuOpenFullscreen">Overschakelen naar volledige scherm modus</x:String>
+    <x:String x:Key="LOCMenuLinksTitle">Koppelingen</x:String>
+    <x:String x:Key="LOCMenuHelpTitle">Hulp</x:String>
+    <x:String x:Key="LOCMenuPatreonSupport">Steun op Patreon</x:String>
+    <x:String x:Key="LOCMenuKofiSupport">Ondersteun {0} op Ko-fi</x:String>
+    <x:String x:Key="LOCUserManual">Gebruikershandleiding</x:String>
+    <x:String x:Key="LOCSDKDocumentation">SDK Documentatie</x:String>
+    <x:String x:Key="LOCMenuRestartSystem">Opnieuw opstarten</x:String>
+    <x:String x:Key="LOCMenuShutdownSystem">Systeem uitschakelen</x:String>
+    <x:String x:Key="LOCMenuSuspendSystem">Systeem Onderbreken</x:String>
+    <x:String x:Key="LOCMenuHibernateSystem">Systeem in slaapstand zetten</x:String>
+    <x:String x:Key="LOCMenuLockSystem">Vergrendel systeem</x:String>
+    <x:String x:Key="LOCMenuLogoutUser">Gebruiker afmelden</x:String>
+    <x:String x:Key="LOCMenuSelectRandomGame">Kies een Willekeurig Spel</x:String>
+    <x:String x:Key="LOCSettingsDetailsPanelItems">Spelvelden weer te geven op detailspaneel:</x:String>
+    <x:String x:Key="LOCSettingsGridItemSpacing">Itemafstand</x:String>
+    <x:String x:Key="LOCSettingsGridItemDrawBackground">Teken grid item achtergrond</x:String>
+    <x:String x:Key="LOCSettingsGridItemCoverMargin">Grensbreedte rasteritem</x:String>
+    <x:String x:Key="LOCSettingsDefaulIconSource">Bron ontbrekende spelicoon</x:String>
+    <x:String x:Key="LOCSettingsDefaulCoverSource">Bron ontbrekende spelomslag</x:String>
+    <x:String x:Key="LOCSettingsDefaulBackgroundSource">Mist game achtergrond bron</x:String>
+    <x:String x:Key="LOCSettingsIndentGameDetails">Verticale afstand tot speldetails</x:String>
+    <x:String x:Key="LOCSettingsGridViewDetailsPosition">Positie details in rasterweergave</x:String>
+    <x:String x:Key="LOCSettingsDetailsGameListPosition">Positie spellijst in detailsweergave</x:String>
+    <x:String x:Key="LOCSettingsDrawPanelSeparators">Teken scheidingslijn tussen panelen</x:String>
+    <x:String x:Key="LOCSettingsGameDetailsCoverHeight">Afbeeldingshoogte spelomslag</x:String>
+    <x:String x:Key="LOCSettingsGameDetailsListIconSize">Icoonhoogte spellijst</x:String>
+    <x:String x:Key="LOCSettingsInterfaceFont">Toepassingslettertype</x:String>
+    <x:String x:Key="LOCSettingsInterfaceMonoFont">Lettertype vaste breedte</x:String>
+    <x:String x:Key="LOCSettingsFilterPanelPosition">Positie filter paneel</x:String>
+    <x:String x:Key="LOCSettingsExplorerPanelPosition">Positie verkenner paneel</x:String>
+    <x:String x:Key="LOCSettingsCoverArtRenderingLabel">Omslagweergave</x:String>
+    <x:String x:Key="LOCSettingsTargetAspectRatioLabel">Gerichte hoogte-breedteverhouding</x:String>
+    <x:String x:Key="LOCSettingsGridTileLayoutFSNote">De volgende opties heb ook invloed op tegel rendering in Fullscreen Modus</x:String>
+    <x:String x:Key="LOCSettingsStrechModeLabel">Uitrekmodus</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectDVD">DVD-box</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectEpicGamesStore">Epic Games Store</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectGogGalaxy2">GOG Galaxy 2.0</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectIgdb">IGDB</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectSquare">Vierkant</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectSteam">Steam-banner</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectSteamVertical">Steam verticale cover</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectTwitch">Twitch</x:String>
+    <x:String x:Key="LOCSettingsRestartNotification">* Vereist herstart om toe te passen</x:String>
+    <x:String x:Key="LOCSettingsLabel">Instellingen</x:String>
+    <x:String x:Key="LOCSettingsGeneralLabel">Algemeen</x:String>
+    <x:String x:Key="LOCSettingsTopPanelLabel">Boven paneel</x:String>
+    <x:String x:Key="LOCSettingsAppearanceLabel">Uiterlijk</x:String>
+    <x:String x:Key="LOCSettingsGameDetailsLabel">Speldetails</x:String>
+    <x:String x:Key="LOCSettingsLayoutLabel">Opmaak</x:String>
+    <x:String x:Key="LOCSettingsAdvancedLabel">Geavanceerd</x:String>
+    <x:String x:Key="LOCSettingsFullscreenLabel">Volledig scherm</x:String>
+    <x:String x:Key="LOCSettingsInputLabel">Invoer</x:String>
+    <x:String x:Key="LOCSettingsPerformanceLabel">Prestatie</x:String>
+    <x:String x:Key="LOCSettingsMetadataLabel">Metadata</x:String>
+    <x:String x:Key="LOCSettingsUpdating">Bijwerken</x:String>
+    <x:String x:Key="LOCSettingsSearch">Zoeken</x:String>
+    <x:String x:Key="LOCSettingsBackup">Back-up</x:String>
+    <x:String x:Key="LOCMenuBackupData">Backup Bibliotheekgegevens</x:String>
+    <x:String x:Key="LOCMenuRestoreBackup">Back-up Herstellen</x:String>
+    <x:String x:Key="LOCSettingsImportLabel">Importeer veranderingen in de bibliotheek automatisch</x:String>
+    <x:String x:Key="LOCSettingsInvalidDBLocation">Ongeldige database bestandslocatie, er moet een correct bestandspad ingesteld zijn.</x:String>
+    <x:String x:Key="LOCSettingsInvalidAccountName">Accountnaam mag niet leeg zijn.</x:String>
+    <x:String x:Key="LOCSettingsDownloadMetadataOnImport">Download metadata na het importeren van spellen</x:String>
+    <x:String x:Key="LOCSettingsStartMinimized">Start Playnite geminimaliseerd</x:String>
+    <x:String x:Key="LOCSettingsStartOnBoot">Start Playnite wanneer u computer start</x:String>
+    <x:String x:Key="LOCSettingsStartOnBootClosedToTray">Start gesloten in het systeemvak</x:String>
+    <x:String x:Key="LOCSettingsStartOnBootRegistrationError">Het registreren van Playnite om te starten bij het opstarten van de computer is mislukt.</x:String>
+    <x:String x:Key="LOCSettingsStartInFullscreen">Start in Volledig Scherm Modus</x:String>
+    <x:String x:Key="LOCSettingsAsyncImageLoading">Asynchroon laden van afbeeldingen</x:String>
+    <x:String x:Key="LOCSettingsAsyncImageLoadingTooltip">Zorgt voor soepeler scrollen in de spellijst in ruil voor het langzamere laden van afbeeldingen.</x:String>
+    <x:String x:Key="LOCSettingsShowNameEmptyCover">Toon spelnaam als omslag ontbreekt</x:String>
+    <x:String x:Key="LOCSettingsShowNamesUnderCover">Toon spelnaam op cover weergave</x:String>
+    <x:String x:Key="LOCSettingsDarkenUninstalledGridCovers">Verduister niet geïnstalleerde games</x:String>
+    <x:String x:Key="LOCSettingsShowIconList">Toon game iconen in Lijstweergave</x:String>
+    <x:String x:Key="LOCSettingsShowGroupCount">Toon Item hoeveelheid op groep beschrijving</x:String>
+    <x:String x:Key="LOCSettingsUsedFieldsOnlyOnFilterLists">Toon alleen toegewezen velden op filter en verkenning panelen</x:String>
+    <x:String x:Key="LOCSettingsDisableAcceleration">Gebruik hardware acceleratie niet</x:String>
+    <x:String x:Key="LOCSettingsDisableAccelerationTooltip">Gebruik als je stotteren ervaart in de UI of soortgelijke problemen</x:String>
+    <x:String x:Key="LOCSettingsHiddenInQuickLaunch">Toon verborgen games in Snel start lijst</x:String>
+    <x:String x:Key="LOCSettingsHiddenInQuickLaunchTooltip">Beïnvloed spring lijsten en lade menu lijsten.</x:String>
+    <x:String x:Key="LOCSettingsQuicLaunchItems">Aantal snel start items </x:String>
+    <x:String x:Key="LOCSettingsShowBackgroundWindowImage">Gebruik spelachtergrond als vensterachtergrond</x:String>
+    <x:String x:Key="LOCSettingsBlurWindowBackgrounImage">Vervaag achtergrond</x:String>
+    <x:String x:Key="LOCSettingsBlurHighQuality">Hoge kwaliteit</x:String>
+    <x:String x:Key="LOCSettingsDarkenWindowBackghrounImage">Verdonker achtergrond</x:String>
+    <x:String x:Key="LOCSettingsShowBackImageOnGridView">Toon in rasterweergave</x:String>
+    <x:String x:Key="LOCSettingsSkin">Thema</x:String>
+    <x:String x:Key="LOCSettingsSkinColor">Themaprofiel</x:String>
+    <x:String x:Key="LOCSettingsSkinFullscreen">Volledig Scherm Thema</x:String>
+    <x:String x:Key="LOCSettingsSkinColorFullscreen">Volledig Scherm Thema Kleur</x:String>
+    <x:String x:Key="LOCSettingsDBLocation">Database Locatie</x:String>
+    <x:String x:Key="LOCSettingsLoginStatus">Loginstatus:</x:String>
+    <x:String x:Key="LOCSettingsWindowTitle">Playnite Instellingen</x:String>
+    <x:String x:Key="LOCSettingsClearWebCache">Leeg web cache</x:String>
+    <x:String x:Key="LOCSettingsClearWebCacheTooltip">Kan problemen oplossen bij het linken van accounts.</x:String>
+    <x:String x:Key="LOCSettingsShowTray">Systeemvakicoon weergeven</x:String>
+    <x:String x:Key="LOCSettingsMinimizeToTray">Minimaliseer Playnite naar systeemvak</x:String>
+    <x:String x:Key="LOCSettingsCloseToTray">Minimaliseer Playnite naar systeemvak wanneer de applicatie is gesloten</x:String>
+    <x:String x:Key="LOCSettingsAfterGameStart">Als een spel start:</x:String>
+    <x:String x:Key="LOCSettingsAfterGameClose">Na het sluiten van het spel:</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeUseDaysFormatLabel">Maak speeltijd op om het aantal gespeelde dagen aan te geven</x:String>
+    <x:String x:Key="LOCSettingsDatesFormatsLabel">Datumnotatie:</x:String>
+    <x:String x:Key="LOCSettingsClearCacheWarn">Dit logt je uit bij alle gelinkte services. Herstart van applicatie is nodig. Wil je verdergaan?</x:String>
+    <x:String x:Key="LOCSettingsClearCacheTitle">Leeg Cache?</x:String>
+    <x:String x:Key="LOCSettingsSkinChangeRestart">Om het thema toe te passen moet Playnite opnieuw opgestart worden</x:String>
+    <x:String x:Key="LOCSettingsGetThemes">Vind meer thema&apos;s</x:String>
+    <x:String x:Key="LOCSettingsCreateThemes">Maak nieuw thema</x:String>
+    <x:String x:Key="LOCSettingsGetExtensions">Vind meer extensies</x:String>
+    <x:String x:Key="LOCSettingsCreateExtensions">Creëer nieuwe extensie</x:String>
+    <x:String x:Key="LOCSettingsCreateLocalization">Help ons met vertalen van Playnite</x:String>
+    <x:String x:Key="LOCSettingsRestartAskMessage">Playnite moet herstart worden alvorens de nieuwe instelling worden toegepast. Wil je nu herstarten?
+Herstarten zal huidige taken (downloads) die nu bezig zijn stopzetten.</x:String>
+    <x:String x:Key="LOCSettingsRestartTitle">Herstart Playnite?</x:String>
+    <x:String x:Key="LOCSettingsDBPathNotification">Playnite verplaatst bibliotheek bestanden niet automatisch, verplaats/kopieer ze voor dat de locatie is veranderd. Als er geen bibliotheek aanwezig is op de aangewezen locatie zal er een nieuwe gemaakt worden. </x:String>
+    <x:String x:Key="LOCSettingsClosePlaytimeNotif">Speeltijd zal niet worden bijgehouden als de &quot;Sluit&quot; actie is ingesteld.</x:String>
+    <x:String x:Key="LOCSettingsFullscreenRows">Aantal rijen</x:String>
+    <x:String x:Key="LOCSettingsFullscreenColumns">Aantal kolommen</x:String>
+    <x:String x:Key="LOCSettingsFullscreenRowDetails">Aantal detailweergave rijen</x:String>
+    <x:String x:Key="LOCSettingsFullscreenBackgroundOnMainScreen">Toon Achtergrond afbeelding op het Hoofd Scherm</x:String>
+    <x:String x:Key="LOCBackgroundImageScreenOptionTooltip">Geldt niet retrospectief voor bestaande spellen zonder metadata opnieuw te downloaden.</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportMode">Importeer de speeltijd van spellen in de bibliotheek:</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeTooltip">Configureert wanneer Playnite de speeltijd moet importeren die door bibliotheek plugins voor spellen in de Playnite database wordt gerapporteerd. Ondersteuning door de bibliotheek plugins die verantwoordelijk zijn voor het verwerken van de spel(s) is nodig om deze functie te kunnen gebruiken.
+
+Altijd: Importeer de speeltijd voor nieuw geïmporteerde en bestaande spellen in de Playnite database.
+Alleen voor nieuw geïmporteerde spellen: Importeer speeltijd alleen voor nieuwe geïmporteerde spellen.
+Nooit: Importeer onder geen enkele omstandigheid speeltijd.</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeAlways">Altijd</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeNewImportsOnly">Alleen voor nieuw geïmporteerde spellen</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeNever">Nooit</x:String>
+    <x:String x:Key="LOCSettingsXInputInDesktopMode">Activeer controller ondersteuning in Desktop modus</x:String>
+    <x:String x:Key="LOCSettingsXInputGuideOpensFullscreen">Gids knop opent volledig scherm modus</x:String>
+    <x:String x:Key="LOCSettingsDefaultMetadataDescription">Automatisch Metadata download instelling voor nieuwe geïmporteerde games.</x:String>
+    <x:String x:Key="LOCSettingsTargetDisplay">Doel scherm</x:String>
+    <x:String x:Key="LOCSettingsAlwaysUsePrimaryDisplay">Gebruik altijd het primaire beeldscherm</x:String>
+    <x:String x:Key="LOCSettingsFullscreenShowGameTitles">Toon Speltitels</x:String>
+    <x:String x:Key="LOCSettingsShowBatteryStatus">Toon Batterijstatus</x:String>
+    <x:String x:Key="LOCSettingsShowBatteryPercentage">Toon Batterijpercentage</x:String>
+    <x:String x:Key="LOCSettingsShowClock">Toon Klok</x:String>
+    <x:String x:Key="LOCSettingsHideMouseCursor">Verberg muis cursor</x:String>
+    <x:String x:Key="LOCSettingsFullscreenQuickFilterInstalled">Alleen Geïnstalleerd in Snelle Filters</x:String>
+    <x:String x:Key="LOCSettingsFullscreenButtonPrompts">Knop Prompts</x:String>
+    <x:String x:Key="LOCSettingsFullscreenLayout">Layout</x:String>
+    <x:String x:Key="LOCSettingsFullscreenHorizontalScrolling">Horizontaal Scrollen</x:String>
+    <x:String x:Key="LOCSettingsSelectChildSection">Selecteer een van de subsecties</x:String>
+    <x:String x:Key="LOCSettingsNoSettingsAvailable">Geen instellingen beschikbaar</x:String>
+    <x:String x:Key="LOCSettingsErrorLoadingSettings">Mislukt om instellingen te laden</x:String>
+    <x:String x:Key="LOCSettingsScriptingNotice">Deze script worden uitgevoerd voor elke game in de bibliotheek. Individuele scripts kunnen toegewezen worden aan elke game afzonderlijk tijdens het bewerken van game details </x:String>
+    <x:String x:Key="LOCSettingsBackgroundImageAnimation">Animeer achtergrond afbeelding transities</x:String>
+    <x:String x:Key="LOCSettingsFontSizes">Lettertype grootte</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionAuto">Automatisch</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionAliased">Gealiast</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionGrayscale">Grijswaarden</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionClearType">ClearType</x:String>
+    <x:String x:Key="LOCSettingsTextFormattingModeOptionIdeal">Ideaal</x:String>
+    <x:String x:Key="LOCSettingsTextFormattingModeOptionDisplay">Scherm</x:String>
+    <x:String x:Key="LOCSettingsTextFormattingMode">Tekstopmaak</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingMode">Tekst weergavemodus</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingNotice">Tekstweergave- en vomgevingmethodes worden voorlopig nog niet gebruikt voor gamebeschrijvingen.</x:String>
+    <x:String x:Key="LOCSettingsImmediateBackgroundDownload">Laad achtergrond afbeelding vooraf</x:String>
+    <x:String x:Key="LOCSettingsImmediateBackgroundDownloadTooltip">Wanneer ingeschakeld, zal Playnite achtergrondafbeeldingen samen met de metadata downloaden, wat meer schijfruimte gebruikt maar de afbeeldingen offline beschikbaar maakt.
+
+Wanneer uitgeschakeld, worden achtergrondafbeeldingen enkel wanneer nodig gedownload, wat minder schrijfruimte gebruikt. Dit kan ervoor zorgen dat er een vertraging is voor de afbeeldingen worden weergegeven en dat sommige afbeeldingen offline niet beschikbaar zijn.</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseLauncherOption">Sluit andere clients automatisch af na het sluiten van een game.</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseGracePeriod">Afsluitvertraging van andere clients (in seconden)</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseMinimalSessionTime">Sluit niet af na gamesessies die minder lang duurden dan (in seconden)</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseSpecificClients">Sluit automatisch de volgende clients af:</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseSection">Sluit clients automatisch</x:String>
+    <x:String x:Key="LOCSettingsImportExclusionList">Importeer uitsluitings lijst</x:String>
+    <x:String x:Key="LOCSettingsShowMediaSizeWarning">Geef een waarschuwing weer wanneer te grote gamemedia worden toegekend.</x:String>
+    <x:String x:Key="LOCOpenDirectoryCommand">&quot;Open map&quot;-commando</x:String>
+    <x:String x:Key="LOCSettingsPreferredAgeRatingOrg">Gewenste leeftijdsclassificatie-organisatie</x:String>
+    <x:String x:Key="LOCSettingsScanLibInstallSizeOnLibUpdate">Update installatiegrootte van spellen bij update bibliotheek</x:String>
+    <x:String x:Key="LOCSettingsScanLibInstallSizeOnLibUpdateTooltip">Scant en werkt de installatiegrootte van spellen bij als blijkt dat de bestanden zijn gewijzigd sinds de laatste scan</x:String>
+    <x:String x:Key="LOCStrechNone">Geen</x:String>
+    <x:String x:Key="LOCStrechFill">Vullen</x:String>
+    <x:String x:Key="LOCStrechUniform">Uniform</x:String>
+    <x:String x:Key="LOCStrechUniformToFill">Uniform te vullen</x:String>
+    <x:String x:Key="LOCDockLeft">Links</x:String>
+    <x:String x:Key="LOCDockRight">Rechts</x:String>
+    <x:String x:Key="LOCDockTop">Boven</x:String>
+    <x:String x:Key="LOCDockBottom">Onder</x:String>
+    <x:String x:Key="LOCImportError">Importeer Error</x:String>
+    <x:String x:Key="LOCLoginRequired">Authenticatie nodig</x:String>
+    <x:String x:Key="LOCLoginFailed">Authenticatie mislukt</x:String>
+    <x:String x:Key="LOCSettingsAltWebViewRendering">Alternatieve web weergave rendering modus</x:String>
+    <x:String x:Key="LOCSettingsAltWebViewRenderingTooltip">Gebruik wanneer er problemen zijn met webviews, bijvoorbeeld die van authenticatie van integraties.</x:String>
+    <x:String x:Key="LOCSettingsPartialDescriptionLoading">Gedeeltelijk laden van grote spelomschrijvingen</x:String>
+    <x:String x:Key="LOCSettingsPartialDescriptionLoadingTooltip">Grote beschrijvingen kunnen merkbare vertraging veroorzaken bij het selecteren van spellen.
+
+Wanneer ingeschakeld, wordt slechts een deel van de beschrijvingstekst geladen met een optie om de rest op verzoek te laden.</x:String>
+    <x:String x:Key="LOCMetaImportWindowTitle">Metadata Importeren</x:String>
+    <x:String x:Key="LOCDownloadMetaButton">Download Metadata</x:String>
+    <x:String x:Key="LOCSaveDefaultTooltip">Stel de geselecteerde configuratie in om gebruikt te worden voor alle toekomstige metadata downloads.
+Kan ook gewijzigd worden in de applicatie instellingen.</x:String>
+    <x:String x:Key="LOCEmuWizardWindowTitle">Emulatie Import Wizard</x:String>
+    <x:String x:Key="LOCEmuWizardIntro">Deze wizard zal je door het download- en importeerproces van emulators en geëmuleerde games leiden.</x:String>
+    <x:String x:Key="LOCEmuWizardNotice">Je kunt later altijd extra emulators en/of geëmuleerde games toevoegen via het configuratiescherm voor emulators (Bibliotheek &gt; Emulators configureren ).</x:String>
+    <x:String x:Key="LOCEmuDownloadDescription">De volgende emulators kan Playnite automatisch herkennen en configureren. Je kan de installatieprogramma&apos;s van hun website downloaden. Wanneer je de emulators (handmatig) geïnstalleerd hebt, kan je ze importeren in het configuratiemenu.</x:String>
+    <x:String x:Key="LOCEmuWizardEmuImportIntro">Je kan geïnstalleerde emulators importeren door op de knop &apos;Automatisch herkennen in map&apos; te klikken. Playnite zal de geselecteerde map doorzoeken en de optie geven gekende emulators te importeren. Je kan dit verschillende keren doen om emulators in verschillende mappen te importeren. De emulators zullen onderaan de lijst worden toegevoegd.</x:String>
+    <x:String x:Key="LOCEmuWizardGameImportIntro">Je kan games importeren door op de knop &apos;Map scannen met emulator&apos; te klikken. Door de juiste emulator te selecteren, weet Playnite welke bestandstypen moeten worden gescand en geïmporteerd. Je kunt deze knop meerdere keren gebruiken om games uit verschillende mappen te importeren. Games worden onderaan de huidige lijst toegevoegd.</x:String>
+    <x:String x:Key="LOCEmuWizardNoEmulatorWarning">Er zijn geen emulators geselecteerd om te importeren. Je kan niet automatisch geëmuleerde spellen importeren zonder eerst emulators te configureren. Weet je zeker dat je verder wilt gaan en het importeerproces wilt afsluiten?</x:String>
+    <x:String x:Key="LOCEmuWizardNoEmulatorForGamesWarning">Er zijn geen emulator geconfigureerd in Playnite. Je kan geen geëmuleerde games importeren zonder eerst een emulator te configureren en de juiste bestandstypen te selecteren. Wil je nu emulators toevoegen?</x:String>
+    <x:String x:Key="LOCEmuWizardButtonScanGames">Scan map met Emulator</x:String>
+    <x:String x:Key="LOCEmuWizardButtonSelectFiles">Selecteer bestanden</x:String>
+    <x:String x:Key="LOCEmuWizardButtonScanEmulator">Automatisch herkennen in map</x:String>
+    <x:String x:Key="LOCEmuWizardButtonConfigureEmulator">Emulators configureren</x:String>
+    <x:String x:Key="LOCEmuWizardScanning">Scannen…</x:String>
+    <x:String x:Key="LOCEmuWizardScanningSpecific">{0} scannen...</x:String>
+    <x:String x:Key="LOCFirstWindowTitle">Eerste Configuratie</x:String>
+    <x:String x:Key="LOCFirstIntro">Deze wizard leidt je door het automatische import- en configuratieproces van externe spelbibliotheken. Playnite kan automatisch games importeren van meerdere gameservices, zoals Steam of GOG, en ook je bibliotheek up-to-date houden door deze automatisch bij te werken wanneer de applicatie wordt gestart.
+
+Houd er rekening mee dat je later altijd nog handmatig een aangepast spel voor elk platform kunt toevoegen door op de knop &apos;Playnite&apos; in het hoofdmenu te klikken.
+
+</x:String>
+    <x:String x:Key="LOCFirstExternalTitle">Bibliotheek Integratie</x:String>
+    <x:String x:Key="LOCFirstImportIntroduction">Importeer automatisch games uit de onderstaande services. Alle latere spelwijzigingen (installatiestatus) worden automatisch bijgewerkt bij het opstarten van Playnite of wanneer ze handmatig worden geactiveerd. De geselecteerde instellingen zijn van invloed op de eerste en alle volgende importen.</x:String>
+    <x:String x:Key="LOCFirstConfigFinishedTitle">Configuratie Klaar</x:String>
+    <x:String x:Key="LOCFirstConfigFinishedText">De eerste installatie is voltooid. Onthoud dat je alle instellingen later kunt wijzigen in het menu &apos;Instellingen&apos;.
+
+Je kunt later ook een ander spel toevoegen door op het Playnite-icoon te klikken.</x:String>
+    <x:String x:Key="LOCFirstPluginDownloadError">Downloaden van één of meerdere extensions is mislukt.
+Je kan proberen deze opnieuw te downloaden via het add-ons menu na de eerste keer opstarten.</x:String>
+    <x:String x:Key="LOCFirstDownloadingAddon">Integratie {0} downloaden...</x:String>
+    <x:String x:Key="LOCDefaultAddonListDownload">Lijst van aanbevolen integraties aan het downloaden…</x:String>
+    <x:String x:Key="LOCDefaultAddonListDownloadError">Downloaden van lijst van aanbevolen integraties mislukt. U kunt later proberen om de integraties opnieuw te downloaden via het Uitbreidingen menu.</x:String>
+    <x:String x:Key="LOCPlatformsWindowTitle">Platforms en emulators configureren</x:String>
+    <x:String x:Key="LOCEmulatorsWindowTitle">Emulators configureren</x:String>
+    <x:String x:Key="LOCPlatformsTitle">Platforms</x:String>
+    <x:String x:Key="LOCPlatformTitle">Platform</x:String>
+    <x:String x:Key="LOCEmulatorsTitle">Emulators</x:String>
+    <x:String x:Key="LOCEmulatorTitle">Emulator</x:String>
+    <x:String x:Key="LOCAddPlatformTitle">Voeg Platform Toe</x:String>
+    <x:String x:Key="LOCSelectIconTitle">Selecteer Icoon</x:String>
+    <x:String x:Key="LOCSelectCoverTitle">Selecteer Cover</x:String>
+    <x:String x:Key="LOCSelectImageTitle">Afbeelding selecteren</x:String>
+    <x:String x:Key="LOCSelectItemTitle">Item selecteren</x:String>
+    <x:String x:Key="LOCSelectBackgroundTitle">Selecteer achtergrond</x:String>
+    <x:String x:Key="LOCSelectFileTitle">Selecteer Bestand</x:String>
+    <x:String x:Key="LOCSelectUrlTitle">Selecteer URL</x:String>
+    <x:String x:Key="LOCAddEmulatorTitle">Voeg Emulator Toe</x:String>
+    <x:String x:Key="LOCSupportedPlatformsTitle">Ondersteunde Platform(s)</x:String>
+    <x:String x:Key="LOCConfirmUnsavedPlatformsTitle">Wil je de platform veranderingen opslaan?</x:String>
+    <x:String x:Key="LOCConfirmUnsavedEmulatorsTitle">Wil je de emulator veranderingen opslaan?</x:String>
+    <x:String x:Key="LOCExecutableTitle">Uitvoerbaar bestand</x:String>
+    <x:String x:Key="LOCArgumentsTitle">Argumenten</x:String>
+    <x:String x:Key="LOCWorkingDirTitle">Werkmap</x:String>
+    <x:String x:Key="LOCSupportedFilesTitle">Ondersteunde Bestandstypes</x:String>
+    <x:String x:Key="LOCImportEmulatorsButton">Importeer Emulators...</x:String>
+    <x:String x:Key="LOCDownloadEmulatorsButton">Download Emulators...</x:String>
+    <x:String x:Key="LOCEmuLoadArgsPresetTooltip">Laad argumenten presets van bekend emulator profiel</x:String>
+    <x:String x:Key="LOCEmuRemovalConfirmation">Weet je zeker dat je {0} emulator wilt verwijderen?        
+Het wordt op dit moment door {1} spel(len) gebruikt.</x:String>
+    <x:String x:Key="LOCPlatformRemovalConfirmation">Weet u zeker dat je {0} platform wilt verwijderen?
+Het wordt momenteel gebruikt door {1} game(s) en {2} emulator(s).Begin the Emulation Import Wizard
+
+</x:String>
+    <x:String x:Key="LOCEmulatorSettingsHelp">Instellingen hulp</x:String>
+    <x:String x:Key="LOCMenuSortByTitle">Sorteren op</x:String>
+    <x:String x:Key="LOCMenuSortByDirection">Sorteerrichting</x:String>
+    <x:String x:Key="LOCMenuGroupByTitle">Groeperen Op</x:String>
+    <x:String x:Key="LOCMenuSortAscending">Oplopend</x:String>
+    <x:String x:Key="LOCMenuSortDescending">Aflopend</x:String>
+    <x:String x:Key="LOCMenuGroupDont">Niet groeperen</x:String>
+    <x:String x:Key="LOCMenuGroupProvider">Groepeer op Leverancier</x:String>
+    <x:String x:Key="LOCMenuGroupCategory">Groepeer op Categorie</x:String>
+    <x:String x:Key="LOCMenuGroupPlatform">Groepeer op Platform</x:String>
+    <x:String x:Key="LOCViewType">Weergave Type</x:String>
+    <x:String x:Key="LOCMenuView">Weergave</x:String>
+    <x:String x:Key="LOCMenuViewExplorerPanel">Verkenner Paneel</x:String>
+    <x:String x:Key="LOCMenuViewFilterPanel">Filter Paneel</x:String>
+    <x:String x:Key="LOCGameIconTitle">Icoon</x:String>
+    <x:String x:Key="LOCLibraryIconTitle">Bibliotheek Icoon</x:String>
+    <x:String x:Key="LOCGameCoverImageTitle">Cover Afbeelding</x:String>
+    <x:String x:Key="LOCGameBackgroundTitle">Achtergrond Afbeelding</x:String>
+    <x:String x:Key="LOCGameSortingNameTitle">Sorteer Naam</x:String>
+    <x:String x:Key="LOCGameProviderTitle">Leverancier</x:String>
+    <x:String x:Key="LOCGameManualTitle">Handleiding</x:String>
+    <x:String x:Key="LOCGameNameTitle">Naam</x:String>
+    <x:String x:Key="LOCInstallDriveTitle">Installatieschijf</x:String>
+    <x:String x:Key="LOCGameAccountNameTitle">Account Naam</x:String>
+    <x:String x:Key="LOCGamePlatformTitle">Platform</x:String>
+    <x:String x:Key="LOCGameCategoriesTitle">Categorie(ën)</x:String>
+    <x:String x:Key="LOCGameGenresTitle">Genre(s)</x:String>
+    <x:String x:Key="LOCGameReleaseDateTitle">Datum van uitgave</x:String>
+    <x:String x:Key="LOCGameReleaseYearTitle">Release Jaar</x:String>
+    <x:String x:Key="LOCGameDevelopersTitle">Ontwikkelaar(s)</x:String>
+    <x:String x:Key="LOCGameTagsTitle">Tag(s)</x:String>
+    <x:String x:Key="LOCGamePublishersTitle">Uitgever(s)</x:String>
+    <x:String x:Key="LOCGameInstallationStatus">Installatiestatus</x:String>
+    <x:String x:Key="LOCUseFilterStyleAndTitle">Alle filterwaarden vereist</x:String>
+    <x:String x:Key="LOCUseFilterStyleAndTooltip">Indien ingeschakeld: alleen spellen die aan alle items in elk filter voldoen zullen worden weergegeven.
+Indien uitgescshakeld: spellen die voldoen aan tenminste één item in elk filter zullen worden weergegeven.</x:String>
+    <x:String x:Key="LOCGameIsInstalledTitle">Geïnstalleerd</x:String>
+    <x:String x:Key="LOCGameIsGameInstalledTitle">Geïnstalleerd</x:String>
+    <x:String x:Key="LOCGameIsUnInstalledTitle">Niet geïnstalleerd</x:String>
+    <x:String x:Key="LOCGameHiddenTitle">Verborgen</x:String>
+    <x:String x:Key="LOCGameFavoriteTitle">Favoriet</x:String>
+    <x:String x:Key="LOCGameHdrTitle">HDR ondersteuning inschakelen</x:String>
+    <x:String x:Key="LOCGameHdrTooltip">Indien ingeschakeld, zal HDR ingeschakeld worden op de primaire display voordat u het spel start.</x:String>
+    <x:String x:Key="LOCGameHdrNotSupportedTooltip">Merk op dat HDR niet ondersteund wordt op uw primair beeldscherm.</x:String>
+    <x:String x:Key="LOCGameLastActivityTitle">Laatst Gespeeld</x:String>
+    <x:String x:Key="LOCGameCategoryTitle">Categorie</x:String>
+    <x:String x:Key="LOCGameDescriptionTitle">Beschrijving</x:String>
+    <x:String x:Key="LOCGameInstallDirTitle">Installatie Map</x:String>
+    <x:String x:Key="LOCGameCoverTitle">Cover Afbeelding</x:String>
+    <x:String x:Key="LOCGameLinksTitle">Links</x:String>
+    <x:String x:Key="LOCGameROMTitle">Image/ISO Pad</x:String>
+    <x:String x:Key="LOCGenreLabel">Genre</x:String>
+    <x:String x:Key="LOCGenresLabel">Genres</x:String>
+    <x:String x:Key="LOCCompanyLabel">Bedrijf</x:String>
+    <x:String x:Key="LOCCompaniesLabel">Bedrijven</x:String>
+    <x:String x:Key="LOCDeveloperLabel">Ontwikkelaar</x:String>
+    <x:String x:Key="LOCDevelopersLabel">Ontwikkelaars</x:String>
+    <x:String x:Key="LOCPublisherLabel">Uitgever</x:String>
+    <x:String x:Key="LOCPublishersLabel">Uitgevers</x:String>
+    <x:String x:Key="LOCCategoryLabel">Categorie</x:String>
+    <x:String x:Key="LOCCategoriesLabel">Categorieën</x:String>
+    <x:String x:Key="LOCTagLabel">Tag</x:String>
+    <x:String x:Key="LOCTagsLabel">Tags</x:String>
+    <x:String x:Key="LOCFeatureLabel">Functie</x:String>
+    <x:String x:Key="LOCFeaturesLabel">Functies</x:String>
+    <x:String x:Key="LOCAgeRatingLabel">Leeftijdsclassificatie</x:String>
+    <x:String x:Key="LOCAgeRatingsLabel">Leeftijdsclassificatie</x:String>
+    <x:String x:Key="LOCRegionLabel">Regio</x:String>
+    <x:String x:Key="LOCRegionsLabel">Regio&apos;s</x:String>
+    <x:String x:Key="LOCSourceLabel">Bron</x:String>
+    <x:String x:Key="LOCSourcesLabel">Bronnen</x:String>
+    <x:String x:Key="LOCRecentActivityLabel">Recente Activiteit</x:String>
+    <x:String x:Key="LOCDatabaseErroTitle">Databasefout</x:String>
+    <x:String x:Key="LOCDatabaseOpenError">Openen van de bibliotheek database is mislukt.</x:String>
+    <x:String x:Key="LOCDatabaseNotOpenedError">Database is niet geopend.</x:String>
+    <x:String x:Key="LOCDatabaseOpenAccessError">Kan geen toegang krijgen tot de bibliotheek database. Bestand &quot;{0}&quot; wordt gebruikt door een ander proces of bevind zich op een ontoegankelijke locatie.</x:String>
+    <x:String x:Key="LOCDiagPackageCreationError">Diagnostics package maken mislukt.</x:String>
+    <x:String x:Key="LOCDiagPackageUploadError">Automatisch uploaden van diagnostische pakket mislukt.</x:String>
+    <x:String x:Key="LOCDiagPackageSentSuccess">Diagnostische informatie is succesvol verzonden.</x:String>
+    <x:String x:Key="LOCDiagPackageCreationSuccess">Het diagnostische pakket is gemaakt en verzonden.
+Voeg de volgende ID toe aan het probleemrapport:
+
+</x:String>
+    <x:String x:Key="LOCLibraryImportError">Kan geen spellen importeren van {0}.</x:String>
+    <x:String x:Key="LOCLibraryImportEmulatedError">Kan geen geëmuleerde spellen importeren van {0}.</x:String>
+    <x:String x:Key="LOCScanEmulatorGamesEmptyProfileError">Kan niet zoeken naar spellen met het geselecteerde emulator profiel. Het profiel bevat geen extensies of platforms.</x:String>
+    <x:String x:Key="LOCStartGenericError">Playnite kan niet worden gestart. Sluit alle andere instanties van Playnite en probeer het opnieuw.</x:String>
+    <x:String x:Key="LOCSkinApplyError">Kan thema &quot;{0}&quot;, kleurprofiel &quot;{1}&quot; niet toepassen
+
+{2}</x:String>
+    <x:String x:Key="LOCURLFormatError">Kan link niet openen, URL is ongeldig.</x:String>
+    <x:String x:Key="LOCAppStartupError">Het starten van de applicatie is mislukt.</x:String>
+    <x:String x:Key="LOCCefSharpInitError">Kan de webweergave component niet initialiseren. Playnite kan niet doorgaan met het opstart-proces.
+
+Meer informatie op https://playnite.link/cefstartup</x:String>
+    <x:String x:Key="LOCEmulatorImportNoDefinitionsError">Kan emulators niet importeren vanwege ontbrekend of beschadigd definitiebestand.</x:String>
+    <x:String x:Key="LOCMenuActionExecError">Kan menuactie niet uitvoeren.</x:String>
+    <x:String x:Key="LOCGameEditWindowTitle">Bewerk Spel Details</x:String>
+    <x:String x:Key="LOCImageURL">Afbeelding URL</x:String>
+    <x:String x:Key="LOCAddLinkButton">Voeg Link Toe</x:String>
+    <x:String x:Key="LOCAddRom">ROM toevoegen</x:String>
+    <x:String x:Key="LOCSaveChanges">Sla Wijzigingen Op</x:String>
+    <x:String x:Key="LOCGameEditChangeSaveTooltip">Wijzigingen in dit veld toepassen op spel(len) die bewerkt worden.</x:String>
+    <x:String x:Key="LOCAddAction">Voeg Actie Toe</x:String>
+    <x:String x:Key="LOCDeleteAction">Verwijder Actie</x:String>
+    <x:String x:Key="LOCRemovePlayAction">Verwijder Speel Actie</x:String>
+    <x:String x:Key="LOCAddGames">Voeg Spellen Toe</x:String>
+    <x:String x:Key="LOCScanFolder">Scan Map...</x:String>
+    <x:String x:Key="LOCDetectInstalled">Detecteer Geïnstalleerd</x:String>
+    <x:String x:Key="LOCBrowse">Bladeren...</x:String>
+    <x:String x:Key="LOCOpenPlaynite">Open Playnite</x:String>
+    <x:String x:Key="LOCProfileSettings">Profiel Instellingen</x:String>
+    <x:String x:Key="LOCEmptyGameNameError">Spelnaam kan niet leeg zijn.</x:String>
+    <x:String x:Key="LOCEmptyTrackingFolderError">Speeltijd volgmap kan niet leeg zijn.</x:String>
+    <x:String x:Key="LOCEmptyGameNameMetaSearchError">Spelnaam kan niet leeg zijn bij het zoeken naar metadata.</x:String>
+    <x:String x:Key="LOCInvalidGameData">Ongeldige spel data</x:String>
+    <x:String x:Key="LOCURLInputInfo">Voer een geldige web URL beginnend met http:// of https:// in</x:String>
+    <x:String x:Key="LOCURLInputInfoTitile">Selecteer URL</x:String>
+    <x:String x:Key="LOCMetadataDownloadError">Downloaden van metadata mislukt: {0}</x:String>
+    <x:String x:Key="LOCDownloadError">Download Fout</x:String>
+    <x:String x:Key="LOCClearFilters">Wis Filters</x:String>
+    <x:String x:Key="LOCPrivateAccount">Privé Account</x:String>
+    <x:String x:Key="LOCPublicAccount">Openbaar Account</x:String>
+    <x:String x:Key="LOCAPIKey">API Sleutel</x:String>
+    <x:String x:Key="LOCStartupError">Opstart Error</x:String>
+    <x:String x:Key="LOCSkinError">Thema Error</x:String>
+    <x:String x:Key="LOCClearAll">Wis Alles</x:String>
+    <x:String x:Key="LOCSetupRunning">Aan het installeren</x:String>
+    <x:String x:Key="LOCUninstalling">Aan het deinstalleren</x:String>
+    <x:String x:Key="LOCGameLaunching">Aan het starten</x:String>
+    <x:String x:Key="LOCGameRunning">Actief</x:String>
+    <x:String x:Key="LOCInvalidURL">Ongeldige URL</x:String>
+    <x:String x:Key="LOCDoNothing">Doe niets</x:String>
+    <x:String x:Key="LOCMinimize">Minimaliseer</x:String>
+    <x:String x:Key="LOCRestoreWindow">Herstel Venster</x:String>
+    <x:String x:Key="LOCRestoreWindowOnlyFromUI">Herstel venster alleen wanneer gelanceerd vanuit UI</x:String>
+    <x:String x:Key="LOCClose">Sluiten</x:String>
+    <x:String x:Key="LOCChange">Wijzig</x:String>
+    <x:String x:Key="LOCAdvanced">Geavanceerd</x:String>
+    <x:String x:Key="LOCNever">Nooit</x:String>
+    <x:String x:Key="LOCCompletionStatus">Voltooiingsstatus</x:String>
+    <x:String x:Key="LOCCompletionStatuses">Voltooiingsstatussen</x:String>
+    <x:String x:Key="LOCUserScore">Gebruikersscore</x:String>
+    <x:String x:Key="LOCCriticScore">Criticusscore</x:String>
+    <x:String x:Key="LOCCommunityScore">Communityscore</x:String>
+    <x:String x:Key="LOCGameScripts">Spel scripts</x:String>
+    <x:String x:Key="LOCApplicationScripts">Applicatie scripts</x:String>
+    <x:String x:Key="LOCScripts">Scripts</x:String>
+    <x:String x:Key="LOCPlugins">Plugins</x:String>
+    <x:String x:Key="LOCMetadataProviders">Metadata Bronnen</x:String>
+    <x:String x:Key="LOCExtensions">Extensies</x:String>
+    <x:String x:Key="LOCExtensionID">Extensie ID</x:String>
+    <x:String x:Key="LOCReloadScripts">Herlaad Scripts</x:String>
+    <x:String x:Key="LOCStartInteractivePowerShell">Interactieve SDK PowerShell</x:String>
+    <x:String x:Key="LOCReloadScriptsSuccess">Alle scripts succesvol herladen.</x:String>
+    <x:String x:Key="LOCNoGamesFound">Geen games gevonden voor opgegeven zoek of filtercriteria</x:String>
+    <x:String x:Key="LOCNoItemsFound">Geen items gevonden</x:String>
+    <x:String x:Key="LOCBackToDesktopMode">Omschakelen naar Desktop Modus</x:String>
+    <x:String x:Key="LOCExitPlaynite">Sluit Playnite</x:String>
+    <x:String x:Key="LOCLibraries">Bibliotheken</x:String>
+    <x:String x:Key="LOCUpdateAll">Alles bijwerken</x:String>
+    <x:String x:Key="LOCExtensionCreatedBy">Aangemaakt door:</x:String>
+    <x:String x:Key="LOCExtensionVersion">Versie:</x:String>
+    <x:String x:Key="LOCExtensionUpdated">Bijgewerkt:</x:String>
+    <x:String x:Key="LOCExtensionModule">Module:</x:String>
+    <x:String x:Key="LOCLibrary">Bibliotheek</x:String>
+    <x:String x:Key="LOCStatistics">Statistieken</x:String>
+    <x:String x:Key="LOCAll">Alles</x:String>
+    <x:String x:Key="LOCNone">Geen</x:String>
+    <x:String x:Key="LOCNotifications">Meldingen</x:String>
+    <x:String x:Key="LOCWidth">Breedte</x:String>
+    <x:String x:Key="LOCHeight">Hoogte</x:String>
+    <x:String x:Key="LOCSize">Formaat</x:String>
+    <x:String x:Key="LOCFontSmall">Klein</x:String>
+    <x:String x:Key="LOCFontNormal">Normaal</x:String>
+    <x:String x:Key="LOCFontLarge">Groot</x:String>
+    <x:String x:Key="LOCFontLarger">Groter</x:String>
+    <x:String x:Key="LOCFontLargest">Grootst</x:String>
+    <x:String x:Key="LOCDefault">Standaard</x:String>
+    <x:String x:Key="LOCSelect">Selecteer</x:String>
+    <x:String x:Key="LOCSelectAll">Selecteer alles</x:String>
+    <x:String x:Key="LOCDeselectAll">Selectie opheffen</x:String>
+    <x:String x:Key="LOCFirst">Eerste</x:String>
+    <x:String x:Key="LOCRandom">Willekeurig</x:String>
+    <x:String x:Key="LOCUserSelect">Gebruikersselectie</x:String>
+    <x:String x:Key="LOCLoadMore">Laad meer</x:String>
+    <x:String x:Key="LOCTransparent">Doorzichtig</x:String>
+    <x:String x:Key="LOCCollapse">Samenvouwen</x:String>
+    <x:String x:Key="LOCExpand">Uitvouwen</x:String>
+    <x:String x:Key="LOCCollapseAll">Alles samenvouwen</x:String>
+    <x:String x:Key="LOCExpandAll">Alles uitklappen</x:String>
+    <x:String x:Key="LOCOther">Andere</x:String>
+    <x:String x:Key="LOCThemes">Thema&apos;s</x:String>
+    <x:String x:Key="LOCEmulatorArguments">Emulator Argumenten</x:String>
+    <x:String x:Key="LOCBuiltinArguments">Ingebouwde argumenten</x:String>
+    <x:String x:Key="LOCCustomArguments">Aangepaste Argumenten</x:String>
+    <x:String x:Key="LOCAdditionalEmulatorArguments">Extra Emulator Argumenten</x:String>
+    <x:String x:Key="LOCOverrideEmulatorArguments">Overschrijf Emulator Argumenten</x:String>
+    <x:String x:Key="LOCIsPlayAction">Speel actie</x:String>
+    <x:String x:Key="LOCMedataDiffWindowTitle">Selecteer metadata om te importeren</x:String>
+    <x:String x:Key="LOCGameImportWindowTitle">Selecteer Spellen om te Importeren</x:String>
+    <x:String x:Key="LOCMetaLookupWindowTitle">Metadata zoeken</x:String>
+    <x:String x:Key="LOCUpdaterWindowTitle">Update Beschikbaar</x:String>
+    <x:String x:Key="LOCUpdaterChangesInfo">Veranderingen sinds laatste update</x:String>
+    <x:String x:Key="LOCUpdaterInstallUpdate">Installeer Update</x:String>
+    <x:String x:Key="LOCCheckForUpdates">Controleer op updates</x:String>
+    <x:String x:Key="LOCUpdateError">Update Fout</x:String>
+    <x:String x:Key="LOCUpdateCheckFailMessage">Controleren op nieuwe versie mislukt.</x:String>
+    <x:String x:Key="LOCUpdateNoNewUpdateMessage">Geen nieuwe versie gevonden, u bent up-to-date.</x:String>
+    <x:String x:Key="LOCGeneralUpdateFailMessage">Downloaden en installeren van update mislukt.</x:String>
+    <x:String x:Key="LOCUpdateProgressCancelAsk">Er is momenteel een achtergrondtaak actief. Wilt u deze annuleren en verdergaan met de update?</x:String>
+    <x:String x:Key="LOCBackgroundProgressCancelAskExit">Er is momenteel een achtergrondtaak actief. Wilt u deze annuleren en Playnite sluiten?</x:String>
+    <x:String x:Key="LOCBackgroundProgressCancelAskSwitchMode">Er is momenteel een achtergrondtaak actief. Van modus wisselen zal deze taak annuleren. Wil je nog steeds van modus wisselen?</x:String>
+    <x:String x:Key="LOCUpdateIsAvailableNotificationBody">Er is een update voor Playnite beschikbaar.</x:String>
+    <x:String x:Key="LOCThemeTestReloadList">Herlaad thema lijst</x:String>
+    <x:String x:Key="LOCThemeTestApplySkin">Geselecteerd thema toepassen</x:String>
+    <x:String x:Key="LOCThemeTestWatchChanges">Kijk naar bestandsveranderingen</x:String>
+    <x:String x:Key="LOCThemeTestWatchChangesTooltip">Pas het thema automatisch toe als de bronbestanden veranderen</x:String>
+    <x:String x:Key="LOCScriptRuntime">Script runtime</x:String>
+    <x:String x:Key="LOCPreScriptDescription">Script dat moet worden uitgevoerd voordat een spel wordt gestart</x:String>
+    <x:String x:Key="LOCPostScriptDescription">Script om uit te voeren na het afsluiten van een game</x:String>
+    <x:String x:Key="LOCGameStartedScriptDescription">Script om uit te voeren nadat een spel is gestart</x:String>
+    <x:String x:Key="LOCAppScriptStartupDescription">Uitvoeren bij opstarten programma</x:String>
+    <x:String x:Key="LOCAppScriptShutdownDescription">Uitvoeren bij afsluiten van programma</x:String>
+    <x:String x:Key="LOCScriptTypeStarting">Spel starten script</x:String>
+    <x:String x:Key="LOCScriptTypeStarted">Spel gestart script</x:String>
+    <x:String x:Key="LOCScriptTypeExit">Spel gestopt script</x:String>
+    <x:String x:Key="LOCExecuteGlobalScript">Globaal script uitvoeren</x:String>
+    <x:String x:Key="LOCStatsGlobal">Globaal</x:String>
+    <x:String x:Key="LOCStatsFiltered">Gefilterd</x:String>
+    <x:String x:Key="LOCMetadataDiffCurrent">Huidig</x:String>
+    <x:String x:Key="LOCMetadataDiffNew">Nieuw</x:String>
+    <x:String x:Key="LOCTestScript">Test script</x:String>
+    <x:String x:Key="LOCOnlyItemsSelectedTooltip">Alleen geselecteerde items tonen.</x:String>
+    <x:String x:Key="LOCSaveAsDefault">Opslaan als standaard</x:String>
+    <x:String x:Key="LOCFavoriteGame">Voeg toe aan Favorieten</x:String>
+    <x:String x:Key="LOCRemoveFavoriteGame">Verwijder uit Favorieten</x:String>
+    <x:String x:Key="LOCHideGame">Verberg deze game</x:String>
+    <x:String x:Key="LOCUnHideGame">Verwijder uit verborgen</x:String>
+    <x:String x:Key="LOCEnableHdr">HDR ondersteuning inschakelen</x:String>
+    <x:String x:Key="LOCDisableHdr">HDR ondersteuning uitschakelen</x:String>
+    <x:String x:Key="LOCEditGame">Bewerk…</x:String>
+    <x:String x:Key="LOCCalculateInstallSize">Bereken installatiegrootte</x:String>
+    <x:String x:Key="LOCCalculateGamesAllInstallSize">Installatiegrootte berekenen (alle spellen)</x:String>
+    <x:String x:Key="LOCCalculateGamesMissingInstallSize">Installatiegrootte berekenen (alleen ontbrekende gegevens)</x:String>
+    <x:String x:Key="LOCInstallSizeMenuLabel">Installatiegrootte</x:String>
+    <x:String x:Key="LOCSetGameCategory">Categorie Instellen...</x:String>
+    <x:String x:Key="LOCSetCompletionStatus">Stel Voltooiingstatus in</x:String>
+    <x:String x:Key="LOCRemoveGame">Verwijderen</x:String>
+    <x:String x:Key="LOCPlayGame">Speel</x:String>
+    <x:String x:Key="LOCInstallGame">Installeer</x:String>
+    <x:String x:Key="LOCGameOptions">Spelinstellingen</x:String>
+    <x:String x:Key="LOCGameDetails">Details</x:String>
+    <x:String x:Key="LOCUninstallGame">Deïnstalleer</x:String>
+    <x:String x:Key="LOCOpenGameLocation">Open spel locatie</x:String>
+    <x:String x:Key="LOCCreateDesktopShortcut">Maak bureaublad snelkoppeling</x:String>
+    <x:String x:Key="LOCOpenGameManual">Open Handleiding</x:String>
+    <x:String x:Key="LOCMoreAction">Meer</x:String>
+    <x:String x:Key="LOCPlayActionUsePlugin">Beheerd door bibliotheek-plugin</x:String>
+    <x:String x:Key="LOCPlayActionUsePluginTooltip">Het startproces van het spel wordt beheerd door de bibliotheekplug-in die verantwoordelijk is voor dit spel.</x:String>
+    <x:String x:Key="LOCMetadownloadNoResultsMessage">Er is geen relevante informatie over het spel &apos;{0}&apos; gevonden op de opgegeven pagina.</x:String>
+    <x:String x:Key="LOCMetadownloadSingleGameTip">Tip: Je kan een geavanceerder metadata download proces gebruiken wanneer je een individueel spel bewerkt via de &quot;Bewerken&quot; menu optie.</x:String>
+    <x:String x:Key="LOCProgreessAvailabilityMessage">Niet beschikbaar als sommige acties nog bezig zijn.</x:String>
+    <x:String x:Key="LOCDescriptionHTMLSupportTooltip">Beschrijvingstekst is HTML syntax sensitief</x:String>
+    <x:String x:Key="LOCDescriptionPlaytimeSeconds">Speltijd wordt opgenomen in seconden.</x:String>
+    <x:String x:Key="LOCDescriptionSizeBytes">Installatiegrootte is aangegeven in bytes.</x:String>
+    <x:String x:Key="LOCReleaseDateTooltip">Datum van uitgave moet in &apos;jaar-maand-dag&apos; datumnotatie. Maand en Dag kunnen weggelaten worden.</x:String>
+    <x:String x:Key="LOCDescriptionScoreValues">Waarden van 0 tot 100 of leeg voor geen score.</x:String>
+    <x:String x:Key="LOCPatreonDevelopMessage">Playnite ontwikkeling wordt ondersteund door deze patrons en Ko-fi leden:</x:String>
+    <x:String x:Key="LOCAboutContributorsMessage">Code, lokalisatie en andere and other bijdragers in willekeurige volgorde:</x:String>
+    <x:String x:Key="LOCCancelMonitoringAskTitle">Spelmonitoring annuleren?</x:String>
+    <x:String x:Key="LOCCancelMonitoringSetupAsk">Er wordt momenteel installatiemonitoring uitgevoerd. Wil je het proces annuleren en het spel terugbrengen naar de vorige staat?
+
+</x:String>
+    <x:String x:Key="LOCCancelMonitoringExecutionAsk">Spel executie monitoring wordt momenteel uitgevoerd. Wil je het proces annuleren en het spel terugbrengen naar de vorige staat?</x:String>
+    <x:String x:Key="LOCTimePlayed">Tijd Gespeeld</x:String>
+    <x:String x:Key="LOCLastPlayed">Laatst Gespeeld</x:String>
+    <x:String x:Key="LOCPlayedDays">{0}d {1}u {2}m</x:String>
+    <x:String x:Key="LOCPlayedHours">{0}u {1}m</x:String>
+    <x:String x:Key="LOCPlayedMinutes">{0} minuten</x:String>
+    <x:String x:Key="LOCPlayedSeconds">{0} seconden</x:String>
+    <x:String x:Key="LOCPlayedNone">Niet Gespeeld</x:String>
+    <x:String x:Key="LOCOpeningDesktopModeMessage">Openen Desktop modus…</x:String>
+    <x:String x:Key="LOCOpeningFullscreenModeMessage">Openen volledig scherm modus…</x:String>
+    <x:String x:Key="LOCOpeningDatabase">Laden spel bibliotheek…</x:String>
+    <x:String x:Key="LOCCalculatingInstallSizeMessage">Installatiegrootte berekenen…</x:String>
+    <x:String x:Key="LOCCalculatingInstallSizeOfGameMessage">Installatiegrootte van {0} berekenen…</x:String>
+    <x:String x:Key="LOCScriptInstallFail">Kan script bestand niet installeren.</x:String>
+    <x:String x:Key="LOCScriptInstallSuccess">Script succesvol geïnstalleerd.</x:String>
+    <x:String x:Key="LOCInstallScript">Installatiescript</x:String>
+    <x:String x:Key="LOCScriptError">Scriptfout</x:String>
+    <x:String x:Key="LOCScriptExecutionError">Uitvoeren van extensie functie mislukt.</x:String>
+    <x:String x:Key="LOCOpenMetadataFolder">Open metadata map</x:String>
+    <x:String x:Key="LOCInstallSizeCalculate">Berekenen</x:String>
+    <x:String x:Key="LOCInstallSizeCalculateEditButtonTooltip">Berekent automatisch de installatiegrootte met behulp van de Roms als die er zijn, of als het spel een installatiemap heeft</x:String>
+    <x:String x:Key="LOCClientNotInstalledError">{0} client is niet geïnstalleerd.</x:String>
+    <x:String x:Key="LOCSignInExternalNotif">{0} client zal nu openen. Log in a.u.b. en sluit dan dit bericht.</x:String>
+    <x:String x:Key="LOCSignInExternalWaitMessage">Wachten op aanmelding van gebruiker, sluit dit alstublieft af wanneer je klaar bent…</x:String>
+    <x:String x:Key="LOCInstallDirNotFoundError">Installatiemap van spel niet gevonden.</x:String>
+    <x:String x:Key="LOCInvalidGameActionSettings">Ongeldige spel-actie configuratie.</x:String>
+    <x:String x:Key="LOCTroubleShootingAccountLink">Probleemoplossingen account sync</x:String>
+    <x:String x:Key="LOCTroubleShootingIssues">Probleemoplossing</x:String>
+    <x:String x:Key="LOCRenameItem">Item hernoemen</x:String>
+    <x:String x:Key="LOCAddNewItem">Nieuw item toevoegen</x:String>
+    <x:String x:Key="LOCEnterName">Naam invoeren</x:String>
+    <x:String x:Key="LOCEnterNewName">Nieuwe naam invoeren</x:String>
+    <x:String x:Key="LOCPLaytimeLessThenAnHour">Minder dan een uur</x:String>
+    <x:String x:Key="LOCPLaytime1to10">1 tot 10 uur</x:String>
+    <x:String x:Key="LOCPLaytime10to100">10 tot 100 uur</x:String>
+    <x:String x:Key="LOCPLaytime100to500">100 tot 500 uur</x:String>
+    <x:String x:Key="LOCPLaytime500to1000">500 tot 1000 uur</x:String>
+    <x:String x:Key="LOCPLaytime1000plus">1000+</x:String>
+    <x:String x:Key="LOCExtInstallationRestartNotif">Playnite moet opnieuw worden opgestart om de installatie te voltooien. Wil je nu opnieuw opstarten?</x:String>
+    <x:String x:Key="LOCGeneralExtensionPackageError">Extensie is niet correct verpakt.</x:String>
+    <x:String x:Key="LOCGeneralThemePackageError">Thema is niet correct verpakt.</x:String>
+    <x:String x:Key="LOCSpecificExtensionLoadError">Extensie &quot;{0}&quot; kon niet correct geladen worden.</x:String>
+    <x:String x:Key="LOCSpecificExtensionLoadSDKError">Kan &quot;{0}&quot; extensie niet laden; huidige versie van Playnite wordt niet ondersteund.</x:String>
+    <x:String x:Key="LOCSpecificThemeLoadError">Thema &quot;{0}&quot; kon niet correct geladen worden.</x:String>
+    <x:String x:Key="LOCSpecificThemeLoadSDKError">Kan &quot;{0}&quot; thema niet laden; huidige versie van Playnite wordt niet ondersteund.</x:String>
+    <x:String x:Key="LOCGeneralExtensionLoadError">Extensie kon niet correct geladen worden.</x:String>
+    <x:String x:Key="LOCGeneralThemeLoadError">Thema kon niet correct geladen worden.</x:String>
+    <x:String x:Key="LOCGeneralExtensionInstallApiVersionFails">Thema/Extensie gebruikt niet-ondersteunde API versie.</x:String>
+    <x:String x:Key="LOCGeneralExtensionInstallSuccess">Installatie is gelukt.</x:String>
+    <x:String x:Key="LOCGeneralExtensionInstallTitle">Extensie installeren?</x:String>
+    <x:String x:Key="LOCExtensionGeneric">Algemeen</x:String>
+    <x:String x:Key="LOCAddonInstallFaild">Installeren van extensie &quot;{0}&quot; mislukt.</x:String>
+    <x:String x:Key="LOCExtensionInstallFail">Extensie installeren mislukt.
+
+{0}</x:String>
+    <x:String x:Key="LOCExtensionInstallPrompt">Wilt u een nieuwe extensie installeren?
+
+{0}
+Door {1}
+Versie {2}</x:String>
+    <x:String x:Key="LOCExtensionUpdatePrompt">Wilt u de extensie &quot;{0}&quot; updaten?
+
+Huidige versie: {1}
+Nieuwe versie: {2}</x:String>
+    <x:String x:Key="LOCThemeInstallFail">Thema installeren mislukt.
+
+{0}</x:String>
+    <x:String x:Key="LOCThemeInstallPrompt">Wilt u een nieuw thema installeren?
+
+{0}
+Door {1}
+Versie {2}</x:String>
+    <x:String x:Key="LOCThemeUpdatePrompt">Wilt u thema &quot;{0}&quot; updaten?
+
+Huidige versie: {1}
+Nieuwe versie: {2}</x:String>
+    <x:String x:Key="LOCUrlNavigationMessage">Je staat op het punt Playnite te verlaten en naar de volgende webpagina te gaan met je standaard webbrowser. Wil je doorgaan?
+
+{0}
+
+</x:String>
+    <x:String x:Key="LOCGameImageSizeWarning">De geselecteerde afbeelding(en) zijn mogelijk te groot voor optimale prestaties. Het gebruik van zeer grote afbeeldingen kan leiden tot een slechtere UI-respons en meer geheugengebruik.
+
+Maximaal aanbevolen resoluties:
+Pictogrammen: {0} megapixels
+Omslagen: {1} megapixels
+Achtergronden: {2} megapixels</x:String>
+    <x:String x:Key="LOCPerformanceWarningTitle">Performantie Waarschuwing</x:String>
+    <x:String x:Key="LOCDontShowAgainTitle">Niet Opnieuw Weergeven</x:String>
+    <x:String x:Key="LOCIncompatibleDragAndDropExtensionError">Bestand met extensie {0} is niet compatibel.</x:String>
+    <x:String x:Key="LOCIncompatibleDragAndDropExtensionErrorTitle">Ongeschikte bestandsextensie </x:String>
+    <x:String x:Key="LOCLargeMediaWarningTooltip">Het geselecteerde afbeeldingsbestand is mogelijk te groot voor optimale prestaties.
+
+</x:String>
+    <x:String x:Key="LOCThemeUninstallQuestion">Weet je zeker dat je het geselecteerde thema wilt verwijderen? Verwijdering wordt in de wachtrij geplaatst tot de volgende start van de toepassing.
+
+</x:String>
+    <x:String x:Key="LOCThemeBuiltInUninstallHint">Ingebouwde thema&apos;s kunnen niet worden verwijderd.
+
+</x:String>
+    <x:String x:Key="LOCThemeUnsupported">Dit thema ondersteunt deze versie van Playnite niet.</x:String>
+    <x:String x:Key="LOCExtensionUninstallQuestion">Weet u zeker dat u de geselecteerde extensie wilt verwijderen? Verwijdering wordt in de wachtrij geplaatst tot de volgende start van de toepassing.</x:String>
+    <x:String x:Key="LOCExtensionBuiltInUninstallHint">Ingebouwde extensies kunnen niet worden verwijderd.</x:String>
+    <x:String x:Key="LOCExtensionUnsupported">Deze extensie ondersteunt deze versie van Playnite niet.</x:String>
+    <x:String x:Key="LOCExtensionInstallDir">Installatie map</x:String>
+    <x:String x:Key="LOCExtensionDataDir">Gegevensmap</x:String>
+    <x:String x:Key="LOCDiagGenerating">Diagnostiek pakket genereren...</x:String>
+    <x:String x:Key="LOCDiagUploading">Opladen diagnostiek pakket...</x:String>
+    <x:String x:Key="LOCAddFromExe">Bestand importeren</x:String>
+    <x:String x:Key="LOCWhatIsThis">Wat is dit?</x:String>
+    <x:String x:Key="LOCConfirumationAskGeneric">Weet je zeker dat je dit wilt doen?</x:String>
+    <x:String x:Key="LOCStatsTotalPlayTime">Totale speeltijd</x:String>
+    <x:String x:Key="LOCStatsAvaragePlayTime">Gemiddelde speeltijd</x:String>
+    <x:String x:Key="LOCStatsTopPlayTime">Hoogste Speeltijd</x:String>
+    <x:String x:Key="LOCStatsTotalInstallSize">Totale installatiegrootte</x:String>
+    <x:String x:Key="LOCOverviewLabel">Overzicht</x:String>
+    <x:String x:Key="LOCSidebar">Zijbalk</x:String>
+    <x:String x:Key="LOCToolsShowOnSidebar">Toon in zijbalk</x:String>
+    <x:String x:Key="LOCSettingsReset">Instellingen terugzetten</x:String>
+    <x:String x:Key="LOCSettingsDefaultResetDesc">Alle applicatie-instellingen zullen terug worden gezet naar hun standaardwaarde, met uitzondering van:
+- Database locatie
+- Import uitsluitingslijst
+- Extensie instellingen, inclusief bibliotheek-integraties
+
+De applicatie moet opnieuw opgestart worden om het proces af te ronden. Wil je de instellingen terugzetten naar de standaardwaardes?</x:String>
+    <x:String x:Key="LOCSettingsForDevelopers">Voor ontwikkelaars</x:String>
+    <x:String x:Key="LOCSettingsExternalExtensions">Externe extensies</x:String>
+    <x:String x:Key="LOCSettingsNewExternalExtensionBox">Vul volledig pad naar map in.</x:String>
+    <x:String x:Key="LOCCommonLinksAchievements">Prestaties</x:String>
+    <x:String x:Key="LOCCommonLinksForum">Forum</x:String>
+    <x:String x:Key="LOCCommonLinksNews">Nieuws</x:String>
+    <x:String x:Key="LOCCommonLinksStorePage">Winkel pagina</x:String>
+    <x:String x:Key="LOCFullscreenFirstTimeError">De initiële installatie is niet voltooid. Playnite zal nu herstarten naar Desktop Mode om de procedure te voltooien.
+
+</x:String>
+    <x:String x:Key="LOCQuickFilterRecentlyPlayed">Onlangs Gespeeld</x:String>
+    <x:String x:Key="LOCQuickFilterFavorites">Favorieten</x:String>
+    <x:String x:Key="LOCQuickFilterMostPlayed">Meest gespeeld</x:String>
+    <x:String x:Key="LOCQuickFilterAllGames">Alle</x:String>
+    <x:String x:Key="LOCGameListFiltered">Er zijn filters toegepast.</x:String>
+    <x:String x:Key="LOCGameListExtraFiltered">Er zijn aanvullende filters toegepast.</x:String>
+    <x:String x:Key="LOCGameListSearchResults">Zoekresultaten voor:</x:String>
+    <x:String x:Key="LOCItemAlreadyExists">Een item met dezelfde naam bestaat al.</x:String>
+    <x:String x:Key="LOCRandomGameLimistToFilter">Beperk de selectie tot de huidige filter</x:String>
+    <x:String x:Key="LOCRandomGamePickAnother">Kies iets anders</x:String>
+    <x:String x:Key="LOCMenuAddons">Uitbreidingen…</x:String>
+    <x:String x:Key="LOCExtensionsInstalled">Geïnstalleerd</x:String>
+    <x:String x:Key="LOCExtensionsSettings">Extensie instellingen</x:String>
+    <x:String x:Key="LOCExtensionsBrowse">Zoeken</x:String>
+    <x:String x:Key="LOCExtensionsUpdates">Updates</x:String>
+    <x:String x:Key="LOCExtensionsUpdatesCount">Updates {0}</x:String>
+    <x:String x:Key="LOCAddonsConfigMoveInfo">Beheer van geïnstalleerde extensies en thema&apos;s, inclusief hun instellingen, is verhuisd naar een nieuw &quot;Add-ons&quot; menu.</x:String>
+    <x:String x:Key="LOCLibrariesConfigWindowDescription">Alle nu geïnstalleerde bibliotheek-integratie extensies kunnen hier geconfigureerd worden.
+
+Als je extra integraties wil installeren of verwijderen, gebruik dan de &quot;Add-ons&quot; optie vanuit het hoofdmenu.</x:String>
+    <x:String x:Key="LOCAddonsThemesDesktop">Thema&apos;s Desktop</x:String>
+    <x:String x:Key="LOCAddonsThemesFullscren">Thema&apos;s Volledig Scherm</x:String>
+    <x:String x:Key="LOCAddonsSearching">Zoeken…</x:String>
+    <x:String x:Key="LOCAddonErrorNotCompatible">Add-on is niet te gebruiken met deze versie van Playnite.</x:String>
+    <x:String x:Key="LOCAddonErrorDownloadFailed">Downloaden van add-on installatie pakket mislukt.</x:String>
+    <x:String x:Key="LOCAddonErrorManifestDownloadError">Downloaden van het installatiemanifest van de add-on is mislukt.</x:String>
+    <x:String x:Key="LOCAddonChangesRestart">De toepassing moet opnieuw starten om de nieuwe instellingen toe te passen.
+</x:String>
+    <x:String x:Key="LOCAddonQueuedForInstall">Installatie van deze add-on is ingepland.</x:String>
+    <x:String x:Key="LOCAddonInstall">Installeer</x:String>
+    <x:String x:Key="LOCAddonReinstall">Opnieuw installeren</x:String>
+    <x:String x:Key="LOCAddonUninstall">Verwijder</x:String>
+    <x:String x:Key="LOCAddonAlreadyInstalled">Reeds geïnstalleerd</x:String>
+    <x:String x:Key="LOCAddonNoAddonsAvailable">Geen nieuwe extensie updates gevonden.</x:String>
+    <x:String x:Key="LOCAddonUpdateAddons">Werk add-ons bij</x:String>
+    <x:String x:Key="LOCAddonChangelogNotAvailavble">Changelog is niet beschikbaar</x:String>
+    <x:String x:Key="LOCAddonUpdateStatusDownloaded">Ingepland voor installatie</x:String>
+    <x:String x:Key="LOCAddonUpdateStatusFailed">Download mislukt</x:String>
+    <x:String x:Key="LOCAddonUpdateStatusLicenseRejected">Licentie afgewezen</x:String>
+    <x:String x:Key="LOCAddonDownloadingAddon">Downloaden {0}</x:String>
+    <x:String x:Key="LOCAddonLookingForUpdates">Aan het zoeken naar add-on updates...</x:String>
+    <x:String x:Key="LOCAppLookingForUpdates">Op zoek naar programma-updates…</x:String>
+    <x:String x:Key="LOCAddonUpdatesAvailable">Eén of meerdere add-on updates zijn beschikbaar</x:String>
+    <x:String x:Key="LOCAddonSelectToUpdate">Selecteer items om te updaten</x:String>
+    <x:String x:Key="LOCAddonDevReferenceLoaded">Extensie ontwikkelings-instantie</x:String>
+    <x:String x:Key="LOCAddonLicenseWindowTitle">{0} licentieovereenkomst</x:String>
+    <x:String x:Key="LOCLicenseAccept">Accepteer</x:String>
+    <x:String x:Key="LOCLicenseDecline">Weigeren</x:String>
+    <x:String x:Key="LOCIncludePluginGameActions">Speel acties van de bibliotheek overnemen</x:String>
+    <x:String x:Key="LOCSelectActionTitle">Actie selecteren</x:String>
+    <x:String x:Key="LOCActionTrackingMode">Speeltijd volgmodus</x:String>
+    <x:String x:Key="LOCActionTrackingPath">Trackingpad</x:String>
+    <x:String x:Key="LOCActionTrackingTrackingDelay">Initiële trackingvertraging</x:String>
+    <x:String x:Key="LOCActionTrackingFrequency">Trackingfrequentie</x:String>
+    <x:String x:Key="LOCGameActionTypeLink">Link</x:String>
+    <x:String x:Key="LOCGameActionTypeFile">Bestand</x:String>
+    <x:String x:Key="LOCGameActionTypeEmulator">Emulator</x:String>
+    <x:String x:Key="LOCGameActionTypeScript">Script</x:String>
+    <x:String x:Key="LOCActionTrackingModeDefault">Standaard</x:String>
+    <x:String x:Key="LOCActionTrackingModeProcess">Proces</x:String>
+    <x:String x:Key="LOCActionTrackingModeDirectory">Map</x:String>
+    <x:String x:Key="LOCActionTrackingOriginalProcess">Oorspronkelijk proces</x:String>
+    <x:String x:Key="LOCActionTrackingProcessName">Procesnaam</x:String>
+    <x:String x:Key="LOCDevelTraceLogEnable">Log trace berichten</x:String>
+    <x:String x:Key="LOCMultiEditOverwriteWarning">De volgende wijzigingen overschrijven data voor alle geselecteerde spellen!</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeNone">Geen</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeUniform">Uniform</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeBetweenItemsOnly">Alleen items</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeStartAndEndOnly">Alleen start en eind</x:String>
+    <x:String x:Key="LOCScrollingSensitivity">Scrollgevoeligheid</x:String>
+    <x:String x:Key="LOCSmoothScrolling">Vloeiend scrollen</x:String>
+    <x:String x:Key="LOCSmoothScrollingSpeed">Animatiesnelheid</x:String>
+    <x:String x:Key="LOCAskRemoveItemTitle">Item verwijderen?</x:String>
+    <x:String x:Key="LOCAskRemoveItemMessage">Weet je zeker dat je dit item wil verwijderen?</x:String>
+    <x:String x:Key="LOCSettingsTopPanelItems">Toon knoppen op het top-paneel:</x:String>
+    <x:String x:Key="LOCSettingsTopPanelGeneralViewItem">Algemene weergaveinstellingen</x:String>
+    <x:String x:Key="LOCSettingsTopPanelGroupingItem">Groeperingsinstellingen</x:String>
+    <x:String x:Key="LOCSettingsTopPanelSortingItem">Sorteerinstellingen</x:String>
+    <x:String x:Key="LOCSettingsTopPanelFilterPresetsItem">Filter presets</x:String>
+    <x:String x:Key="LOCTopPanelPluginPanelPosition">Plugin items positie</x:String>
+    <x:String x:Key="LOCTopPanelSeparatorWidth">Sectie scheidingslijn breedte</x:String>
+    <x:String x:Key="LOCTopPanelMainButtonMove">Verhuis hoofdmenuknop naar de zijbalk</x:String>
+    <x:String x:Key="LOCTopPanelExplorerSwitch">Verkenningspaneel</x:String>
+    <x:String x:Key="LOCTopPanelSelectRandomGameButton">Kies een willekeurig spel</x:String>
+    <x:String x:Key="LOCTopPanelViewSelectRandomGameButton">Willekeurige spelkiezer bekijken</x:String>
+    <x:String x:Key="LOCTopPanelViewSelectRandomGameButtonTooltip">Kies een willekeurig spel uit de zichtbare lijst</x:String>
+    <x:String x:Key="LOCFilterPresetSaveViewOptions">Bewaar sorteer- en groeperingsinstellingen</x:String>
+    <x:String x:Key="LOCFilterPresetShowOnFSTopPanel">Toon als snelfilter in Fullscreen modus</x:String>
+    <x:String x:Key="LOCInPast7Days">In de afgelopen 7 dagen</x:String>
+    <x:String x:Key="LOCInPast31Days">In de afgelopen 31 dagen</x:String>
+    <x:String x:Key="LOCInPast365Days">In de afgelopen 365 dagen</x:String>
+    <x:String x:Key="LOCMoreThan365DaysAgo">Meer dan 365 dagen geleden</x:String>
+    <x:String x:Key="LOCConfigure">Configureer</x:String>
+    <x:String x:Key="LOCFilterPresetSave">Voorkeursinstellingen opslaan</x:String>
+    <x:String x:Key="LOCSettingsMinimizeAfterStartingGame">Minimaliseer na spel opstarten</x:String>
+    <x:String x:Key="LOCSettingsMinimizeAfterStartingGameDescription">Minimaliseer Playnite nadat een spel opgestart wordt
+
+Dit uitschakelen kan leiden tot problemen waarbij spellen geen invoer-focus krijgen bij het opstarten!</x:String>
+    <x:String x:Key="LOCSettingsFontSize">Lettertype grootte</x:String>
+    <x:String x:Key="LOCSettingsFontSizeSmall">Klein lettertype grootte</x:String>
+    <x:String x:Key="LOCSettingsXInputProcessing">Ondersteuning voor spelcontroller</x:String>
+    <x:String x:Key="LOCSettingsXInputProcessingDescription">Als dit uitgeschakeld is accepteert Playnite geen spelcontrollerinvoer.
+
+Schakel dit uit als je tools gebruikt die spelcontrollerinvoer vertalen naar muis- of toetsenbordinvoer en je dubbele invoer krijgt in Playnite.</x:String>
+    <x:String x:Key="LOCSettingsShowItemsMainMenuHeader">Toon items in het hoofdmenu:</x:String>
+    <x:String x:Key="LOCSettingsSwapMainViewXAButtons">Omgekeerde X/A hoofdweergave knop binding</x:String>
+    <x:String x:Key="LOCSettingsSwapMainViewXAButtonsDescriptions">Verwisselt de knoppen voor het starten van een spel en het tonen van de speldetailpagina in de hoofdweergave.</x:String>
+    <x:String x:Key="LOCSettingsSwapConfirmCancelButtons">Verwissel bevestigings- en annulerings-knop</x:String>
+    <x:String x:Key="LOCSettingsSwapConfirmCancelButtonsDescriptions">Knoppen A/B omkeren voor bevestiging en annulering.</x:String>
+    <x:String x:Key="LOCSettingsPrimaryControllerOnly">Alleen primaire controller</x:String>
+    <x:String x:Key="LOCSettingsPrimaryControllerOnlyDescription">Accepteer alleen inputs van primaire controller wanneer ingeschakeld.</x:String>
+    <x:String x:Key="LOCSettingsRefocusOnGuidButton">Guide knop focust Playnite</x:String>
+    <x:String x:Key="LOCSettingsInterfaceVolume">Interface volume</x:String>
+    <x:String x:Key="LOCSettingsMusiVolume">Achtergrondvolume</x:String>
+    <x:String x:Key="LOCSettingsMuteBackground">Dempen in de achtergrond</x:String>
+    <x:String x:Key="LOCErrorAudioInterfaceInit">Audio-interface initialiseren mislukt</x:String>
+    <x:String x:Key="LOCSettingsAudioOutputApi">Uitvoer API</x:String>
+    <x:String x:Key="LOCSettingsAudioOutputApiDescription">API voor het uitvoeren van audio. Wijzigen als je problemen ondervindt met geluid.</x:String>
+    <x:String x:Key="LOCSettingsFSSectionGeneral">Algemeen</x:String>
+    <x:String x:Key="LOCSettingsFSSectionVisuals">Visueel</x:String>
+    <x:String x:Key="LOCSettingsFSSectionAudio">Audio</x:String>
+    <x:String x:Key="LOCSettingsFSSectionLayout">Layout</x:String>
+    <x:String x:Key="LOCSettingsFSSectionMenus">Menu&apos;s</x:String>
+    <x:String x:Key="LOCSettingsFSSection">Invoer</x:String>
+    <x:String x:Key="LOCGameIsStarting">{0} start...</x:String>
+    <x:String x:Key="LOCGameIsRunning">{0} draait...</x:String>
+    <x:String x:Key="LOCTextInputCapitalize">Hoofdletters</x:String>
+    <x:String x:Key="LOCTextInputSpace">Spatiebalk</x:String>
+    <x:String x:Key="LOCSettingsImageScalerMode">Afbeelding rendering scaler</x:String>
+    <x:String x:Key="LOCSettingsImageScalingAlternative">Alternatief</x:String>
+    <x:String x:Key="LOCSettingsImageScalingBalanced">Gebalanceerd</x:String>
+    <x:String x:Key="LOCSettingsImageScalingQuality">Kwaliteit</x:String>
+    <x:String x:Key="LOCSettingsImageScalerModeTooltip">Kwaliteit:
+Beste beeldkwaliteit, traag, hoog geheugengebruik.
+
+Gebalanceerd:
+Goede kwaliteit, snel, laag geheugengebruik.
+
+Alternatief:
+Betere kwaliteit, gemiddelde snelheid, laag geheugengebruik.</x:String>
+    <x:String x:Key="LOCSelectFileTooltip">Selecteer bestand...</x:String>
+    <x:String x:Key="LOCSelectDirectoryTooltip">Selecteer map...</x:String>
+    <x:String x:Key="LOCStartupScript">Opstartscript</x:String>
+    <x:String x:Key="LOCAddonPerfNotice">Hou er rekening mee dat zowel extensies als thema&apos;s in grote mate Playnite&apos;s prestaties, stabiliteit en veiligheid kunnen beïnvloeden.
+
+Als je problemen ervaart na het installeren van een thema of extensie, probeer die dan eerst uit te schakelen of te de-installeren om te kijken of dat de oorzaak is.</x:String>
+    <x:String x:Key="LOCGameActionSelectOnStart">Kiezen bij opstarten</x:String>
+    <x:String x:Key="LOCEmulatorSelectOnStart">Kiezen bij opstarten</x:String>
+    <x:String x:Key="LOCEmulatorBuiltInProfiles">Ingebouwde profielen</x:String>
+    <x:String x:Key="LOCEmulatorBuiltInProfile">Ingebouwd profiel</x:String>
+    <x:String x:Key="LOCEmulatorCustomProfiles">Aangepaste profielen</x:String>
+    <x:String x:Key="LOCEmulatorCustomProfile">Aangepast profiel</x:String>
+    <x:String x:Key="LOCEmulatorFunctionHandledByScript">Afgehandeld door een ingebouwd script</x:String>
+    <x:String x:Key="LOCEmulatorSpec">Emulatorspecificatie</x:String>
+    <x:String x:Key="LOCPlatformSpec">Platformspecificatie</x:String>
+    <x:String x:Key="LOCRegionSpec">Regiospecificatie</x:String>
+    <x:String x:Key="LOCEmulatorPreScriptDescription">Uitvoeren vóór het starten van de emulator</x:String>
+    <x:String x:Key="LOCEmulatorPostScriptDescription">Uitvoeren nadat de emulator gestart is</x:String>
+    <x:String x:Key="LOCEmulatorStartedScriptDescription">Uitvoeren na het afsluiten van de emulator</x:String>
+    <x:String x:Key="LOCErrorEmulatorExecutableNotFound">Uitvoerbaar bestand van de emulator niet gevonden.</x:String>
+    <x:String x:Key="LOCErrorEmulatorSpecificationNotFound">Emulatorspecificatie niet gevonden.</x:String>
+    <x:String x:Key="LOCErrorEmulatorStartupScriptNotFound">Emulator opstartscript niet gevonden.</x:String>
+    <x:String x:Key="LOCSplitEmuImportSplitGames">Splitsen als aparte spellen</x:String>
+    <x:String x:Key="LOCSplitEmuImportMergeGames">Samenvoegen tot één spel</x:String>
+    <x:String x:Key="LOCEmuImportAssignPlatform">Platform instellen</x:String>
+    <x:String x:Key="LOCEmuImportAssignRegion">Regio instellen</x:String>
+    <x:String x:Key="LOCEmuScanDirectory">Map scannen</x:String>
+    <x:String x:Key="LOCEmuScanConfigurations">Scan instellingen</x:String>
+    <x:String x:Key="LOCEmuCrcExcludeFileTypes">Patronen uitsluiten van checksum-scan</x:String>
+    <x:String x:Key="LOCEmuCrcExcludeFileTypesTooltip">Bestanden die overeenkomen met de patronen zullen niet gescand worden op hun checksum en zullen gematcht worden op hun bestandsnaam. Zie emulator-hulppagina voor meer informatie.</x:String>
+    <x:String x:Key="LOCEmuScanEmulator">Scan met emulator</x:String>
+    <x:String x:Key="LOCScanConfigNameError">Naam is verplicht bij het opslaan van een nieuwe configuratie.</x:String>
+    <x:String x:Key="LOCScanConfigNoEmulatorError">Emulator of emulatorprofiel is niet ingesteld.</x:String>
+    <x:String x:Key="LOCScanConfigDirectoryError">Map om te scannen is niet opgegeven of bestaat niet.</x:String>
+    <x:String x:Key="LOCScanConfigError">Scan-configuratie is niet goed ingesteld.</x:String>
+    <x:String x:Key="LOCEmuScanIncludeGlobalUpdate">Betrek bij bulk scan auto-scan</x:String>
+    <x:String x:Key="LOCEmulatorScanFailed">Map scannen op emulators mislukt.</x:String>
+    <x:String x:Key="LOCEmulatedGameScanFailed">Map(pen) scannen op geëmuleerde spellen mislukt.</x:String>
+    <x:String x:Key="LOCEmuScanHideImported">Geïmporteerde verbergen</x:String>
+    <x:String x:Key="LOCEmuImportProfilesToImportHeader">Profielen om te importeren:</x:String>
+    <x:String x:Key="LOCEmuAutoScanConfigurations">Auto-scan instellingen</x:String>
+    <x:String x:Key="LOCEmuSaveScanConfig">Opslaan als auto-scan configuratie</x:String>
+    <x:String x:Key="LOCEmuSaveScanConfigTooltip">Slaat de configuratie op voor later gebruik bij een bibliotheekupdate. Opgeslagen configuraties kunnen beheerd worden via het &quot;Configureer Emulators&quot; menu.</x:String>
+    <x:String x:Key="LOCEmuImportWithRelativePaths">Importeren via relatieve paden</x:String>
+    <x:String x:Key="LOCEmuImportWithRelativePathsTooltip">Indien mogelijk spelbestanden importeren met behulp van relatieve paden ten opzichte van Playnite&apos;s installatiemap of de emulator&apos;s installatiemap.</x:String>
+    <x:String x:Key="LOCEmuImportScanSubfolders">Submappen scannen</x:String>
+    <x:String x:Key="LOCEmuImportScanInsideArchives">Scan in archieven</x:String>
+    <x:String x:Key="LOCEmuMergeRelatedFiles">Samenvoegen van gerelateerde bestanden</x:String>
+    <x:String x:Key="LOCEmuMergeRelatedFilesTooltip">Voeg gerelateerde spelbestanden samen, net als individuele spelschijven, onder één spel-invoer.</x:String>
+    <x:String x:Key="LOCEmuAddScanner">Scanner toevoegen</x:String>
+    <x:String x:Key="LOCEmuAddSavedScanner">Opgeslagen scanner toevoegen</x:String>
+    <x:String x:Key="LOCStartScan">Scan starten</x:String>
+    <x:String x:Key="LOCEmuImportDirectoryConfigDesc">Voeg scanconfiguratie(s) met emulators toe om specifieke mappen te scannen. Zorg ervoor dat emulators goed geconfigureerd zijn voordat je spellen importeert (via het Bibliotheek -&gt; Configureer Emulators menu).</x:String>
+    <x:String x:Key="LOCCompletionStatusDefaultStatusDesc">Standaardstatus die toegewezen wordt aan nieuwe spellen</x:String>
+    <x:String x:Key="LOCCompletionStatusPlayedStatusDesc">Status die toegewezen wordt aan spellen die voor het eerst gespeeld zijn</x:String>
+    <x:String x:Key="LOCPowerShellCreationError">Kon de Powershell script runtime niet initializeren. Als u Windows 7 gebruikt, probeer dan PowerShell 5.1 (opnieuw) te installeren om dit op te lossen.</x:String>
+    <x:String x:Key="LOCFilterPresetNameConflict">Filter preset met de opgegeven naam bestaat al. Preset updaten met nieuwe instellingen?</x:String>
+    <x:String x:Key="LOCSortingNameAutofill">Automatisch ontbrekende sorteernamen invullen voor spellen die in batch toegevoegd of bewerkt zijn</x:String>
+    <x:String x:Key="LOCSortingNameAutofillTooltip">Als je een spel bewerkt, voeg dan spellen toe via een bibliotheek update, een scan van een emulator map of een normale map, vul automatisch het &quot;Sorteernaam&quot; veld in met een betere weergave van de naam van het spel. Bijvoorbeeld &quot;The Witcher 3&quot; krijgt een Sorteernaam van &quot;Witcher 03&quot;. Dit zal nooit een sorteernaam instellen die niet verschilt van de spelnaam, en het zal alleen automatisch sorteernamen bijwerken die leeg zijn.</x:String>
+    <x:String x:Key="LOCSortingNameRemovedArticles">Deze woorden zullen verwijderd worden van het begin van de automatisch ingevulde sorteernaam:</x:String>
+    <x:String x:Key="LOCSortingNameRemovedArticlesTooltip">Gebruik dit voor het negeren van woorden aan het begin van een naam voor sorteerdoeleinden. De standaardwaarde is &quot;The&quot;, &quot;An&quot; en &quot;A&quot;.</x:String>
+    <x:String x:Key="LOCSortingNameAutofillButton">Vul Sorteernaam voor spellen zonder</x:String>
+    <x:String x:Key="LOCSettingsSortingLabel">Sortering</x:String>
+    <x:String x:Key="LOCSortingNameAutofillProgress">Vullen Sorteernaam waardes…</x:String>
+    <x:String x:Key="LOCNahimicServiceWarning">Nahimic service is gedetecteerd op dit systeem. Van deze service is bekend dat hij rendering problemen bij Playnite (en andere apps) kan veroorzaken.
+
+Als je grafische corruptie of andere rendering problemen in Playnite ervaart, bevelen we aan deze service uit te zetten of Nahimic service compleet te de-installeren.
+
+Meer informatie is te vinden op https://playnite.link/nahimicsucks</x:String>
+    <x:String x:Key="LOCElevatedProcessWarning">Playnite draait nu met administrator rechten. Dit is niet aanbevolen sinds dit ook verhoogde rechten geeft aan alle geïnstalleerde extensies en alle spellen/applicaties die vanuit Playnite gestart worden!
+
+Meer informatie op https://playnite.link/adminfaq</x:String>
+    <x:String x:Key="LOCElevatedProcessWarningShowOption">Toon waarschuwing als Playnite met administrator rechten draait</x:String>
+    <x:String x:Key="LOCInstallSizeScanUseSizeOnDiskOption">Krijg de werkelijke grootte op de schijf bij het berekenen van de grootte van spellen</x:String>
+    <x:String x:Key="LOCInstallSizeScanUseSizeOnDiskOptionTooltip">Indien ingeschakeld, zijn scans langzamer en krijgen ze de werkelijke grootte die bestanden innemen op de schijf.
+Indien uitgeschakeld, zijn scans sneller en zal de grootte van de bestanden zelf worden gebruikt.</x:String>
+    <x:String x:Key="LOCWarningBlacklistedExtensions">De volgende extensie(s) zijn gerapporteerd als mogelijk problematisch, door grote stabiliteits- of prestatie-impact of beveiligingsproblemen. We raden sterk aan deze te verwijderen:
+
+{0}
+</x:String>
+    <x:String x:Key="LOCEmuExcludeOnlineFiles">Online bestanden uitsluiten van scan</x:String>
+    <x:String x:Key="LOCEmuExcludeOnlineFilesTooltip">Bestanden in cloud opslag worden niet gescand en geïmporteerd als deze niet lokaal beschikbaar zijn.
+Alleen ondersteund voor: Google Drive, DropBox, OneDrive </x:String>
+    <x:String x:Key="LOCEmuUseSimplifiedOnlineFileScan">Scan met versimpelde methode zonder bestandsinhoud te bekijken</x:String>
+    <x:String x:Key="LOCEmuUseSimplifiedOnlineFileScanTooltip">Bestanden worden geïmporteerd met een minder accurate methode die geen bestandsinhoud op de lokale schijf vereist.</x:String>
+    <x:String x:Key="LOCMetadatSetAllFieldsToValue">Op alle toepassen</x:String>
+    <x:String x:Key="LOCOverrideInstallState">Installatiestatus overschrijven</x:String>
+    <x:String x:Key="LOCOverrideInstallStateTooltip">Wanneer ingesteld, negeert Playnite de installatiestatus (inclusief installatie directory) die is ingesteld door de integratieplugin die dit spel importeert.
+        
+Deze optie werkt mogelijk niet volledig met plugins die een specifieke game import methode gebruiken, tenzij ze ook rekening houden met deze overschrijving.</x:String>
+    <x:String x:Key="LOCOptionOnlyManually">Alleen handmatig</x:String>
+    <x:String x:Key="LOCOptionOnceADay">Eens per dag</x:String>
+    <x:String x:Key="LOCOptionOnceAWeek">Eens per week</x:String>
+    <x:String x:Key="LOCOptionOnEveryStartup">Bij elke start</x:String>
+    <x:String x:Key="LOCCheckProgramUpdates">Controleren op programma-updates</x:String>
+    <x:String x:Key="LOCCheckAddonUpdates">Controleren op add-on updates</x:String>
+    <x:String x:Key="LOCCheckLibraryUpdates">Bibliotheken bijwerken</x:String>
+    <x:String x:Key="LOCCheckEmulatedLibraryUpdates">Scan emulatiemappen</x:String>
+    <x:String x:Key="LOCStatsIncludeHidden">Inclusief verborgen spellen</x:String>
+    <x:String x:Key="LOCMenuSetFields">Velden bewerken</x:String>
+    <x:String x:Key="LOCItemSelectionSelectDeselectAll">Selecteer / Deselecteer alle</x:String>
+    <x:String x:Key="LOCOpen">Open</x:String>
+    <x:String x:Key="LOCActivate">Activeren</x:String>
+    <x:String x:Key="LOCAssign">Toewijzen</x:String>
+    <x:String x:Key="LOCDefaultSearchDescription">Begin met typen om een spel te zoeken... [F1] voor hulp</x:String>
+    <x:String x:Key="LOCDefaultSearchHint">Starten met # toont een lijst met beschikbare commando&apos;s.
+Starten met / toont een lijst met beschikbare zoekaanbieders/plugins.
+Typt zoekwoord en eindigen met SPATIE schakelt direct naar die zoekopdracht.
+
+TAB: switch actie
+ENTER: activeer geselecteerde actie
+SHIFT-ENTER: open item menu</x:String>
+    <x:String x:Key="LOCSearchFilterUninstalled">Inclusief gedeïnstalleerde spellen</x:String>
+    <x:String x:Key="LOCSearchFilterHidden">Inclusief verborgen spellen</x:String>
+    <x:String x:Key="LOCSearchFilterUninstalledIncluded">Niet geïnstalleerde spellen inbegrepen</x:String>
+    <x:String x:Key="LOCSearchFilterUninstalledExcluded">Niet-geïnstalleerde spellen uitgesloten</x:String>
+    <x:String x:Key="LOCSearchFilterHiddenIncluded">Inclusief verborgen spellen</x:String>
+    <x:String x:Key="LOCSearchFilterHiddenalledExcluded">Exclusief verborgen spellen</x:String>
+    <x:String x:Key="LOCGameSearchItemActionPlay">Spelen of installeren</x:String>
+    <x:String x:Key="LOCGameSearchItemActionSwitchTo">Ga naar details</x:String>
+    <x:String x:Key="LOCGameSearchItemActionOpenMenu">Spelmenu</x:String>
+    <x:String x:Key="LOCGameSearchItemActionEdit">Bewerk spel</x:String>
+    <x:String x:Key="LOCOpenSearch">Open zoeken</x:String>
+    <x:String x:Key="LOCTopPanelSearchBox">Zoekbalk</x:String>
+    <x:String x:Key="LOCTopPanelSearchButton">Zoekknop</x:String>
+    <x:String x:Key="LOCSearchSettingsPrimaryAction">Primaire spelactie</x:String>
+    <x:String x:Key="LOCSearchSettingsSecondaryAction">Primaire spelactie</x:String>
+    <x:String x:Key="LOCSearchSettingsKeyboardOpenSearch">CTRL-F opent globale zoekopdracht in plaats van de focus op het zoekvak</x:String>
+    <x:String x:Key="LOCSearchSettingsSaveFilter">Spelfilter instellingen tussen zoeksessies opslaan</x:String>
+    <x:String x:Key="LOCSearchSettingsSearchProviders">Zoekmachines</x:String>
+    <x:String x:Key="LOCSearchSettingsDefaultKeyword">Standaard trefwoorden</x:String>
+    <x:String x:Key="LOCSearchSettingsCustomKeyword">Aangepast trefwoord</x:String>
+    <x:String x:Key="LOCSearchSettingsSystemWideShortcut">Systeemwijde snelkoppeling</x:String>
+    <x:String x:Key="LOCSearchTitle">Zoeken in Playnite</x:String>
+    <x:String x:Key="LOCExtensionSettingsMenu">Extensie instelling</x:String>
+    <x:String x:Key="LOCExclusions">Uitsluitingen</x:String>
+    <x:String x:Key="LOCEmuScannerExcludedFiles">Uitgesloten bestanden ten opzichte van de scan map</x:String>
+    <x:String x:Key="LOCEmuScannerExcludedFolders">Uitgesloten mappen ten opzichte van de scan map</x:String>
+    <x:String x:Key="LOCEmuImportAddROMExclusionList">Bestand toevoegen aan uitsluitingslijst</x:String>
+    <x:String x:Key="LOCEmuImportAddFolderExclusionList">Map toevoegen aan uitsluitingslijst</x:String>
+    <x:String x:Key="LOCEmuExclusionNoConfigError">Uitsluitingen kunnen alleen worden toegevoegd aan de configuraties van de opgeslagen scanner.</x:String>
+    <x:String x:Key="LOCEmuExclusionAddedMessage">Uitsluitingen zijn toegevoegd aan de &quot;{0}&quot; scanner.</x:String>
+    <x:String x:Key="LOCEmuOverridePlatform">Platform overschrijven</x:String>
+    <x:String x:Key="LOCEmuOverridePlatformTooltip">Wanneer ingesteld, zal scanner dit platform toewijzen aan alle spellen, en de automatisch gedetecteerde platformen overschrijven.</x:String>
+    <x:String x:Key="LOCSearchIncludeCommandsInDefault">Opdrachten opnemen in standaard zoeken</x:String>
+    <x:String x:Key="LOCSearchIncludeCommandsInDefaultTooltip">Indien uitgeschakeld, zullen commando&apos;s niet worden opgenomen in de standaard zoekopdracht totdat # prefix is gebruikt.</x:String>
+    <x:String x:Key="NameFilterUseFuzzyMatching">Fuzzy matching in naam filter gebruiken</x:String>
+    <x:String x:Key="NameFilterUseFuzzyMatchingTooltip">Wanneer ingeschakeld, zal de naam filter gelijk zijn aan de spelnamen zoals globale zoekopdrachten.
+Strikte matching kan op individuele gevallen worden afgedwongen door een filter met een !</x:String>
+    <x:String x:Key="LOCSearchViewGameFieldOptions">Velden die worden weergegeven voor spellen in zoekresultaten:</x:String>
+    <x:String x:Key="LOCHiddenStatus">Verborgen Status</x:String>
+    <x:String x:Key="LOCBackupCancelled">Gegevens back-up geannuleerd</x:String>
+    <x:String x:Key="LOCBackupFailed">Gegevens back-up mislukt.</x:String>
+    <x:String x:Key="LOCBackupErrorTitle">Fout in data back-up</x:String>
+    <x:String x:Key="LOCBackupProgress">Gegevens back-up bezig...</x:String>
+    <x:String x:Key="LOCBackupRestoreProgress">Data herstellen van back-up...</x:String>
+    <x:String x:Key="LOCBackupRestoreFailed">Gegevens herstellen van back-up mislukt.</x:String>
+    <x:String x:Key="LOCBackupOptionSettings">Instellingen</x:String>
+    <x:String x:Key="LOCBackupOptionLibrary">Bibliotheek</x:String>
+    <x:String x:Key="LOCBackupOptionGameMedia">Spelbibliotheekmedia</x:String>
+    <x:String x:Key="LOCBackupOptionExtensions">Geïnstalleerde Extensies</x:String>
+    <x:String x:Key="LOCBackupOptionExtensionsData">Extensiedata</x:String>
+    <x:String x:Key="LOCBackupOptionThemes">Geïnstalleerde Thema&apos;s</x:String>
+    <x:String x:Key="LOCBackupRestoreMessage">Selecteer de data te herstellen vanuit het opgegeven back-upbestand.
+    
+Playnite zal automatisch herstarten om de backup te herstellen.</x:String>
+    <x:String x:Key="LOCBackupDataBackupMessage">Selecteer items om op te nemen in data backup. Applicatieinstellingen en gamebibliotheek zijn standaard inbegrepen.
+    
+Playnite zal automatisch herstarten om het back-upproces te starten.</x:String>
+    <x:String x:Key="LOCSettingsEnableAutomaticBackup">Automatische data-back-up</x:String>
+    <x:String x:Key="LOCSettingsAutoBackupFrequency">Automatische back-up frequentie</x:String>
+    <x:String x:Key="LOCSettingsBackupFolder">Back-up map</x:String>
+    <x:String x:Key="LOCSettingsRotatingBackups">Roterende back-ups</x:String>
+    <x:String x:Key="LOCSettingsAutoBackupIncludeItems">Aanvullende gegevens toevoegen:</x:String>
+    <x:String x:Key="LOCSettingsNoBackupDirSpecifiedError">Reservekopiemap moet worden ingesteld als automatische back-up is ingeschakeld.</x:String>
+    <x:String x:Key="LOCUpdateNotifyOnlyPatches">Toon alleen meldingen voor patch releases</x:String>
+    <x:String x:Key="LOCUpdateNotifyOnlyPatchesToolip">Wanneer ingeschakeld, zullen alleen updates die beschikbaar zijn voor momenteel geïnstalleerde hoofdrelease resulteren in een update notificatie.
+Nieuwe grote releases resulteren niet in een update notificatie.</x:String>
+    <x:String x:Key="LOCSettingsPastWeekRelativeFormat">Gebruik relatieve datums voor de afgelopen week</x:String>
+    <x:String x:Key="LOCSettingsPastWeekRelativeFormatTooltip">Gebruik relatieve datums in &quot;Vandaag&quot;, &quot;gisteren&quot; etc. formaat als de datum minder dan een week oud is.
+    
+De opgegeven datumnotatie zal worden gebruikt voor alle andere datums.</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearch">Webafbeelding zoeken</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearchIconTerm">Pictogramafbeelding zoekstring</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearchCoverTerm">Zoekstring omslagfoto</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearchBackground">Zoekstring voor achtergrondafbeelding</x:String>
+    <x:String x:Key="LOCGettingsAddonInformation">Add-on informatie verkrijgen...</x:String>
+    <x:String x:Key="LOCNoMetadataSource">Geen metadatabron beschikbaar</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettings">Speel Actie instellingen</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettingsScanner">Instellingen voor scanner gebruiken</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettingsSelectProfile">Selecteer profiel bij opstarten</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettingsSelectEmulator">Selecteer emulator bij het opstarten</x:String>
+    <x:String x:Key="LOCAutomatic">Automatisch</x:String>
+    <x:String x:Key="LOCAlwaysOn">Altijd aan</x:String>
+    <x:String x:Key="LOCAlwaysOff">Altijd uit</x:String>
+    <x:String x:Key="LOCSettingsAccessibilityInterface">Toegankelijkheid (schermlezer) ondersteuning</x:String>
+    <x:String x:Key="LOCApplicationMenu">Applicatie menu</x:String>
+    <x:String x:Key="LOCGameMenu">Spel menu</x:String>
+    <x:String x:Key="LOCProgramFolder">Programma map</x:String>
+    <x:String x:Key="LOCUserDataFolder">Gebruikers data locatie</x:String>
+    <x:String x:Key="LOCDBCorruptionCrashMessage">Corruptie bibliotheekbestand is gedetecteerd, Playnite wordt nu afgesloten.
+    
+Open het nieuwe probleem op Playnite&apos;s GitHub-pagina met een verzoek om corruptie in je bestanden op te lossen.</x:String>
+    <x:String x:Key="LOCUnsavedChangesAskMessage">Wil je de wijzigingen opslaan?</x:String>
+    <x:String x:Key="LOCPortableInstallation">Draagbare installatie</x:String>
+    <x:String x:Key="LOCNoControllersDetected">Geen controllers gedetecteerd</x:String>
+</ResourceDictionary>

@@ -18,10 +18,13 @@ public sealed class RuntimeThemeManager
     private readonly LooseXamlLoader loader;
     private readonly List<ResourceDictionary> activeThemeDictionaries = new();
     private readonly List<Styles> activeThemeStyles = new();
-    private ResourceDictionary activeLanguage;
+    private readonly List<ResourceDictionary> activeLanguages = new();
 
     public IReadOnlyList<ResourceDictionary> ActiveThemeDictionaries => activeThemeDictionaries;
-    public ResourceDictionary ActiveLanguage => activeLanguage;
+
+    // The effective (highest-priority) language dictionary, i.e. the selected
+    // culture overlay when one is active, otherwise the English base.
+    public ResourceDictionary ActiveLanguage => activeLanguages.Count > 0 ? activeLanguages[^1] : null;
 
     public RuntimeThemeManager(Application application, Assembly controlsAssembly = null)
     {
@@ -80,41 +83,36 @@ public sealed class RuntimeThemeManager
         activeThemeStyles.AddRange(styles);
     }
 
-    public void ApplyLanguage(string languageDictionaryPath)
+    public void ApplyLanguage(string languageDictionaryPath) =>
+        ApplyLanguage(new[] { languageDictionaryPath });
+
+    /// <summary>
+    /// Applies an ordered set of language dictionaries, lowest priority first
+    /// (e.g. shell keys, then the English corpus base, then the selected culture
+    /// overlay). Later dictionaries win, so untranslated keys fall back to the
+    /// English base. All files are parsed before the active language is swapped.
+    /// </summary>
+    public void ApplyLanguage(IReadOnlyList<string> languageDictionaryPaths)
     {
         Dispatcher.UIThread.VerifyAccess();
-        var language = loader.LoadFile<ResourceDictionary>(languageDictionaryPath);
-        var previousLanguage = activeLanguage;
-        var languageIndex = previousLanguage == null
-            ? application.Resources.MergedDictionaries.Count
-            : application.Resources.MergedDictionaries.IndexOf(previousLanguage);
-        if (languageIndex < 0)
-        {
-            languageIndex = application.Resources.MergedDictionaries.Count;
-        }
+        var languages = (languageDictionaryPaths ?? Array.Empty<string>())
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Select(loader.LoadFile<ResourceDictionary>)
+            .ToList();
+        var previousLanguages = activeLanguages.ToList();
+        var languageIndex = FindLanguageInsertionIndex(previousLanguages);
 
         try
         {
-            if (previousLanguage != null)
-            {
-                application.Resources.MergedDictionaries.Remove(previousLanguage);
-            }
-
-            application.Resources.MergedDictionaries.Insert(
-                Math.Min(languageIndex, application.Resources.MergedDictionaries.Count),
-                language);
+            RemoveDictionaries(previousLanguages);
+            InsertDictionaries(languages, languageIndex);
         }
         catch (Exception applyException)
         {
             try
             {
-                application.Resources.MergedDictionaries.Remove(language);
-                if (previousLanguage != null)
-                {
-                    application.Resources.MergedDictionaries.Insert(
-                        Math.Min(languageIndex, application.Resources.MergedDictionaries.Count),
-                        previousLanguage);
-                }
+                RemoveDictionaries(languages);
+                InsertDictionaries(previousLanguages, languageIndex);
             }
             catch (Exception rollbackException)
             {
@@ -127,7 +125,19 @@ public sealed class RuntimeThemeManager
             throw;
         }
 
-        activeLanguage = language;
+        activeLanguages.Clear();
+        activeLanguages.AddRange(languages);
+    }
+
+    private int FindLanguageInsertionIndex(IReadOnlyList<ResourceDictionary> languages)
+    {
+        var indexes = languages
+            .Select(dictionary => application.Resources.MergedDictionaries.IndexOf(dictionary))
+            .Where(index => index >= 0)
+            .ToList();
+        return indexes.Count > 0
+            ? indexes.Min()
+            : application.Resources.MergedDictionaries.Count;
     }
 
     private int FindDictionaryInsertionIndex(IReadOnlyList<ResourceDictionary> dictionaries)
@@ -141,10 +151,13 @@ public sealed class RuntimeThemeManager
             return indexes.Min();
         }
 
-        var languageIndex = activeLanguage == null
-            ? -1
-            : application.Resources.MergedDictionaries.IndexOf(activeLanguage);
-        return languageIndex >= 0 ? languageIndex : application.Resources.MergedDictionaries.Count;
+        var languageIndexes = activeLanguages
+            .Select(dictionary => application.Resources.MergedDictionaries.IndexOf(dictionary))
+            .Where(index => index >= 0)
+            .ToList();
+        return languageIndexes.Count > 0
+            ? languageIndexes.Min()
+            : application.Resources.MergedDictionaries.Count;
     }
 
     private int FindStyleInsertionIndex(IReadOnlyList<Styles> styles)

@@ -638,22 +638,28 @@
 
                                     <ScrollViewer Grid.Column="1" MaxHeight="470" Padding="18,0,4,0">
                                         <StackPanel IsVisible="{Binding Settings.IsGeneralSelected}" Spacing="14">
+                                            <TextBlock Text="{DynamicResource LOCLanguageSettingsLabel}" Classes="sectionLabel" />
+                                            <ComboBox MinWidth="220"
+                                                      ItemsSource="{Binding Settings.AvailableLanguages}"
+                                                      SelectedItem="{Binding Settings.SelectedLanguage, Mode=TwoWay}" />
+
+                                            <Border Height="1" Background="#303A49" Margin="0,4" />
                                             <TextBlock Text="Window &amp; tray" Classes="sectionLabel" />
-                                            <CheckBox Content="Show tray icon"
+                                            <CheckBox Content="{DynamicResource LOCSettingsShowTray}"
                                                       IsChecked="{Binding Settings.EnableTray, Mode=TwoWay}" />
-                                            <CheckBox Content="Minimize to tray" Margin="18,0,0,0"
+                                            <CheckBox Content="{DynamicResource LOCSettingsMinimizeToTray}" Margin="18,0,0,0"
                                                       IsEnabled="{Binding Settings.TrayOptionsEnabled}"
                                                       IsChecked="{Binding Settings.MinimizeToTray, Mode=TwoWay}" />
-                                            <CheckBox Content="Close to tray" Margin="18,0,0,0"
+                                            <CheckBox Content="{DynamicResource LOCSettingsCloseToTray}" Margin="18,0,0,0"
                                                       IsEnabled="{Binding Settings.TrayOptionsEnabled}"
                                                       IsChecked="{Binding Settings.CloseToTray, Mode=TwoWay}" />
 
                                             <Border Height="1" Background="#303A49" Margin="0,4" />
                                             <TextBlock Text="Library" Classes="sectionLabel" />
-                                            <CheckBox Content="Download metadata for newly imported games"
+                                            <CheckBox Content="{DynamicResource LOCSettingsDownloadMetadataOnImport}"
                                                       IsChecked="{Binding Settings.DownloadMetadataOnImport, Mode=TwoWay}" />
                                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                                <TextBlock Text="Playtime import" VerticalAlignment="Center"
+                                                <TextBlock Text="{DynamicResource LOCSettingsPlaytimeImportMode}" VerticalAlignment="Center"
                                                            Foreground="{DynamicResource DesktopTextBrush}" />
                                                 <ComboBox MinWidth="180"
                                                           ItemsSource="{Binding Settings.PlaytimeImportModes}"

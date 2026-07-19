@@ -1,0 +1,1247 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:String x:Key="LanguageName">Български</x:String>
+    <x:String x:Key="LOCLanguageSettingsLabel">Език на Playnite</x:String>
+    <x:String x:Key="LOCExitAppLabel">Изход</x:String>
+    <x:String x:Key="LOCFilterActiveLabel">Филтърът е активен</x:String>
+    <x:String x:Key="LOCFilterInactiveLabel">Филтърът е деактивиран</x:String>
+    <x:String x:Key="LOCAditionalFilters">Допълнителни филтри</x:String>
+    <x:String x:Key="LOCFilters">Филтри</x:String>
+    <x:String x:Key="LOCFilter">Филтър</x:String>
+    <x:String x:Key="LOCInvalidDataTitle">Невалидни данни</x:String>
+    <x:String x:Key="LOCSaveChangesAskTitle">Да се запазят ли промените?</x:String>
+    <x:String x:Key="LOCAboutHomePageLink">Начална страница на www.playnite.link</x:String>
+    <x:String x:Key="LOCAboutSourceLink">Изходен код в GitHub</x:String>
+    <x:String x:Key="LOCAboutCreateDiagButton">Създаване на диаг. пакет</x:String>
+    <x:String x:Key="LOCAboutSendDiagButton">Изпращане на диаг. информация</x:String>
+    <x:String x:Key="LOCAboutWindowTitle">Относно Playnite</x:String>
+    <x:String x:Key="LOCAboutAuthor">Създадено от Josef Němec</x:String>
+    <x:String x:Key="LOCCategoryWindowTitle">Присвояване на категория</x:String>
+    <x:String x:Key="LOCCategorySetButton">Задаване на категории</x:String>
+    <x:String x:Key="LOCCategoryAddCatButton">Добавяне на категория</x:String>
+    <x:String x:Key="LOCCategoryTooltip">Отметнато - Присвояване на категория
+Без отметка - Премахване на категорията
+Неопределено - Без промени (при редактиране на няколко игри)</x:String>
+    <x:String x:Key="LOCNoCategory">Няма категория</x:String>
+    <x:String x:Key="LOCNoPlatform">Няма платформа</x:String>
+    <x:String x:Key="LOCCrashWindowTitle">Ами сега! Нещо се обърка...</x:String>
+    <x:String x:Key="LOCCrashDescription">Възникна непоправима грешка.
+
+Ако искате да ни помогнете да коригираме този проблем, моля, опишете накратко действията, предприети преди срива, и след това изпратете диагностична информация. Ако сте онлайн, пакетът ще бъде качен на сървъра на Playnite за анализ.
+
+Като алтернатива можете да щракнете върху бутона „Докладване за срив“, за да създадете нов проблем с GitHub и да докладвате ръчно за срива.
+
+Благодаря ви за помощта.</x:String>
+    <x:String x:Key="LOCExtCrashDescription">Разширение &quot;{0}&quot; предизвика непоправима грешка.
+
+Препоръчваме да запазите регистрационния файл и да докладвате за проблема на разработчика на разширението. Ако проблемът продължава да се появява, деактивирайте разширението.</x:String>
+    <x:String x:Key="LOCExtCrashDescriptionFS">Разширение &quot;{0}&quot; предизвика непоправима грешка.
+
+Препоръчваме да докладвате за проблема на разработчика на разширението. Ако проблемът продължава да се появява, деактивирайте разширението.</x:String>
+    <x:String x:Key="LOCExtCrashDescriptionUknown">Неизвестно разширение или тема причиниха непоправима грешка.
+
+Препоръчваме да деактивирате добавките на трети страни, да изолирате проблемната и да докладвате за проблема на разработчика на добавката.</x:String>
+    <x:String x:Key="LOCCrashDescriptionFullscreen">Възникна непоправима грешка.
+
+Ако искате да ни помогнете да разрешим този проблем, моля, изпратете диагностична информация. Благодаря ви.</x:String>
+    <x:String x:Key="LOCCrashDisableExtension">Деактивиране на разширението</x:String>
+    <x:String x:Key="LOCCrashSaveLog">Запазване на регистрационния файл</x:String>
+    <x:String x:Key="LOCCrashSendDiag">Изпращане на диаг. информация</x:String>
+    <x:String x:Key="LOCCrashReportIssue">Докладване за срив</x:String>
+    <x:String x:Key="LOCCrashRestartPlaynite">Рестартирайте Playnite</x:String>
+    <x:String x:Key="LOCCrashRestartSafe">Рестартиране в безопасен режим</x:String>
+    <x:String x:Key="LOCCrashRestartSafeTooltip">Деактивиране на всички разширения на трети страни и използване на тема по подразбиране.</x:String>
+    <x:String x:Key="LOCCrashClosePlaynite">Излезте от Playnite</x:String>
+    <x:String x:Key="LOCCrashUserActionsDescription">Действия, предприети преди срива (на английски):</x:String>
+    <x:String x:Key="LOCLibraryManager">Мениджър на библиотека</x:String>
+    <x:String x:Key="LOCGameRemoveAskTitle">Да се премахне ли игра(и)?</x:String>
+    <x:String x:Key="LOCGameRemoveRunningError">Не може да се премахне - Играта или инсталаторът работят. </x:String>
+    <x:String x:Key="LOCGameUninstallRunningError">Не може да се деинсталира - играта работи.</x:String>
+    <x:String x:Key="LOCGameRemoveAskMessage">Наистина ли искате да премахнете {0}?</x:String>
+    <x:String x:Key="LOCGamesRemoveAskMessage">Сигурни ли сте, че искате да премахнете {0} игри?</x:String>
+    <x:String x:Key="LOCGameRemoveAskMessageIgnoreOption">Сигурни ли сте, че искате да премахнете {0}?
+
+Избирането на опцията &quot;добавяне към списък с изключения&quot; ще попречи на игрите да бъдат импортирани отново следващия път, когато библиотеката се актуализира.</x:String>
+    <x:String x:Key="LOCGamesRemoveAskMessageIgnoreOption">Сигурни ли сте, че искате да премахнете {0} игри?
+
+Избирането на &quot;добавяне към списък с изключения&quot; опция ще попречи на игрите да бъдат импортирани отново следващия път, когато библиотеката се актуализира.</x:String>
+    <x:String x:Key="LOCRemoveUnusedFieldsAskMessage">Сигурни ли сте, че искате да премахнете {0} записа, които в момента не се използват?</x:String>
+    <x:String x:Key="LOCRemoveUnusedFieldsNoUnusedMessage">Няма намерени неизползвани полета.</x:String>
+    <x:String x:Key="LOCRemoveAskAddToExlusionListYesResponse">Да (добавяне към списъка с изключения)</x:String>
+    <x:String x:Key="LOCGameEditChangeNotif">В този раздел има незапазени промени</x:String>
+    <x:String x:Key="LOCDBUpgradeProgress">Актуализиране на формата на библиотеката с игри...</x:String>
+    <x:String x:Key="LOCDBUpgradeFail">Неуспешна актуализация на базата данни.</x:String>
+    <x:String x:Key="LOCDBUpgradeEmptySpaceFail">Не може да се актуализира библиотеката с игри. Изискват се {0} MB свободно пространство.</x:String>
+    <x:String x:Key="LOCGameError">GameError</x:String>
+    <x:String x:Key="LOCGameStartErrorNoGame">Не може да стартира играта. „{0}“ не беше намерено в базата данни.</x:String>
+    <x:String x:Key="LOCGameStartError">Не може да стартира играта: {0}</x:String>
+    <x:String x:Key="LOCGameStartActionError">Не може да започне действие: {0}</x:String>
+    <x:String x:Key="LOCGameOpenLocationError">Не може да се отвори местоположението на играта: {0}</x:String>
+    <x:String x:Key="LOCCalculateGameSizeError">Не може да се открие размерът на инсталираната игра: {0}</x:String>
+    <x:String x:Key="LOCCalculateGameSizeErrorCaption">Грешка при сканиране на размера на инсталацията</x:String>
+    <x:String x:Key="LOCCalculateGamesSizeErrorMessage">Имаше {0} грешки по време на сканирането на инсталационния размер</x:String>
+    <x:String x:Key="LOCGameShortcutError">Неуспешно създаване на пряк път: {0}</x:String>
+    <x:String x:Key="LOCManualOpenError">Неуспешно отваряне на ръководството: {0}</x:String>
+    <x:String x:Key="LOCGameInstallError">Не може да се инсталира играта: {0}</x:String>
+    <x:String x:Key="LOCGameUninstallError">Не може да се деинсталира играта: {0}</x:String>
+    <x:String x:Key="LOCErrorNoPlayAction">Няма намерени валидни действия при стартиране на играта. Когато използвате действия на емулатора, уверете се, че дефинициите на платформата съвпадат между играта и конфигурацията на емулатора.</x:String>
+    <x:String x:Key="LOCErrorNoInstallAction">Внедряването на инсталацията не е налично.</x:String>
+    <x:String x:Key="LOCErrorLibraryPluginNotFound">Приставката за библиотека, отговорна за тази игра, е деактивирана или не е инсталирана.</x:String>
+    <x:String x:Key="LOCErrorNoMetadataDownloader">Официалното изтегляне на метаданни не е налично.</x:String>
+    <x:String x:Key="LOCErrorNoGameSelected">Не е избрана игра.</x:String>
+    <x:String x:Key="LOCErrorGameScriptAction">Неуспешно изпълнение на скрипта на играта.</x:String>
+    <x:String x:Key="LOCErrorApplicationScript">Неуспешно изпълнение на скрипт на приложение.</x:String>
+    <x:String x:Key="LOCErrorGlobalScriptAction">Неуспешно изпълнение на глобален скрипт.</x:String>
+    <x:String x:Key="LOCErrorEmulatorScriptAction">Неуспешно изпълнение на скрипта на емулатора.</x:String>
+    <x:String x:Key="LOCErrorPlayScriptAction">Неуспешно изпълнение на действие на скрипт за възпроизвеждане.</x:String>
+    <x:String x:Key="LOCErrorPowerShellNotInstalled">PowerShell 3.0 или по-нова не е инсталирана.</x:String>
+    <x:String x:Key="LOCErrorStartupNoController">Не можах да определя как да стартирам играта.</x:String>
+    <x:String x:Key="LOCEnabledTitle">Активирано</x:String>
+    <x:String x:Key="LOCDisabledTitle">Изключено</x:String>
+    <x:String x:Key="LOCRemoveTitle">Премахване</x:String>
+    <x:String x:Key="LOCRemoveUnusedTitle">Премахване на неизползваните</x:String>
+    <x:String x:Key="LOCRenameTitle">Преименуване</x:String>
+    <x:String x:Key="LOCCopyTitle">Копиране</x:String>
+    <x:String x:Key="LOCAddTitle">Добавяне</x:String>
+    <x:String x:Key="LOCDefaultIconTitle">Икона по подразбиране</x:String>
+    <x:String x:Key="LOCDefaultCoverTitle">Изображение на корицата по подразбиране</x:String>
+    <x:String x:Key="LOCDefaultBackgroundTitle">Фоново изображение по подразбиране</x:String>
+    <x:String x:Key="LOCFinishLabel">Край</x:String>
+    <x:String x:Key="LOCNextLabel">Напред</x:String>
+    <x:String x:Key="LOCBackLabel">Назад</x:String>
+    <x:String x:Key="LOCDoneCapLabel">ГОТОВО</x:String>
+    <x:String x:Key="LOCBackCapLabel">НАЗАД</x:String>
+    <x:String x:Key="LOCClearCapLabel">ИЗЧИСТИ</x:String>
+    <x:String x:Key="LOCClearLabel">Изчисти</x:String>
+    <x:String x:Key="LOCDismiss">Отхвърли</x:String>
+    <x:String x:Key="LOCDismissAll">Отхвърли всички</x:String>
+    <x:String x:Key="LOCImportLabel">Импортирай</x:String>
+    <x:String x:Key="LOCNameLabel">Име</x:String>
+    <x:String x:Key="LOCAuthorLabel">Автор</x:String>
+    <x:String x:Key="LOCModuleLabel">Модул</x:String>
+    <x:String x:Key="LOCSeriesLabel">Поредица</x:String>
+    <x:String x:Key="LOCVersionLabel">Версия</x:String>
+    <x:String x:Key="LOCLastPlayedLabel">Последно пускане</x:String>
+    <x:String x:Key="LOCMostPlayedLabel">Най-играни</x:String>
+    <x:String x:Key="LOCPlayCountLabel">Брой пускания</x:String>
+    <x:String x:Key="LOCInstallSizeLabel">Размер на инсталиране</x:String>
+    <x:String x:Key="LOCFolderLabel">Папка</x:String>
+    <x:String x:Key="LOCNotesLabel">Бележки</x:String>
+    <x:String x:Key="LOCAddedLabel">Добавено</x:String>
+    <x:String x:Key="LOCDateAddedLabel">Дата на добавяне</x:String>
+    <x:String x:Key="LOCModifiedLabel">Модифицирано</x:String>
+    <x:String x:Key="LOCDateModifiedLabel">Дата на промяна</x:String>
+    <x:String x:Key="LOCWebsiteLabel">Уебсайт</x:String>
+    <x:String x:Key="LOCPathLabel">Път</x:String>
+    <x:String x:Key="LOCOKLabel">OK</x:String>
+    <x:String x:Key="LOCSaveLabel">Запази</x:String>
+    <x:String x:Key="LOCCloseLabel">Затвори</x:String>
+    <x:String x:Key="LOCCancelLabel">Отказ</x:String>
+    <x:String x:Key="LOCConfirmLabel">Потвърди</x:String>
+    <x:String x:Key="LOCResetLabel">Занули</x:String>
+    <x:String x:Key="LOCYesLabel">Да</x:String>
+    <x:String x:Key="LOCNoLabel">Не</x:String>
+    <x:String x:Key="LOCWelcomeLabel">Добре дошли</x:String>
+    <x:String x:Key="LOCLocalUserLabel">Локален потребител</x:String>
+    <x:String x:Key="LOCGeneralLabel">Общи</x:String>
+    <x:String x:Key="LOCMediaLabel">Медия</x:String>
+    <x:String x:Key="LOCLinksLabel">Връзки</x:String>
+    <x:String x:Key="LOCInstallationLabel">Инсталиране</x:String>
+    <x:String x:Key="LOCActionsLabel">Действия</x:String>
+    <x:String x:Key="LOCDownloadingLabel">Изтегля се...</x:String>
+    <x:String x:Key="LOCDownloadingMediaLabel">Изтегляне на мултимедия...</x:String>
+    <x:String x:Key="LOCLoadingLabel">Зарежда се...</x:String>
+    <x:String x:Key="LOCTypeLabel">Тип</x:String>
+    <x:String x:Key="LOCProfileLabel">Профил</x:String>
+    <x:String x:Key="LOCProfilesLabel">Профили</x:String>
+    <x:String x:Key="LOCRemoveLabel">Премахване</x:String>
+    <x:String x:Key="LOCDownloadLabel">Изтегляне</x:String>
+    <x:String x:Key="LOCSearchLabel">Търсене</x:String>
+    <x:String x:Key="LOCSearchResolutionLabel">Резолюция:</x:String>
+    <x:String x:Key="LOCSearchResolutionAnyLabel">Всички</x:String>
+    <x:String x:Key="LOCZoomLabel">Мащабиране</x:String>
+    <x:String x:Key="LOCListViewLabel">Списъчен изглед</x:String>
+    <x:String x:Key="LOCCoversLabel">Обложки</x:String>
+    <x:String x:Key="LOCGridViewLabel">Мрежов изглед</x:String>
+    <x:String x:Key="LOCDetailsViewLabel">Изглед с подробности</x:String>
+    <x:String x:Key="LOCCustomLabel">Персонализиран</x:String>
+    <x:String x:Key="LOCURLLabel">URL</x:String>
+    <x:String x:Key="LOCSpecialThanks">Специални благодарности</x:String>
+    <x:String x:Key="LOCLicenseLabel">Лиценз</x:String>
+    <x:String x:Key="LOCContributorsLabel">Сътрудници</x:String>
+    <x:String x:Key="LOCClosingPlaynite">Излизане от Playnite...</x:String>
+    <x:String x:Key="LOCToday">Днес</x:String>
+    <x:String x:Key="LOCYesterday">Вчера</x:String>
+    <x:String x:Key="LOCMonday">Понеделник</x:String>
+    <x:String x:Key="LOCTuesday">вторник</x:String>
+    <x:String x:Key="LOCWednesday">сряда</x:String>
+    <x:String x:Key="LOCThursday">Четвъртък</x:String>
+    <x:String x:Key="LOCFriday">Петък</x:String>
+    <x:String x:Key="LOCSaturday">Събота</x:String>
+    <x:String x:Key="LOCSunday">Неделя</x:String>
+    <x:String x:Key="LOCPastWeek">Миналата седмица</x:String>
+    <x:String x:Key="LOCPastMonth">Миналия месец</x:String>
+    <x:String x:Key="LOCPastYear">Миналата година</x:String>
+    <x:String x:Key="LOCMoreThenYear">Преди повече от година</x:String>
+    <x:String x:Key="LOCSizeZeroTo100Mb">0 до 100MB</x:String>
+    <x:String x:Key="LOCSize100MbTo1Gb">100MB до 1GB</x:String>
+    <x:String x:Key="LOCSize1GbTo5Gb">1GB до 5GB</x:String>
+    <x:String x:Key="LOCSize5GbTo10Gb">5GB до 10GB</x:String>
+    <x:String x:Key="LOCSize10GbTo20Gb">10GB до 20GB</x:String>
+    <x:String x:Key="LOCSize20GbTo40Gb">20GB до 40GB</x:String>
+    <x:String x:Key="LOCSize40GbTo100Gb">40GB до 100GB</x:String>
+    <x:String x:Key="LOCSizeMoreThan100Gb">100GB или повече</x:String>
+    <x:String x:Key="LOCImportCompleted">Импортирането завърши успешно.</x:String>
+    <x:String x:Key="LOCAllGames">Всички игри</x:String>
+    <x:String x:Key="LOCGameId">Идентификационен номер на играта</x:String>
+    <x:String x:Key="LOCDatabaseId">Идентификационен номер на база данни</x:String>
+    <x:String x:Key="LOCPresets">Предварителни настройки</x:String>
+    <x:String x:Key="LOCColumn">Колона</x:String>
+    <x:String x:Key="LOCColumns">Колони</x:String>
+    <x:String x:Key="LOCRow">Ред</x:String>
+    <x:String x:Key="LOCRows">Редове</x:String>
+    <x:String x:Key="LOCExecIconMissingPlayAction">Не може да се получи икона от действието Play. Няма действие от тип файл.</x:String>
+    <x:String x:Key="LOCMetaSkipNonEmpty">Изтегляне само на липсващи метаданни</x:String>
+    <x:String x:Key="LOCMetaSkipNonEmptyTooltip">Активирането на тази опция ще пропусне изтеглянето на метаданни за полетата с данни, които вече съдържат информация.</x:String>
+    <x:String x:Key="LOCMetaGamesSourceIntro">Избор на игри</x:String>
+    <x:String x:Key="LOCMetaGamesSourceDescription">Моля, изберете кои игри да се актуализират с нови метаданни:</x:String>
+    <x:String x:Key="LOCMetaGameSourceAll">Всички игри от базата данни</x:String>
+    <x:String x:Key="LOCMetaGameSourceFiltered">Всички филтрирани в момента игри</x:String>
+    <x:String x:Key="LOCMetaGameSourceSelected">Само избрани игри</x:String>
+    <x:String x:Key="LOCMetaNoFieldsSelectedErrorCaption">Няма избрани полета за метаданни</x:String>
+    <x:String x:Key="LOCMetaNoFieldsSelectedErrorMessage">Не са избрани полета за метаданни за изтегляне. Моля, изберете поне едно и активирайте поне един доставчик на метаданни за него.</x:String>
+    <x:String x:Key="LOCMetaSourceStore">Официален магазин</x:String>
+    <x:String x:Key="LOCMetaSourceIGDB">IGDB</x:String>
+    <x:String x:Key="LOCMetaDescriptionFields">Моля, изберете кои полета да се попълват автоматично от Playnite и кои източници да се използват за получаване на данните.</x:String>
+    <x:String x:Key="LOCMetaIgdbContribNotif">Моля, помислете дали да не щракнете върху логото по-горе и да допринесете за актуализации в базата данни на igdb.com, за да подобрите данните, които Playnite използва.</x:String>
+    <x:String x:Key="LOCProgressMetadata">Изтегляне на метаданни...</x:String>
+    <x:String x:Key="LOCProgressInstalledGames">Импортиране на инсталирани игри...</x:String>
+    <x:String x:Key="LOCProgressImportinGames">Импортиране на {0} игри…</x:String>
+    <x:String x:Key="LOCProgressImportinEmulatedGames">Импортиране на емулирани игри от {0}…</x:String>
+    <x:String x:Key="LOCProgressLibraryGames">Изтегляне на актуализации на библиотеката...</x:String>
+    <x:String x:Key="LOCProgressScanningGamesInstallSize">Сканиране на размера на игрите в библиотеката...</x:String>
+    <x:String x:Key="LOCProgressScanningImportedGamesInstallSize">Размер на сканиране на импортирани игри...</x:String>
+    <x:String x:Key="LOCProgressLibImportFinish">Актуализацията на библиотеката завърши</x:String>
+    <x:String x:Key="LOCProgressReleasingResources">Освобождаване на ресурси...</x:String>
+    <x:String x:Key="LOCMenuConfigurationTitle">Конфигурация</x:String>
+    <x:String x:Key="LOCMenuPlayniteSettingsTitle">Настройки…</x:String>
+    <x:String x:Key="LOCMenuPlatformEmulatorSettingsTitle">Платформи и емулатори</x:String>
+    <x:String x:Key="LOCMenuConfigureEmulatorsMenuTitle">Конфигуриране на емулатори…</x:String>
+    <x:String x:Key="LOCMenuLibraryManagerTitle">Мениджър на библиотека…</x:String>
+    <x:String x:Key="LOCMenuTools">Инструменти</x:String>
+    <x:String x:Key="LOCMenuDownloadMetadata">Изтегляне на метаданни…</x:String>
+    <x:String x:Key="LOCMenuSoftwareTools">Софтуерни инструменти…</x:String>
+    <x:String x:Key="LOCMenuConfigureIntegrations">Конфигуриране на интеграции…</x:String>
+    <x:String x:Key="LOCMenuOpenClient">Отваряне на клиент на трета страна</x:String>
+    <x:String x:Key="LOCMenuClients">Клиенти на трети страни</x:String>
+    <x:String x:Key="LOCMenuReloadLibrary">Актуализиране на библиотеката с игри</x:String>
+    <x:String x:Key="LOCMenuCancelLibraryUpdate">Отмяна на актуализацията на библиотеката</x:String>
+    <x:String x:Key="LOCMenuUpdateEmulatedDirs">Актуализиране на емулирани папки</x:String>
+    <x:String x:Key="LOCMenuAddGame">Добавяне на игра</x:String>
+    <x:String x:Key="LOCMenuAddGameManual">Ръчно…</x:String>
+    <x:String x:Key="LOCMenuAddGameInstalled">Сканирай автоматично...</x:String>
+    <x:String x:Key="LOCMenuAddGameEmulated">Емулирана игра…</x:String>
+    <x:String x:Key="LOCMenuAddWindowsStore">Приложение на Microsoft Store…</x:String>
+    <x:String x:Key="LOCMenuAbout">Относно Playnite</x:String>
+    <x:String x:Key="LOCMenuIssues">Изпращане на обратна връзка</x:String>
+    <x:String x:Key="LOCMenuOpenFullscreen">Превключване към режим на цял екран</x:String>
+    <x:String x:Key="LOCMenuLinksTitle">Връзки</x:String>
+    <x:String x:Key="LOCMenuHelpTitle">Помощ</x:String>
+    <x:String x:Key="LOCMenuPatreonSupport">Поддръжка на Patreon</x:String>
+    <x:String x:Key="LOCMenuKofiSupport">Подкрепи в Ko-fi</x:String>
+    <x:String x:Key="LOCUserManual">Ръководство за потребителя</x:String>
+    <x:String x:Key="LOCSDKDocumentation">Документация за SDK</x:String>
+    <x:String x:Key="LOCMenuRestartSystem">Рестартирайте системата</x:String>
+    <x:String x:Key="LOCMenuShutdownSystem">Изключване на системата</x:String>
+    <x:String x:Key="LOCMenuSuspendSystem">Суспендиране на системата</x:String>
+    <x:String x:Key="LOCMenuHibernateSystem">Система за хибернация</x:String>
+    <x:String x:Key="LOCMenuLockSystem">Заключи Система</x:String>
+    <x:String x:Key="LOCMenuLogoutUser">Отпиши Потребител</x:String>
+    <x:String x:Key="LOCMenuSelectRandomGame">Избор на произволна игра</x:String>
+    <x:String x:Key="LOCSettingsDetailsPanelItems">Полета за игра, които да се показват в панела с подробности:</x:String>
+    <x:String x:Key="LOCSettingsGridItemSpacing">Разстояние между елементи</x:String>
+    <x:String x:Key="LOCSettingsGridItemDrawBackground">Изчертаване на фон на елемент от мрежата</x:String>
+    <x:String x:Key="LOCSettingsGridItemCoverMargin">Ширина на рамката на елемент от мрежата</x:String>
+    <x:String x:Key="LOCSettingsDefaulIconSource">Липсващ източник на икона на игра</x:String>
+    <x:String x:Key="LOCSettingsDefaulCoverSource">Липсващ източник на обложката на играта</x:String>
+    <x:String x:Key="LOCSettingsDefaulBackgroundSource">Липсващ фонов източник на играта</x:String>
+    <x:String x:Key="LOCSettingsIndentGameDetails">Вертикално разстояние до подробностите за играта</x:String>
+    <x:String x:Key="LOCSettingsGridViewDetailsPosition">Позиция на детайлите на мрежовия изглед</x:String>
+    <x:String x:Key="LOCSettingsDetailsGameListPosition">Подробности за позицията на списъка с игри</x:String>
+    <x:String x:Key="LOCSettingsDrawPanelSeparators">Изчертаване на разделител между панелите</x:String>
+    <x:String x:Key="LOCSettingsGameDetailsCoverHeight">Височина на изображението на корицата на играта</x:String>
+    <x:String x:Key="LOCSettingsGameDetailsListIconSize">Височина на иконата на списъка с игри</x:String>
+    <x:String x:Key="LOCSettingsInterfaceFont">Шрифт на приложението</x:String>
+    <x:String x:Key="LOCSettingsInterfaceMonoFont">Моноразмерен шрифт</x:String>
+    <x:String x:Key="LOCSettingsFilterPanelPosition">Позиция на филтърния панел</x:String>
+    <x:String x:Key="LOCSettingsExplorerPanelPosition">Позиция на панела на Explorer</x:String>
+    <x:String x:Key="LOCSettingsCoverArtRenderingLabel">Изобразяване на обложката</x:String>
+    <x:String x:Key="LOCSettingsTargetAspectRatioLabel">Целево съотношение на страните</x:String>
+    <x:String x:Key="LOCSettingsGridTileLayoutFSNote">Следните опции също засягат изобразяването на плочки в режим на цял екран!</x:String>
+    <x:String x:Key="LOCSettingsStrechModeLabel">Режим на разтягане</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectDVD">DVD кутия</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectEpicGamesStore">Epic Games Store</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectGogGalaxy2">GOG Galaxy 2.0</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectIgdb">IGDB</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectSquare">Квадрат</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectSteam">Steam банер</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectSteamVertical">Вертикален капак на Steam</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectTwitch">Twitch</x:String>
+    <x:String x:Key="LOCSettingsRestartNotification">* Изисква рестартиране за прилагане</x:String>
+    <x:String x:Key="LOCSettingsLabel">Настройки</x:String>
+    <x:String x:Key="LOCSettingsGeneralLabel">Общи</x:String>
+    <x:String x:Key="LOCSettingsTopPanelLabel">Горен панел</x:String>
+    <x:String x:Key="LOCSettingsAppearanceLabel">Външен вид</x:String>
+    <x:String x:Key="LOCSettingsGameDetailsLabel">Подробности за играта</x:String>
+    <x:String x:Key="LOCSettingsLayoutLabel">Оформление</x:String>
+    <x:String x:Key="LOCSettingsAdvancedLabel">Разширени</x:String>
+    <x:String x:Key="LOCSettingsFullscreenLabel">Цял екран</x:String>
+    <x:String x:Key="LOCSettingsInputLabel">Вход</x:String>
+    <x:String x:Key="LOCSettingsPerformanceLabel">Ефективност</x:String>
+    <x:String x:Key="LOCSettingsMetadataLabel">Метаданни</x:String>
+    <x:String x:Key="LOCSettingsUpdating">Актуализиране</x:String>
+    <x:String x:Key="LOCSettingsSearch">Търсене</x:String>
+    <x:String x:Key="LOCSettingsBackup">Архивиране</x:String>
+    <x:String x:Key="LOCMenuBackupData">Архивиране на данни от библиотека</x:String>
+    <x:String x:Key="LOCMenuRestoreBackup">Възстановяване на резервно копие на данни</x:String>
+    <x:String x:Key="LOCSettingsImportLabel">Автоматично импортиране на промените в библиотеката</x:String>
+    <x:String x:Key="LOCSettingsInvalidDBLocation">Невалидно местоположение на файла на базата данни, трябва да се зададе правилен път към файла.</x:String>
+    <x:String x:Key="LOCSettingsInvalidAccountName">Името на акаунта не може да бъде празно.</x:String>
+    <x:String x:Key="LOCSettingsDownloadMetadataOnImport">Изтегляне на метаданни след импортиране на игри</x:String>
+    <x:String x:Key="LOCSettingsStartMinimized">Стартиране на минимизиран Playnite</x:String>
+    <x:String x:Key="LOCSettingsStartOnBoot">Стартирайте Playnite, когато стартирате компютъра си</x:String>
+    <x:String x:Key="LOCSettingsStartOnBootClosedToTray">Старт затворено в трея</x:String>
+    <x:String x:Key="LOCSettingsStartOnBootRegistrationError">Неуспешно регистриране на Playnite за стартиране при стартиране на компютъра.</x:String>
+    <x:String x:Key="LOCSettingsStartInFullscreen">Стартиране в режим на цял екран</x:String>
+    <x:String x:Key="LOCSettingsAsyncImageLoading">Асинхронно зареждане на изображение</x:String>
+    <x:String x:Key="LOCSettingsAsyncImageLoadingTooltip">Може да подобри гладкостта на превъртането на списъците с игри в замяна на по-бавно време за зареждане на изображението.</x:String>
+    <x:String x:Key="LOCSettingsShowNameEmptyCover">Показване на името на играта, ако липсва обложка</x:String>
+    <x:String x:Key="LOCSettingsShowNamesUnderCover">Показване на имената на игрите в мрежов изглед</x:String>
+    <x:String x:Key="LOCSettingsDarkenUninstalledGridCovers">Затъмняване на неинсталирани игри</x:String>
+    <x:String x:Key="LOCSettingsShowIconList">Показване на иконите на играта в списъка за изглед с подробности</x:String>
+    <x:String x:Key="LOCSettingsShowGroupCount">Показване на броя на елементите в описанията на групи</x:String>
+    <x:String x:Key="LOCSettingsUsedFieldsOnlyOnFilterLists">Показване само на присвоените полета в панелите за филтриране и изследване</x:String>
+    <x:String x:Key="LOCSettingsDisableAcceleration">Деактивиране на хардуерното ускорение</x:String>
+    <x:String x:Key="LOCSettingsDisableAccelerationTooltip">Използвайте, когато изпитвате заекване или подобни проблеми с потребителския интерфейс</x:String>
+    <x:String x:Key="LOCSettingsHiddenInQuickLaunch">Показване на скрити игри в списъците за бързо стартиране</x:String>
+    <x:String x:Key="LOCSettingsHiddenInQuickLaunchTooltip">Засяга списъка за прескачане и списъците с менюта в областта.</x:String>
+    <x:String x:Key="LOCSettingsQuicLaunchItems">Брой елементи за бързо стартиране</x:String>
+    <x:String x:Key="LOCSettingsShowBackgroundWindowImage">Използване на фоново изображение на играта като фон на прозорец</x:String>
+    <x:String x:Key="LOCSettingsBlurWindowBackgrounImage">Замъгляване на фон</x:String>
+    <x:String x:Key="LOCSettingsBlurHighQuality">Високо качество</x:String>
+    <x:String x:Key="LOCSettingsDarkenWindowBackghrounImage">Затъмняване на фона</x:String>
+    <x:String x:Key="LOCSettingsShowBackImageOnGridView">Показване в мрежов изглед</x:String>
+    <x:String x:Key="LOCSettingsSkin">Тема</x:String>
+    <x:String x:Key="LOCSettingsSkinColor">Профил на тема</x:String>
+    <x:String x:Key="LOCSettingsSkinFullscreen">Тема на цял екран</x:String>
+    <x:String x:Key="LOCSettingsSkinColorFullscreen">Профил на темата на цял екран</x:String>
+    <x:String x:Key="LOCSettingsDBLocation">Местоположение на базата данни</x:String>
+    <x:String x:Key="LOCSettingsLoginStatus">Състояние на влизане:</x:String>
+    <x:String x:Key="LOCSettingsWindowTitle">Настройки на Playnite</x:String>
+    <x:String x:Key="LOCSettingsClearWebCache">Изчистване на уеб кеша</x:String>
+    <x:String x:Key="LOCSettingsClearWebCacheTooltip">Може да разреши проблеми, възникнали при свързването на акаунти.</x:String>
+    <x:String x:Key="LOCSettingsShowTray">Показване на иконата в системната област</x:String>
+    <x:String x:Key="LOCSettingsMinimizeToTray">Минимизиране на Playnite в системната област</x:String>
+    <x:String x:Key="LOCSettingsCloseToTray">Минимизиране на Playnite в системната област, когато прозорецът на приложението е затворен</x:String>
+    <x:String x:Key="LOCSettingsAfterGameStart">Когато играта започне:</x:String>
+    <x:String x:Key="LOCSettingsAfterGameClose">След затваряне на играта:</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeUseDaysFormatLabel">Форматирайте изиграното време, за да индикирате броя изиграни дни</x:String>
+    <x:String x:Key="LOCSettingsDatesFormatsLabel">Формати на датите:</x:String>
+    <x:String x:Key="LOCSettingsClearCacheWarn">Това ще ви излезе от всички свързани услуги. Изисква се рестартиране на приложението, искате ли да продължите?</x:String>
+    <x:String x:Key="LOCSettingsClearCacheTitle">Изчистване на кеша?</x:String>
+    <x:String x:Key="LOCSettingsSkinChangeRestart">Изисква се рестартиране на Playnite за прилагане на нова тема</x:String>
+    <x:String x:Key="LOCSettingsGetThemes">Вземете още теми</x:String>
+    <x:String x:Key="LOCSettingsCreateThemes">Създаване на нова тема</x:String>
+    <x:String x:Key="LOCSettingsGetExtensions">Вземете още разширения</x:String>
+    <x:String x:Key="LOCSettingsCreateExtensions">Създаване на ново разширение</x:String>
+    <x:String x:Key="LOCSettingsCreateLocalization">Помогнете ни да преведем Playnite</x:String>
+    <x:String x:Key="LOCSettingsRestartAskMessage">Playnite трябва да се рестартира, за да се приложат нови настройки. Рестартирай сега?
+
+Рестартирането ще отмени всички активни задачи (изтегляния), които се извършват в момента.</x:String>
+    <x:String x:Key="LOCSettingsRestartTitle">Рестартиране на Playnite?</x:String>
+    <x:String x:Key="LOCSettingsDBPathNotification">Playnite не може да премества файловете на вашата библиотека автоматично. Трябва ръчно да преместите/копирате файловете, преди да промените местоположението. Ако няма библиотека в целевото местоположение, ще бъде създадена нова.
+
+Новото местоположение на базата данни няма да се използва, докато Playnite не бъде рестартиран. </x:String>
+    <x:String x:Key="LOCSettingsClosePlaytimeNotif">Времето за игра няма да бъде записано, ако &quot;Затвори&quot; действието е зададено.</x:String>
+    <x:String x:Key="LOCSettingsFullscreenRows">Брой редове</x:String>
+    <x:String x:Key="LOCSettingsFullscreenColumns">Брой колони</x:String>
+    <x:String x:Key="LOCSettingsFullscreenRowDetails">Брой редове за подробен изглед</x:String>
+    <x:String x:Key="LOCSettingsFullscreenBackgroundOnMainScreen">Показване на фоново изображение на главния екран</x:String>
+    <x:String x:Key="LOCBackgroundImageScreenOptionTooltip">Не се прилага ретроспективно за съществуващи игри без повторно изтегляне на метаданни.</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportMode">Импортиране на време за игра на игри в библиотеката:</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeTooltip">Конфигурира кога Playnite трябва да импортира времето за игра, отчетено от плъгините на библиотеката за игри в базата данни на Playnite. Необходима е поддръжка от плъгините на библиотеката, отговарящи за обработката на играта(ите), за да можете да използвате тази функция.
+
+Винаги: Импортира време за игра за нови импортирани и съществуващи игри в базата данни на Playnite.
+Само за нововнесени игри: Импортира време за игра само за нови импортирани игри.
+Никога: Никога не импортира време за игра при никакви обстоятелства.</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeAlways">Винаги</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeNewImportsOnly">Само за новоимпортирани игри</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeNever">Никога</x:String>
+    <x:String x:Key="LOCSettingsXInputInDesktopMode">Активиране на поддръжката на контролера в настолен режим</x:String>
+    <x:String x:Key="LOCSettingsXInputGuideOpensFullscreen">Бутонът за ръководство отваря режим на цял екран</x:String>
+    <x:String x:Key="LOCSettingsDefaultMetadataDescription">Настройки за автоматично изтегляне на метаданни за новоимпортирани игри.</x:String>
+    <x:String x:Key="LOCSettingsTargetDisplay">Целеви дисплей</x:String>
+    <x:String x:Key="LOCSettingsAlwaysUsePrimaryDisplay">Винаги използвайте основния дисплей</x:String>
+    <x:String x:Key="LOCSettingsFullscreenShowGameTitles">Показване на заглавия на игри</x:String>
+    <x:String x:Key="LOCSettingsShowBatteryStatus">Показване на състоянието на батерията</x:String>
+    <x:String x:Key="LOCSettingsShowBatteryPercentage">Показване на процента на батерията</x:String>
+    <x:String x:Key="LOCSettingsShowClock">Показване на часовника</x:String>
+    <x:String x:Key="LOCSettingsHideMouseCursor">Скриване на курсора на мишката</x:String>
+    <x:String x:Key="LOCSettingsFullscreenQuickFilterInstalled">Инсталира се само в бързи филтри</x:String>
+    <x:String x:Key="LOCSettingsFullscreenButtonPrompts">Подканващи бутони</x:String>
+    <x:String x:Key="LOCSettingsFullscreenLayout">Оформление</x:String>
+    <x:String x:Key="LOCSettingsFullscreenHorizontalScrolling">Хоризонтално превъртане</x:String>
+    <x:String x:Key="LOCSettingsSelectChildSection">Изберете един от подсекциите</x:String>
+    <x:String x:Key="LOCSettingsNoSettingsAvailable">Няма налични настройки</x:String>
+    <x:String x:Key="LOCSettingsErrorLoadingSettings">Неуспешно зареждане на настройките</x:String>
+    <x:String x:Key="LOCSettingsScriptingNotice">Тези скриптове се изпълняват за всяка игра в библиотеката. Индивидуални скриптове могат да бъдат присвоени на всяка игра поотделно, докато редактирате подробностите за играта.</x:String>
+    <x:String x:Key="LOCSettingsBackgroundImageAnimation">Анимиране на преходи на фоново изображение</x:String>
+    <x:String x:Key="LOCSettingsFontSizes">Размери на шрифта</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionAuto">Автоматично</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionAliased">Псевдоним</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionGrayscale">Сива скала</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionClearType">ClearType</x:String>
+    <x:String x:Key="LOCSettingsTextFormattingModeOptionIdeal">Идеално</x:String>
+    <x:String x:Key="LOCSettingsTextFormattingModeOptionDisplay">Дисплей</x:String>
+    <x:String x:Key="LOCSettingsTextFormattingMode">Режим на форматиране на текст</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingMode">Режим на изобразяване на текст</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingNotice">Методите за изобразяване и форматиране на текст в момента не се използват за описания на игри.</x:String>
+    <x:String x:Key="LOCSettingsImmediateBackgroundDownload">Предварително зареждане на фонови изображения</x:String>
+    <x:String x:Key="LOCSettingsImmediateBackgroundDownloadTooltip">Ако е активирано, Playnite ще изтегля фонови произведения на изкуството, докато изтегля метаданни, като използва повече дисково пространство и прави произведения на изкуството достъпни, когато сте офлайн.
+
+Ако е деактивирано, фоновата илюстрация се изтегля само когато е необходима за първи път, използвайки по-малко място, но може да доведе до забавяне, преди да се покаже илюстрацията и някои изображения може да не са налични, когато сте офлайн.</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseLauncherOption">Автоматично затваряне на клиент на трета страна след излизане от играта</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseGracePeriod">Забавяне при изключване на клиента (в секунди)</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseMinimalSessionTime">Не затваряйте след игрови сесии, по-кратки от (в секунди)</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseSpecificClients">Автоматично затваряне на следните клиенти:</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseSection">Автоматично затваряне на клиенти</x:String>
+    <x:String x:Key="LOCSettingsImportExclusionList">Списък с изключения за импортиране</x:String>
+    <x:String x:Key="LOCSettingsShowMediaSizeWarning">Показване на предупреждение при присвояване на твърде голяма медия за игра</x:String>
+    <x:String x:Key="LOCOpenDirectoryCommand">Команда за отваряне на папка</x:String>
+    <x:String x:Key="LOCSettingsPreferredAgeRatingOrg">Предпочитана организация за оценка на възраст</x:String>
+    <x:String x:Key="LOCSettingsScanLibInstallSizeOnLibUpdate">Актуализиране на инсталационния размер на игри при актуализация на библиотека</x:String>
+    <x:String x:Key="LOCSettingsScanLibInstallSizeOnLibUpdateTooltip">Сканира и актуализира инсталационния размер на игрите, ако се установи, че техните файлове са били променени след последното сканиране</x:String>
+    <x:String x:Key="LOCStrechNone">Няма</x:String>
+    <x:String x:Key="LOCStrechFill">Попълване</x:String>
+    <x:String x:Key="LOCStrechUniform">Униформа</x:String>
+    <x:String x:Key="LOCStrechUniformToFill">Униформа за запълване</x:String>
+    <x:String x:Key="LOCDockLeft">Наляво</x:String>
+    <x:String x:Key="LOCDockRight">Надясно</x:String>
+    <x:String x:Key="LOCDockTop">Нагоре</x:String>
+    <x:String x:Key="LOCDockBottom">Отдолу</x:String>
+    <x:String x:Key="LOCImportError">Грешка при импортиране</x:String>
+    <x:String x:Key="LOCLoginRequired">Изисква се удостоверяване</x:String>
+    <x:String x:Key="LOCLoginFailed">Неуспешно удостоверяване</x:String>
+    <x:String x:Key="LOCSettingsAltWebViewRendering">Алтернативен режим на изобразяване на уеб изглед</x:String>
+    <x:String x:Key="LOCSettingsAltWebViewRenderingTooltip">Използвайте, когато имате проблеми с уеб изгледи, например диалогови прозорци за удостоверяване на интеграция.</x:String>
+    <x:String x:Key="LOCSettingsPartialDescriptionLoading">Частично зареждане на големи описания на игри</x:String>
+    <x:String x:Key="LOCSettingsPartialDescriptionLoadingTooltip">Големите описания могат да причинят забележимо забавяне при избора на игри.
+
+Когато е активирано, само част от текста на описанието ще бъде първоначално зареден с опция за зареждане на останалата част при поискване.</x:String>
+    <x:String x:Key="LOCMetaImportWindowTitle">Импортиране на метаданни</x:String>
+    <x:String x:Key="LOCDownloadMetaButton">Изтегляне на метаданни</x:String>
+    <x:String x:Key="LOCSaveDefaultTooltip">Задайте избраната конфигурация, която да се използва за бъдещи изтегляния на метаданни.
+Може също да се промени в настройките на приложението.</x:String>
+    <x:String x:Key="LOCEmuWizardWindowTitle">Съветник за импортиране на емулация</x:String>
+    <x:String x:Key="LOCEmuWizardIntro">Този съветник ще ви преведе през процеса на изтегляне и импортиране на конзолни емулатори и импортиране на емулирани игри.</x:String>
+    <x:String x:Key="LOCEmuWizardNotice">Имайте предвид, че винаги можете да добавите допълнителни емулатори и/или игри по-късно чрез главното меню (под менюто &quot;Библиотека&quot; за настройки на емулатора и менюто &quot;Добавяне на игри&quot; за емулирани игри ).</x:String>
+    <x:String x:Key="LOCEmuDownloadDescription">По-долу е даден списък с емулатори, които Playnite може да разпознае и конфигурира автоматично. Можете да изтеглите инсталационни програми за емулатор от техните уебсайтове. След като инсталирате емулаторите (ръчно), можете да ги импортирате в диалоговия прозорец за конфигуриране на емулатора.</x:String>
+    <x:String x:Key="LOCEmuWizardEmuImportIntro">Можете да импортирате всички емулатори, които са инсталирани на вашия компютър, като щракнете върху бутона „Автоматично откриване от папка…“. Playnite ще търси в избраната папка всички известни емулатори и ще предостави опцията за импортирането им. Можете да използвате този бутон няколко пъти, за да импортирате емулатори от различни папки. Емулаторите ще бъдат добавени в края на текущия списък.</x:String>
+    <x:String x:Key="LOCEmuWizardGameImportIntro">Можете да импортирате игри, като щракнете върху бутона „Сканиране на папка чрез емулатор“. Избирането на подходящия емулатор ще каже на Playnite кои типове файлове трябва да бъдат сканирани и импортирани. Можете да използвате този бутон няколко пъти, за да импортирате игри от различни папки. Игрите ще бъдат добавени в края на текущия списък.</x:String>
+    <x:String x:Key="LOCEmuWizardNoEmulatorWarning">Няма избрани емулатори за импортиране. Няма да можете автоматично да импортирате никакви емулирани игри, без първо да конфигурирате емулатори. Сигурни ли сте, че искате да продължите и да излезете от процеса на импортиране?</x:String>
+    <x:String x:Key="LOCEmuWizardNoEmulatorForGamesWarning">В Playnite няма конфигурирани емулатори. Не можете да импортирате игри, без първо да конфигурирате емулатора и да изберете подходящите типове файлове. Искате ли да добавите някои емулатори сега?</x:String>
+    <x:String x:Key="LOCEmuWizardButtonScanGames">Сканиране на папка чрез емулатор</x:String>
+    <x:String x:Key="LOCEmuWizardButtonSelectFiles">Избор на файлове</x:String>
+    <x:String x:Key="LOCEmuWizardButtonScanEmulator">Автоматично откриване от папка…</x:String>
+    <x:String x:Key="LOCEmuWizardButtonConfigureEmulator">Конфигуриране на емулатори…</x:String>
+    <x:String x:Key="LOCEmuWizardScanning">Сканиране...</x:String>
+    <x:String x:Key="LOCEmuWizardScanningSpecific">Сканиране {0}…</x:String>
+    <x:String x:Key="LOCFirstWindowTitle">Конфигурация за първи път</x:String>
+    <x:String x:Key="LOCFirstIntro">Този процес ще ви преведе през автоматично импортиране и конфигуриране на външни библиотеки с игри. Playnite може автоматично да импортира игри от множество услуги за игри, като Steam или GOG.
+
+Имайте предвид, че можете също ръчно да добавите персонализирана или емулирана игра за всяка платформа по-късно от главното меню.</x:String>
+    <x:String x:Key="LOCFirstExternalTitle">Интегриране на библиотека</x:String>
+    <x:String x:Key="LOCFirstImportIntroduction">Следва списъкът с някои подбрани библиотечни интеграции, поддържани от Playnite. Моля, изберете тези, които искате да инсталирате.
+
+Повече интеграции могат да бъдат инсталирани по-късно от &quot;Добавки&quot; меню.</x:String>
+    <x:String x:Key="LOCFirstConfigFinishedTitle">Конфигурацията завършена</x:String>
+    <x:String x:Key="LOCFirstConfigFinishedText">Първоначалната настройка е завършена. Не забравяйте, че можете да промените всички настройки по-късно, както и да добавите допълнителни интеграции от главното меню.</x:String>
+    <x:String x:Key="LOCFirstPluginDownloadError">Неуспешно изтегляне на едно или повече разширения.
+
+Можете да опитате да изтеглите повторно интеграции от менюто с добавки, след като съветникът за първо стартиране завърши.</x:String>
+    <x:String x:Key="LOCFirstDownloadingAddon">Изтегля се интеграция на {0}…</x:String>
+    <x:String x:Key="LOCDefaultAddonListDownload">Изтегля се списък с препоръчани интеграции...</x:String>
+    <x:String x:Key="LOCDefaultAddonListDownloadError">Неуспешно изтегляне на списък с препоръчани интеграции. Можете да опитате и да изтеглите повторно интеграции по-късно чрез менюто Addons.</x:String>
+    <x:String x:Key="LOCPlatformsWindowTitle">Конфигуриране на платформи и емулатори</x:String>
+    <x:String x:Key="LOCEmulatorsWindowTitle">Конфигуриране на емулатори</x:String>
+    <x:String x:Key="LOCPlatformsTitle">Платформи</x:String>
+    <x:String x:Key="LOCPlatformTitle">Платформа</x:String>
+    <x:String x:Key="LOCEmulatorsTitle">Емулатори</x:String>
+    <x:String x:Key="LOCEmulatorTitle">Емулатор</x:String>
+    <x:String x:Key="LOCAddPlatformTitle">Добавяне на платформа</x:String>
+    <x:String x:Key="LOCSelectIconTitle">Избор на икона</x:String>
+    <x:String x:Key="LOCSelectCoverTitle">Изберете корица</x:String>
+    <x:String x:Key="LOCSelectImageTitle">Избор на изображение</x:String>
+    <x:String x:Key="LOCSelectItemTitle">Избор на елемент</x:String>
+    <x:String x:Key="LOCSelectBackgroundTitle">Избор на фон</x:String>
+    <x:String x:Key="LOCSelectFileTitle">Изберете файл</x:String>
+    <x:String x:Key="LOCSelectUrlTitle">Изберете URL</x:String>
+    <x:String x:Key="LOCAddEmulatorTitle">Добавяне на емулатор</x:String>
+    <x:String x:Key="LOCSupportedPlatformsTitle">Поддържана платформа(и)</x:String>
+    <x:String x:Key="LOCConfirmUnsavedPlatformsTitle">Искате ли да запазите промените в платформата?</x:String>
+    <x:String x:Key="LOCConfirmUnsavedEmulatorsTitle">Искате ли да запазите промените в емулатора?</x:String>
+    <x:String x:Key="LOCExecutableTitle">Изпълним</x:String>
+    <x:String x:Key="LOCArgumentsTitle">Аргументи</x:String>
+    <x:String x:Key="LOCWorkingDirTitle">Работна директория</x:String>
+    <x:String x:Key="LOCSupportedFilesTitle">Поддържани файлови типове</x:String>
+    <x:String x:Key="LOCImportEmulatorsButton">Импортиране на емулатори...</x:String>
+    <x:String x:Key="LOCDownloadEmulatorsButton">Изтегляне на емулатори...</x:String>
+    <x:String x:Key="LOCEmuLoadArgsPresetTooltip">Зареждане на предварително зададени аргументи от известен профил на емулатор</x:String>
+    <x:String x:Key="LOCEmuRemovalConfirmation">Сигурни ли сте, че искате да премахнете емулатора на {0}?
+В момента се използва от {1} игра(и).</x:String>
+    <x:String x:Key="LOCPlatformRemovalConfirmation">Сигурни ли сте, че искате да премахнете платформата {0}?
+В момента се използва от {1} игра(и) и {2} емулатор(а).</x:String>
+    <x:String x:Key="LOCEmulatorSettingsHelp">Помощ за настройки</x:String>
+    <x:String x:Key="LOCMenuSortByTitle">Сортиране по</x:String>
+    <x:String x:Key="LOCMenuSortByDirection">Посока на сортиране</x:String>
+    <x:String x:Key="LOCMenuGroupByTitle">Групиране по</x:String>
+    <x:String x:Key="LOCMenuSortAscending">Възходящо</x:String>
+    <x:String x:Key="LOCMenuSortDescending">Низходящо</x:String>
+    <x:String x:Key="LOCMenuGroupDont">Не групирай</x:String>
+    <x:String x:Key="LOCMenuGroupProvider">Групиране по библиотека</x:String>
+    <x:String x:Key="LOCMenuGroupCategory">Групиране по категория</x:String>
+    <x:String x:Key="LOCMenuGroupPlatform">Групиране по платформа</x:String>
+    <x:String x:Key="LOCViewType">Тип изглед</x:String>
+    <x:String x:Key="LOCMenuView">Изглед</x:String>
+    <x:String x:Key="LOCMenuViewExplorerPanel">Панел за преглед</x:String>
+    <x:String x:Key="LOCMenuViewFilterPanel">Панел за филтри</x:String>
+    <x:String x:Key="LOCGameIconTitle">Икона</x:String>
+    <x:String x:Key="LOCLibraryIconTitle">Икона на библиотека</x:String>
+    <x:String x:Key="LOCGameCoverImageTitle">Изображение на корицата</x:String>
+    <x:String x:Key="LOCGameBackgroundTitle">Фоново изображение</x:String>
+    <x:String x:Key="LOCGameSortingNameTitle">Име за сортиране</x:String>
+    <x:String x:Key="LOCGameProviderTitle">Библиотека</x:String>
+    <x:String x:Key="LOCGameManualTitle">Ръководство</x:String>
+    <x:String x:Key="LOCGameNameTitle">Име</x:String>
+    <x:String x:Key="LOCInstallDriveTitle">Инсталиране на устройство</x:String>
+    <x:String x:Key="LOCGameAccountNameTitle">Име на акаунт</x:String>
+    <x:String x:Key="LOCGamePlatformTitle">Платформа</x:String>
+    <x:String x:Key="LOCGameCategoriesTitle">Категория</x:String>
+    <x:String x:Key="LOCGameGenresTitle">Жанр</x:String>
+    <x:String x:Key="LOCGameReleaseDateTitle">Дата на издаване</x:String>
+    <x:String x:Key="LOCGameReleaseYearTitle">Година на издаване</x:String>
+    <x:String x:Key="LOCGameDevelopersTitle">Разработчик</x:String>
+    <x:String x:Key="LOCGameTagsTitle">Етикет</x:String>
+    <x:String x:Key="LOCGamePublishersTitle">Издател</x:String>
+    <x:String x:Key="LOCGameInstallationStatus">Състояние на инсталацията</x:String>
+    <x:String x:Key="LOCUseFilterStyleAndTitle">Съвпада с всички филтри</x:String>
+    <x:String x:Key="LOCUseFilterStyleAndTooltip">Ако е разрешено, само игри, които използват всички елементи във всички филтри, ще бъдат включени в изгледа.
+Ако е деактивирано, игрите, които използват който и да е елемент във всеки филтър, ще бъдат включени в изгледа.</x:String>
+    <x:String x:Key="LOCGameIsInstalledTitle">Инсталирани</x:String>
+    <x:String x:Key="LOCGameIsGameInstalledTitle">Инсталирани</x:String>
+    <x:String x:Key="LOCGameIsUnInstalledTitle">Не инсталирани</x:String>
+    <x:String x:Key="LOCGameHiddenTitle">Скрити</x:String>
+    <x:String x:Key="LOCGameFavoriteTitle">Любими</x:String>
+    <x:String x:Key="LOCGameHdrTitle">Активиране на HDR поддръжка</x:String>
+    <x:String x:Key="LOCGameHdrTooltip">Ако е активиран, HDR ще бъде активиран на основния дисплей преди стартиране на играта.</x:String>
+    <x:String x:Key="LOCGameHdrNotSupportedTooltip">Имайте предвид, че HDR не се поддържа на вашия основен дисплей.</x:String>
+    <x:String x:Key="LOCGameLastActivityTitle">Последно играно</x:String>
+    <x:String x:Key="LOCGameCategoryTitle">Категория</x:String>
+    <x:String x:Key="LOCGameDescriptionTitle">Описание</x:String>
+    <x:String x:Key="LOCGameInstallDirTitle">Инсталационна папка</x:String>
+    <x:String x:Key="LOCGameCoverTitle">Изображение на корицата</x:String>
+    <x:String x:Key="LOCGameLinksTitle">Връзки</x:String>
+    <x:String x:Key="LOCGameROMTitle">Изображение, ROM или ISO път</x:String>
+    <x:String x:Key="LOCGenreLabel">Жанр</x:String>
+    <x:String x:Key="LOCGenresLabel">Жанрове</x:String>
+    <x:String x:Key="LOCCompanyLabel">Фирма</x:String>
+    <x:String x:Key="LOCCompaniesLabel">Компании</x:String>
+    <x:String x:Key="LOCDeveloperLabel">Разработчик</x:String>
+    <x:String x:Key="LOCDevelopersLabel">Разработчици</x:String>
+    <x:String x:Key="LOCPublisherLabel">Издател</x:String>
+    <x:String x:Key="LOCPublishersLabel">Издатели</x:String>
+    <x:String x:Key="LOCCategoryLabel">Категория</x:String>
+    <x:String x:Key="LOCCategoriesLabel">Категории</x:String>
+    <x:String x:Key="LOCTagLabel">Етикет</x:String>
+    <x:String x:Key="LOCTagsLabel">Етикети</x:String>
+    <x:String x:Key="LOCFeatureLabel">Функция</x:String>
+    <x:String x:Key="LOCFeaturesLabel">Функции</x:String>
+    <x:String x:Key="LOCAgeRatingLabel">Възрастова оценка</x:String>
+    <x:String x:Key="LOCAgeRatingsLabel">Възрастови оценки</x:String>
+    <x:String x:Key="LOCRegionLabel">Регион</x:String>
+    <x:String x:Key="LOCRegionsLabel">Региони</x:String>
+    <x:String x:Key="LOCSourceLabel">Източник</x:String>
+    <x:String x:Key="LOCSourcesLabel">Източници</x:String>
+    <x:String x:Key="LOCRecentActivityLabel">Последна активност</x:String>
+    <x:String x:Key="LOCDatabaseErroTitle">Грешка в базата данни</x:String>
+    <x:String x:Key="LOCDatabaseOpenError">Неуспешно отваряне на библиотечна база данни.</x:String>
+    <x:String x:Key="LOCDatabaseNotOpenedError">Базата данни не е отворена.</x:String>
+    <x:String x:Key="LOCDatabaseOpenAccessError">Не може да се осъществи достъп до базата данни на библиотеката. Файл &quot;{0}&quot; се използва от друг процес или е на недостъпно място.</x:String>
+    <x:String x:Key="LOCDiagPackageCreationError">Неуспешно създаване на диагностичен пакет.</x:String>
+    <x:String x:Key="LOCDiagPackageUploadError">Неуспешно автоматично качване на диагностичен пакет.</x:String>
+    <x:String x:Key="LOCDiagPackageSentSuccess">Диагностичната информация беше изпратена успешно.</x:String>
+    <x:String x:Key="LOCDiagPackageCreationSuccess">Диагностичният пакет е създаден и изпратен успешно.
+Моля, прикачете следния идентификатор към вашия доклад за проблем:</x:String>
+    <x:String x:Key="LOCLibraryImportError">Неуспешно импортиране на игри от {0}.</x:String>
+    <x:String x:Key="LOCLibraryImportEmulatedError">Неуспешно импортиране на емулирани игри от {0}.</x:String>
+    <x:String x:Key="LOCScanEmulatorGamesEmptyProfileError">Не може да търси игри по избран профил на емулатор. Профилът не съдържа файлови разширения или платформи.</x:String>
+    <x:String x:Key="LOCStartGenericError">Playnite не успя да стартира. Моля, затворете всички други копия и опитайте отново.</x:String>
+    <x:String x:Key="LOCSkinApplyError">Неуспешно прилагане на тема &quot;{0}&quot;, цветен профил &quot;{1}&quot;
+
+{2}</x:String>
+    <x:String x:Key="LOCURLFormatError">Не може да се отвори връзка, URL адресът не е във валиден формат.</x:String>
+    <x:String x:Key="LOCAppStartupError">Неуспешно стартиране на приложението.</x:String>
+    <x:String x:Key="LOCCefSharpInitError">Неуспешно инициализиране на компонента за уеб изглед. Playnite не може да продължи с процеса на стартиране.
+
+Повече информация на https://playnite.link/cefstartup</x:String>
+    <x:String x:Key="LOCEmulatorImportNoDefinitionsError">Не могат да се импортират емулатори поради липсващ или повреден дефиниционен файл.</x:String>
+    <x:String x:Key="LOCMenuActionExecError">Неуспешно изпълнение на действие от менюто.</x:String>
+    <x:String x:Key="LOCGameEditWindowTitle">Редактиране на подробностите за играта</x:String>
+    <x:String x:Key="LOCImageURL">URL адрес на изображение</x:String>
+    <x:String x:Key="LOCAddLinkButton">Добавяне на връзка</x:String>
+    <x:String x:Key="LOCAddRom">Добавяне на ROM</x:String>
+    <x:String x:Key="LOCSaveChanges">Запазване на промените</x:String>
+    <x:String x:Key="LOCGameEditChangeSaveTooltip">Прилагане на промени в полето към игра(и), които се редактират.</x:String>
+    <x:String x:Key="LOCAddAction">Добавяне на действие</x:String>
+    <x:String x:Key="LOCDeleteAction">Премахване</x:String>
+    <x:String x:Key="LOCRemovePlayAction">Премахване на действие за възпроизвеждане</x:String>
+    <x:String x:Key="LOCAddGames">Добавяне на игри</x:String>
+    <x:String x:Key="LOCScanFolder">Сканиране на папка…</x:String>
+    <x:String x:Key="LOCDetectInstalled">Откриване на инсталирани</x:String>
+    <x:String x:Key="LOCBrowse">Преглед...</x:String>
+    <x:String x:Key="LOCOpenPlaynite">Отворете Playnite</x:String>
+    <x:String x:Key="LOCProfileSettings">Настройки на профила</x:String>
+    <x:String x:Key="LOCEmptyGameNameError">Името на играта не може да бъде празно.</x:String>
+    <x:String x:Key="LOCEmptyTrackingFolderError">Директорията за проследяване на действие на играта не може да бъде празна.</x:String>
+    <x:String x:Key="LOCEmptyGameNameMetaSearchError">Името на играта не може да бъде празно преди търсене в метаданни.</x:String>
+    <x:String x:Key="LOCInvalidGameData">Невалидни данни за играта</x:String>
+    <x:String x:Key="LOCURLInputInfo">Въведете валиден уеб URL, започващ с http:// или https://</x:String>
+    <x:String x:Key="LOCURLInputInfoTitile">Изберете URL адрес</x:String>
+    <x:String x:Key="LOCMetadataDownloadError">Неуспешно изтегляне на метаданни: {0}</x:String>
+    <x:String x:Key="LOCDownloadError">Грешка при изтегляне</x:String>
+    <x:String x:Key="LOCClearFilters">Изчистване на филтрите</x:String>
+    <x:String x:Key="LOCPrivateAccount">Личен акаунт</x:String>
+    <x:String x:Key="LOCPublicAccount">Публичен акаунт</x:String>
+    <x:String x:Key="LOCAPIKey">API ключ</x:String>
+    <x:String x:Key="LOCStartupError">Грешка при стартиране</x:String>
+    <x:String x:Key="LOCSkinError">Грешка в темата</x:String>
+    <x:String x:Key="LOCClearAll">Изчистване на всички</x:String>
+    <x:String x:Key="LOCSetupRunning">Инсталиране</x:String>
+    <x:String x:Key="LOCUninstalling">Деинсталиране</x:String>
+    <x:String x:Key="LOCGameLaunching">Стартиране</x:String>
+    <x:String x:Key="LOCGameRunning">Изпълнява се</x:String>
+    <x:String x:Key="LOCInvalidURL">Невалиден URL адрес</x:String>
+    <x:String x:Key="LOCDoNothing">Не правете нищо</x:String>
+    <x:String x:Key="LOCMinimize">Минимизиране</x:String>
+    <x:String x:Key="LOCRestoreWindow">Прозорец за възстановяване</x:String>
+    <x:String x:Key="LOCRestoreWindowOnlyFromUI">Възстанови прозореца само когато стартира през потребителския интерфейс</x:String>
+    <x:String x:Key="LOCClose">Затваряне</x:String>
+    <x:String x:Key="LOCChange">Промяна</x:String>
+    <x:String x:Key="LOCAdvanced">Разширени</x:String>
+    <x:String x:Key="LOCNever">Никога</x:String>
+    <x:String x:Key="LOCCompletionStatus">Статус на завършване</x:String>
+    <x:String x:Key="LOCCompletionStatuses">Състояния на завършване</x:String>
+    <x:String x:Key="LOCUserScore">Потребителски резултат</x:String>
+    <x:String x:Key="LOCCriticScore">Резултат от критик</x:String>
+    <x:String x:Key="LOCCommunityScore">Резултат от общността</x:String>
+    <x:String x:Key="LOCGameScripts">Скриптове за игри</x:String>
+    <x:String x:Key="LOCApplicationScripts">Скриптове за приложения</x:String>
+    <x:String x:Key="LOCScripts">Скриптове</x:String>
+    <x:String x:Key="LOCPlugins">Добавки</x:String>
+    <x:String x:Key="LOCMetadataProviders">Източници на метаданни</x:String>
+    <x:String x:Key="LOCExtensions">Разширения</x:String>
+    <x:String x:Key="LOCExtensionID">ID на разширение</x:String>
+    <x:String x:Key="LOCReloadScripts">Презареждане на скриптове</x:String>
+    <x:String x:Key="LOCStartInteractivePowerShell">Интерактивен SDK PowerShell</x:String>
+    <x:String x:Key="LOCReloadScriptsSuccess">Всички скриптове са презаредени успешно.</x:String>
+    <x:String x:Key="LOCNoGamesFound">Няма намерени игри за определени критерии за търсене/филтриране</x:String>
+    <x:String x:Key="LOCNoItemsFound">Няма намерени елементи</x:String>
+    <x:String x:Key="LOCBackToDesktopMode">Превключване към режим на работен плот</x:String>
+    <x:String x:Key="LOCExitPlaynite">Излезте от Playnite</x:String>
+    <x:String x:Key="LOCLibraries">Библиотеки</x:String>
+    <x:String x:Key="LOCUpdateAll">Актуализиране на всички</x:String>
+    <x:String x:Key="LOCExtensionCreatedBy">Създаден от:</x:String>
+    <x:String x:Key="LOCExtensionVersion">Версия:</x:String>
+    <x:String x:Key="LOCExtensionUpdated">Актуализирано:</x:String>
+    <x:String x:Key="LOCExtensionModule">Модул:</x:String>
+    <x:String x:Key="LOCLibrary">Библиотека</x:String>
+    <x:String x:Key="LOCStatistics">Статистика</x:String>
+    <x:String x:Key="LOCAll">Всички</x:String>
+    <x:String x:Key="LOCNone">Няма</x:String>
+    <x:String x:Key="LOCNotifications">Известия</x:String>
+    <x:String x:Key="LOCWidth">Ширина</x:String>
+    <x:String x:Key="LOCHeight">Височина</x:String>
+    <x:String x:Key="LOCSize">Размер</x:String>
+    <x:String x:Key="LOCFontSmall">Малък</x:String>
+    <x:String x:Key="LOCFontNormal">Нормално</x:String>
+    <x:String x:Key="LOCFontLarge">Голям</x:String>
+    <x:String x:Key="LOCFontLarger">По-голям</x:String>
+    <x:String x:Key="LOCFontLargest">Най-голям</x:String>
+    <x:String x:Key="LOCDefault">По подразбиране</x:String>
+    <x:String x:Key="LOCSelect">Избор</x:String>
+    <x:String x:Key="LOCSelectAll">Избиране на всички</x:String>
+    <x:String x:Key="LOCDeselectAll">Премахване на избора от всички</x:String>
+    <x:String x:Key="LOCFirst">Първо</x:String>
+    <x:String x:Key="LOCRandom">Произволно</x:String>
+    <x:String x:Key="LOCUserSelect">Избор на потребител</x:String>
+    <x:String x:Key="LOCLoadMore">Зареди още</x:String>
+    <x:String x:Key="LOCTransparent">Прозрачен</x:String>
+    <x:String x:Key="LOCCollapse">Свиване</x:String>
+    <x:String x:Key="LOCExpand">Разгъване</x:String>
+    <x:String x:Key="LOCCollapseAll">Свиване на всички</x:String>
+    <x:String x:Key="LOCExpandAll">Разгъване на всички</x:String>
+    <x:String x:Key="LOCOther">Други</x:String>
+    <x:String x:Key="LOCThemes">Теми</x:String>
+    <x:String x:Key="LOCEmulatorArguments">Аргументи на емулатора</x:String>
+    <x:String x:Key="LOCBuiltinArguments">Вградени аргументи</x:String>
+    <x:String x:Key="LOCCustomArguments">Персонализирани аргументи</x:String>
+    <x:String x:Key="LOCAdditionalEmulatorArguments">Допълнителни аргументи на емулатора</x:String>
+    <x:String x:Key="LOCOverrideEmulatorArguments">Замяна на аргументите на емулатора</x:String>
+    <x:String x:Key="LOCIsPlayAction">Действие за възпроизвеждане</x:String>
+    <x:String x:Key="LOCMedataDiffWindowTitle">Изберете метаданни за импортиране</x:String>
+    <x:String x:Key="LOCGameImportWindowTitle">Изберете игри за импортиране</x:String>
+    <x:String x:Key="LOCMetaLookupWindowTitle">Търсене на метаданни</x:String>
+    <x:String x:Key="LOCUpdaterWindowTitle">Налична актуализация</x:String>
+    <x:String x:Key="LOCUpdaterChangesInfo">Промени от последната актуализация</x:String>
+    <x:String x:Key="LOCUpdaterInstallUpdate">Изтеглете и инсталирайте актуализация</x:String>
+    <x:String x:Key="LOCCheckForUpdates">Проверка за актуализации</x:String>
+    <x:String x:Key="LOCUpdateError">Грешка при актуализиране</x:String>
+    <x:String x:Key="LOCUpdateCheckFailMessage">Неуспешна проверка за нова версия.</x:String>
+    <x:String x:Key="LOCUpdateNoNewUpdateMessage">Няма намерена нова версия, вие сте актуална.</x:String>
+    <x:String x:Key="LOCGeneralUpdateFailMessage">Неуспешно изтегляне и инсталиране на актуализация.</x:String>
+    <x:String x:Key="LOCUpdateProgressCancelAsk">В момента се изпълнява някаква фонова задача. Искате ли да го отмените и да продължите с актуализацията?</x:String>
+    <x:String x:Key="LOCBackgroundProgressCancelAskExit">В момента се изпълнява някаква фонова задача. Искате ли да го отмените и да излезете от Playnite?</x:String>
+    <x:String x:Key="LOCBackgroundProgressCancelAskSwitchMode">В момента се изпълнява някаква фонова задача. Превключването на режимите ще анулира задачата. Искате ли все пак да превключите?</x:String>
+    <x:String x:Key="LOCUpdateIsAvailableNotificationBody">Налична е актуализация за Playnite</x:String>
+    <x:String x:Key="LOCThemeTestReloadList">Презареди списъка с теми</x:String>
+    <x:String x:Key="LOCThemeTestApplySkin">Прилагане на избраната тема</x:String>
+    <x:String x:Key="LOCThemeTestWatchChanges">Гледайте промените във файла</x:String>
+    <x:String x:Key="LOCThemeTestWatchChangesTooltip">Автоматично прилагане на тема, когато изходният файл се промени</x:String>
+    <x:String x:Key="LOCScriptRuntime">Среда за изпълнение на скрипт</x:String>
+    <x:String x:Key="LOCPreScriptDescription">Изпълняване преди стартиране на игра</x:String>
+    <x:String x:Key="LOCPostScriptDescription">Изпълняване след излизане от игра</x:String>
+    <x:String x:Key="LOCGameStartedScriptDescription">Изпълняване след стартиране на игра</x:String>
+    <x:String x:Key="LOCAppScriptStartupDescription">Изпълняване при стартиране на приложението</x:String>
+    <x:String x:Key="LOCAppScriptShutdownDescription">Изпълняване при изключване на приложението</x:String>
+    <x:String x:Key="LOCScriptTypeStarting">Скрипт за стартиране на играта</x:String>
+    <x:String x:Key="LOCScriptTypeStarted">Скрипт за стартиране на играта</x:String>
+    <x:String x:Key="LOCScriptTypeExit">Скрипт за спряна игра</x:String>
+    <x:String x:Key="LOCExecuteGlobalScript">Изпълняване на глобален скрипт</x:String>
+    <x:String x:Key="LOCStatsGlobal">Глобален</x:String>
+    <x:String x:Key="LOCStatsFiltered">Филтрирано</x:String>
+    <x:String x:Key="LOCMetadataDiffCurrent">Текущ</x:String>
+    <x:String x:Key="LOCMetadataDiffNew">Ново</x:String>
+    <x:String x:Key="LOCTestScript">Тестов скрипт</x:String>
+    <x:String x:Key="LOCOnlyItemsSelectedTooltip">Показване само на избрани елементи.</x:String>
+    <x:String x:Key="LOCSaveAsDefault">Запазване по подразбиране</x:String>
+    <x:String x:Key="LOCFavoriteGame">Добавяне към любими</x:String>
+    <x:String x:Key="LOCRemoveFavoriteGame">Премахване от любими</x:String>
+    <x:String x:Key="LOCHideGame">Скриване на тази игра</x:String>
+    <x:String x:Key="LOCUnHideGame">Премахване от скрити</x:String>
+    <x:String x:Key="LOCEnableHdr">Активиране на HDR поддръжка</x:String>
+    <x:String x:Key="LOCDisableHdr">Деактивиране на HDR поддръжка</x:String>
+    <x:String x:Key="LOCEditGame">Редактиране...</x:String>
+    <x:String x:Key="LOCCalculateInstallSize">Изчисляване на инсталационния размер</x:String>
+    <x:String x:Key="LOCCalculateGamesAllInstallSize">Изчисляване на инсталационния размер (Всички игри)</x:String>
+    <x:String x:Key="LOCCalculateGamesMissingInstallSize">Изчисляване на инсталационния размер (само липсващи данни)</x:String>
+    <x:String x:Key="LOCInstallSizeMenuLabel">Размер за инсталиране</x:String>
+    <x:String x:Key="LOCSetGameCategory">Задаване на категория...</x:String>
+    <x:String x:Key="LOCSetCompletionStatus">Задаване на състояние на завършване</x:String>
+    <x:String x:Key="LOCRemoveGame">Премахване</x:String>
+    <x:String x:Key="LOCPlayGame">Играйте</x:String>
+    <x:String x:Key="LOCInstallGame">Инсталиране</x:String>
+    <x:String x:Key="LOCGameOptions">Опции на играта</x:String>
+    <x:String x:Key="LOCGameDetails">Подробности</x:String>
+    <x:String x:Key="LOCUninstallGame">Деинсталиране</x:String>
+    <x:String x:Key="LOCOpenGameLocation">Отваряне на мястото за инсталиране</x:String>
+    <x:String x:Key="LOCCreateDesktopShortcut">Създаване на пряк път на работния плот</x:String>
+    <x:String x:Key="LOCOpenGameManual">Отворете ръководството</x:String>
+    <x:String x:Key="LOCMoreAction">Още</x:String>
+    <x:String x:Key="LOCPlayActionUsePlugin">Управлява се от приставката за библиотека</x:String>
+    <x:String x:Key="LOCPlayActionUsePluginTooltip">Процесът на стартиране на играта ще се управлява от плъгина на библиотеката, отговорен за тази игра.</x:String>
+    <x:String x:Key="LOCMetadownloadNoResultsMessage">На посочената страница не е намерена подходяща информация за играта „{0}“.</x:String>
+    <x:String x:Key="LOCMetadownloadSingleGameTip">Съвет: Можете да използвате по-разширен процес на изтегляне на метаданни, докато редактирате една игра чрез &quot;Редактиране&quot; опция от менюто.</x:String>
+    <x:String x:Key="LOCProgreessAvailabilityMessage">Не е налично, когато се извършва някакво действие.</x:String>
+    <x:String x:Key="LOCDescriptionHTMLSupportTooltip">Текстът на описанието е чувствителен към HTML синтаксиса</x:String>
+    <x:String x:Key="LOCDescriptionPlaytimeSeconds">Времето на играта се записва в секунди.</x:String>
+    <x:String x:Key="LOCDescriptionSizeBytes">Размерът на инсталиране е посочен в байтове.</x:String>
+    <x:String x:Key="LOCReleaseDateTooltip">Дата на издаване трябва да бъде зададена във формат „година-месец-ден“. Стойностите за месец и ден могат да бъдат пропуснати.</x:String>
+    <x:String x:Key="LOCDescriptionScoreValues">Стойности от 0 до 100 или празни за липса на резултат.</x:String>
+    <x:String x:Key="LOCPatreonDevelopMessage">Разработката на Playnite се поддържа от следните потребители на Patreon и Ko-fi:
+
+</x:String>
+    <x:String x:Key="LOCAboutContributorsMessage">Код, локализация и други сътрудници без определен ред:</x:String>
+    <x:String x:Key="LOCCancelMonitoringAskTitle">Анулиране на наблюдението на играта?</x:String>
+    <x:String x:Key="LOCCancelMonitoringSetupAsk">Наблюдението на инсталацията се изпълнява в момента. Искате ли да отмените процеса и да върнете играта в предишното състояние?</x:String>
+    <x:String x:Key="LOCCancelMonitoringExecutionAsk">В момента се изпълнява мониторинг на изпълнението на играта. Искате ли да отмените процеса и да върнете играта в предишното състояние?</x:String>
+    <x:String x:Key="LOCTimePlayed">Изиграно време</x:String>
+    <x:String x:Key="LOCLastPlayed">Последно пускане</x:String>
+    <x:String x:Key="LOCPlayedDays">{0}д {1}ч {2}мин</x:String>
+    <x:String x:Key="LOCPlayedHours">{0} ч {1} м</x:String>
+    <x:String x:Key="LOCPlayedMinutes">{0} минути</x:String>
+    <x:String x:Key="LOCPlayedSeconds">{0} секунди</x:String>
+    <x:String x:Key="LOCPlayedNone">Не е играно</x:String>
+    <x:String x:Key="LOCOpeningDesktopModeMessage">Отваряне на режим на работен плот...</x:String>
+    <x:String x:Key="LOCOpeningFullscreenModeMessage">Отваряне на режим на цял екран...</x:String>
+    <x:String x:Key="LOCOpeningDatabase">Зарежда се библиотека с игри...</x:String>
+    <x:String x:Key="LOCCalculatingInstallSizeMessage">Изчисляване на инсталационния размер...</x:String>
+    <x:String x:Key="LOCCalculatingInstallSizeOfGameMessage">Изчисляване на инсталационния размер на {0}…</x:String>
+    <x:String x:Key="LOCScriptInstallFail">Неуспешно инсталиране на файл със скрипт.</x:String>
+    <x:String x:Key="LOCScriptInstallSuccess">Скриптът е инсталиран успешно.</x:String>
+    <x:String x:Key="LOCInstallScript">Скрипт за инсталиране</x:String>
+    <x:String x:Key="LOCScriptError">Грешка в скрипта</x:String>
+    <x:String x:Key="LOCScriptExecutionError">Неуспешно изпълнение на функцията за разширение.</x:String>
+    <x:String x:Key="LOCOpenMetadataFolder">Отворете папката с метаданни</x:String>
+    <x:String x:Key="LOCInstallSizeCalculate">Изчисляване</x:String>
+    <x:String x:Key="LOCInstallSizeCalculateEditButtonTooltip">Автоматично изчислява инсталационния размер с помощта на ROM, ако играта има такива, или инсталационната директория, ако е зададена</x:String>
+    <x:String x:Key="LOCClientNotInstalledError">{0} клиент не е инсталиран.</x:String>
+    <x:String x:Key="LOCSignInExternalNotif">{0} клиент сега ще се отвори. Моля, влезте и затворете това съобщение.</x:String>
+    <x:String x:Key="LOCSignInExternalWaitMessage">Изчакване потребителят да влезе, моля затворете това, когато сте готови...</x:String>
+    <x:String x:Key="LOCInstallDirNotFoundError">Инсталационната папка на играта не е намерена.</x:String>
+    <x:String x:Key="LOCInvalidGameActionSettings">Невалидна конфигурация на действие в играта.</x:String>
+    <x:String x:Key="LOCTroubleShootingAccountLink">Отстраняване на проблеми със синхронизирането на акаунт</x:String>
+    <x:String x:Key="LOCTroubleShootingIssues">Отстраняване на проблеми</x:String>
+    <x:String x:Key="LOCRenameItem">Преименуване на елемент</x:String>
+    <x:String x:Key="LOCAddNewItem">Добавяне на нов елемент</x:String>
+    <x:String x:Key="LOCEnterName">Въведете име</x:String>
+    <x:String x:Key="LOCEnterNewName">Въведете ново име</x:String>
+    <x:String x:Key="LOCPLaytimeLessThenAnHour">По-малко от час</x:String>
+    <x:String x:Key="LOCPLaytime1to10">1 до 10 часа</x:String>
+    <x:String x:Key="LOCPLaytime10to100">10 до 100 часа</x:String>
+    <x:String x:Key="LOCPLaytime100to500">100 до 500 часа</x:String>
+    <x:String x:Key="LOCPLaytime500to1000">500 до 1000 часа</x:String>
+    <x:String x:Key="LOCPLaytime1000plus">Над 1000 часа</x:String>
+    <x:String x:Key="LOCExtInstallationRestartNotif">Playnite трябва да се рестартира, за да завърши инсталацията. Искате ли да рестартирате сега?</x:String>
+    <x:String x:Key="LOCGeneralExtensionPackageError">Разширението не е пакетирано правилно.</x:String>
+    <x:String x:Key="LOCGeneralThemePackageError">Темата не е пакетирана правилно.</x:String>
+    <x:String x:Key="LOCSpecificExtensionLoadError">Разширение &quot;{0}&quot; не успя да се зареди правилно.</x:String>
+    <x:String x:Key="LOCSpecificExtensionLoadSDKError">Не може да се зареди &quot;{0}&quot; разширение, текущата версия на Playnite не се поддържа.</x:String>
+    <x:String x:Key="LOCSpecificThemeLoadError">Тема &quot;{0}&quot; не успя да се зареди правилно.</x:String>
+    <x:String x:Key="LOCSpecificThemeLoadSDKError">Не може да се зареди &quot;{0}&quot; тема, текущата версия на Playnite не се поддържа.</x:String>
+    <x:String x:Key="LOCGeneralExtensionLoadError">Разширението не успя да се зареди правилно.</x:String>
+    <x:String x:Key="LOCGeneralThemeLoadError">Темата не успя да се зареди правилно.</x:String>
+    <x:String x:Key="LOCGeneralExtensionInstallApiVersionFails">Темата/разширението използва неподдържана версия на API.</x:String>
+    <x:String x:Key="LOCGeneralExtensionInstallSuccess">Инсталацията беше успешна.</x:String>
+    <x:String x:Key="LOCGeneralExtensionInstallTitle">Инсталиране на добавка?</x:String>
+    <x:String x:Key="LOCExtensionGeneric">Общи</x:String>
+    <x:String x:Key="LOCAddonInstallFaild">Неуспешно инсталиране на &quot;{0}&quot; добавка.</x:String>
+    <x:String x:Key="LOCExtensionInstallFail">Неуспешно инсталиране на разширение.
+
+{0}</x:String>
+    <x:String x:Key="LOCExtensionInstallPrompt">Искате ли да инсталирате ново разширение?
+
+{0}
+от {1}
+Версия {2}</x:String>
+    <x:String x:Key="LOCExtensionUpdatePrompt">Искате ли да актуализирате &quot;{0}&quot; разширение?
+
+Текуща версия: {1}
+Нова версия: {2}</x:String>
+    <x:String x:Key="LOCThemeInstallFail">Неуспешно инсталиране на тема.
+
+{0}</x:String>
+    <x:String x:Key="LOCThemeInstallPrompt">Искате ли да инсталирате нова тема?
+
+{0}
+от {1}
+Версия {2}</x:String>
+    <x:String x:Key="LOCThemeUpdatePrompt">Искате ли да актуализирате &quot;{0}&quot; тема?
+
+Текуща версия: {1}
+Нова версия: {2}</x:String>
+    <x:String x:Key="LOCUrlNavigationMessage">Вие сте на път да напуснете Playnite и да навигирате до следната уеб страница, като използвате вашия уеб браузър по подразбиране. Искаш ли да продължиш?
+
+{0}</x:String>
+    <x:String x:Key="LOCGameImageSizeWarning">Избраното изображение(а) може да е твърде голямо за оптимална производителност. Използването на много големи изображения може да доведе до по-лоша реакция на потребителския интерфейс и увеличено използване на паметта.
+
+Максимални препоръчителни разделителни способности:
+Икони: {0} мегапиксела
+Корици: {1} мегапиксела
+Фон: {2} мегапиксела</x:String>
+    <x:String x:Key="LOCPerformanceWarningTitle">Предупреждение за производителност</x:String>
+    <x:String x:Key="LOCDontShowAgainTitle">Не показвай отново</x:String>
+    <x:String x:Key="LOCIncompatibleDragAndDropExtensionError">Файлът с разширение {0} не е съвместим.</x:String>
+    <x:String x:Key="LOCIncompatibleDragAndDropExtensionErrorTitle">Несъвместимо файлово разширение</x:String>
+    <x:String x:Key="LOCLargeMediaWarningTooltip">Избраният файл с изображение може да е твърде голям за оптимална производителност.</x:String>
+    <x:String x:Key="LOCThemeUninstallQuestion">Сигурни ли сте, че искате да деинсталирате избраната тема? Деинсталирането ще бъде на опашка до следващото стартиране на приложението.</x:String>
+    <x:String x:Key="LOCThemeBuiltInUninstallHint">Вградените теми не могат да бъдат деинсталирани.</x:String>
+    <x:String x:Key="LOCThemeUnsupported">Тази тема не поддържа тази версия на Playnite.</x:String>
+    <x:String x:Key="LOCExtensionUninstallQuestion">Сигурни ли сте, че искате да деинсталирате избраното разширение? Деинсталирането ще бъде на опашка до следващото стартиране на приложението.</x:String>
+    <x:String x:Key="LOCExtensionBuiltInUninstallHint">Вградените разширения не могат да бъдат деинсталирани.</x:String>
+    <x:String x:Key="LOCExtensionUnsupported">Това разширение не поддържа тази версия на Playnite.</x:String>
+    <x:String x:Key="LOCExtensionInstallDir">Инсталационна папка</x:String>
+    <x:String x:Key="LOCExtensionDataDir">Папка с данни</x:String>
+    <x:String x:Key="LOCDiagGenerating">Генериране на диагностичен пакет…</x:String>
+    <x:String x:Key="LOCDiagUploading">Качване на диагностичен пакет...</x:String>
+    <x:String x:Key="LOCAddFromExe">Импортиране на файл...</x:String>
+    <x:String x:Key="LOCWhatIsThis">Какво е това?</x:String>
+    <x:String x:Key="LOCConfirumationAskGeneric">Сигурни ли сте, че искате да направите това?</x:String>
+    <x:String x:Key="LOCStatsTotalPlayTime">Общо време за игра</x:String>
+    <x:String x:Key="LOCStatsAvaragePlayTime">Средно време за игра</x:String>
+    <x:String x:Key="LOCStatsTopPlayTime">Най-добро време за игра</x:String>
+    <x:String x:Key="LOCStatsTotalInstallSize">Общ размер на инсталиране</x:String>
+    <x:String x:Key="LOCOverviewLabel">Общ преглед</x:String>
+    <x:String x:Key="LOCSidebar">Странична лента</x:String>
+    <x:String x:Key="LOCToolsShowOnSidebar">Покажи в страничната лента</x:String>
+    <x:String x:Key="LOCSettingsReset">Нулиране на настройките</x:String>
+    <x:String x:Key="LOCSettingsDefaultResetDesc">Всички настройки на приложението ще бъдат нулирани до стойностите по подразбиране, с изключение на:
+- Местоположение на базата данни
+- Импортиране на списък с изключения
+- Настройки на разширението, включително интеграции на библиотека
+    
+За завършване на процеса е необходимо рестартиране на приложението. Искате ли да нулирате настройките?</x:String>
+    <x:String x:Key="LOCSettingsForDevelopers">За разработчици</x:String>
+    <x:String x:Key="LOCSettingsExternalExtensions">Външни разширения</x:String>
+    <x:String x:Key="LOCSettingsNewExternalExtensionBox">Въведете пълния път на папката.</x:String>
+    <x:String x:Key="LOCCommonLinksAchievements">Постижения</x:String>
+    <x:String x:Key="LOCCommonLinksForum">Форум</x:String>
+    <x:String x:Key="LOCCommonLinksNews">Новини</x:String>
+    <x:String x:Key="LOCCommonLinksStorePage">Страница на магазин</x:String>
+    <x:String x:Key="LOCFullscreenFirstTimeError">Първоначалната настройка не е завършена. Playnite сега ще се рестартира в режим на работен плот, за да завърши процедурата.</x:String>
+    <x:String x:Key="LOCQuickFilterRecentlyPlayed">Наскоро играни</x:String>
+    <x:String x:Key="LOCQuickFilterFavorites">Любими</x:String>
+    <x:String x:Key="LOCQuickFilterMostPlayed">Най-играни</x:String>
+    <x:String x:Key="LOCQuickFilterAllGames">Всички</x:String>
+    <x:String x:Key="LOCGameListFiltered">Има приложени филтри.</x:String>
+    <x:String x:Key="LOCGameListExtraFiltered">Има приложени допълнителни филтри.</x:String>
+    <x:String x:Key="LOCGameListSearchResults">Показване на резултати от търсене за:</x:String>
+    <x:String x:Key="LOCItemAlreadyExists">Елемент със същото име вече съществува.</x:String>
+    <x:String x:Key="LOCRandomGameLimistToFilter">Ограничаване на избора до текущия филтър</x:String>
+    <x:String x:Key="LOCRandomGamePickAnother">Изберете друг</x:String>
+    <x:String x:Key="LOCMenuAddons">Добавки…</x:String>
+    <x:String x:Key="LOCExtensionsInstalled">Инсталиран</x:String>
+    <x:String x:Key="LOCExtensionsSettings">Настройки на разширенията</x:String>
+    <x:String x:Key="LOCExtensionsBrowse">Преглед</x:String>
+    <x:String x:Key="LOCExtensionsUpdates">Актуализации</x:String>
+    <x:String x:Key="LOCExtensionsUpdatesCount">Актуализации ({0})</x:String>
+    <x:String x:Key="LOCAddonsConfigMoveInfo">Управлението на инсталираните разширения и теми, включително техните настройки, е преместено в нов &quot;Добавки&quot; меню.</x:String>
+    <x:String x:Key="LOCLibrariesConfigWindowDescription">Всички текущо инсталирани разширения за интегриране на библиотека могат да бъдат конфигурирани тук.
+
+Ако искате да инсталирате или деинсталирате допълнителни интеграции, използвайте &quot;Добавки&quot; опция от главното меню.</x:String>
+    <x:String x:Key="LOCAddonsThemesDesktop">Работен плот с теми</x:String>
+    <x:String x:Key="LOCAddonsThemesFullscren">Теми на цял екран</x:String>
+    <x:String x:Key="LOCAddonsSearching">Търсене...</x:String>
+    <x:String x:Key="LOCAddonErrorNotCompatible">Добавката не е съвместима с тази версия на Playnite.</x:String>
+    <x:String x:Key="LOCAddonErrorDownloadFailed">Неуспешно изтегляне на инсталационния пакет на добавката.</x:String>
+    <x:String x:Key="LOCAddonErrorManifestDownloadError">Неуспешно изтегляне на манифеста за инсталиране на добавка.</x:String>
+    <x:String x:Key="LOCAddonChangesRestart">Необходимо е рестартиране на приложението, за да се приложат чакащи промени.</x:String>
+    <x:String x:Key="LOCAddonQueuedForInstall">Тази добавка е планирана за инсталиране.</x:String>
+    <x:String x:Key="LOCAddonInstall">Инсталиране</x:String>
+    <x:String x:Key="LOCAddonReinstall">Пре-инсталиране</x:String>
+    <x:String x:Key="LOCAddonUninstall">Деинсталиране</x:String>
+    <x:String x:Key="LOCAddonAlreadyInstalled">Вече инсталиран</x:String>
+    <x:String x:Key="LOCAddonNoAddonsAvailable">Няма намерени нови актуализации на добавки.</x:String>
+    <x:String x:Key="LOCAddonUpdateAddons">Актуализиране на добавки</x:String>
+    <x:String x:Key="LOCAddonChangelogNotAvailavble">Регистърът на промените не е наличен</x:String>
+    <x:String x:Key="LOCAddonUpdateStatusDownloaded">Планирано за инсталиране</x:String>
+    <x:String x:Key="LOCAddonUpdateStatusFailed">Неуспешно изтегляне</x:String>
+    <x:String x:Key="LOCAddonUpdateStatusLicenseRejected">Лицензът е отхвърлен</x:String>
+    <x:String x:Key="LOCAddonDownloadingAddon">Изтегляне на {0}…</x:String>
+    <x:String x:Key="LOCAddonLookingForUpdates">Търсят се актуализации на добавки...</x:String>
+    <x:String x:Key="LOCAppLookingForUpdates">Търсене за актуализации на програмата…</x:String>
+    <x:String x:Key="LOCAddonUpdatesAvailable">Налични са една или повече актуализации на добавките.</x:String>
+    <x:String x:Key="LOCAddonSelectToUpdate">Изберете елементи за актуализиране</x:String>
+    <x:String x:Key="LOCAddonDevReferenceLoaded">Екземпляр за разработка на разширение</x:String>
+    <x:String x:Key="LOCAddonLicenseWindowTitle">{0} лицензионно споразумение</x:String>
+    <x:String x:Key="LOCLicenseAccept">Приемам</x:String>
+    <x:String x:Key="LOCLicenseDecline">Отказ</x:String>
+    <x:String x:Key="LOCIncludePluginGameActions">Включване на действия за игра на интегриране на библиотека</x:String>
+    <x:String x:Key="LOCSelectActionTitle">Избор на действие</x:String>
+    <x:String x:Key="LOCActionTrackingMode">Режим на проследяване</x:String>
+    <x:String x:Key="LOCActionTrackingPath">Път за проследяване</x:String>
+    <x:String x:Key="LOCActionTrackingTrackingDelay">Първоначално забавяне на проследяването</x:String>
+    <x:String x:Key="LOCActionTrackingFrequency">Честота на проследяване</x:String>
+    <x:String x:Key="LOCGameActionTypeLink">Връзка</x:String>
+    <x:String x:Key="LOCGameActionTypeFile">Файл</x:String>
+    <x:String x:Key="LOCGameActionTypeEmulator">Емулатор</x:String>
+    <x:String x:Key="LOCGameActionTypeScript">Скрипт</x:String>
+    <x:String x:Key="LOCActionTrackingModeDefault">По подразбиране</x:String>
+    <x:String x:Key="LOCActionTrackingModeProcess">Процес</x:String>
+    <x:String x:Key="LOCActionTrackingModeDirectory">Папка</x:String>
+    <x:String x:Key="LOCActionTrackingOriginalProcess">Оригинален процес</x:String>
+    <x:String x:Key="LOCActionTrackingProcessName">Име на процеса</x:String>
+    <x:String x:Key="LOCDevelTraceLogEnable">Регистриране на съобщения за проследяване</x:String>
+    <x:String x:Key="LOCMultiEditOverwriteWarning">Следващите промени презаписват данните за всички текущо избрани игри!</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeNone">Няма</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeUniform">Униформа</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeBetweenItemsOnly">Само елементи</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeStartAndEndOnly">Само начало и край</x:String>
+    <x:String x:Key="LOCScrollingSensitivity">Чувствителност при превъртане</x:String>
+    <x:String x:Key="LOCSmoothScrolling">Гладко превъртане</x:String>
+    <x:String x:Key="LOCSmoothScrollingSpeed">Скорост на анимацията</x:String>
+    <x:String x:Key="LOCAskRemoveItemTitle">Премахване на елемент?</x:String>
+    <x:String x:Key="LOCAskRemoveItemMessage">Сигурни ли сте, че искате да премахнете този елемент?</x:String>
+    <x:String x:Key="LOCSettingsTopPanelItems">Показване на бутони в горния панел:</x:String>
+    <x:String x:Key="LOCSettingsTopPanelGeneralViewItem">Общи настройки на изгледа</x:String>
+    <x:String x:Key="LOCSettingsTopPanelGroupingItem">Настройки за групиране</x:String>
+    <x:String x:Key="LOCSettingsTopPanelSortingItem">Настройки за сортиране</x:String>
+    <x:String x:Key="LOCSettingsTopPanelFilterPresetsItem">Предварително зададени филтри</x:String>
+    <x:String x:Key="LOCTopPanelPluginPanelPosition">Позиция на елементите на приставката</x:String>
+    <x:String x:Key="LOCTopPanelSeparatorWidth">Ширина на разделителя на секции</x:String>
+    <x:String x:Key="LOCTopPanelMainButtonMove">Преместване на бутона на главното меню в страничната лента</x:String>
+    <x:String x:Key="LOCTopPanelExplorerSwitch">Панел за преглед</x:String>
+    <x:String x:Key="LOCTopPanelSelectRandomGameButton">Произволен избор на игра</x:String>
+    <x:String x:Key="LOCTopPanelViewSelectRandomGameButton">Преглежда селектора за произволни игри</x:String>
+    <x:String x:Key="LOCTopPanelViewSelectRandomGameButtonTooltip">Изберете произволна игра от изгледа</x:String>
+    <x:String x:Key="LOCFilterPresetSaveViewOptions">Запазване на настройките за групиране и сортиране</x:String>
+    <x:String x:Key="LOCFilterPresetShowOnFSTopPanel">Показване като бърз филтър в режим на цял екран</x:String>
+    <x:String x:Key="LOCInPast7Days">През последните 7 дни</x:String>
+    <x:String x:Key="LOCInPast31Days">През последните 31 дни</x:String>
+    <x:String x:Key="LOCInPast365Days">През последните 365 дни</x:String>
+    <x:String x:Key="LOCMoreThan365DaysAgo">Преди повече от 365 дни</x:String>
+    <x:String x:Key="LOCConfigure">Конфигуриране</x:String>
+    <x:String x:Key="LOCFilterPresetSave">Запазване на предварителна настройка</x:String>
+    <x:String x:Key="LOCSettingsMinimizeAfterStartingGame">Минимизиране след стартиране на играта</x:String>
+    <x:String x:Key="LOCSettingsMinimizeAfterStartingGameDescription">Минимизиране на Playnite след стартиране на игра.
+
+Деактивирането на това може да доведе до проблеми с игрите, които не получават фокус върху входа при стартиране!</x:String>
+    <x:String x:Key="LOCSettingsFontSize">Размер на шрифта</x:String>
+    <x:String x:Key="LOCSettingsFontSizeSmall">Малък размер на шрифта</x:String>
+    <x:String x:Key="LOCSettingsControllerApi">Активиране на поддръжката на API за игрови контролер.</x:String>
+    <x:String x:Key="LOCSettingsXInputProcessing">Поддръжка на игрови контролери</x:String>
+    <x:String x:Key="LOCSettingsXInputProcessingDescription">Ако е деактивирано, Playnite няма да приеме входове на XInput интерфейс.
+
+Деактивирайте, ако използвате инструменти, които преобразуват XInput входове във входове от мишка/клавиатура и получавате двойни входове в Playnite.</x:String>
+    <x:String x:Key="LOCSettingsShowItemsMainMenuHeader">Показване на елементи в главното меню:</x:String>
+    <x:String x:Key="LOCSettingsSwapMainViewXAButtons">Свързване на обърнат X/A бутон за основен изглед</x:String>
+    <x:String x:Key="LOCSettingsSwapMainViewXAButtonsDescriptions">Разменя връзките на бутоните за стартиране на игра и показване на страница с подробности за играта в основния изглед.</x:String>
+    <x:String x:Key="LOCSettingsSwapConfirmCancelButtons">Размяна на обвързване на бутона за потвърждение/отмяна</x:String>
+    <x:String x:Key="LOCSettingsSwapConfirmCancelButtonsDescriptions">Инвертира A/B обвързвания на бутони за потвърждение и анулиране.</x:String>
+    <x:String x:Key="LOCSettingsPrimaryControllerOnly">Само основен контролер</x:String>
+    <x:String x:Key="LOCSettingsPrimaryControllerOnlyDescription">Приема входове само от основния контролер, когато е активиран.</x:String>
+    <x:String x:Key="LOCSettingsRefocusOnGuidButton">Бутонът за ръководство фокусира Playnite</x:String>
+    <x:String x:Key="LOCSettingsInterfaceVolume">Сила на звука на интерфейса</x:String>
+    <x:String x:Key="LOCSettingsMusiVolume">Сила на фона</x:String>
+    <x:String x:Key="LOCSettingsMuteBackground">Заглушаване във фонов режим</x:String>
+    <x:String x:Key="LOCErrorAudioInterfaceInit">Неуспешно инициализиране на аудио интерфейс.</x:String>
+    <x:String x:Key="LOCSettingsAudioOutputApi">API за изход</x:String>
+    <x:String x:Key="LOCSettingsAudioOutputApiDescription">API, използван за аудио изход. Променете, ако имате проблеми със звука.</x:String>
+    <x:String x:Key="LOCSettingsFSSectionGeneral">Общи</x:String>
+    <x:String x:Key="LOCSettingsFSSectionVisuals">Визуални елементи</x:String>
+    <x:String x:Key="LOCSettingsFSSectionAudio">Аудио</x:String>
+    <x:String x:Key="LOCSettingsFSSectionLayout">Оформление</x:String>
+    <x:String x:Key="LOCSettingsFSSectionMenus">Менюта</x:String>
+    <x:String x:Key="LOCSettingsFSSection">Вход</x:String>
+    <x:String x:Key="LOCGameIsStarting">{0} стартира...</x:String>
+    <x:String x:Key="LOCGameIsRunning">{0} работи...</x:String>
+    <x:String x:Key="LOCTextInputCapitalize">Главни букви</x:String>
+    <x:String x:Key="LOCTextInputSpace">Интервал</x:String>
+    <x:String x:Key="LOCSettingsImageScalerMode">Програма за мащабиране на рендиране на изображение</x:String>
+    <x:String x:Key="LOCSettingsImageScalingAlternative">Алтернатива</x:String>
+    <x:String x:Key="LOCSettingsImageScalingBalanced">Балансиран</x:String>
+    <x:String x:Key="LOCSettingsImageScalingQuality">Качество</x:String>
+    <x:String x:Key="LOCSettingsImageScalerModeTooltip">Качество:
+Най-добро качество на изображението, бавно, високо използване на паметта.
+    
+Балансиран:
+Добро качество, бързо, малко използване на паметта.
+    
+алтернатива:
+По-добро качество, средна скорост, малко използване на паметта.</x:String>
+    <x:String x:Key="LOCSelectFileTooltip">Изберете файл...</x:String>
+    <x:String x:Key="LOCSelectDirectoryTooltip">Изберете папка...</x:String>
+    <x:String x:Key="LOCStartupScript">Стартов скрипт</x:String>
+    <x:String x:Key="LOCAddonPerfNotice">Моля, имайте предвид, че както разширенията, така и темите могат значително да повлияят на производителността, стабилността и сигурността на Playnite.
+    
+Ако започнете да изпитвате проблеми след инсталиране на тема или разширение, опитайте първо да ги деактивирате/деинсталирате, за да видите дали те са в основата на проблема.</x:String>
+    <x:String x:Key="LOCGameActionSelectOnStart">Избор при стартиране</x:String>
+    <x:String x:Key="LOCEmulatorSelectOnStart">Избиране при стартиране</x:String>
+    <x:String x:Key="LOCEmulatorBuiltInProfiles">Вградени профили</x:String>
+    <x:String x:Key="LOCEmulatorBuiltInProfile">Вграден профил</x:String>
+    <x:String x:Key="LOCEmulatorCustomProfiles">Персонализирани профили</x:String>
+    <x:String x:Key="LOCEmulatorCustomProfile">Персонализиран профил</x:String>
+    <x:String x:Key="LOCEmulatorFunctionHandledByScript">Обработва се от вграден скрипт</x:String>
+    <x:String x:Key="LOCEmulatorSpec">Спецификация на емулатора</x:String>
+    <x:String x:Key="LOCPlatformSpec">Спецификация на платформата</x:String>
+    <x:String x:Key="LOCRegionSpec">Спецификация на региона</x:String>
+    <x:String x:Key="LOCEmulatorPreScriptDescription">Изпълняване преди стартиране на емулатора</x:String>
+    <x:String x:Key="LOCEmulatorPostScriptDescription">Изпълняване след стартиране на емулатора</x:String>
+    <x:String x:Key="LOCEmulatorStartedScriptDescription">Изпълняване след излизане от емулатора</x:String>
+    <x:String x:Key="LOCErrorEmulatorExecutableNotFound">Изпълнимият файл на емулатора не е намерен.</x:String>
+    <x:String x:Key="LOCErrorEmulatorSpecificationNotFound">Спецификацията на емулатора не е намерена.</x:String>
+    <x:String x:Key="LOCErrorEmulatorStartupScriptNotFound">Скриптът за стартиране на емулатора не е намерен.</x:String>
+    <x:String x:Key="LOCSplitEmuImportSplitGames">Разделяне като отделни игри</x:String>
+    <x:String x:Key="LOCSplitEmuImportMergeGames">Сливане в една игра</x:String>
+    <x:String x:Key="LOCEmuImportAssignPlatform">Задаване на платформа</x:String>
+    <x:String x:Key="LOCEmuImportAssignRegion">Задаване на регион</x:String>
+    <x:String x:Key="LOCEmuScanDirectory">Сканиране на папка</x:String>
+    <x:String x:Key="LOCEmuScanConfigurations">Конфигурации на сканиране</x:String>
+    <x:String x:Key="LOCEmuCrcExcludeFileTypes">Изключване на модели от сканиране на контролна сума</x:String>
+    <x:String x:Key="LOCEmuCrcExcludeFileTypesTooltip">Файловете, съответстващи на определен шаблон(и), няма да бъдат сканирани за контролна сума и ще бъдат съпоставени по име на файл. Вижте помощната страница на емулатора за повече информация.</x:String>
+    <x:String x:Key="LOCEmuScanEmulator">Сканиране с емулатор</x:String>
+    <x:String x:Key="LOCScanConfigNameError">Името трябва да бъде зададено при запазване на нова конфигурация.</x:String>
+    <x:String x:Key="LOCScanConfigNoEmulatorError">Емулатор или профил на емулатор не е зададен.</x:String>
+    <x:String x:Key="LOCScanConfigDirectoryError">Директорията за сканиране не е посочена или не съществува.</x:String>
+    <x:String x:Key="LOCScanConfigError">Конфигурацията на сканиране не е зададена правилно.</x:String>
+    <x:String x:Key="LOCEmuScanIncludeGlobalUpdate">Включване в автоматичното сканиране при групово сканиране</x:String>
+    <x:String x:Key="LOCEmulatorScanFailed">Неуспешно сканиране на папката за емулатори.</x:String>
+    <x:String x:Key="LOCEmulatedGameScanFailed">Неуспешно сканиране на папка(и) за емулирани игри.</x:String>
+    <x:String x:Key="LOCEmuScanHideImported">Скриване на импортираните</x:String>
+    <x:String x:Key="LOCEmuImportProfilesToImportHeader">Профили за импортиране:</x:String>
+    <x:String x:Key="LOCEmuAutoScanConfigurations">Конфигурации за автоматично сканиране</x:String>
+    <x:String x:Key="LOCEmuSaveScanConfig">Запазване като конфигурация за автоматично сканиране</x:String>
+    <x:String x:Key="LOCEmuSaveScanConfigTooltip">Запазва конфигурацията за по-късна употреба по време на актуализацията на библиотеката. Запазените конфигурации могат да се управляват чрез &quot;Конфигуриране на емулатори&quot; меню.</x:String>
+    <x:String x:Key="LOCEmuImportWithRelativePaths">Импортиране чрез относителни пътища</x:String>
+    <x:String x:Key="LOCEmuImportWithRelativePathsTooltip">Ако е възможно, импортирайте файлове с игри, като използвате пътища, свързани с инсталационната папка на Playnite или инсталационната папка на емулатора.</x:String>
+    <x:String x:Key="LOCEmuImportScanSubfolders">Сканиране на подпапки</x:String>
+    <x:String x:Key="LOCEmuImportScanInsideArchives">Сканиране на вътрешните архиви</x:String>
+    <x:String x:Key="LOCEmuMergeRelatedFiles">Обединяване на свързани файлове</x:String>
+    <x:String x:Key="LOCEmuMergeRelatedFilesTooltip">Обединете свързани файлове с игри, като отделни дискове с игри, в един запис за игра.</x:String>
+    <x:String x:Key="LOCEmuAddScanner">Добавяне на скенер</x:String>
+    <x:String x:Key="LOCEmuAddSavedScanner">Добавяне на запазен скенер</x:String>
+    <x:String x:Key="LOCStartScan">Стартиране на сканирането</x:String>
+    <x:String x:Key="LOCEmuImportDirectoryConfigDesc">Добавете конфигурация(и) за сканиране с емулатори за сканиране на определени папки. Уверете се, че емулаторите са правилно конфигурирани, преди да импортирате игри (чрез менюто Библиотека -&gt; Конфигуриране на емулатори).</x:String>
+    <x:String x:Key="LOCCompletionStatusDefaultStatusDesc">Статус по подразбиране, присвоен на новодобавени игри</x:String>
+    <x:String x:Key="LOCCompletionStatusPlayedStatusDesc">Статус, присвоен на игри, играни за първи път</x:String>
+    <x:String x:Key="LOCPowerShellCreationError">Неуспешно инициализиране на времето за изпълнение на скрипт PowerShell. Ако сте потребител на Windows 7, опитайте (пре)инсталирайте PowerShell 5.1, за да коригирате проблема.</x:String>
+    <x:String x:Key="LOCFilterPresetNameConflict">Вече съществува предварително зададен филтър с посочено име. Актуализиране на предварителна настройка с нови настройки?</x:String>
+    <x:String x:Key="LOCSortingNameAutofill">Автоматично попълване на липсващи имена за сортиране при групово добавени или редактирани игри.</x:String>
+    <x:String x:Key="LOCSortingNameAutofillTooltip">Когато редактирате игра, добавяте игри чрез обновяване на библиотеката, сканиране на папка на емулатор или обикновено сканиране на папка, полето „Име за сортиране“ автоматично ще се попълва с по-подходяща форма на името на играта за сортиране. Например „The Witcher 3“ ще получи име за сортиране „Witcher 03“. Тази функция никога няма да зададе име за сортиране, което не се различава от името на играта, и автоматично ще актуализира само празни полета за сортиране.</x:String>
+    <x:String x:Key="LOCSortingNameRemovedArticles">Тези думи ще бъдат премахнати от началото на автоматично попълнената стойност за име за сортиране:</x:String>
+    <x:String x:Key="LOCSortingNameRemovedArticlesTooltip">Използвайте това за игнориране на думи в началото на низ с цел сортиране. По подразбиране е &quot;The&quot;, &quot;An&quot; и &quot;A&quot;.</x:String>
+    <x:String x:Key="LOCSortingNameAutofillButton">Попълване на име за сортиране за игри без такова</x:String>
+    <x:String x:Key="LOCSettingsSortingLabel">Сортиране</x:String>
+    <x:String x:Key="LOCSortingNameAutofillProgress">Попълване на стойности на имената за сортиране…</x:String>
+    <x:String x:Key="LOCNahimicServiceWarning">Установено е, че услугата Nahimic работи на вашата система. Известно е, че тази услуга причинява проблеми с изобразяването на Playnite (и други приложения).
+
+Ако срещнете повреда на графиката или други проблеми с изобразяването в Playnite, препоръчваме да деактивирате или напълно да деинсталирате услугата Nahimic.
+
+Повече информация на https://playnite.link/nahimicsucks</x:String>
+    <x:String x:Key="LOCElevatedProcessWarning">Playnite работи с повишени привилегии (като администратор). Това не се препоръчва, тъй като дава повишени привилегии на всички инсталирани разширения и всички игри/приложения, стартирани от Playnite!
+
+Повече информация на https://playnite.link/adminfaq</x:String>
+    <x:String x:Key="LOCElevatedProcessWarningShowOption">Показва предупреждение, ако Playnite работи с повишени привилегии</x:String>
+    <x:String x:Key="LOCInstallSizeScanUseSizeOnDiskOption">Получете реалния размер на устройството, когато изчислявате размера на игрите</x:String>
+    <x:String x:Key="LOCInstallSizeScanUseSizeOnDiskOptionTooltip">Ако е активирано, сканирането ще бъде по-бавно и ще получи реалния размер, който файловете използват в устройството.
+Ако е деактивирано, сканирането ще бъде по-бързо и ще използва размера на самите файлове.</x:String>
+    <x:String x:Key="LOCWarningBlacklistedExtensions">Следните добавки са докладвани като потенциално проблемни или поради силно въздействие върху стабилността/производителността, или поради проблеми със сигурността. Силно препоръчваме да ги деинсталирате:
+   	 
+{0}
+	</x:String>
+    <x:String x:Key="LOCEmuExcludeOnlineFiles">Изключване на онлайн файлове от сканиране</x:String>
+    <x:String x:Key="LOCEmuExcludeOnlineFilesTooltip">Файловете, съхранявани в облачно хранилище, няма да бъдат сканирани и импортирани, ако не са налични локално.
+Поддържа се само за: Google Drive, DropBox, OneDrive</x:String>
+    <x:String x:Key="LOCEmuUseSimplifiedOnlineFileScan">Сканиране, но с помощта на опростен метод без файлово съдържание</x:String>
+    <x:String x:Key="LOCEmuUseSimplifiedOnlineFileScanTooltip">Файловете ще бъдат импортирани, но с помощта на по-малко точен метод, който не изисква съдържанието на файла да бъде изтеглено и представено локално.</x:String>
+    <x:String x:Key="LOCMetadatSetAllFieldsToValue">Прилагане към всички</x:String>
+    <x:String x:Key="LOCOverrideInstallState">Замяна на състоянието на инсталиране</x:String>
+    <x:String x:Key="LOCOverrideInstallStateTooltip">Когато е зададено, Playnite ще игнорира състоянието на инсталация (включително инсталационна директория), зададено от плъгина за интегриране, който импортира тази игра.
+   	 
+Тази опция може да не работи напълно с плъгини, които използват конкретен метод за импортиране на игри, освен ако не вземат предвид и тази опция за отмяна.</x:String>
+    <x:String x:Key="LOCOptionOnlyManually">Само ръчно</x:String>
+    <x:String x:Key="LOCOptionOnceADay">Веднъж на ден</x:String>
+    <x:String x:Key="LOCOptionOnceAWeek">Веднъж седмично</x:String>
+    <x:String x:Key="LOCOptionOnEveryStartup">При всяко стартиране</x:String>
+    <x:String x:Key="LOCCheckProgramUpdates">Проверете за актуализации на програмата</x:String>
+    <x:String x:Key="LOCCheckAddonUpdates">Проверка за актуализации на добавки</x:String>
+    <x:String x:Key="LOCCheckLibraryUpdates">Актуализиране на библиотеки</x:String>
+    <x:String x:Key="LOCCheckEmulatedLibraryUpdates">Сканиране на папки за емулация</x:String>
+    <x:String x:Key="LOCStatsIncludeHidden">Включване на скрити игри</x:String>
+    <x:String x:Key="LOCMenuSetFields">Редактиране на полета</x:String>
+    <x:String x:Key="LOCItemSelectionSelectDeselectAll">Избиране/Премахване на всички</x:String>
+    <x:String x:Key="LOCOpen">Отвори</x:String>
+    <x:String x:Key="LOCActivate">Активиране</x:String>
+    <x:String x:Key="LOCAssign">Присвояване</x:String>
+    <x:String x:Key="LOCDefaultSearchDescription">Започнете да пишете, за да търсите игри… [F1] за помощ</x:String>
+    <x:String x:Key="LOCDefaultSearchHint">Започването с # показва списък с налични команди.
+Започвайки с /, извежда списък с налични доставчици/плъгини за търсене.
+Въвеждането на ключова дума за търсене и завършването с ИНТЕРВАЛ незабавно превключва към това търсене.
+
+TAB: действие за превключване
+ENTER: активиране на избраното действие
+SHIFT-ENTER: отваряне на менюто с елементи</x:String>
+    <x:String x:Key="LOCSearchFilterUninstalled">Включване на деинсталирани игри</x:String>
+    <x:String x:Key="LOCSearchFilterHidden">Включване на скрити игри</x:String>
+    <x:String x:Key="LOCSearchFilterUninstalledIncluded">Включени са деинсталирани игри</x:String>
+    <x:String x:Key="LOCSearchFilterUninstalledExcluded">Деинсталираните игри са изключени</x:String>
+    <x:String x:Key="LOCSearchFilterHiddenIncluded">Включени скрити игри</x:String>
+    <x:String x:Key="LOCSearchFilterHiddenalledExcluded">Скритите игри са изключени</x:String>
+    <x:String x:Key="LOCGameSearchItemActionPlay">Играйте или инсталирайте</x:String>
+    <x:String x:Key="LOCGameSearchItemActionSwitchTo">Отидете на подробности</x:String>
+    <x:String x:Key="LOCGameSearchItemActionOpenMenu">Меню на играта</x:String>
+    <x:String x:Key="LOCGameSearchItemActionEdit">Редактиране на играта</x:String>
+    <x:String x:Key="LOCOpenSearch">Отворете търсене</x:String>
+    <x:String x:Key="LOCTopPanelSearchBox">Поле за търсене</x:String>
+    <x:String x:Key="LOCTopPanelSearchButton">Бутон за търсене</x:String>
+    <x:String x:Key="LOCSearchSettingsPrimaryAction">Основно действие в играта</x:String>
+    <x:String x:Key="LOCSearchSettingsSecondaryAction">Вторично действие в играта</x:String>
+    <x:String x:Key="LOCSearchSettingsKeyboardOpenSearch">CTRL-F отваря глобално търсене, вместо да фокусира полето за търсене</x:String>
+    <x:String x:Key="LOCSearchSettingsSaveFilter">Запазване на настройките на филтъра на играта между сесиите за търсене</x:String>
+    <x:String x:Key="LOCSearchSettingsSearchProviders">Доставчици на търсене</x:String>
+    <x:String x:Key="LOCSearchSettingsDefaultKeyword">Ключова дума по подразбиране</x:String>
+    <x:String x:Key="LOCSearchSettingsCustomKeyword">Персонализирана ключова дума</x:String>
+    <x:String x:Key="LOCSearchSettingsSystemWideShortcut">Пряк път за цялата система</x:String>
+    <x:String x:Key="LOCSearchTitle">Търсене в Playnite</x:String>
+    <x:String x:Key="LOCExtensionSettingsMenu">Настройки на разширението</x:String>
+    <x:String x:Key="LOCExclusions">Изключения</x:String>
+    <x:String x:Key="LOCEmuScannerExcludedFiles">Изключени файлове спрямо папката за сканиране</x:String>
+    <x:String x:Key="LOCEmuScannerExcludedFolders">Изключени папки спрямо папката за сканиране</x:String>
+    <x:String x:Key="LOCEmuImportAddROMExclusionList">Добавяне на файл към списъка с изключения</x:String>
+    <x:String x:Key="LOCEmuImportAddFolderExclusionList">Добавяне на папка към списъка с изключения</x:String>
+    <x:String x:Key="LOCEmuExclusionNoConfigError">Изключения могат да се добавят само към запазени конфигурации на скенера.</x:String>
+    <x:String x:Key="LOCEmuExclusionAddedMessage">Изключенията са добавени към &quot;{0}&quot; скенер.</x:String>
+    <x:String x:Key="LOCEmuOverridePlatform">Замяна на платформа</x:String>
+    <x:String x:Key="LOCEmuOverridePlatformTooltip">Когато е зададено, скенерът ще присвои тази платформа на всички игри, като презапише всички автоматично открити платформи.</x:String>
+    <x:String x:Key="LOCSearchIncludeCommandsInDefault">Включване на команди в търсенето по подразбиране</x:String>
+    <x:String x:Key="LOCSearchIncludeCommandsInDefaultTooltip">Когато е деактивирано, командите няма да бъдат включени в търсенето по подразбиране, докато не се използва # префикс.</x:String>
+    <x:String x:Key="NameFilterUseFuzzyMatching">Използвайте размито съвпадение във филтъра за имена</x:String>
+    <x:String x:Key="NameFilterUseFuzzyMatchingTooltip">Когато е активиран, филтърът за имена ще съпоставя имената на игрите по същия начин като глобалното търсене.
+Строгото съвпадение може да бъде наложено за отделен случай чрез префикс филтър със ! символ.</x:String>
+    <x:String x:Key="LOCSearchViewGameFieldOptions">Полета за показване на резултатите от играта:</x:String>
+    <x:String x:Key="LOCHiddenStatus">Скрито състояние</x:String>
+    <x:String x:Key="LOCBackupCancelled">Архивирането на данни бе отменено.</x:String>
+    <x:String x:Key="LOCBackupFailed">Неуспешно архивиране на данни.</x:String>
+    <x:String x:Key="LOCBackupErrorTitle">Грешка при архивиране на данни</x:String>
+    <x:String x:Key="LOCBackupProgress">Извършва се архивиране на данни...</x:String>
+    <x:String x:Key="LOCBackupRestoreProgress">Възстановяване на данни от резервно копие...</x:String>
+    <x:String x:Key="LOCBackupRestoreFailed">Неуспешно възстановяване на данни от резервно копие.</x:String>
+    <x:String x:Key="LOCBackupOptionSettings">Настройки</x:String>
+    <x:String x:Key="LOCBackupOptionLibrary">Библиотека с игри</x:String>
+    <x:String x:Key="LOCBackupOptionGameMedia">Носител на библиотека с игри</x:String>
+    <x:String x:Key="LOCBackupOptionExtensions">Инсталирани разширения</x:String>
+    <x:String x:Key="LOCBackupOptionExtensionsData">Данни за разширенията</x:String>
+    <x:String x:Key="LOCBackupOptionThemes">Инсталирани теми</x:String>
+    <x:String x:Key="LOCBackupRestoreMessage">Изберете данни, които да бъдат възстановени от посочения архивен файл.
+    
+Playnite автоматично ще се рестартира, за да започне процес на възстановяване на резервно копие.</x:String>
+    <x:String x:Key="LOCBackupDataBackupMessage">Изберете елементи, които да бъдат включени в архивирането на данни. Настройките на приложението и данните от библиотеката с игри са включени по подразбиране.
+    
+Playnite автоматично ще се рестартира, за да стартира процеса на архивиране.</x:String>
+    <x:String x:Key="LOCSettingsEnableAutomaticBackup">Автоматично архивиране на данни</x:String>
+    <x:String x:Key="LOCSettingsAutoBackupFrequency">Честота на автоматично архивиране</x:String>
+    <x:String x:Key="LOCSettingsBackupFolder">Архивна папка</x:String>
+    <x:String x:Key="LOCSettingsRotatingBackups">Ротиращи архиви</x:String>
+    <x:String x:Key="LOCSettingsAutoBackupIncludeItems">Включете допълнителни данни:</x:String>
+    <x:String x:Key="LOCSettingsNoBackupDirSpecifiedError">Папката за архивиране трябва да бъде зададена, ако е активирано автоматично архивиране.</x:String>
+    <x:String x:Key="LOCUpdateNotifyOnlyPatches">Показване на известия само за издания на корекции</x:String>
+    <x:String x:Key="LOCUpdateNotifyOnlyPatchesToolip">Когато е активирано, само наличните актуализации за текущо инсталираната основна версия ще доведат до известие за актуализация.
+Новите основни версии няма да доведат до известие за актуализация.</x:String>
+    <x:String x:Key="LOCSettingsPastWeekRelativeFormat">Използване на относителни дати за последната седмица</x:String>
+    <x:String x:Key="LOCSettingsPastWeekRelativeFormatTooltip">Използване на относителни дати в &quot;Днес&quot;, &quot;Вчера&quot; и т.н. формат, ако датата е на по-малко от седмица.
+    
+Посоченият формат на датата ще се използва за всички останали дати.</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearch">Търсене на изображения в мрежата</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearchIconTerm">Низ за търсене на изображение на икона</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearchCoverTerm">Низ за търсене на изображение на корицата</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearchBackground">Низ за търсене на фоново изображение</x:String>
+    <x:String x:Key="LOCGettingsAddonInformation">Получаване на информация за добавката...</x:String>
+    <x:String x:Key="LOCNoMetadataSource">Няма наличен източник на метаданни</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettings">Настройки за действие за възпроизвеждане</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettingsScanner">Използване на настройките на скенера</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettingsSelectProfile">Избор на профил при стартиране</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettingsSelectEmulator">Избор на емулатор при стартиране</x:String>
+    <x:String x:Key="LOCAutomatic">Автоматично</x:String>
+    <x:String x:Key="LOCAlwaysOn">Винаги включен</x:String>
+    <x:String x:Key="LOCAlwaysOff">Винаги изключено</x:String>
+    <x:String x:Key="LOCSettingsAccessibilityInterface">Поддръжка за достъпност (екранен четец)</x:String>
+    <x:String x:Key="LOCApplicationMenu">Меню на приложението</x:String>
+    <x:String x:Key="LOCGameMenu">Меню на играта</x:String>
+    <x:String x:Key="LOCProgramFolder">Програмна папка</x:String>
+    <x:String x:Key="LOCUserDataFolder">Директория с потребителски данни</x:String>
+    <x:String x:Key="LOCDBCorruptionCrashMessage">Открито е повреда на файла на библиотеката, Playnite ще се изключи.
+    
+Отворете нов проблем в GitHub страницата на Playnite с искане за коригиране на повреда във вашите файлове.</x:String>
+    <x:String x:Key="LOCUnsavedChangesAskMessage">Искате ли да запазите направените промени?</x:String>
+    <x:String x:Key="LOCPortableInstallation">Портативна инсталация</x:String>
+    <x:String x:Key="LOCNoControllersDetected">Няма открити контролери</x:String>
+</ResourceDictionary>

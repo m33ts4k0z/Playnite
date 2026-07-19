@@ -1,0 +1,1247 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:String x:Key="LanguageName">Català</x:String>
+    <x:String x:Key="LOCLanguageSettingsLabel">Idioma de Playnite</x:String>
+    <x:String x:Key="LOCExitAppLabel">Sortir</x:String>
+    <x:String x:Key="LOCFilterActiveLabel">Filtre actiu</x:String>
+    <x:String x:Key="LOCFilterInactiveLabel">Filtre desactivat</x:String>
+    <x:String x:Key="LOCAditionalFilters">Filtres addicionals</x:String>
+    <x:String x:Key="LOCFilters">Filtres</x:String>
+    <x:String x:Key="LOCFilter">Filtre</x:String>
+    <x:String x:Key="LOCInvalidDataTitle">Dades no vàlides</x:String>
+    <x:String x:Key="LOCSaveChangesAskTitle">Vols desar els canvis?</x:String>
+    <x:String x:Key="LOCAboutHomePageLink">Pàgina web a www.playnite.link</x:String>
+    <x:String x:Key="LOCAboutSourceLink">Codi font a GitHub</x:String>
+    <x:String x:Key="LOCAboutCreateDiagButton">Crear paquet de diagnosi</x:String>
+    <x:String x:Key="LOCAboutSendDiagButton">Enviar informació del sistema</x:String>
+    <x:String x:Key="LOCAboutWindowTitle">Quant a Playnite</x:String>
+    <x:String x:Key="LOCAboutAuthor">Creat per Josef Němec</x:String>
+    <x:String x:Key="LOCCategoryWindowTitle">Assignar categoria</x:String>
+    <x:String x:Key="LOCCategorySetButton">Establir categories</x:String>
+    <x:String x:Key="LOCCategoryAddCatButton">Afegir categoria</x:String>
+    <x:String x:Key="LOCCategoryTooltip">Seleccionat - Assignar categoria
+No seleccionat - Eliminar categoria
+Indeterminat - Sense canvis (en editar diversos jocs)</x:String>
+    <x:String x:Key="LOCNoCategory">Sense categoria</x:String>
+    <x:String x:Key="LOCNoPlatform">Sense plataforma</x:String>
+    <x:String x:Key="LOCCrashWindowTitle">Vaja! Alguna cosa ha anat malament…</x:String>
+    <x:String x:Key="LOCCrashDescription">S&apos;ha produït un error irrecuperable.
+
+Si ens vols ajudar a solucionar el problema, descriu breument les accions preses abans del problema i envia la informació de diagnosi. Si estàs connectat a Internet, el paquet es penjarà al servidor de Playnite per a analitzar-se.
+
+També pots clicar al botó &apos;Informar d&apos;una fallada&apos; per crear una nova incidència al Github i informar manualment del problema.
+
+Gràcies per la teva ajuda.</x:String>
+    <x:String x:Key="LOCExtCrashDescription">L&apos;extensió &quot;{0}&quot; ha provocat un error irrecuperable.
+
+Es recomana desar el fitxer de registre i informar del problema al desenvolupador de l&apos;extensió. Si el problema es repeteix, desactiva l&apos;extensió.</x:String>
+    <x:String x:Key="LOCExtCrashDescriptionFS">L&apos;extensió &quot;{0}&quot; ha provocat un error irrecuperable.
+
+Es recomana informar del problema al desenvolupador de l&apos;extensió. Si el problema es repeteix, desactiva l&apos;extensió.</x:String>
+    <x:String x:Key="LOCExtCrashDescriptionUknown">Una extensió desconeguda o un tema ha provocat un error irrecuperable.
+
+Recomanem desactivar els complements de tercers, aïllar el problema i informar el problema al desenvolupador del complement.</x:String>
+    <x:String x:Key="LOCCrashDescriptionFullscreen">S&apos;ha produït un error irrecuperable.
+
+Si vols ajudar-nos a arreglar aquest problema, envia&apos;ns la informació de diagnosi. Gràcies.</x:String>
+    <x:String x:Key="LOCCrashDisableExtension">Desactivar extensió</x:String>
+    <x:String x:Key="LOCCrashSaveLog">Desar fitxer de registre</x:String>
+    <x:String x:Key="LOCCrashSendDiag">Envia informació de diagnosi</x:String>
+    <x:String x:Key="LOCCrashReportIssue">Informar d&apos;una fallada</x:String>
+    <x:String x:Key="LOCCrashRestartPlaynite">Reiniciar Playnite</x:String>
+    <x:String x:Key="LOCCrashRestartSafe">Reiniciar en mode segur</x:String>
+    <x:String x:Key="LOCCrashRestartSafeTooltip">Desactivant totes les extensions de tercers i utilitzant el tema predeterminat.</x:String>
+    <x:String x:Key="LOCCrashClosePlaynite">Sortir de Playnite</x:String>
+    <x:String x:Key="LOCCrashUserActionsDescription">Accions preses abans de la fallada (en anglès):</x:String>
+    <x:String x:Key="LOCLibraryManager">Organitzador de la biblioteca</x:String>
+    <x:String x:Key="LOCGameRemoveAskTitle">Eliminar joc(s)?</x:String>
+    <x:String x:Key="LOCGameRemoveRunningError">No es pot eliminar: el joc o l&apos;instal·lador s&apos;està executant. </x:String>
+    <x:String x:Key="LOCGameUninstallRunningError">No es pot desinstal·lar: el joc s&apos;està executant.</x:String>
+    <x:String x:Key="LOCGameRemoveAskMessage">Segur que vols eliminar {0}?</x:String>
+    <x:String x:Key="LOCGamesRemoveAskMessage">Segur que vols eliminar {0} jocs?</x:String>
+    <x:String x:Key="LOCGameRemoveAskMessageIgnoreOption">Segur que vols eliminar {0}?
+
+Si selecciones l&apos;opció &quot;Afegir a la llista d&apos;exclusions&quot;, s&apos;evitarà que el joc es torni a importar la pròxima vegada que s&apos;actualitzi la biblioteca.</x:String>
+    <x:String x:Key="LOCGamesRemoveAskMessageIgnoreOption">Segur que vols eliminar {0} jocs?
+
+Si selecciones l&apos;opció &quot;Afegir a la llista d&apos;exclusions&quot;, s&apos;evitarà que el joc es torni a importar la pròxima vegada que s&apos;actualitzi la biblioteca.</x:String>
+    <x:String x:Key="LOCRemoveUnusedFieldsAskMessage">Segur que vols eliminar {0} entrades que no s&apos;estan utilitzant actualment?</x:String>
+    <x:String x:Key="LOCRemoveUnusedFieldsNoUnusedMessage">No s&apos;han trobat camps sense utilitzar</x:String>
+    <x:String x:Key="LOCRemoveAskAddToExlusionListYesResponse">Sí (afegir a la llista d&apos;exclusions)</x:String>
+    <x:String x:Key="LOCGameEditChangeNotif">Hi ha canvis sense desar en aquesta secció</x:String>
+    <x:String x:Key="LOCDBUpgradeProgress">Actualitzant format de la biblioteca de jocs…</x:String>
+    <x:String x:Key="LOCDBUpgradeFail">Ha fallat l’actualització de la base de dades.</x:String>
+    <x:String x:Key="LOCDBUpgradeEmptySpaceFail">No es pot actualitzar la biblioteca de jocs. Es requereixen {0} MB d’espai lliure.</x:String>
+    <x:String x:Key="LOCGameError">Error del joc</x:String>
+    <x:String x:Key="LOCGameStartErrorNoGame">No es pot iniciar el joc. &apos;{0}&apos; no s’ha trobat a la base de dades.</x:String>
+    <x:String x:Key="LOCGameStartError">No es pot iniciar el joc: {0}</x:String>
+    <x:String x:Key="LOCGameStartActionError">No es pot iniciar l’acció: {0}</x:String>
+    <x:String x:Key="LOCGameOpenLocationError">No es pot obrir la ubicació del joc: {0}</x:String>
+    <x:String x:Key="LOCCalculateGameSizeError">No s&apos;ha pogut detectar la mida de la instal·lació del joc: {0}</x:String>
+    <x:String x:Key="LOCCalculateGameSizeErrorCaption">Error en escanejar la mida de la instal·lació</x:String>
+    <x:String x:Key="LOCCalculateGamesSizeErrorMessage">Hi ha hagut {0} errors en escanejar la mida de la instal·lació</x:String>
+    <x:String x:Key="LOCGameShortcutError">No s’ha pogut crear la drecera: {0}</x:String>
+    <x:String x:Key="LOCManualOpenError">No s&apos;ha pogut obrir el manual: {0}</x:String>
+    <x:String x:Key="LOCGameInstallError">No es pot instal·lar el joc: {0}</x:String>
+    <x:String x:Key="LOCGameUninstallError">No es pot desinstal·lar el joc: {0}</x:String>
+    <x:String x:Key="LOCErrorNoPlayAction">No s&apos;han trobat accions d&apos;inici de joc vàlides. Quan utilitzis accions d&apos;emulador, assegura&apos;t que les definicions de la plataforma coincideixin entre el joc i la configuració de l&apos;emulador.</x:String>
+    <x:String x:Key="LOCErrorNoInstallAction">La implementació de la instal·lació no està disponible.</x:String>
+    <x:String x:Key="LOCErrorLibraryPluginNotFound">El connector de la biblioteca responsable d&apos;aquest joc està desactivat o no està instal·lat.</x:String>
+    <x:String x:Key="LOCErrorNoMetadataDownloader">La baixada de metadades oficials no està disponible.</x:String>
+    <x:String x:Key="LOCErrorNoGameSelected">No hi ha cap joc seleccionat.</x:String>
+    <x:String x:Key="LOCErrorGameScriptAction">Ha fallat l&apos;execució de l&apos;acció de l&apos;script de joc</x:String>
+    <x:String x:Key="LOCErrorApplicationScript">Ha fallat l&apos;execució de l&apos;acció de l&apos;script de l&apos;aplicació.</x:String>
+    <x:String x:Key="LOCErrorGlobalScriptAction">Ha fallat l&apos;execució de l&apos;acció de l&apos;script global</x:String>
+    <x:String x:Key="LOCErrorEmulatorScriptAction">Ha fallat l&apos;execució de l&apos;acció de l&apos;script de l&apos;emulador.</x:String>
+    <x:String x:Key="LOCErrorPlayScriptAction">Ha fallat l&apos;execució de l&apos;acció de l&apos;script de joc.</x:String>
+    <x:String x:Key="LOCErrorPowerShellNotInstalled">PowerShell 3.0 o una versió més recent no està instal·lat.</x:String>
+    <x:String x:Key="LOCErrorStartupNoController">No s&apos;ha pogut determinar com obrir el joc.</x:String>
+    <x:String x:Key="LOCEnabledTitle">Activat</x:String>
+    <x:String x:Key="LOCDisabledTitle">Desactivat</x:String>
+    <x:String x:Key="LOCRemoveTitle">Eliminar</x:String>
+    <x:String x:Key="LOCRemoveUnusedTitle">Eliminar els no utilitzats</x:String>
+    <x:String x:Key="LOCRenameTitle">Canviar el nom</x:String>
+    <x:String x:Key="LOCCopyTitle">Copiar</x:String>
+    <x:String x:Key="LOCAddTitle">Afegir</x:String>
+    <x:String x:Key="LOCDefaultIconTitle">Icona per defecte</x:String>
+    <x:String x:Key="LOCDefaultCoverTitle">Imatge de caràtula per defecte</x:String>
+    <x:String x:Key="LOCDefaultBackgroundTitle">Imatge de fons per defecte</x:String>
+    <x:String x:Key="LOCFinishLabel">Finalitzar</x:String>
+    <x:String x:Key="LOCNextLabel">Següent</x:String>
+    <x:String x:Key="LOCBackLabel">Enrere</x:String>
+    <x:String x:Key="LOCDoneCapLabel">FET</x:String>
+    <x:String x:Key="LOCBackCapLabel">ENRERE</x:String>
+    <x:String x:Key="LOCClearCapLabel">NETEJAR</x:String>
+    <x:String x:Key="LOCClearLabel">Netejar</x:String>
+    <x:String x:Key="LOCDismiss">Descartar</x:String>
+    <x:String x:Key="LOCDismissAll">Descartar tot</x:String>
+    <x:String x:Key="LOCImportLabel">Importar</x:String>
+    <x:String x:Key="LOCNameLabel">Nom</x:String>
+    <x:String x:Key="LOCAuthorLabel">Autor</x:String>
+    <x:String x:Key="LOCModuleLabel">Mòdul</x:String>
+    <x:String x:Key="LOCSeriesLabel">Sèrie</x:String>
+    <x:String x:Key="LOCVersionLabel">Versió</x:String>
+    <x:String x:Key="LOCLastPlayedLabel">Darrera partida</x:String>
+    <x:String x:Key="LOCMostPlayedLabel">Joc més utilitzat</x:String>
+    <x:String x:Key="LOCPlayCountLabel">Nombre de partides</x:String>
+    <x:String x:Key="LOCInstallSizeLabel">Mida de la instal·lació</x:String>
+    <x:String x:Key="LOCFolderLabel">Carpeta</x:String>
+    <x:String x:Key="LOCNotesLabel">Notes</x:String>
+    <x:String x:Key="LOCAddedLabel">Afegit el</x:String>
+    <x:String x:Key="LOCDateAddedLabel">Data d&apos;addició</x:String>
+    <x:String x:Key="LOCModifiedLabel">Modificat el</x:String>
+    <x:String x:Key="LOCDateModifiedLabel">Data de modificació</x:String>
+    <x:String x:Key="LOCWebsiteLabel">Pàgina web</x:String>
+    <x:String x:Key="LOCPathLabel">Ruta</x:String>
+    <x:String x:Key="LOCOKLabel">D&apos;acord</x:String>
+    <x:String x:Key="LOCSaveLabel">Desar</x:String>
+    <x:String x:Key="LOCCloseLabel">Tancar</x:String>
+    <x:String x:Key="LOCCancelLabel">Cancel·lar</x:String>
+    <x:String x:Key="LOCConfirmLabel">Confirmar</x:String>
+    <x:String x:Key="LOCResetLabel">Reinciar</x:String>
+    <x:String x:Key="LOCYesLabel">Sí</x:String>
+    <x:String x:Key="LOCNoLabel">No</x:String>
+    <x:String x:Key="LOCWelcomeLabel">Benvingut</x:String>
+    <x:String x:Key="LOCLocalUserLabel">Usuari local</x:String>
+    <x:String x:Key="LOCGeneralLabel">General</x:String>
+    <x:String x:Key="LOCMediaLabel">Multimèdia</x:String>
+    <x:String x:Key="LOCLinksLabel">Enllaços</x:String>
+    <x:String x:Key="LOCInstallationLabel">Instal·lació</x:String>
+    <x:String x:Key="LOCActionsLabel">Accions</x:String>
+    <x:String x:Key="LOCDownloadingLabel">Descarregant…</x:String>
+    <x:String x:Key="LOCDownloadingMediaLabel">Descarregant multimèdia...</x:String>
+    <x:String x:Key="LOCLoadingLabel">Carregant...</x:String>
+    <x:String x:Key="LOCTypeLabel">Tipus</x:String>
+    <x:String x:Key="LOCProfileLabel">Perfil</x:String>
+    <x:String x:Key="LOCProfilesLabel">Perfils</x:String>
+    <x:String x:Key="LOCRemoveLabel">Eliminar</x:String>
+    <x:String x:Key="LOCDownloadLabel">Descarregar</x:String>
+    <x:String x:Key="LOCSearchLabel">Cercar</x:String>
+    <x:String x:Key="LOCSearchResolutionLabel">Resolució:</x:String>
+    <x:String x:Key="LOCSearchResolutionAnyLabel">Qualsevol</x:String>
+    <x:String x:Key="LOCZoomLabel">Zoom</x:String>
+    <x:String x:Key="LOCListViewLabel">Vista de llista</x:String>
+    <x:String x:Key="LOCCoversLabel">Caràtules</x:String>
+    <x:String x:Key="LOCGridViewLabel">Vista de quadrícula</x:String>
+    <x:String x:Key="LOCDetailsViewLabel">Vista de detalls</x:String>
+    <x:String x:Key="LOCCustomLabel">Personalitzat</x:String>
+    <x:String x:Key="LOCURLLabel">URL</x:String>
+    <x:String x:Key="LOCSpecialThanks">Agraïments especials </x:String>
+    <x:String x:Key="LOCLicenseLabel">Llicència</x:String>
+    <x:String x:Key="LOCContributorsLabel">Col·laboradors</x:String>
+    <x:String x:Key="LOCClosingPlaynite">Sortint de Playnite…</x:String>
+    <x:String x:Key="LOCToday">Avui</x:String>
+    <x:String x:Key="LOCYesterday">Ahir</x:String>
+    <x:String x:Key="LOCMonday">Dilluns</x:String>
+    <x:String x:Key="LOCTuesday">Dimarts</x:String>
+    <x:String x:Key="LOCWednesday">Dimecres</x:String>
+    <x:String x:Key="LOCThursday">Dijous</x:String>
+    <x:String x:Key="LOCFriday">Divendres</x:String>
+    <x:String x:Key="LOCSaturday">Dissabte</x:String>
+    <x:String x:Key="LOCSunday">Diumenge</x:String>
+    <x:String x:Key="LOCPastWeek">La setmana passada</x:String>
+    <x:String x:Key="LOCPastMonth">El mes passat</x:String>
+    <x:String x:Key="LOCPastYear">L&apos;any passat</x:String>
+    <x:String x:Key="LOCMoreThenYear">Fa més d&apos;un any</x:String>
+    <x:String x:Key="LOCSizeZeroTo100Mb">0 a 100 MB</x:String>
+    <x:String x:Key="LOCSize100MbTo1Gb">100 MB a 1 GB</x:String>
+    <x:String x:Key="LOCSize1GbTo5Gb">1 GB a 5 GB</x:String>
+    <x:String x:Key="LOCSize5GbTo10Gb">5 GB a 10 GB</x:String>
+    <x:String x:Key="LOCSize10GbTo20Gb">10 GB a 20 GB</x:String>
+    <x:String x:Key="LOCSize20GbTo40Gb">20 GB a 40 GB</x:String>
+    <x:String x:Key="LOCSize40GbTo100Gb">40 GB a 100 GB</x:String>
+    <x:String x:Key="LOCSizeMoreThan100Gb">100 GB o més</x:String>
+    <x:String x:Key="LOCImportCompleted">La importació s&apos;ha completat correctament.</x:String>
+    <x:String x:Key="LOCAllGames">Tots els jocs</x:String>
+    <x:String x:Key="LOCGameId">Id del joc</x:String>
+    <x:String x:Key="LOCDatabaseId">Id de la base de dades</x:String>
+    <x:String x:Key="LOCPresets">Ajustaments per defecte</x:String>
+    <x:String x:Key="LOCColumn">Columna</x:String>
+    <x:String x:Key="LOCColumns">Columnes</x:String>
+    <x:String x:Key="LOCRow">Filera</x:String>
+    <x:String x:Key="LOCRows">Files</x:String>
+    <x:String x:Key="LOCExecIconMissingPlayAction">No s&apos;ha pogut obtenir la icona de l&apos;acció Jugar. No hi ha cap acció de tipus fitxer present.</x:String>
+    <x:String x:Key="LOCMetaSkipNonEmpty">Només descarregar metadades que faltin</x:String>
+    <x:String x:Key="LOCMetaSkipNonEmptyTooltip">Activar aquesta opció farà que s&apos;ometi la descàrrega de metadades pels camps que ja contenen informació.</x:String>
+    <x:String x:Key="LOCMetaGamesSourceIntro">Selecció de jocs</x:String>
+    <x:String x:Key="LOCMetaGamesSourceDescription">Selecciona els jocs que s’hagin d&apos;actualitzar amb les noves metadades:</x:String>
+    <x:String x:Key="LOCMetaGameSourceAll">Tots els jocs de la base de dades</x:String>
+    <x:String x:Key="LOCMetaGameSourceFiltered">Tots els jocs filtrats actualment</x:String>
+    <x:String x:Key="LOCMetaGameSourceSelected">Només els jocs seleccionats</x:String>
+    <x:String x:Key="LOCMetaNoFieldsSelectedErrorCaption">No s&apos;ha seleccionat cap camp de metadades</x:String>
+    <x:String x:Key="LOCMetaNoFieldsSelectedErrorMessage">No s&apos;ha seleccionat cap camp de metadades per descarregar. Si us plau, com a mínim, selecciona un camp i un proveïdor de metadades que li correspongui.</x:String>
+    <x:String x:Key="LOCMetaSourceStore">Botiga oficial</x:String>
+    <x:String x:Key="LOCMetaSourceIGDB">IGDB</x:String>
+    <x:String x:Key="LOCMetaDescriptionFields">Selecciona quins camps ha d&apos;emplenar automàticament Playnite i quines fonts s’utilitzaran per obtenir les dades.</x:String>
+    <x:String x:Key="LOCMetaIgdbContribNotif">Pots fer clic al logo de dalt i contribuir a la base de dades d&apos;igdb.com per a millorar les dades que utilitza Playnite.</x:String>
+    <x:String x:Key="LOCProgressMetadata">Descarregant metadades…</x:String>
+    <x:String x:Key="LOCProgressInstalledGames">Important jocs instal·lats…</x:String>
+    <x:String x:Key="LOCProgressImportinGames">Important jocs de {0}…</x:String>
+    <x:String x:Key="LOCProgressImportinEmulatedGames">Important jocs emulats de {0}…</x:String>
+    <x:String x:Key="LOCProgressLibraryGames">Descarregant actualitzacions de la biblioteca…</x:String>
+    <x:String x:Key="LOCProgressScanningGamesInstallSize">Escanejant la mida dels jocs de la biblioteca...</x:String>
+    <x:String x:Key="LOCProgressScanningImportedGamesInstallSize">Escanejant mida dels jocs importats...</x:String>
+    <x:String x:Key="LOCProgressLibImportFinish">L’actualització de la biblioteca ha finalitzat</x:String>
+    <x:String x:Key="LOCProgressReleasingResources">Alliberant recursos…</x:String>
+    <x:String x:Key="LOCMenuConfigurationTitle">Configuració</x:String>
+    <x:String x:Key="LOCMenuPlayniteSettingsTitle">Configuració…</x:String>
+    <x:String x:Key="LOCMenuPlatformEmulatorSettingsTitle">Plataformes i emuladors</x:String>
+    <x:String x:Key="LOCMenuConfigureEmulatorsMenuTitle">Configurar emuladors…</x:String>
+    <x:String x:Key="LOCMenuLibraryManagerTitle">Organitzador de la biblioteca…</x:String>
+    <x:String x:Key="LOCMenuTools">Eines</x:String>
+    <x:String x:Key="LOCMenuDownloadMetadata">Descarregar metadades…</x:String>
+    <x:String x:Key="LOCMenuSoftwareTools">Eines de programari…</x:String>
+    <x:String x:Key="LOCMenuConfigureIntegrations">Configurar integracions…</x:String>
+    <x:String x:Key="LOCMenuOpenClient">Obrir client de tercers</x:String>
+    <x:String x:Key="LOCMenuClients">Clients de tercers</x:String>
+    <x:String x:Key="LOCMenuReloadLibrary">Actualitzar biblioteca de jocs</x:String>
+    <x:String x:Key="LOCMenuCancelLibraryUpdate">Cancel·lar actualització de la biblioteca</x:String>
+    <x:String x:Key="LOCMenuUpdateEmulatedDirs">Actualitzar carpetes emulades</x:String>
+    <x:String x:Key="LOCMenuAddGame">Afegir joc</x:String>
+    <x:String x:Key="LOCMenuAddGameManual">Manualment…</x:String>
+    <x:String x:Key="LOCMenuAddGameInstalled">Escanejar automàticament…</x:String>
+    <x:String x:Key="LOCMenuAddGameEmulated">Joc emulat…</x:String>
+    <x:String x:Key="LOCMenuAddWindowsStore">Aplicació del Microsoft Store…</x:String>
+    <x:String x:Key="LOCMenuAbout">Quant a Playnite</x:String>
+    <x:String x:Key="LOCMenuIssues">Enviar comentaris</x:String>
+    <x:String x:Key="LOCMenuOpenFullscreen">Canviar al mode de pantalla completa</x:String>
+    <x:String x:Key="LOCMenuLinksTitle">Enllaços</x:String>
+    <x:String x:Key="LOCMenuHelpTitle">Ajuda</x:String>
+    <x:String x:Key="LOCMenuPatreonSupport">Donar suport al Patreon</x:String>
+    <x:String x:Key="LOCMenuKofiSupport">Suport a Ko-fi</x:String>
+    <x:String x:Key="LOCUserManual">Manual d&apos;usuari</x:String>
+    <x:String x:Key="LOCSDKDocumentation">Documentació del SDK</x:String>
+    <x:String x:Key="LOCMenuRestartSystem">Reiniciar el sistema</x:String>
+    <x:String x:Key="LOCMenuShutdownSystem">Tancar el sistema</x:String>
+    <x:String x:Key="LOCMenuSuspendSystem">Suspendre el sistema</x:String>
+    <x:String x:Key="LOCMenuHibernateSystem">Hibernar el sistema</x:String>
+    <x:String x:Key="LOCMenuLockSystem">Bloquejar sistema</x:String>
+    <x:String x:Key="LOCMenuLogoutUser">Tancar sessió de l&apos;usuari</x:String>
+    <x:String x:Key="LOCMenuSelectRandomGame">Escollir un joc a l&apos;atzar</x:String>
+    <x:String x:Key="LOCSettingsDetailsPanelItems">Camps del joc que es mostraran al panell de detalls:</x:String>
+    <x:String x:Key="LOCSettingsGridItemSpacing">Espai entre elements</x:String>
+    <x:String x:Key="LOCSettingsGridItemDrawBackground">Mostrar imatge de fons dels elements de la quadrícula</x:String>
+    <x:String x:Key="LOCSettingsGridItemCoverMargin">Amplada de la vora dels elements de la quadrícula</x:String>
+    <x:String x:Key="LOCSettingsDefaulIconSource">Font de la icona faltant del joc</x:String>
+    <x:String x:Key="LOCSettingsDefaulCoverSource">Font de la caràtula faltant del joc</x:String>
+    <x:String x:Key="LOCSettingsDefaulBackgroundSource">Font de la imatge de fons faltant del joc</x:String>
+    <x:String x:Key="LOCSettingsIndentGameDetails">Espai vertical dels detalls del joc</x:String>
+    <x:String x:Key="LOCSettingsGridViewDetailsPosition">Posició de detalls en la vista de quadrícula</x:String>
+    <x:String x:Key="LOCSettingsDetailsGameListPosition">Posició de la llista de jocs en la vista detallada</x:String>
+    <x:String x:Key="LOCSettingsDrawPanelSeparators">Posar un separador entre panells</x:String>
+    <x:String x:Key="LOCSettingsGameDetailsCoverHeight">Alçada d&apos;imatge de caràtula de joc</x:String>
+    <x:String x:Key="LOCSettingsGameDetailsListIconSize">Alçada d&apos;icona de la llista de jocs</x:String>
+    <x:String x:Key="LOCSettingsInterfaceFont">Font de l&apos;aplicació</x:String>
+    <x:String x:Key="LOCSettingsInterfaceMonoFont">Font monoespaiada</x:String>
+    <x:String x:Key="LOCSettingsFilterPanelPosition">Posició del panell de filtres</x:String>
+    <x:String x:Key="LOCSettingsExplorerPanelPosition">Posició del panell d&apos;exploració</x:String>
+    <x:String x:Key="LOCSettingsCoverArtRenderingLabel">Renderització de la caràtula</x:String>
+    <x:String x:Key="LOCSettingsTargetAspectRatioLabel">Relació d&apos;aspecte desitjada</x:String>
+    <x:String x:Key="LOCSettingsGridTileLayoutFSNote">Les següents opcions també afecten la renderització dels mosaics en mode de pantalla completa.</x:String>
+    <x:String x:Key="LOCSettingsStrechModeLabel">Mode d&apos;estirament</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectDVD">Caixa de DVD</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectEpicGamesStore">Epic Games Store</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectGogGalaxy2">GOG Galaxy 2.0</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectIgdb">IGDB</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectSquare">Quadrat</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectSteam">Bàner de Steam</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectSteamVertical">Caràtula vertical de Steam</x:String>
+    <x:String x:Key="LOCSettingsCovertAspectTwitch">Twitch</x:String>
+    <x:String x:Key="LOCSettingsRestartNotification">* Cal reiniciar per aplicar els canvis</x:String>
+    <x:String x:Key="LOCSettingsLabel">Configuració</x:String>
+    <x:String x:Key="LOCSettingsGeneralLabel">General</x:String>
+    <x:String x:Key="LOCSettingsTopPanelLabel">Panell superior</x:String>
+    <x:String x:Key="LOCSettingsAppearanceLabel">Aparença</x:String>
+    <x:String x:Key="LOCSettingsGameDetailsLabel">Detalls del joc</x:String>
+    <x:String x:Key="LOCSettingsLayoutLabel">Disposició</x:String>
+    <x:String x:Key="LOCSettingsAdvancedLabel">Avançat</x:String>
+    <x:String x:Key="LOCSettingsFullscreenLabel">Pantalla completa</x:String>
+    <x:String x:Key="LOCSettingsInputLabel">Entrada</x:String>
+    <x:String x:Key="LOCSettingsPerformanceLabel">Rendiment</x:String>
+    <x:String x:Key="LOCSettingsMetadataLabel">Metadades</x:String>
+    <x:String x:Key="LOCSettingsUpdating">Actualització</x:String>
+    <x:String x:Key="LOCSettingsSearch">Cerca</x:String>
+    <x:String x:Key="LOCSettingsBackup">Còpia de seguretat</x:String>
+    <x:String x:Key="LOCMenuBackupData">Fer una còpia de seguretat de la biblioteca</x:String>
+    <x:String x:Key="LOCMenuRestoreBackup">Restaurar còpia de seguretat de les dades</x:String>
+    <x:String x:Key="LOCSettingsImportLabel">Importar els canvis a la biblioteca automàticament</x:String>
+    <x:String x:Key="LOCSettingsInvalidDBLocation">La ubicació del fitxer de base de dades no és vàlida; cal definir la ruta del fitxer adequada.</x:String>
+    <x:String x:Key="LOCSettingsInvalidAccountName">El nom del compte no pot estar buit.</x:String>
+    <x:String x:Key="LOCSettingsDownloadMetadataOnImport">Descarregar metadades després d&apos;importar jocs</x:String>
+    <x:String x:Key="LOCSettingsStartMinimized">Iniciar Playnite minimitzat</x:String>
+    <x:String x:Key="LOCSettingsStartOnBoot">Iniciar Playnite quan s&apos;engegui l&apos;ordinador</x:String>
+    <x:String x:Key="LOCSettingsStartOnBootClosedToTray">Iniciar tancat a la safata</x:String>
+    <x:String x:Key="LOCSettingsStartOnBootRegistrationError">No s’ha pogut registrar Playnite per iniciar-se quan s&apos;obri l’ordinador.</x:String>
+    <x:String x:Key="LOCSettingsStartInFullscreen">Iniciar en mode de pantalla completa</x:String>
+    <x:String x:Key="LOCSettingsAsyncImageLoading">Càrrega d’imatges asíncrona</x:String>
+    <x:String x:Key="LOCSettingsAsyncImageLoadingTooltip">Millora la suavitat de desplaçament de les llistes de jocs a canvi de temps de càrrega d&apos;imatges més lents.</x:String>
+    <x:String x:Key="LOCSettingsShowNameEmptyCover">Mostrar el nom del joc si no hi ha imatge de caràtula</x:String>
+    <x:String x:Key="LOCSettingsShowNamesUnderCover">Mostrar noms dels jocs en la vista de quadrícula</x:String>
+    <x:String x:Key="LOCSettingsDarkenUninstalledGridCovers">Enfosquir els jocs no instal·lats</x:String>
+    <x:String x:Key="LOCSettingsShowIconList">Mostrar les icones dels jocs en la vista de detalls</x:String>
+    <x:String x:Key="LOCSettingsShowGroupCount">Mostrar el recompte d’elements a les descripcions de grups</x:String>
+    <x:String x:Key="LOCSettingsUsedFieldsOnlyOnFilterLists">Mostrar només els camps assignats als panells de filtre i exploració</x:String>
+    <x:String x:Key="LOCSettingsDisableAcceleration">Desactivar l&apos;acceleració de hardware</x:String>
+    <x:String x:Key="LOCSettingsDisableAccelerationTooltip">Fes-ho servir quan tinguis problemes de rendiment o similars a la IU</x:String>
+    <x:String x:Key="LOCSettingsHiddenInQuickLaunch">Mostrar els jocs ocults a les llistes d&apos;inici ràpid</x:String>
+    <x:String x:Key="LOCSettingsHiddenInQuickLaunchTooltip">Afecta el Jump List i les llistes del menú de safata.</x:String>
+    <x:String x:Key="LOCSettingsQuicLaunchItems">Nombre d&apos;elements a la llista d&apos;inici ràpid</x:String>
+    <x:String x:Key="LOCSettingsShowBackgroundWindowImage">Utilitzar la imatge de fons del joc com a fons per la finestra</x:String>
+    <x:String x:Key="LOCSettingsBlurWindowBackgrounImage">Desenfocar el fons</x:String>
+    <x:String x:Key="LOCSettingsBlurHighQuality">Alta qualitat</x:String>
+    <x:String x:Key="LOCSettingsDarkenWindowBackghrounImage">Enfosquir el fons</x:String>
+    <x:String x:Key="LOCSettingsShowBackImageOnGridView">Mostrar en vista de quadrícula</x:String>
+    <x:String x:Key="LOCSettingsSkin">Tema</x:String>
+    <x:String x:Key="LOCSettingsSkinColor">Perfil del tema</x:String>
+    <x:String x:Key="LOCSettingsSkinFullscreen">Tema de pantalla completa</x:String>
+    <x:String x:Key="LOCSettingsSkinColorFullscreen">Perfil del tema de pantalla completa</x:String>
+    <x:String x:Key="LOCSettingsDBLocation">Localització de la base de dades</x:String>
+    <x:String x:Key="LOCSettingsLoginStatus">Estat d&apos;inici de sessió:</x:String>
+    <x:String x:Key="LOCSettingsWindowTitle">Configuració de Playnite</x:String>
+    <x:String x:Key="LOCSettingsClearWebCache">Esborrar la memòria cau web</x:String>
+    <x:String x:Key="LOCSettingsClearWebCacheTooltip">Pot resoldre els problemes que es trobin mentre s&apos;enllacen els comptes.</x:String>
+    <x:String x:Key="LOCSettingsShowTray">Mostrar icona a la safata del sistema</x:String>
+    <x:String x:Key="LOCSettingsMinimizeToTray">Minimitzar Playnite a la safata del sistema</x:String>
+    <x:String x:Key="LOCSettingsCloseToTray">Minimitzar Playnite a la safata del sistema quan la finestra de l’aplicació estigui tancada</x:String>
+    <x:String x:Key="LOCSettingsAfterGameStart">Quan el joc s&apos;iniciï:</x:String>
+    <x:String x:Key="LOCSettingsAfterGameClose">Quan el joc es tanqui:</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeUseDaysFormatLabel">Format de temps reproduït per indicar el nombre de dies jugats</x:String>
+    <x:String x:Key="LOCSettingsDatesFormatsLabel">Formats de dates:</x:String>
+    <x:String x:Key="LOCSettingsClearCacheWarn">Això et tancarà la sessió a tots els serveis enllaçats. Cal reiniciar l’aplicació, vols continuar?</x:String>
+    <x:String x:Key="LOCSettingsClearCacheTitle">Esborrar memòria cau?</x:String>
+    <x:String x:Key="LOCSettingsSkinChangeRestart">Es requereix reiniciar Playnite per a aplicar el tema nou</x:String>
+    <x:String x:Key="LOCSettingsGetThemes">Obtenir més temes</x:String>
+    <x:String x:Key="LOCSettingsCreateThemes">Crear nou tema</x:String>
+    <x:String x:Key="LOCSettingsGetExtensions">Obtenir més extensions</x:String>
+    <x:String x:Key="LOCSettingsCreateExtensions">Crear nova extensió</x:String>
+    <x:String x:Key="LOCSettingsCreateLocalization">Ajuda&apos;ns a traduir Playnite</x:String>
+    <x:String x:Key="LOCSettingsRestartAskMessage">Cal reiniciar Playnite per poder aplicar la nova configuració. Reiniciar ara?
+
+Si es reinicia, es cancel·laran les tasques actives (baixades) en curs.</x:String>
+    <x:String x:Key="LOCSettingsRestartTitle">Reiniciar Playnite?</x:String>
+    <x:String x:Key="LOCSettingsDBPathNotification">Playnite no pot moure els fitxers de la biblioteca automàticament. Has de moure/copiar manualment els fitxers abans de canviar la ubicació. Si no hi ha cap biblioteca a la ubicació de destinació, se&apos;n crearà una de nova.
+
+La nova ubicació de la base de dades no s&apos;utilitzarà fins que es reiniciï Playnite. </x:String>
+    <x:String x:Key="LOCSettingsClosePlaytimeNotif">El temps de joc no quedarà registrat si es defineix l&apos;acció &quot;Tancar&quot;.</x:String>
+    <x:String x:Key="LOCSettingsFullscreenRows">Nombre de files</x:String>
+    <x:String x:Key="LOCSettingsFullscreenColumns">Nombre de columnes</x:String>
+    <x:String x:Key="LOCSettingsFullscreenRowDetails">Nombre de files de vista de detalls</x:String>
+    <x:String x:Key="LOCSettingsFullscreenBackgroundOnMainScreen">Mostrar imatge de fons a la pantalla principal</x:String>
+    <x:String x:Key="LOCBackgroundImageScreenOptionTooltip">No s&apos;aplica retrospectivament als jocs existents sense tornar a descarregar les metadades.</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportMode">Importar temps de joc dels jocs de la biblioteca:</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeTooltip">Configura quan ha d&apos;importar Playnite el temps de joc indicat pels plugins de la biblioteca per a jocs a la base de dades de Playnite. Es necessita el suport dels connectors de la biblioteca encarregats de gestionar els jocs per poder utilitzar aquesta funció.
+
+Sempre: Importa el temps de joc per a nous jocs importats i existents a la base de dades de Playnite.
+Només pels jocs recentment importats: Importa temps de joc només per als nous jocs importats.
+Mai: Mai no importa temps de joc sota cap circumstància.</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeAlways">Sempre</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeNewImportsOnly">Només pels jocs recentment importats</x:String>
+    <x:String x:Key="LOCSettingsPlaytimeImportModeNever">Mai</x:String>
+    <x:String x:Key="LOCSettingsXInputInDesktopMode">Activar la compatibilitat amb el comandament en mode d&apos;escriptori</x:String>
+    <x:String x:Key="LOCSettingsXInputGuideOpensFullscreen">El botó Guia obre el mode de pantalla completa</x:String>
+    <x:String x:Key="LOCSettingsDefaultMetadataDescription">Configuració de descàrrega automàtica de metadades per a jocs recentment importats.</x:String>
+    <x:String x:Key="LOCSettingsTargetDisplay">Pantalla objectiu</x:String>
+    <x:String x:Key="LOCSettingsAlwaysUsePrimaryDisplay">Utilitzar sempre la pantalla principal</x:String>
+    <x:String x:Key="LOCSettingsFullscreenShowGameTitles">Mostrar títols dels jocs</x:String>
+    <x:String x:Key="LOCSettingsShowBatteryStatus">Mostrar estat de la bateria</x:String>
+    <x:String x:Key="LOCSettingsShowBatteryPercentage">Mostrar percentatge de la bateria</x:String>
+    <x:String x:Key="LOCSettingsShowClock">Mostrar rellotge</x:String>
+    <x:String x:Key="LOCSettingsHideMouseCursor">Amagar el cursor del ratolí</x:String>
+    <x:String x:Key="LOCSettingsFullscreenQuickFilterInstalled">Només instal·lats a filtres ràpids</x:String>
+    <x:String x:Key="LOCSettingsFullscreenButtonPrompts">Estil dels botons</x:String>
+    <x:String x:Key="LOCSettingsFullscreenLayout">Disposició</x:String>
+    <x:String x:Key="LOCSettingsFullscreenHorizontalScrolling">Desplaçament horitzontal</x:String>
+    <x:String x:Key="LOCSettingsSelectChildSection">Selecciona una de les subseccions</x:String>
+    <x:String x:Key="LOCSettingsNoSettingsAvailable">No hi ha una configuració disponible</x:String>
+    <x:String x:Key="LOCSettingsErrorLoadingSettings">No s&apos;ha pogut carregar la configuració</x:String>
+    <x:String x:Key="LOCSettingsScriptingNotice">Aquests scripts són executats per cada joc de la biblioteca. Es poden assignar scripts individuals per cada joc per separat mentre s&apos;editen els detalls del joc.</x:String>
+    <x:String x:Key="LOCSettingsBackgroundImageAnimation">Animar transicions de les imatges de fons</x:String>
+    <x:String x:Key="LOCSettingsFontSizes">Mides de les fonts</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionAuto">Automàtic</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionAliased">Aliàsing</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionGrayscale">Escala de grisos</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingModeOptionClearType">ClearType</x:String>
+    <x:String x:Key="LOCSettingsTextFormattingModeOptionIdeal">Ideal</x:String>
+    <x:String x:Key="LOCSettingsTextFormattingModeOptionDisplay">Pantalla</x:String>
+    <x:String x:Key="LOCSettingsTextFormattingMode">Mode de format de text</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingMode">Mode de renderització de text
+</x:String>
+    <x:String x:Key="LOCSettingsTextRenderingNotice">Actualment no s’utilitzen mètodes de renderització i format de text per a la descripció de jocs.</x:String>
+    <x:String x:Key="LOCSettingsImmediateBackgroundDownload">Precarregar les imatges de fons</x:String>
+    <x:String x:Key="LOCSettingsImmediateBackgroundDownloadTooltip">Si s&apos;activa, Playnite descarregarà imatges d&apos;art de fons mentre descarrega metadades, utilitzant més espai de disc i fent l&apos;art disponible quan s&apos;estigui fora de línia.
+
+Si es desactiva, les imatges d&apos;art de fons seran descarregades només quan es necessitin per primera vegada, utilitzant menys espai, però pot causar un retard abans que l&apos;art sigui presentat i algunes imatges poden no estar disponibles quan s&apos;estigui fora de línia. </x:String>
+    <x:String x:Key="LOCSettingsAutoCloseLauncherOption">Tancar automàticament el client de tercers després de sortir del joc</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseGracePeriod">Retard d&apos;apagada del client (en segons)</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseMinimalSessionTime">No tancar després de les sessions de joc de menys de (en segons)</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseSpecificClients">Tancar automàticament els següents clients:</x:String>
+    <x:String x:Key="LOCSettingsAutoCloseSection">Tancar clients automàticament</x:String>
+    <x:String x:Key="LOCSettingsImportExclusionList">Importar llista d&apos;exclusions</x:String>
+    <x:String x:Key="LOCSettingsShowMediaSizeWarning">Mostrar avís quan s&apos;assigni multimèdia del joc molt gran</x:String>
+    <x:String x:Key="LOCOpenDirectoryCommand">Ordre d’obertura de directori</x:String>
+    <x:String x:Key="LOCSettingsPreferredAgeRatingOrg">Organització de classificació per edat preferida</x:String>
+    <x:String x:Key="LOCSettingsScanLibInstallSizeOnLibUpdate">Actualitzar la mida de la instal·lació de jocs en actualitzar la biblioteca</x:String>
+    <x:String x:Key="LOCSettingsScanLibInstallSizeOnLibUpdateTooltip">Escaneja i actualitza la mida de la instal·lació de jocs si es detecta que s&apos;han modificat els seus fitxers des de l&apos;últim escaneig</x:String>
+    <x:String x:Key="LOCStrechNone">Cap</x:String>
+    <x:String x:Key="LOCStrechFill">Omplir</x:String>
+    <x:String x:Key="LOCStrechUniform">Uniforme</x:String>
+    <x:String x:Key="LOCStrechUniformToFill">Emplenar uniformement</x:String>
+    <x:String x:Key="LOCDockLeft">Esquerra</x:String>
+    <x:String x:Key="LOCDockRight">Dreta</x:String>
+    <x:String x:Key="LOCDockTop">Dalt</x:String>
+    <x:String x:Key="LOCDockBottom">Baix</x:String>
+    <x:String x:Key="LOCImportError">Error d&apos;importació</x:String>
+    <x:String x:Key="LOCLoginRequired">Es requereix autenticació</x:String>
+    <x:String x:Key="LOCLoginFailed">L&apos;autenticació ha fallat</x:String>
+    <x:String x:Key="LOCSettingsAltWebViewRendering">Mode de renderització de vista web alternatiu</x:String>
+    <x:String x:Key="LOCSettingsAltWebViewRenderingTooltip">Utilitza&apos;l quan tinguis problemes amb les vistes web, per exemple, els diàlegs d&apos;autenticació d&apos;integració.</x:String>
+    <x:String x:Key="LOCSettingsPartialDescriptionLoading">Càrrega parcial de descripcions llargues de jocs</x:String>
+    <x:String x:Key="LOCSettingsPartialDescriptionLoadingTooltip">Les descripcions llargues poden causar un lag notable en seleccionar jocs.
+
+Si s&apos;activa, només es carregarà inicialment una part del text de la descripció amb una opció de carregar la resta sota demanda.</x:String>
+    <x:String x:Key="LOCMetaImportWindowTitle">Importació de metadades</x:String>
+    <x:String x:Key="LOCDownloadMetaButton">Descarregar metadades</x:String>
+    <x:String x:Key="LOCSaveDefaultTooltip">Estableix la configuració seleccionada perquè s&apos;utilitzi a totes les descàrregues futures de metadades.
+També es pot canviar a les opcions de l&apos;aplicació.</x:String>
+    <x:String x:Key="LOCEmuWizardWindowTitle">Assistent d&apos;importació d&apos;emulació</x:String>
+    <x:String x:Key="LOCEmuWizardIntro">Aquest assistent et guiarà durant el procés de descàrrega i importació d’emuladors de consola i d’importació de jocs emulats.</x:String>
+    <x:String x:Key="LOCEmuWizardNotice">Recorda que sempre pots afegir emuladors i/o jocs addicionals a través del menú principal (al menú &quot;Biblioteca&quot; per a la configuració de l’emulador i al menú &quot;Afegir jocs&quot; per als jocs emulats).</x:String>
+    <x:String x:Key="LOCEmuDownloadDescription">A continuació es mostra una llista d&apos;emuladors que Playnite pot reconèixer i configurar automàticament. Pots descarregar instal·ladors d&apos;emuladors des dels seus llocs web. Un cop tinguis els emuladors instal·lats (manualment), pots importar-los al diàleg de configuració de l&apos;emulador.</x:String>
+    <x:String x:Key="LOCEmuWizardEmuImportIntro">Pots importar qualsevol emulador instal·lat al teu PC fent clic a &quot;Auto-detectar des de carpeta…&quot;. Playnite cercarà a la carpeta seleccionada qualsevol emulador conegut i permetrà importar-los. Pots importar des de diverses carpetes repetint l&apos;acció, els emuladors seran afegits al final de la llista actual.</x:String>
+    <x:String x:Key="LOCEmuWizardGameImportIntro">Pots importar jocs prement el botó &quot;Escanejar carpeta mitjançant l’emulador&quot;. La selecció de l’emulador apropiat indicarà a Playnite quins tipus de fitxers haurien de ser escanejats i importats. Pots importar des de múltiples carpetes utilitzant aquest botó diverses vegades, els jocs s&apos;afegiran a la part inferior de la llista actual.</x:String>
+    <x:String x:Key="LOCEmuWizardNoEmulatorWarning">No hi ha cap emulador seleccionat per importar. No podràs importar automàticament cap joc emulat sense configurar primer els emuladors. Segur que vols continuar i sortir del procés d&apos;importació?</x:String>
+    <x:String x:Key="LOCEmuWizardNoEmulatorForGamesWarning">No hi ha cap emulador configurat a Playnite. No pots importar jocs sense configurar primer l’emulador i seleccionar els tipus de fitxer adequats. Vols afegir alguns emuladors ara?</x:String>
+    <x:String x:Key="LOCEmuWizardButtonScanGames">Escanejar carpeta mitjançant l’emulador</x:String>
+    <x:String x:Key="LOCEmuWizardButtonSelectFiles">Seleccionar fitxers</x:String>
+    <x:String x:Key="LOCEmuWizardButtonScanEmulator">Detectar automàticament des de carpeta…</x:String>
+    <x:String x:Key="LOCEmuWizardButtonConfigureEmulator">Configurar emuladors…</x:String>
+    <x:String x:Key="LOCEmuWizardScanning">Escanejant…</x:String>
+    <x:String x:Key="LOCEmuWizardScanningSpecific">Escanejant {0}...</x:String>
+    <x:String x:Key="LOCFirstWindowTitle">Primera configuració</x:String>
+    <x:String x:Key="LOCFirstIntro">Aquest assistent et guiarà a través del procés d’importació automàtica i la configuració de biblioteques de jocs externes. Playnite pot importar automàticament jocs des de diversos serveis com ara Steam o GOG.
+        
+Tingues en compte que sempre pots afegir qualsevol joc personalitzat o emulat per a qualsevol plataforma manualment des del menú principal.  
+    </x:String>
+    <x:String x:Key="LOCFirstExternalTitle">Integració de biblioteques</x:String>
+    <x:String x:Key="LOCFirstImportIntroduction">A continuació es presenta una llista d&apos;algunes integracions de biblioteques que són compatibles amb Playnite. Si us plau, selecciona les que vulguis instal·lar.
+
+Pots instal·lar més integracions posteriorment des del menú &quot;Complements&quot;.</x:String>
+    <x:String x:Key="LOCFirstConfigFinishedTitle">Configuració finalitzada</x:String>
+    <x:String x:Key="LOCFirstConfigFinishedText">La configuració inicial ha estat completada. Recorda que pots canviar tots els paràmetres posteriorment, així com afegir integracions addicionals des del menú principal.</x:String>
+    <x:String x:Key="LOCFirstPluginDownloadError">No s&apos;han pogut baixar una o més extensions.
+
+Pots provar de tornar a descarregar les integracions des del menú de complements un cop finalitzi l&apos;assistent de la primera execució.</x:String>
+    <x:String x:Key="LOCFirstDownloadingAddon">Descarregant integració de {0}...</x:String>
+    <x:String x:Key="LOCDefaultAddonListDownload">Descarregant llista d&apos;integracions recomanades...</x:String>
+    <x:String x:Key="LOCDefaultAddonListDownloadError">No s&apos;ha pogut descarregar la llista d&apos;integracions recomanades. Pots intentar tornar a descarregar les integracions més tard mitjançant el menú de complements.</x:String>
+    <x:String x:Key="LOCPlatformsWindowTitle">Configurar plataformes i emuladors</x:String>
+    <x:String x:Key="LOCEmulatorsWindowTitle">Configurar emuladors</x:String>
+    <x:String x:Key="LOCPlatformsTitle">Plataformes</x:String>
+    <x:String x:Key="LOCPlatformTitle">Plataforma</x:String>
+    <x:String x:Key="LOCEmulatorsTitle">Emuladors</x:String>
+    <x:String x:Key="LOCEmulatorTitle">Emulador</x:String>
+    <x:String x:Key="LOCAddPlatformTitle">Afegir plataforma</x:String>
+    <x:String x:Key="LOCSelectIconTitle">Seleccionar icona</x:String>
+    <x:String x:Key="LOCSelectCoverTitle">Seleccionar caràtula</x:String>
+    <x:String x:Key="LOCSelectImageTitle">Seleccionar imatge</x:String>
+    <x:String x:Key="LOCSelectItemTitle">Seleccionar element</x:String>
+    <x:String x:Key="LOCSelectBackgroundTitle">Seleccionar fons</x:String>
+    <x:String x:Key="LOCSelectFileTitle">Seleccionar fitxer</x:String>
+    <x:String x:Key="LOCSelectUrlTitle">Seleccionar URL</x:String>
+    <x:String x:Key="LOCAddEmulatorTitle">Afegir emulador</x:String>
+    <x:String x:Key="LOCSupportedPlatformsTitle">Plataformes compatibles</x:String>
+    <x:String x:Key="LOCConfirmUnsavedPlatformsTitle">Vols desar els canvis de la plataforma?</x:String>
+    <x:String x:Key="LOCConfirmUnsavedEmulatorsTitle">Vols desar els canvis de l’emulador?</x:String>
+    <x:String x:Key="LOCExecutableTitle">Executable</x:String>
+    <x:String x:Key="LOCArgumentsTitle">Paràmetres</x:String>
+    <x:String x:Key="LOCWorkingDirTitle">Directori de treball</x:String>
+    <x:String x:Key="LOCSupportedFilesTitle">Tipus de fitxers admesos</x:String>
+    <x:String x:Key="LOCImportEmulatorsButton">Importar emuladors…</x:String>
+    <x:String x:Key="LOCDownloadEmulatorsButton">Descarregar emuladors…</x:String>
+    <x:String x:Key="LOCEmuLoadArgsPresetTooltip">Carregar arguments predefinits del perfil conegut de l’emulador</x:String>
+    <x:String x:Key="LOCEmuRemovalConfirmation">Segur que vols eliminar l&apos;emulador {0}?
+Actualment, està sent utilitzat per {1} joc(s).</x:String>
+    <x:String x:Key="LOCPlatformRemovalConfirmation">Segur que vols eliminar la plataforma {0}?
+Actualment, està sent utilitzat per {1} joc(s) i {2} emulador(s).</x:String>
+    <x:String x:Key="LOCEmulatorSettingsHelp">Ajuda de configuració</x:String>
+    <x:String x:Key="LOCMenuSortByTitle">Ordenar per</x:String>
+    <x:String x:Key="LOCMenuSortByDirection">Direcció de l&apos;ordenació</x:String>
+    <x:String x:Key="LOCMenuGroupByTitle">Agrupar per</x:String>
+    <x:String x:Key="LOCMenuSortAscending">Ascendent</x:String>
+    <x:String x:Key="LOCMenuSortDescending">Descendent</x:String>
+    <x:String x:Key="LOCMenuGroupDont">No agrupar</x:String>
+    <x:String x:Key="LOCMenuGroupProvider">Agrupar per biblioteca</x:String>
+    <x:String x:Key="LOCMenuGroupCategory">Agrupar per categoria</x:String>
+    <x:String x:Key="LOCMenuGroupPlatform">Agrupar per plataforma</x:String>
+    <x:String x:Key="LOCViewType">Tipus de vista</x:String>
+    <x:String x:Key="LOCMenuView">Visualització</x:String>
+    <x:String x:Key="LOCMenuViewExplorerPanel">Panell d&apos;exploració</x:String>
+    <x:String x:Key="LOCMenuViewFilterPanel">Panell de filtres</x:String>
+    <x:String x:Key="LOCGameIconTitle">Icona</x:String>
+    <x:String x:Key="LOCLibraryIconTitle">Icona de biblioteca</x:String>
+    <x:String x:Key="LOCGameCoverImageTitle">Imatge de caràtula</x:String>
+    <x:String x:Key="LOCGameBackgroundTitle">Imatge de fons</x:String>
+    <x:String x:Key="LOCGameSortingNameTitle">Nom d&apos;ordenació</x:String>
+    <x:String x:Key="LOCGameProviderTitle">Biblioteca</x:String>
+    <x:String x:Key="LOCGameManualTitle">Manual</x:String>
+    <x:String x:Key="LOCGameNameTitle">Nom</x:String>
+    <x:String x:Key="LOCInstallDriveTitle">Unitat d&apos;instal·lació</x:String>
+    <x:String x:Key="LOCGameAccountNameTitle">Nom del compte</x:String>
+    <x:String x:Key="LOCGamePlatformTitle">Plataforma</x:String>
+    <x:String x:Key="LOCGameCategoriesTitle">Categoria</x:String>
+    <x:String x:Key="LOCGameGenresTitle">Gènere</x:String>
+    <x:String x:Key="LOCGameReleaseDateTitle">Data de llançament</x:String>
+    <x:String x:Key="LOCGameReleaseYearTitle">Any de llançament</x:String>
+    <x:String x:Key="LOCGameDevelopersTitle">Desenvolupador</x:String>
+    <x:String x:Key="LOCGameTagsTitle">Etiqueta</x:String>
+    <x:String x:Key="LOCGamePublishersTitle">Editor</x:String>
+    <x:String x:Key="LOCGameInstallationStatus">Estat de la instal·lació</x:String>
+    <x:String x:Key="LOCUseFilterStyleAndTitle">Coincidir amb tots els filtres</x:String>
+    <x:String x:Key="LOCUseFilterStyleAndTooltip">Si està activat, només s&apos;inclouran a la vista els jocs que utilitzen tots els elements de tots els filtres.
+Si està desactivat, els jocs que utilitzen qualsevol element en qualsevol filtre s&apos;inclouran a la vista.</x:String>
+    <x:String x:Key="LOCGameIsInstalledTitle">Instal·lat</x:String>
+    <x:String x:Key="LOCGameIsGameInstalledTitle">Instal·lat</x:String>
+    <x:String x:Key="LOCGameIsUnInstalledTitle">No instal·lat</x:String>
+    <x:String x:Key="LOCGameHiddenTitle">Ocult</x:String>
+    <x:String x:Key="LOCGameFavoriteTitle">Preferit</x:String>
+    <x:String x:Key="LOCGameHdrTitle">Activar compatibilitat amb HDR</x:String>
+    <x:String x:Key="LOCGameHdrTooltip">Si es selecciona, el HDR s&apos;activarà a la pantalla principal abans d&apos;iniciar el joc.</x:String>
+    <x:String x:Key="LOCGameHdrNotSupportedTooltip">Tingues en compte que el HDR no és compatible amb la teva pantalla principal.</x:String>
+    <x:String x:Key="LOCGameLastActivityTitle">Última partida</x:String>
+    <x:String x:Key="LOCGameCategoryTitle">Categoria</x:String>
+    <x:String x:Key="LOCGameDescriptionTitle">Descripció</x:String>
+    <x:String x:Key="LOCGameInstallDirTitle">Carpeta d&apos;instal·lació</x:String>
+    <x:String x:Key="LOCGameCoverTitle">Imatge de caràtula</x:String>
+    <x:String x:Key="LOCGameLinksTitle">Enllaços</x:String>
+    <x:String x:Key="LOCGameROMTitle">Ruta d&apos;Imatge, ROM o ISO</x:String>
+    <x:String x:Key="LOCGenreLabel">Gènere</x:String>
+    <x:String x:Key="LOCGenresLabel">Gèneres</x:String>
+    <x:String x:Key="LOCCompanyLabel">Companyia</x:String>
+    <x:String x:Key="LOCCompaniesLabel">Companyies</x:String>
+    <x:String x:Key="LOCDeveloperLabel">Desenvolupador</x:String>
+    <x:String x:Key="LOCDevelopersLabel">Desenvolupadors</x:String>
+    <x:String x:Key="LOCPublisherLabel">Editor</x:String>
+    <x:String x:Key="LOCPublishersLabel">Editors</x:String>
+    <x:String x:Key="LOCCategoryLabel">Categoria</x:String>
+    <x:String x:Key="LOCCategoriesLabel">Categories</x:String>
+    <x:String x:Key="LOCTagLabel">Etiqueta</x:String>
+    <x:String x:Key="LOCTagsLabel">Etiquetes</x:String>
+    <x:String x:Key="LOCFeatureLabel">Característica</x:String>
+    <x:String x:Key="LOCFeaturesLabel">Característiques</x:String>
+    <x:String x:Key="LOCAgeRatingLabel">Classificació per edat</x:String>
+    <x:String x:Key="LOCAgeRatingsLabel">Classificacions per edat</x:String>
+    <x:String x:Key="LOCRegionLabel">Regió</x:String>
+    <x:String x:Key="LOCRegionsLabel">Regions</x:String>
+    <x:String x:Key="LOCSourceLabel">Font</x:String>
+    <x:String x:Key="LOCSourcesLabel">Fonts</x:String>
+    <x:String x:Key="LOCRecentActivityLabel">Activitat recent</x:String>
+    <x:String x:Key="LOCDatabaseErroTitle">Error de la base de dades</x:String>
+    <x:String x:Key="LOCDatabaseOpenError">No s’ha pogut obrir la base de dades de la biblioteca.</x:String>
+    <x:String x:Key="LOCDatabaseNotOpenedError">La base de dades no està oberta.</x:String>
+    <x:String x:Key="LOCDatabaseOpenAccessError">No es pot accedir a la base de dades de biblioteca. El fitxer &quot;{0}&quot; està sent utilitzat per un altre procés o es troba en una ubicació inaccessible.</x:String>
+    <x:String x:Key="LOCDiagPackageCreationError">No s’ha pogut crear el paquet de diagnosi.</x:String>
+    <x:String x:Key="LOCDiagPackageUploadError">No s’ha pogut carregar automàticament el paquet de diagnosi.</x:String>
+    <x:String x:Key="LOCDiagPackageSentSuccess">La informació de diagnosi s&apos;ha enviat correctament.</x:String>
+    <x:String x:Key="LOCDiagPackageCreationSuccess">El paquet de diagnosi s’ha creat i carregat correctament.
+Si us plau, adjunta el següent ID al teu informe d&apos;error:</x:String>
+    <x:String x:Key="LOCLibraryImportError">No s’han pogut importar els jocs de {0}.</x:String>
+    <x:String x:Key="LOCLibraryImportEmulatedError">No s’han pogut importar jocs emulats de {0}.</x:String>
+    <x:String x:Key="LOCScanEmulatorGamesEmptyProfileError">No es poden cercar jocs pel perfil d’emulador seleccionat. El perfil no conté extensions de fitxers ni plataformes.</x:String>
+    <x:String x:Key="LOCStartGenericError">Playnite no s&apos;ha pogut iniciar. Tanca totes les instàncies del programa en execució i torna-ho a provar.</x:String>
+    <x:String x:Key="LOCSkinApplyError">No s’ha pogut aplicar el tema &quot;{0}&quot;, perfil de color &quot;{1}&quot;
+        
+{2}</x:String>
+    <x:String x:Key="LOCURLFormatError">No es pot obrir l’enllaç, l’URL no té un format vàlid.</x:String>
+    <x:String x:Key="LOCAppStartupError">No s’ha pogut iniciar l’aplicació.</x:String>
+    <x:String x:Key="LOCCefSharpInitError">No s&apos;ha pogut iniciar el component de vista web. Playnite no pot continuar amb el procés d&apos;arrancada.
+
+Més informació a https://playnite.link/cefstartup</x:String>
+    <x:String x:Key="LOCEmulatorImportNoDefinitionsError">No es poden importar emuladors perquè falta un fitxer de definició o està corromput.</x:String>
+    <x:String x:Key="LOCMenuActionExecError">No s’ha pogut executar l&apos;acció del menú.</x:String>
+    <x:String x:Key="LOCGameEditWindowTitle">Editar els detalls del joc</x:String>
+    <x:String x:Key="LOCImageURL">URL d&apos;imatge</x:String>
+    <x:String x:Key="LOCAddLinkButton">Afegir enllaç</x:String>
+    <x:String x:Key="LOCAddRom">Afegir ROM</x:String>
+    <x:String x:Key="LOCSaveChanges">Desar canvis</x:String>
+    <x:String x:Key="LOCGameEditChangeSaveTooltip">Aplicar els canvis de camp als jocs que s&apos;estan editant.</x:String>
+    <x:String x:Key="LOCAddAction">Afegir acció</x:String>
+    <x:String x:Key="LOCDeleteAction">Eliminar</x:String>
+    <x:String x:Key="LOCRemovePlayAction">Eliminar acció de Jugar</x:String>
+    <x:String x:Key="LOCAddGames">Afegir jocs</x:String>
+    <x:String x:Key="LOCScanFolder">Escanejar carpeta…</x:String>
+    <x:String x:Key="LOCDetectInstalled">Detectar instal·lats</x:String>
+    <x:String x:Key="LOCBrowse">Navegar…</x:String>
+    <x:String x:Key="LOCOpenPlaynite">Obrir Playnite</x:String>
+    <x:String x:Key="LOCProfileSettings">Opcions del perfil</x:String>
+    <x:String x:Key="LOCEmptyGameNameError">El nom del joc no pot estar buit.</x:String>
+    <x:String x:Key="LOCEmptyTrackingFolderError">El directori de seguiment d&apos;accions del joc no pot estar buit.</x:String>
+    <x:String x:Key="LOCEmptyGameNameMetaSearchError">El nom del joc no pot estar buit abans de cercar metadades.</x:String>
+    <x:String x:Key="LOCInvalidGameData">Dades de joc no vàlides</x:String>
+    <x:String x:Key="LOCURLInputInfo">Introdueix un URL web vàlid que comenci per http:// o https://</x:String>
+    <x:String x:Key="LOCURLInputInfoTitile">Seleccionar URL</x:String>
+    <x:String x:Key="LOCMetadataDownloadError">No s&apos;ha pogut descarregar les metadades: {0}</x:String>
+    <x:String x:Key="LOCDownloadError">Error de descàrrega</x:String>
+    <x:String x:Key="LOCClearFilters">Esborrar els filtres</x:String>
+    <x:String x:Key="LOCPrivateAccount">Compte privat</x:String>
+    <x:String x:Key="LOCPublicAccount">Compte públic</x:String>
+    <x:String x:Key="LOCAPIKey">Clau API</x:String>
+    <x:String x:Key="LOCStartupError">Error d’inici</x:String>
+    <x:String x:Key="LOCSkinError">Error del tema</x:String>
+    <x:String x:Key="LOCClearAll">Esborrar tot</x:String>
+    <x:String x:Key="LOCSetupRunning">Instal·lant</x:String>
+    <x:String x:Key="LOCUninstalling">Desinstal·lant</x:String>
+    <x:String x:Key="LOCGameLaunching">Iniciant</x:String>
+    <x:String x:Key="LOCGameRunning">En funcionament</x:String>
+    <x:String x:Key="LOCInvalidURL">URL no vàlid</x:String>
+    <x:String x:Key="LOCDoNothing">No fer res</x:String>
+    <x:String x:Key="LOCMinimize">Minimitzar</x:String>
+    <x:String x:Key="LOCRestoreWindow">Restaurar la finestra</x:String>
+    <x:String x:Key="LOCRestoreWindowOnlyFromUI">Restaurar finestra només quan s&apos;iniciï des de la IU</x:String>
+    <x:String x:Key="LOCClose">Tancar</x:String>
+    <x:String x:Key="LOCChange">Canviar</x:String>
+    <x:String x:Key="LOCAdvanced">Avançat</x:String>
+    <x:String x:Key="LOCNever">Mai</x:String>
+    <x:String x:Key="LOCCompletionStatus">Estat de finalització</x:String>
+    <x:String x:Key="LOCCompletionStatuses">Estats de finalització</x:String>
+    <x:String x:Key="LOCUserScore">Puntuació dels usuaris</x:String>
+    <x:String x:Key="LOCCriticScore">Puntuació de la crítica</x:String>
+    <x:String x:Key="LOCCommunityScore">Puntuació de la comunitat</x:String>
+    <x:String x:Key="LOCGameScripts">Scripts del joc</x:String>
+    <x:String x:Key="LOCApplicationScripts">Scripts de l&apos;aplicació</x:String>
+    <x:String x:Key="LOCScripts">Scripts</x:String>
+    <x:String x:Key="LOCPlugins">Plugins</x:String>
+    <x:String x:Key="LOCMetadataProviders">Fonts de metadades</x:String>
+    <x:String x:Key="LOCExtensions">Extensions</x:String>
+    <x:String x:Key="LOCExtensionID">ID de l&apos;extensió</x:String>
+    <x:String x:Key="LOCReloadScripts">Recarregar scripts</x:String>
+    <x:String x:Key="LOCStartInteractivePowerShell">PowerShell SDK interactiu</x:String>
+    <x:String x:Key="LOCReloadScriptsSuccess">Tots els scripts s&apos;han carregat correctament.</x:String>
+    <x:String x:Key="LOCNoGamesFound">No s&apos;han trobat jocs per la cerca o filtre especificat</x:String>
+    <x:String x:Key="LOCNoItemsFound">No s&apos;ha trobat cap element</x:String>
+    <x:String x:Key="LOCBackToDesktopMode">Canviar al mode d&apos;escriptori</x:String>
+    <x:String x:Key="LOCExitPlaynite">Sortir de Playnite</x:String>
+    <x:String x:Key="LOCLibraries">Biblioteques</x:String>
+    <x:String x:Key="LOCUpdateAll">Actualitzar-ho tot</x:String>
+    <x:String x:Key="LOCExtensionCreatedBy">Creat per:</x:String>
+    <x:String x:Key="LOCExtensionVersion">Versió:</x:String>
+    <x:String x:Key="LOCExtensionUpdated">Actualitzat:</x:String>
+    <x:String x:Key="LOCExtensionModule">Mòdul:</x:String>
+    <x:String x:Key="LOCLibrary">Biblioteca</x:String>
+    <x:String x:Key="LOCStatistics">Estadístiques</x:String>
+    <x:String x:Key="LOCAll">Tots</x:String>
+    <x:String x:Key="LOCNone">Cap</x:String>
+    <x:String x:Key="LOCNotifications">Notificacions</x:String>
+    <x:String x:Key="LOCWidth">Amplada</x:String>
+    <x:String x:Key="LOCHeight">Alçada</x:String>
+    <x:String x:Key="LOCSize">Mida</x:String>
+    <x:String x:Key="LOCFontSmall">Petita</x:String>
+    <x:String x:Key="LOCFontNormal">Normal</x:String>
+    <x:String x:Key="LOCFontLarge">Gran</x:String>
+    <x:String x:Key="LOCFontLarger">Més gran</x:String>
+    <x:String x:Key="LOCFontLargest">La més gran</x:String>
+    <x:String x:Key="LOCDefault">Per defecte</x:String>
+    <x:String x:Key="LOCSelect">Seleccionar</x:String>
+    <x:String x:Key="LOCSelectAll">Seleccionar-ho tot</x:String>
+    <x:String x:Key="LOCDeselectAll">Desseleccionar-ho tot</x:String>
+    <x:String x:Key="LOCFirst">Primer</x:String>
+    <x:String x:Key="LOCRandom">Aleatori</x:String>
+    <x:String x:Key="LOCUserSelect">A selecció de l&apos;usuari</x:String>
+    <x:String x:Key="LOCLoadMore">Carregar-ne més</x:String>
+    <x:String x:Key="LOCTransparent">Transparent</x:String>
+    <x:String x:Key="LOCCollapse">Contraure</x:String>
+    <x:String x:Key="LOCExpand">Desplegar</x:String>
+    <x:String x:Key="LOCCollapseAll">Contraure tot</x:String>
+    <x:String x:Key="LOCExpandAll">Desplegar-ho tot</x:String>
+    <x:String x:Key="LOCOther">Altres</x:String>
+    <x:String x:Key="LOCThemes">Temes</x:String>
+    <x:String x:Key="LOCEmulatorArguments">Paràmetres de l&apos;emulador</x:String>
+    <x:String x:Key="LOCBuiltinArguments">Paràmetres incorporats</x:String>
+    <x:String x:Key="LOCCustomArguments">Paràmetres personalitzats</x:String>
+    <x:String x:Key="LOCAdditionalEmulatorArguments">Paràmetres addicionals de l&apos;emulador</x:String>
+    <x:String x:Key="LOCOverrideEmulatorArguments">Substituir els paràmetres de l&apos;emulador</x:String>
+    <x:String x:Key="LOCIsPlayAction">Acció de Jugar</x:String>
+    <x:String x:Key="LOCMedataDiffWindowTitle">Seleccionar les metadades per importar</x:String>
+    <x:String x:Key="LOCGameImportWindowTitle">Seleccionar jocs per importar</x:String>
+    <x:String x:Key="LOCMetaLookupWindowTitle">Cerca de metadades</x:String>
+    <x:String x:Key="LOCUpdaterWindowTitle">Actualització disponible</x:String>
+    <x:String x:Key="LOCUpdaterChangesInfo">Canvis des de l&apos;última actualització</x:String>
+    <x:String x:Key="LOCUpdaterInstallUpdate">Descarregar i instal·lar l&apos;actualització</x:String>
+    <x:String x:Key="LOCCheckForUpdates">Buscar actualitzacions</x:String>
+    <x:String x:Key="LOCUpdateError">Error d’actualització</x:String>
+    <x:String x:Key="LOCUpdateCheckFailMessage">No s&apos;ha pogut comprovar si hi ha una versió nova.</x:String>
+    <x:String x:Key="LOCUpdateNoNewUpdateMessage">No s’ha trobat cap versió nova, estàs al dia.</x:String>
+    <x:String x:Key="LOCGeneralUpdateFailMessage">No s&apos;ha pogut descarregar i instal·lar l&apos;actualització.</x:String>
+    <x:String x:Key="LOCUpdateProgressCancelAsk">Hi ha alguna tasca en curs en segon pla. Vols cancel·lar-la i continuar amb l&apos;actualització?</x:String>
+    <x:String x:Key="LOCBackgroundProgressCancelAskExit">Hi ha alguna tasca en curs en segon pla. Vols cancel·lar-la i sortir de Playnite?</x:String>
+    <x:String x:Key="LOCBackgroundProgressCancelAskSwitchMode">Hi ha alguna tasca en curs en segon pla. Si es canvia de mode, la tasca es cancel·larà. Vols canviar de totes maneres?</x:String>
+    <x:String x:Key="LOCUpdateIsAvailableNotificationBody">Hi ha disponible una actualització per Playnite</x:String>
+    <x:String x:Key="LOCThemeTestReloadList">Tornar a carregar la llista de temes</x:String>
+    <x:String x:Key="LOCThemeTestApplySkin">Aplicar el tema seleccionat</x:String>
+    <x:String x:Key="LOCThemeTestWatchChanges">Veure els canvis dels fitxers</x:String>
+    <x:String x:Key="LOCThemeTestWatchChangesTooltip">Aplicar automàticament el tema quan canviï el fitxer font</x:String>
+    <x:String x:Key="LOCScriptRuntime">Temps d&apos;execució del script</x:String>
+    <x:String x:Key="LOCPreScriptDescription"> Executar abans d&apos;iniciar un joc</x:String>
+    <x:String x:Key="LOCPostScriptDescription">Executar després de sortir d&apos;un joc</x:String>
+    <x:String x:Key="LOCGameStartedScriptDescription">Executar després que s&apos;hagi iniciat un joc</x:String>
+    <x:String x:Key="LOCAppScriptStartupDescription">Executar en iniciar aplicació</x:String>
+    <x:String x:Key="LOCAppScriptShutdownDescription">Executar en tancar aplicació</x:String>
+    <x:String x:Key="LOCScriptTypeStarting">Script d&apos;inici del joc</x:String>
+    <x:String x:Key="LOCScriptTypeStarted">Script de joc iniciat</x:String>
+    <x:String x:Key="LOCScriptTypeExit">Script de joc aturat</x:String>
+    <x:String x:Key="LOCExecuteGlobalScript">Executar script global</x:String>
+    <x:String x:Key="LOCStatsGlobal">Global</x:String>
+    <x:String x:Key="LOCStatsFiltered">Filtrat</x:String>
+    <x:String x:Key="LOCMetadataDiffCurrent">Actual</x:String>
+    <x:String x:Key="LOCMetadataDiffNew">Nou</x:String>
+    <x:String x:Key="LOCTestScript">Provar script</x:String>
+    <x:String x:Key="LOCOnlyItemsSelectedTooltip">Mostrar només els elements seleccionats.</x:String>
+    <x:String x:Key="LOCSaveAsDefault">Desar com a predeterminat</x:String>
+    <x:String x:Key="LOCFavoriteGame">Afegir a Preferits</x:String>
+    <x:String x:Key="LOCRemoveFavoriteGame">Eliminar de Preferits</x:String>
+    <x:String x:Key="LOCHideGame">Ocultar aquest joc</x:String>
+    <x:String x:Key="LOCUnHideGame">Treure d&apos;Ocults</x:String>
+    <x:String x:Key="LOCEnableHdr">Activar compatibilitat amb HDR</x:String>
+    <x:String x:Key="LOCDisableHdr">Desactivar compatibilitat amb HDR</x:String>
+    <x:String x:Key="LOCEditGame">Editar…</x:String>
+    <x:String x:Key="LOCCalculateInstallSize">Calcular mida de la instal·lació</x:String>
+    <x:String x:Key="LOCCalculateGamesAllInstallSize">Calcular mida de la instal·lació (tots els jocs)</x:String>
+    <x:String x:Key="LOCCalculateGamesMissingInstallSize">Calcular mida de la instal·lació (només les dades que faltin)</x:String>
+    <x:String x:Key="LOCInstallSizeMenuLabel">Mida de la instal·lació</x:String>
+    <x:String x:Key="LOCSetGameCategory">Establir categoria…</x:String>
+    <x:String x:Key="LOCSetCompletionStatus">Establir estat de finalització</x:String>
+    <x:String x:Key="LOCRemoveGame">Eliminar</x:String>
+    <x:String x:Key="LOCPlayGame">Jugar</x:String>
+    <x:String x:Key="LOCInstallGame">Instal·lar</x:String>
+    <x:String x:Key="LOCGameOptions">Opcions del joc</x:String>
+    <x:String x:Key="LOCGameDetails">Detalls</x:String>
+    <x:String x:Key="LOCUninstallGame">Desinstal·lar</x:String>
+    <x:String x:Key="LOCOpenGameLocation">Obrir l&apos;ubicació de l&apos;instal·lació</x:String>
+    <x:String x:Key="LOCCreateDesktopShortcut">Crear accés directe a l&apos;escriptori</x:String>
+    <x:String x:Key="LOCOpenGameManual">Obrir el manual</x:String>
+    <x:String x:Key="LOCMoreAction">Més</x:String>
+    <x:String x:Key="LOCPlayActionUsePlugin">Gestionat pel plugin de biblioteca</x:String>
+    <x:String x:Key="LOCPlayActionUsePluginTooltip">El procés d&apos;inici del joc serà gestionat pel plugin de la biblioteca responsable d&apos;aquest joc.</x:String>
+    <x:String x:Key="LOCMetadownloadNoResultsMessage">No s&apos;ha trobat cap informació important sobre el joc &apos;{0}&apos; en la pàgina especificada.</x:String>
+    <x:String x:Key="LOCMetadownloadSingleGameTip">Consell: pots utilitzar el procés de descàrrega de metadades més avançat mentre edites un joc a través de l&apos;opció &quot;Editar&quot; del menú.</x:String>
+    <x:String x:Key="LOCProgreessAvailabilityMessage">No està disponible quan hi ha alguna acció en curs.</x:String>
+    <x:String x:Key="LOCDescriptionHTMLSupportTooltip">El text de descripció és sensible a la sintaxi HTML</x:String>
+    <x:String x:Key="LOCDescriptionPlaytimeSeconds">El temps de joc s&apos;enregistra en segons.</x:String>
+    <x:String x:Key="LOCDescriptionSizeBytes">La mida de la instal·lació s&apos;indica en bytes.</x:String>
+    <x:String x:Key="LOCReleaseDateTooltip">La data de llançament s&apos;ha d&apos;establir en format &quot;any-mes-dia&quot;. Els valors del mes i el dia es poden ometre.</x:String>
+    <x:String x:Key="LOCDescriptionScoreValues">Valors de 0 a 100 (o deixa-ho buit per no indicar una puntuació).</x:String>
+    <x:String x:Key="LOCPatreonDevelopMessage">El desenvolupament de Playnite compta amb el suport d&apos;aquests mecenes i membres de Ko-fi:</x:String>
+    <x:String x:Key="LOCAboutContributorsMessage">Codi, localització i altres col·laboradors sense cap ordre particular:</x:String>
+    <x:String x:Key="LOCCancelMonitoringAskTitle">Cancel·lar la monitorització del joc?</x:String>
+    <x:String x:Key="LOCCancelMonitoringSetupAsk">Actualment, s’està executant la supervisió de la instal·lació. Vols cancel·lar el procés i tornar el joc a l&apos;estat anterior?</x:String>
+    <x:String x:Key="LOCCancelMonitoringExecutionAsk">Actualment, s’està executant la supervisió de l’execució del joc. Vols cancel·lar el procés i tornar el joc a l&apos;estat anterior?</x:String>
+    <x:String x:Key="LOCTimePlayed">Temps jugat</x:String>
+    <x:String x:Key="LOCLastPlayed">Última partida</x:String>
+    <x:String x:Key="LOCPlayedDays">{0}d {1}h {2}m</x:String>
+    <x:String x:Key="LOCPlayedHours">{0}h {1}m</x:String>
+    <x:String x:Key="LOCPlayedMinutes">{0} minuts</x:String>
+    <x:String x:Key="LOCPlayedSeconds">{0} segons</x:String>
+    <x:String x:Key="LOCPlayedNone">No jugat</x:String>
+    <x:String x:Key="LOCOpeningDesktopModeMessage">Obrint mode d&apos;escriptori…</x:String>
+    <x:String x:Key="LOCOpeningFullscreenModeMessage">Obrint mode de pantalla completa…</x:String>
+    <x:String x:Key="LOCOpeningDatabase">Carregant la biblioteca de jocs…</x:String>
+    <x:String x:Key="LOCCalculatingInstallSizeMessage">Calculant la mida de la instal·lació...</x:String>
+    <x:String x:Key="LOCCalculatingInstallSizeOfGameMessage">Calculant la mida de la instal·lació de {0}...</x:String>
+    <x:String x:Key="LOCScriptInstallFail">No s’ha pogut instal·lar el fitxer d&apos;script.</x:String>
+    <x:String x:Key="LOCScriptInstallSuccess">Script instal·lat correctament.</x:String>
+    <x:String x:Key="LOCInstallScript">Instal·lar script</x:String>
+    <x:String x:Key="LOCScriptError">Error d&apos;script</x:String>
+    <x:String x:Key="LOCScriptExecutionError">No s’ha pogut executar la funció d’extensió.</x:String>
+    <x:String x:Key="LOCOpenMetadataFolder">Obrir carpeta de metadades</x:String>
+    <x:String x:Key="LOCInstallSizeCalculate">Calcular</x:String>
+    <x:String x:Key="LOCInstallSizeCalculateEditButtonTooltip">Calcula automàticament la mida de la instal·lació mitjançant les ROMs si el joc en té alguna o s&apos;ha establit el directori d&apos;instal·lació</x:String>
+    <x:String x:Key="LOCClientNotInstalledError">El client de {0} no està instal·lat.</x:String>
+    <x:String x:Key="LOCSignInExternalNotif">Ara s&apos;obrirà el client de {0}. Inicia sessió i tanca aquest missatge.</x:String>
+    <x:String x:Key="LOCSignInExternalWaitMessage">Esperant que l&apos;usuari iniciï la sessió. Si us plau, tanca aquest missatge quan ho hagis fet…</x:String>
+    <x:String x:Key="LOCInstallDirNotFoundError">No s&apos;ha trobat la carpeta d’instal·lació del joc.</x:String>
+    <x:String x:Key="LOCInvalidGameActionSettings">Configuració d’acció de joc no vàlida.</x:String>
+    <x:String x:Key="LOCTroubleShootingAccountLink">Resolució de problemes de sincronització del compte</x:String>
+    <x:String x:Key="LOCTroubleShootingIssues">Resolució de problemes</x:String>
+    <x:String x:Key="LOCRenameItem">Renomenar element</x:String>
+    <x:String x:Key="LOCAddNewItem">Afegir nou element</x:String>
+    <x:String x:Key="LOCEnterName">Introdueix el nom</x:String>
+    <x:String x:Key="LOCEnterNewName">Introdueix el nou nom</x:String>
+    <x:String x:Key="LOCPLaytimeLessThenAnHour">Menys d&apos;una hora</x:String>
+    <x:String x:Key="LOCPLaytime1to10">1 a 10 hores</x:String>
+    <x:String x:Key="LOCPLaytime10to100">10 a 100 hores</x:String>
+    <x:String x:Key="LOCPLaytime100to500">100 a 500 hores</x:String>
+    <x:String x:Key="LOCPLaytime500to1000">500 a 1000 hores</x:String>
+    <x:String x:Key="LOCPLaytime1000plus">Més de 1000 hores</x:String>
+    <x:String x:Key="LOCExtInstallationRestartNotif">S&apos;ha de reiniciar Playnite per a completar la instal·lació. Vols reiniciar-lo ara?</x:String>
+    <x:String x:Key="LOCGeneralExtensionPackageError">L&apos;extensió no està empaquetada correctament.</x:String>
+    <x:String x:Key="LOCGeneralThemePackageError">El tema no està empaquetat correctament.</x:String>
+    <x:String x:Key="LOCSpecificExtensionLoadError">No s&apos;ha pogut carregar correctament l&apos;extensió &quot;{0}&quot;.</x:String>
+    <x:String x:Key="LOCSpecificExtensionLoadSDKError">No es pot carregar l&apos;extensió &quot;{0}&quot;, la versió actual de Playnite no és compatible.</x:String>
+    <x:String x:Key="LOCSpecificThemeLoadError">No s&apos;ha pogut carregar correctament el tema &quot;{0}&quot;.</x:String>
+    <x:String x:Key="LOCSpecificThemeLoadSDKError">No es pot carregar el tema &quot;{0}&quot;, la versió actual de Playnite no és compatible.</x:String>
+    <x:String x:Key="LOCGeneralExtensionLoadError">No s&apos;ha pogut carregar correctament l&apos;extensió.</x:String>
+    <x:String x:Key="LOCGeneralThemeLoadError">No s&apos;ha pogut carregar correctament el tema.</x:String>
+    <x:String x:Key="LOCGeneralExtensionInstallApiVersionFails">Aquest tema o extensió utilitza una versió de l&apos;API que no és compatible.</x:String>
+    <x:String x:Key="LOCGeneralExtensionInstallSuccess">La instal·lació s&apos;ha realitzat correctament.</x:String>
+    <x:String x:Key="LOCGeneralExtensionInstallTitle">Instal·lar complement?</x:String>
+    <x:String x:Key="LOCExtensionGeneric">General</x:String>
+    <x:String x:Key="LOCAddonInstallFaild">No s&apos;ha pogut instal·lar el complement &quot;{0}&quot;.</x:String>
+    <x:String x:Key="LOCExtensionInstallFail">No s&apos;ha pogut instal·lar l&apos;extensió.
+        
+{0}</x:String>
+    <x:String x:Key="LOCExtensionInstallPrompt">Vols instal·lar una nova extensió?
+
+{0}
+Per {1}
+Versió {2}</x:String>
+    <x:String x:Key="LOCExtensionUpdatePrompt">Vols actualitzar l&apos;extensió &quot;{0}&quot;?
+
+Versió actual: {1}
+Nova versió: {2}</x:String>
+    <x:String x:Key="LOCThemeInstallFail">No ha pogut instal·lar el tema.
+
+{0}</x:String>
+    <x:String x:Key="LOCThemeInstallPrompt">Vols instal·lar un tema nou?
+
+{0}
+Per {1}
+Versió {2}</x:String>
+    <x:String x:Key="LOCThemeUpdatePrompt">Vols actualitzar el tema &quot;{0}&quot;?
+
+Versió actual: {1}
+Nova versió: {2}</x:String>
+    <x:String x:Key="LOCUrlNavigationMessage">Estàs a punt de sortir de Playnite i dirigir-te a la pàgina web següent utilitzant el teu navegador per defecte. Vols continuar?
+    
+{0}</x:String>
+    <x:String x:Key="LOCGameImageSizeWarning">Les imatges seleccionades poden ser molt grans per un rendiment òptim. Utilitzar imatges molt grans pot causar una pitjor resposta de l&apos;aplicació i un increment de l&apos;ús de la memòria. 
+
+Màxima resolució recomanada:
+Icones: {0} megapíxels
+Caràtules: {1} megapíxels
+Imatges de fons: {2} megapíxels</x:String>
+    <x:String x:Key="LOCPerformanceWarningTitle">Avís de rendiment</x:String>
+    <x:String x:Key="LOCDontShowAgainTitle">No mostrar de nou</x:String>
+    <x:String x:Key="LOCIncompatibleDragAndDropExtensionError">El fitxer amb extensió {0} no és compatible.</x:String>
+    <x:String x:Key="LOCIncompatibleDragAndDropExtensionErrorTitle">Extensió de fitxer no compatible</x:String>
+    <x:String x:Key="LOCLargeMediaWarningTooltip">El fitxer d&apos;imatge seleccionat pot ser massa gran pel rendiment òptim.</x:String>
+    <x:String x:Key="LOCThemeUninstallQuestion">Segur que vols desinstal·lar el tema seleccionat? La desinstal·lació es produirà la pròxima vegada que el programa s&apos;executi.</x:String>
+    <x:String x:Key="LOCThemeBuiltInUninstallHint">Els temes preinstal·lats no es poden desinstal·lar.</x:String>
+    <x:String x:Key="LOCThemeUnsupported">Aquest tema no és compatible amb aquesta versió de Playnite.</x:String>
+    <x:String x:Key="LOCExtensionUninstallQuestion">Segur que vols desinstal·lar l&apos;extensió seleccionada? La desinstal·lació es produirà la pròxima vegada que el programa s&apos;executi.</x:String>
+    <x:String x:Key="LOCExtensionBuiltInUninstallHint">Les extensions preinstal·lades no es poden desinstal·lar.</x:String>
+    <x:String x:Key="LOCExtensionUnsupported">Aquesta extensió no és compatible amb aquesta versió de Playnite.</x:String>
+    <x:String x:Key="LOCExtensionInstallDir">Carpeta d&apos;instal·lació</x:String>
+    <x:String x:Key="LOCExtensionDataDir">Carpeta de dades</x:String>
+    <x:String x:Key="LOCDiagGenerating">Generant paquet de diagnosi…</x:String>
+    <x:String x:Key="LOCDiagUploading">Pujant paquet de diagnosi…</x:String>
+    <x:String x:Key="LOCAddFromExe">Importar fitxer…</x:String>
+    <x:String x:Key="LOCWhatIsThis">Què és això?</x:String>
+    <x:String x:Key="LOCConfirumationAskGeneric">Segur que ho vols fer?</x:String>
+    <x:String x:Key="LOCStatsTotalPlayTime">Temps total de joc</x:String>
+    <x:String x:Key="LOCStatsAvaragePlayTime">Temps mitjà de joc</x:String>
+    <x:String x:Key="LOCStatsTopPlayTime">Temps màxim de joc</x:String>
+    <x:String x:Key="LOCStatsTotalInstallSize">Mida total de la instal·lació</x:String>
+    <x:String x:Key="LOCOverviewLabel">Resum</x:String>
+    <x:String x:Key="LOCSidebar">Barra lateral</x:String>
+    <x:String x:Key="LOCToolsShowOnSidebar">Mostrar a la barra lateral</x:String>
+    <x:String x:Key="LOCSettingsReset">Restablir configuració</x:String>
+    <x:String x:Key="LOCSettingsDefaultResetDesc">Tota la configuració de l&apos;aplicació es restablirà als seus valor per defecte, excepte:
+- La localització de la base de dades
+- La llista d&apos;exclusió d&apos;importació
+- La configuració d&apos;extensions, incloses les integracions de biblioteques.
+    
+És necessari reiniciar l&apos;aplicació per finalitzar el procés. Vols restablir la configuració?</x:String>
+    <x:String x:Key="LOCSettingsForDevelopers">Per a desenvolupadors</x:String>
+    <x:String x:Key="LOCSettingsExternalExtensions">Extensions externes</x:String>
+    <x:String x:Key="LOCSettingsNewExternalExtensionBox">Introdueix la ruta completa de la carpeta.</x:String>
+    <x:String x:Key="LOCCommonLinksAchievements">Assoliments</x:String>
+    <x:String x:Key="LOCCommonLinksForum">Fòrum</x:String>
+    <x:String x:Key="LOCCommonLinksNews">Noticies</x:String>
+    <x:String x:Key="LOCCommonLinksStorePage">Pàgina de la botiga</x:String>
+    <x:String x:Key="LOCFullscreenFirstTimeError">La configuració inicial no s&apos;ha completat. Playnite es reiniciarà en mode d&apos;escriptori per a finalitzar el procés.</x:String>
+    <x:String x:Key="LOCQuickFilterRecentlyPlayed">Jugat recentment</x:String>
+    <x:String x:Key="LOCQuickFilterFavorites">Preferits</x:String>
+    <x:String x:Key="LOCQuickFilterMostPlayed">El més jugat</x:String>
+    <x:String x:Key="LOCQuickFilterAllGames">Tots</x:String>
+    <x:String x:Key="LOCGameListFiltered">S&apos;han aplicat filtres.</x:String>
+    <x:String x:Key="LOCGameListExtraFiltered">S&apos;han aplicat filtres addicionals.</x:String>
+    <x:String x:Key="LOCGameListSearchResults">Mostrant resultats de la cerca per:</x:String>
+    <x:String x:Key="LOCItemAlreadyExists">Ja existeix un element amb el mateix nom.</x:String>
+    <x:String x:Key="LOCRandomGameLimistToFilter">Limitar selecció al filtre actual</x:String>
+    <x:String x:Key="LOCRandomGamePickAnother">Seleccionar un altre</x:String>
+    <x:String x:Key="LOCMenuAddons">Complements…</x:String>
+    <x:String x:Key="LOCExtensionsInstalled">Instal·lat</x:String>
+    <x:String x:Key="LOCExtensionsSettings">Configuració d&apos;extensions</x:String>
+    <x:String x:Key="LOCExtensionsBrowse">Exploració</x:String>
+    <x:String x:Key="LOCExtensionsUpdates">Actualitzacions</x:String>
+    <x:String x:Key="LOCExtensionsUpdatesCount">Actualitzacions ({0})</x:String>
+    <x:String x:Key="LOCAddonsConfigMoveInfo">La gestió d&apos;extensions i temes instal·lats, incloent-hi la seva configuració, s&apos;ha traslladat a un nou menú anomenat &quot;Complements&quot;.</x:String>
+    <x:String x:Key="LOCLibrariesConfigWindowDescription">Totes les extensions d&apos;integració de biblioteques actualment instal·lades es poden configurar aquí.
+
+Si vols instal·lar o desinstal·lar integracions addicionals, pots utilitzar l&apos;opció &quot;Complements&quot; del menú principal.</x:String>
+    <x:String x:Key="LOCAddonsThemesDesktop">Temes (escriptori)</x:String>
+    <x:String x:Key="LOCAddonsThemesFullscren">Temes (pantalla completa)</x:String>
+    <x:String x:Key="LOCAddonsSearching">Cercant…</x:String>
+    <x:String x:Key="LOCAddonErrorNotCompatible">El complement no és compatible amb aquesta versió de Playnite.</x:String>
+    <x:String x:Key="LOCAddonErrorDownloadFailed">No s&apos;ha pogut descarregar el paquet d&apos;instal·lació del complement.</x:String>
+    <x:String x:Key="LOCAddonErrorManifestDownloadError">No s&apos;ha pogut descarregar el manifest d&apos;instal·lació del complement.</x:String>
+    <x:String x:Key="LOCAddonChangesRestart">És necessari reiniciar l&apos;aplicació per poder aplicar els canvis pendents.</x:String>
+    <x:String x:Key="LOCAddonQueuedForInstall">Aquest complement té programada la seva instal·lació.</x:String>
+    <x:String x:Key="LOCAddonInstall">Instal·lar</x:String>
+    <x:String x:Key="LOCAddonReinstall">Reinstal·lar</x:String>
+    <x:String x:Key="LOCAddonUninstall">Desinstal·lar</x:String>
+    <x:String x:Key="LOCAddonAlreadyInstalled">Ja instal·lat</x:String>
+    <x:String x:Key="LOCAddonNoAddonsAvailable">No s&apos;han trobat noves actualitzacions de complements.</x:String>
+    <x:String x:Key="LOCAddonUpdateAddons">Actualitzar complements</x:String>
+    <x:String x:Key="LOCAddonChangelogNotAvailavble">El registre de canvis no està disponible</x:String>
+    <x:String x:Key="LOCAddonUpdateStatusDownloaded">Té programada la seva instal·lació</x:String>
+    <x:String x:Key="LOCAddonUpdateStatusFailed">La descàrrega ha fallat</x:String>
+    <x:String x:Key="LOCAddonUpdateStatusLicenseRejected">S&apos;ha rebutjat la llicència</x:String>
+    <x:String x:Key="LOCAddonDownloadingAddon">Descarregant {0}...</x:String>
+    <x:String x:Key="LOCAddonLookingForUpdates">Cercant actualitzacions de complements...</x:String>
+    <x:String x:Key="LOCAppLookingForUpdates">Cercant actualitzacions del programa...</x:String>
+    <x:String x:Key="LOCAddonUpdatesAvailable">Hi ha disponibles una o més actualitzacions de complements.</x:String>
+    <x:String x:Key="LOCAddonSelectToUpdate">Selecciona els elements que vols actualitzar</x:String>
+    <x:String x:Key="LOCAddonDevReferenceLoaded">Instància de desenvolupament d&apos;extensió</x:String>
+    <x:String x:Key="LOCAddonLicenseWindowTitle">Acord de llicència de {0}</x:String>
+    <x:String x:Key="LOCLicenseAccept">Acceptar</x:String>
+    <x:String x:Key="LOCLicenseDecline">Rebutjar</x:String>
+    <x:String x:Key="LOCIncludePluginGameActions">Incloure accions de Jugar de la integració de la biblioteca.</x:String>
+    <x:String x:Key="LOCSelectActionTitle">Selecciona una acció</x:String>
+    <x:String x:Key="LOCActionTrackingMode">Mode de seguiment</x:String>
+    <x:String x:Key="LOCActionTrackingPath">Ruta de seguiment</x:String>
+    <x:String x:Key="LOCActionTrackingTrackingDelay">Retard de seguiment inicial</x:String>
+    <x:String x:Key="LOCActionTrackingFrequency">Freqüència de seguiment</x:String>
+    <x:String x:Key="LOCGameActionTypeLink">Enllaç</x:String>
+    <x:String x:Key="LOCGameActionTypeFile">Fitxer</x:String>
+    <x:String x:Key="LOCGameActionTypeEmulator">Emulador</x:String>
+    <x:String x:Key="LOCGameActionTypeScript">Script</x:String>
+    <x:String x:Key="LOCActionTrackingModeDefault">Per defecte</x:String>
+    <x:String x:Key="LOCActionTrackingModeProcess">Procés</x:String>
+    <x:String x:Key="LOCActionTrackingModeDirectory">Carpeta</x:String>
+    <x:String x:Key="LOCActionTrackingOriginalProcess">Procés original</x:String>
+    <x:String x:Key="LOCActionTrackingProcessName">Nom del procés</x:String>
+    <x:String x:Key="LOCDevelTraceLogEnable">Registrar missatges de seguiment</x:String>
+    <x:String x:Key="LOCMultiEditOverwriteWarning">Els següents canvis sobreescriuen les dades per tots els jocs actualment seleccionats!</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeNone">Cap</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeUniform">Uniforme</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeBetweenItemsOnly">Només elements.</x:String>
+    <x:String x:Key="LOCGridViewSpacingModeStartAndEndOnly">Només inici i final</x:String>
+    <x:String x:Key="LOCScrollingSensitivity">Sensibilitat de desplaçament</x:String>
+    <x:String x:Key="LOCSmoothScrolling">Desplaçament suau</x:String>
+    <x:String x:Key="LOCSmoothScrollingSpeed">Velocitat d&apos;animació</x:String>
+    <x:String x:Key="LOCAskRemoveItemTitle">Eliminar element?</x:String>
+    <x:String x:Key="LOCAskRemoveItemMessage">Segur que vols eliminar aquest element?</x:String>
+    <x:String x:Key="LOCSettingsTopPanelItems">Mostrar botons al panell superior:</x:String>
+    <x:String x:Key="LOCSettingsTopPanelGeneralViewItem">Configuració de visualització general</x:String>
+    <x:String x:Key="LOCSettingsTopPanelGroupingItem">Configuració d&apos;agrupament</x:String>
+    <x:String x:Key="LOCSettingsTopPanelSortingItem">Configuració d&apos;ordenació</x:String>
+    <x:String x:Key="LOCSettingsTopPanelFilterPresetsItem">Predefinits de filtratge</x:String>
+    <x:String x:Key="LOCTopPanelPluginPanelPosition">Posició dels elements de plugin</x:String>
+    <x:String x:Key="LOCTopPanelSeparatorWidth">Amplada del separador de secció</x:String>
+    <x:String x:Key="LOCTopPanelMainButtonMove">Moure el botó del menú principal a la barra lateral</x:String>
+    <x:String x:Key="LOCTopPanelExplorerSwitch">Panell d&apos;exploració</x:String>
+    <x:String x:Key="LOCTopPanelSelectRandomGameButton">Selector de joc aleatori</x:String>
+    <x:String x:Key="LOCTopPanelViewSelectRandomGameButton">Selector de joc aleatori de vistes</x:String>
+    <x:String x:Key="LOCTopPanelViewSelectRandomGameButtonTooltip">Seleccionar joc aleatori de la vista</x:String>
+    <x:String x:Key="LOCFilterPresetSaveViewOptions">Desar la configuració d&apos;agrupament i d&apos;ordenació</x:String>
+    <x:String x:Key="LOCFilterPresetShowOnFSTopPanel">Mostrar com a filtre ràpid en el mode de pantalla completa</x:String>
+    <x:String x:Key="LOCInPast7Days">En els darrers 7 dies</x:String>
+    <x:String x:Key="LOCInPast31Days">En els darrers 31 dies</x:String>
+    <x:String x:Key="LOCInPast365Days">En els darrers 365 dies</x:String>
+    <x:String x:Key="LOCMoreThan365DaysAgo">Fa més de 365 dies</x:String>
+    <x:String x:Key="LOCConfigure">Configurar</x:String>
+    <x:String x:Key="LOCFilterPresetSave">Desar predefinit</x:String>
+    <x:String x:Key="LOCSettingsMinimizeAfterStartingGame">Minimitzar després d&apos;iniciar el joc</x:String>
+    <x:String x:Key="LOCSettingsMinimizeAfterStartingGameDescription">Minimitzar Playnite després que s&apos;iniciï un joc.
+
+Desactivar això pot portar problemes amb jocs que no rebin informació d&apos;entrada a l&apos;inici!</x:String>
+    <x:String x:Key="LOCSettingsFontSize">Mida de la font</x:String>
+    <x:String x:Key="LOCSettingsFontSizeSmall">Mida de la font petita</x:String>
+    <x:String x:Key="LOCSettingsControllerApi">Activar el suport API per joc amb comandament</x:String>
+    <x:String x:Key="LOCSettingsXInputProcessing">Compatibilitat amb comandament de jocs</x:String>
+    <x:String x:Key="LOCSettingsXInputProcessingDescription">Si es desactiva, Playnite no acceptarà cap entrada de comandament de joc.
+
+Desactiva-ho si utilitzes eines que tradueixen les entrades de comandament de joc a les entrades ratolí/teclat i reps entrades dobles a Playnite.</x:String>
+    <x:String x:Key="LOCSettingsShowItemsMainMenuHeader">Mostrar elements al menú principal:</x:String>
+    <x:String x:Key="LOCSettingsSwapMainViewXAButtons">Assignació dels botons X/A invertida a la vista principal</x:String>
+    <x:String x:Key="LOCSettingsSwapMainViewXAButtonsDescriptions">Intercanvia els botons per iniciar un joc i mostrar la pàgina de detalls del joc a la vista principal.</x:String>
+    <x:String x:Key="LOCSettingsSwapConfirmCancelButtons">Intercanviar l&apos;assignació de botons de confirmació/cancel·lació</x:String>
+    <x:String x:Key="LOCSettingsSwapConfirmCancelButtonsDescriptions">Inverteix l&apos;assignació dels botons A/B per la confirmació i la cancel·lació.</x:String>
+    <x:String x:Key="LOCSettingsPrimaryControllerOnly">Només el comandament primari</x:String>
+    <x:String x:Key="LOCSettingsPrimaryControllerOnlyDescription">Només acceptar entrades del comandament primari quan aquesta opció està activada.</x:String>
+    <x:String x:Key="LOCSettingsRefocusOnGuidButton">El botó Guia porta Playnite a primer pla</x:String>
+    <x:String x:Key="LOCSettingsInterfaceVolume">Volum de la interfície</x:String>
+    <x:String x:Key="LOCSettingsMusiVolume">Volum en segon pla</x:String>
+    <x:String x:Key="LOCSettingsMuteBackground">Silenciar quan s&apos;estigui en segon pla</x:String>
+    <x:String x:Key="LOCErrorAudioInterfaceInit">No s&apos;ha pogut iniciar la interfície d&apos;àudio.</x:String>
+    <x:String x:Key="LOCSettingsAudioOutputApi">API de sortida</x:String>
+    <x:String x:Key="LOCSettingsAudioOutputApiDescription">API utilitzada per a la sortida d&apos;àudio. Modifica-ho si tens problemes amb el so.</x:String>
+    <x:String x:Key="LOCSettingsFSSectionGeneral">General</x:String>
+    <x:String x:Key="LOCSettingsFSSectionVisuals">Visuals</x:String>
+    <x:String x:Key="LOCSettingsFSSectionAudio">Àudio</x:String>
+    <x:String x:Key="LOCSettingsFSSectionLayout">Disposició</x:String>
+    <x:String x:Key="LOCSettingsFSSectionMenus">Menús</x:String>
+    <x:String x:Key="LOCSettingsFSSection">Entrada</x:String>
+    <x:String x:Key="LOCGameIsStarting">{0} s&apos;està iniciant...</x:String>
+    <x:String x:Key="LOCGameIsRunning">{0} s&apos;està executant…</x:String>
+    <x:String x:Key="LOCTextInputCapitalize">Majúscules</x:String>
+    <x:String x:Key="LOCTextInputSpace">Espai</x:String>
+    <x:String x:Key="LOCSettingsImageScalerMode">Escalador de renderització d&apos;imatge</x:String>
+    <x:String x:Key="LOCSettingsImageScalingAlternative">Alternatiu</x:String>
+    <x:String x:Key="LOCSettingsImageScalingBalanced">Equilibrat</x:String>
+    <x:String x:Key="LOCSettingsImageScalingQuality">Qualitat</x:String>
+    <x:String x:Key="LOCSettingsImageScalerModeTooltip">Qualitat:
+La millor qualitat d&apos;imatge, lent, alt consum de memòria.
+    
+Equilibrat:
+Bona qualitat, ràpid, baix consum de memòria.
+    
+Alternatiu:
+Millor qualitat, velocitat mitjana, baix consum de memòria.</x:String>
+    <x:String x:Key="LOCSelectFileTooltip">Seleccionar fitxer...</x:String>
+    <x:String x:Key="LOCSelectDirectoryTooltip">Seleccionar carpeta...</x:String>
+    <x:String x:Key="LOCStartupScript">Script d&apos;inici</x:String>
+    <x:String x:Key="LOCAddonPerfNotice">Tingues en compte que tant les extensions com els temes poden afectar en gran manera el rendiment, l&apos;estabilitat i la seguretat de Playnite.
+    
+Si comences a experimentar alguns problemes després d&apos;instal·lar un tema o una extensió, prova primer de desactivar-los/desinstal·lar-los per veure si són l&apos;arrel del problema.</x:String>
+    <x:String x:Key="LOCGameActionSelectOnStart">Seleccionar a l&apos;iniciar</x:String>
+    <x:String x:Key="LOCEmulatorSelectOnStart">Seleccionar a l&apos;iniciar</x:String>
+    <x:String x:Key="LOCEmulatorBuiltInProfiles">Perfils integrats</x:String>
+    <x:String x:Key="LOCEmulatorBuiltInProfile">Perfil integrat</x:String>
+    <x:String x:Key="LOCEmulatorCustomProfiles">Perfils personalitzats</x:String>
+    <x:String x:Key="LOCEmulatorCustomProfile">Perfil personalitzat</x:String>
+    <x:String x:Key="LOCEmulatorFunctionHandledByScript">Gestionat per un script incorporat</x:String>
+    <x:String x:Key="LOCEmulatorSpec">Especificació d&apos;emulador</x:String>
+    <x:String x:Key="LOCPlatformSpec">Especificació de plataforma</x:String>
+    <x:String x:Key="LOCRegionSpec">Especificació de regió</x:String>
+    <x:String x:Key="LOCEmulatorPreScriptDescription">Executar abans d&apos;iniciar l&apos;emulador</x:String>
+    <x:String x:Key="LOCEmulatorPostScriptDescription">Executar després que s&apos;hagi iniciat l&apos;emulador</x:String>
+    <x:String x:Key="LOCEmulatorStartedScriptDescription">Executar després de sortir de l&apos;emulador</x:String>
+    <x:String x:Key="LOCErrorEmulatorExecutableNotFound">No s&apos;ha trobat l&apos;executable de l&apos;emulador.</x:String>
+    <x:String x:Key="LOCErrorEmulatorSpecificationNotFound">No s&apos;ha trobat l&apos;especificació de l&apos;emulador.</x:String>
+    <x:String x:Key="LOCErrorEmulatorStartupScriptNotFound">No s&apos;ha trobat l&apos;script d&apos;inici de l&apos;emulador.</x:String>
+    <x:String x:Key="LOCSplitEmuImportSplitGames">Dividir com a jocs separats</x:String>
+    <x:String x:Key="LOCSplitEmuImportMergeGames">Fusionar en un joc</x:String>
+    <x:String x:Key="LOCEmuImportAssignPlatform">Definir plataforma</x:String>
+    <x:String x:Key="LOCEmuImportAssignRegion">Definir regió</x:String>
+    <x:String x:Key="LOCEmuScanDirectory">Escanejar carpeta</x:String>
+    <x:String x:Key="LOCEmuScanConfigurations">Escanejar configuracions</x:String>
+    <x:String x:Key="LOCEmuCrcExcludeFileTypes">Excloure patrons de l&apos;escaneig de suma de verificació</x:String>
+    <x:String x:Key="LOCEmuCrcExcludeFileTypesTooltip">Els fitxers que coincideixin amb els patrons especificats no s&apos;escanejaran per a la suma de verificació i es relacionaran amb el nom del fitxer. Visita la pàgina d&apos;ajuda de l&apos;emulador per a més informació.</x:String>
+    <x:String x:Key="LOCEmuScanEmulator">Escanejar amb emulador</x:String>
+    <x:String x:Key="LOCScanConfigNameError">El nom s&apos;ha de definir en desar la nova configuració.</x:String>
+    <x:String x:Key="LOCScanConfigNoEmulatorError">L&apos;emulador o el perfil d&apos;emulador no està definit.</x:String>
+    <x:String x:Key="LOCScanConfigDirectoryError">El directori a escanejar no està especificat o no existeix.</x:String>
+    <x:String x:Key="LOCScanConfigError">Els paràmetres d&apos;escaneig no estan configurats correctament.</x:String>
+    <x:String x:Key="LOCEmuScanIncludeGlobalUpdate">Incloure l&apos;escaneig automàtic en l&apos;escaneig massiu</x:String>
+    <x:String x:Key="LOCEmulatorScanFailed">No s&apos;ha pogut escanejar la carpeta per cercar emuladors.</x:String>
+    <x:String x:Key="LOCEmulatedGameScanFailed">No s&apos;han pogut escanejar les carpetes per a cercar a jocs emulats.</x:String>
+    <x:String x:Key="LOCEmuScanHideImported">Ocultar importats</x:String>
+    <x:String x:Key="LOCEmuImportProfilesToImportHeader">Perfils per importar:</x:String>
+    <x:String x:Key="LOCEmuAutoScanConfigurations">Configuracions d&apos;escaneig automàtic</x:String>
+    <x:String x:Key="LOCEmuSaveScanConfig">Desar com a configuració d&apos;escaneig automàtic</x:String>
+    <x:String x:Key="LOCEmuSaveScanConfigTooltip">Desa la configuració per a la seva utilització posterior durant l&apos;actualització de la biblioteca. Les configuracions desades es poden gestionar mitjançant el menú &quot;Configurar emuladors&quot;.</x:String>
+    <x:String x:Key="LOCEmuImportWithRelativePaths">Importar mitjançant rutes relatives</x:String>
+    <x:String x:Key="LOCEmuImportWithRelativePathsTooltip">Si és possible, importar fitxers del joc mitjançant rutes relatives a la carpeta d&apos;instal·lació de Playnite o la carpeta d&apos;instal·lació de l&apos;emulador.</x:String>
+    <x:String x:Key="LOCEmuImportScanSubfolders">Escanejar subcarpetes</x:String>
+    <x:String x:Key="LOCEmuImportScanInsideArchives">Escanejar dins dels arxius</x:String>
+    <x:String x:Key="LOCEmuMergeRelatedFiles">Fusionar fitxers relacionats</x:String>
+    <x:String x:Key="LOCEmuMergeRelatedFilesTooltip">Fusionar fitxers del joc relacionats, com per exemple discs del joc individuals, sota una sola entrada del joc.</x:String>
+    <x:String x:Key="LOCEmuAddScanner">Afegir escàner</x:String>
+    <x:String x:Key="LOCEmuAddSavedScanner">Afegir escàner desat</x:String>
+    <x:String x:Key="LOCStartScan">Iniciar escaneig</x:String>
+    <x:String x:Key="LOCEmuImportDirectoryConfigDesc">Afegir les configuracions d&apos;escaneig amb emuladors per escanejar carpetes específiques. Assegura&apos;t que els emuladors estiguin configurats correctament abans d&apos;importar jocs (mitjançant el menú Biblioteca -&gt; Configurar emuladors).</x:String>
+    <x:String x:Key="LOCCompletionStatusDefaultStatusDesc">Estat per defecte assignat a jocs afegits recentment</x:String>
+    <x:String x:Key="LOCCompletionStatusPlayedStatusDesc">Estat assignat a jocs jugats per primer cop</x:String>
+    <x:String x:Key="LOCPowerShellCreationError">No s&apos;ha pogut iniciar el temps d&apos;execució del script de PowerShell. Si ets usuari de Windows 7, prova de (re)instal·lar PowerShell 5.1 per resoldre el problema.</x:String>
+    <x:String x:Key="LOCFilterPresetNameConflict">El predefinit de filtratge amb el nom especificat ja existeix. Vols actualitzar el predefinit amb la nova configuració?</x:String>
+    <x:String x:Key="LOCSortingNameAutofill">Omplir automàticament els noms d&apos;ordenació restants pels jocs afegits o editats per lots</x:String>
+    <x:String x:Key="LOCSortingNameAutofillTooltip">Quan edites un joc, l&apos;afegeixes actualitzant la llibreria, escaneges la carpeta d&apos;un emulador, o escaneges una carpeta normal, omple automàticament el &quot;Nom d&apos;Ordenació&quot; amb la representació millor ordenable del nom del joc. Per exemple, &quot;The Witcher 3&quot; s&apos;ordenarà com a &quot;Witcher 03&quot;. No utilitzarà un nom d&apos;ordenació que no sigui diferent del nom del joc, i només actualitzarà els noms d&apos;ordenació que estiguin buits.</x:String>
+    <x:String x:Key="LOCSortingNameRemovedArticles">Aquestes paraules s&apos;eliminaran del principi del valor de nom d&apos;ordenació omplert automàticament:</x:String>
+    <x:String x:Key="LOCSortingNameRemovedArticlesTooltip">Utilitza això per ignorar paraules al principi d&apos;una cadena per propòsits d&apos;ordenació. El valor per defecte és &quot;The&quot;, &quot;An&quot; i &quot;A&quot;.</x:String>
+    <x:String x:Key="LOCSortingNameAutofillButton">Omplir el nom d&apos;ordenació de jocs sense un</x:String>
+    <x:String x:Key="LOCSettingsSortingLabel">Ordenació</x:String>
+    <x:String x:Key="LOCSortingNameAutofillProgress">Omplint valors de nom d&apos;ordenació...</x:String>
+    <x:String x:Key="LOCNahimicServiceWarning">S&apos;ha detectat que el servei Nahimic s&apos;està executant al teu sistema. Se sap que aquest servei causa problemes de renderització a Playnite (i altres aplicacions).
+
+Si trobes alguna corrupció de gràfics o altres problemes de renderització a Playnite, es recomana desactivar o desinstal·lar completament el servei Nahimic.
+
+Més informació a https://playnite.link/nahimicsucks</x:String>
+    <x:String x:Key="LOCElevatedProcessWarning">Playnite s&apos;està executant amb privilegis elevats (com a administrador). Això no es recomana, ja que dóna privilegis elevats a totes les extensions instal·lades i a tots els jocs/aplicacions iniciats des de Playnite!
+
+Més informació a https://playnite.link/adminfaq</x:String>
+    <x:String x:Key="LOCElevatedProcessWarningShowOption">Mostrar avís si Playnite està funcionant amb privilegis elevats</x:String>
+    <x:String x:Key="LOCInstallSizeScanUseSizeOnDiskOption">Obtenir la mida real en el disc dur quan es calculi la mida dels jocs</x:String>
+    <x:String x:Key="LOCInstallSizeScanUseSizeOnDiskOptionTooltip">Si s&apos;activa, els escaneigs seran més lents i obtindran la mida real que els fitxers ocupen en la unitat.
+Si es desactiva, els escaneigs seran més ràpids i utilitzaran la mida dels mateixos fitxers.</x:String>
+    <x:String x:Key="LOCWarningBlacklistedExtensions">S&apos;ha informat que els complements següents són potencialment problemàtics, ja sigui a causa de l&apos;alt impacte en l&apos;estabilitat/rendiment o per problemes de seguretat. Et recomanem que els desinstal·lis:
+        
+{0}
+    </x:String>
+    <x:String x:Key="LOCEmuExcludeOnlineFiles">Excloure fitxers en línia de l&apos;escaneig</x:String>
+    <x:String x:Key="LOCEmuExcludeOnlineFilesTooltip">Els fitxers emmagatzemats al núvol no s&apos;escanejaran i importaran si no estan disponibles de manera local.
+Només és compatible amb Google Drive, DropBox i OneDrive</x:String>
+    <x:String x:Key="LOCEmuUseSimplifiedOnlineFileScan">Escanejar, però utilitzant el mètode simplificat sense el contingut del fitxer</x:String>
+    <x:String x:Key="LOCEmuUseSimplifiedOnlineFileScanTooltip">S&apos;importaran els fitxers, però utilitzant un mètode menys precís que no requereix que el contingut dels fitxers es descarregui i estigui present de manera local.</x:String>
+    <x:String x:Key="LOCMetadatSetAllFieldsToValue">Aplicar-ho a tots</x:String>
+    <x:String x:Key="LOCOverrideInstallState">Ignorar l&apos;estat de la instal·lació</x:String>
+    <x:String x:Key="LOCOverrideInstallStateTooltip">Si es defineix, Playnite ignorarà l&apos;estat de la instal·lació (incloent-hi el directori d&apos;instal·lació) establert pel plugin d&apos;integració que importa aquest joc.
+        
+Aquesta opció podria no funcionar completament amb plugins que utilitzen un mètode específic d&apos;importació de jocs, a menys que també tinguin en compte aquesta opció d&apos;ignorar.</x:String>
+    <x:String x:Key="LOCOptionOnlyManually">Només manualment</x:String>
+    <x:String x:Key="LOCOptionOnceADay">Un cop al dia</x:String>
+    <x:String x:Key="LOCOptionOnceAWeek">Un cop per setmana</x:String>
+    <x:String x:Key="LOCOptionOnEveryStartup">A cada inici</x:String>
+    <x:String x:Key="LOCCheckProgramUpdates">Cercar actualitzacions del programa</x:String>
+    <x:String x:Key="LOCCheckAddonUpdates">Cercar actualitzacions de complements</x:String>
+    <x:String x:Key="LOCCheckLibraryUpdates">Actualitzar biblioteques</x:String>
+    <x:String x:Key="LOCCheckEmulatedLibraryUpdates">Escanejar carpetes d&apos;emulació</x:String>
+    <x:String x:Key="LOCStatsIncludeHidden">Incloure jocs ocults</x:String>
+    <x:String x:Key="LOCMenuSetFields">Editar els camps</x:String>
+    <x:String x:Key="LOCItemSelectionSelectDeselectAll">Seleccionar/Desseleccionar-ho tot</x:String>
+    <x:String x:Key="LOCOpen">Obrir</x:String>
+    <x:String x:Key="LOCActivate">Activar</x:String>
+    <x:String x:Key="LOCAssign">Asignar</x:String>
+    <x:String x:Key="LOCDefaultSearchDescription">Comença a teclejar per a cercar jocs... [F1] per ajuda</x:String>
+    <x:String x:Key="LOCDefaultSearchHint">Començar amb # mostra una llista de les ordres disponibles.
+Començar amb / mostra una llista dels proveïdors/plugins de cerca disponibles.
+Començar teclejant la paraula a cercar i acabant amb ESPAI canvia immediatament a aquella cerca.
+
+TABULADOR: Canviar acció
+ENTER: Activar l&apos;acció seleccionada
+MAJÚSCULES-ENTER: Obrir menú d&apos;elements</x:String>
+    <x:String x:Key="LOCSearchFilterUninstalled">Incloure jocs desinstal·lats</x:String>
+    <x:String x:Key="LOCSearchFilterHidden">Incloure jocs ocults</x:String>
+    <x:String x:Key="LOCSearchFilterUninstalledIncluded">Jocs desinstal·lats inclosos</x:String>
+    <x:String x:Key="LOCSearchFilterUninstalledExcluded">Jocs desinstal·lats exclosos</x:String>
+    <x:String x:Key="LOCSearchFilterHiddenIncluded">Jocs ocults inclosos</x:String>
+    <x:String x:Key="LOCSearchFilterHiddenalledExcluded">Jocs ocults exclosos</x:String>
+    <x:String x:Key="LOCGameSearchItemActionPlay">Jugar o instal·lar</x:String>
+    <x:String x:Key="LOCGameSearchItemActionSwitchTo">Anar als detalls</x:String>
+    <x:String x:Key="LOCGameSearchItemActionOpenMenu">Menú del joc</x:String>
+    <x:String x:Key="LOCGameSearchItemActionEdit">Editar joc</x:String>
+    <x:String x:Key="LOCOpenSearch">Obrir cerca</x:String>
+    <x:String x:Key="LOCTopPanelSearchBox">Quadre de cerca</x:String>
+    <x:String x:Key="LOCTopPanelSearchButton">Botó de cerca</x:String>
+    <x:String x:Key="LOCSearchSettingsPrimaryAction">Acció principal del joc</x:String>
+    <x:String x:Key="LOCSearchSettingsSecondaryAction">Acció secundària del joc</x:String>
+    <x:String x:Key="LOCSearchSettingsKeyboardOpenSearch">CTRL-F obre la cerca global en lloc d&apos;activar el quadre de cerca</x:String>
+    <x:String x:Key="LOCSearchSettingsSaveFilter">Desar configuració de filtratge de jocs entre sessions de cerca</x:String>
+    <x:String x:Key="LOCSearchSettingsSearchProviders">Proveïdors de cerca</x:String>
+    <x:String x:Key="LOCSearchSettingsDefaultKeyword">Paraula clau per defecte</x:String>
+    <x:String x:Key="LOCSearchSettingsCustomKeyword">Paraula clau personalitzada</x:String>
+    <x:String x:Key="LOCSearchSettingsSystemWideShortcut">Drecera global del sistema</x:String>
+    <x:String x:Key="LOCSearchTitle">Cerca de Playnite</x:String>
+    <x:String x:Key="LOCExtensionSettingsMenu">Configuració de l&apos;extensió</x:String>
+    <x:String x:Key="LOCExclusions">Exclusions</x:String>
+    <x:String x:Key="LOCEmuScannerExcludedFiles">Fitxers exclosos relatius a la carpeta d&apos;escaneig</x:String>
+    <x:String x:Key="LOCEmuScannerExcludedFolders">Carpetes excloses relatives a la carpeta d&apos;escaneig</x:String>
+    <x:String x:Key="LOCEmuImportAddROMExclusionList">Afegir fitxer a la llista d&apos;exclusions</x:String>
+    <x:String x:Key="LOCEmuImportAddFolderExclusionList">Afegir carpeta a la llista d&apos;exclusions</x:String>
+    <x:String x:Key="LOCEmuExclusionNoConfigError">Les exclusions només es poden afegir a configuracions desades de l&apos;escàner.</x:String>
+    <x:String x:Key="LOCEmuExclusionAddedMessage">S&apos;han afegit exclusions a l&apos;escàner &quot;{0}&quot;.</x:String>
+    <x:String x:Key="LOCEmuOverridePlatform">Substituir plataforma</x:String>
+    <x:String x:Key="LOCEmuOverridePlatformTooltip">Si es defineix, l&apos;escàner assignarà aquesta plataforma a tots els jocs, sobreescrivint qualsevol altra plataforma que es detecti automàticament.</x:String>
+    <x:String x:Key="LOCSearchIncludeCommandsInDefault">Incloure ordres a la cerca per defecte</x:String>
+    <x:String x:Key="LOCSearchIncludeCommandsInDefaultTooltip">Si es desactiva, les ordres no s&apos;inclouran en la casella de cerca fins que s&apos;utilitzi el prefix #.</x:String>
+    <x:String x:Key="NameFilterUseFuzzyMatching">Utilitzar una coincidència aproximada en el filtre de noms</x:String>
+    <x:String x:Key="NameFilterUseFuzzyMatchingTooltip">Si s&apos;activa, el filtre de noms coincidirà amb els noms dels jocs de la mateixa manera que la cerca global.
+Es pot aplicar una coincidència estricta en un cas individual afegint el prefix &quot;!&quot; al filtre.</x:String>
+    <x:String x:Key="LOCSearchViewGameFieldOptions">Camps que es mostraran per als resultats de jocs:</x:String>
+    <x:String x:Key="LOCHiddenStatus">Estat ocult</x:String>
+    <x:String x:Key="LOCBackupCancelled">S&apos;ha cancel·lat la còpia de seguretat de les dades.</x:String>
+    <x:String x:Key="LOCBackupFailed">Ha fallat la còpia de seguretat de les dades.</x:String>
+    <x:String x:Key="LOCBackupErrorTitle">Error de còpia de seguretat de dades</x:String>
+    <x:String x:Key="LOCBackupProgress">Còpia de seguretat de les dades en progrés...</x:String>
+    <x:String x:Key="LOCBackupRestoreProgress">S&apos;estan restaurant les dades a partir de la còpia de seguretat...</x:String>
+    <x:String x:Key="LOCBackupRestoreFailed">No s&apos;han pogut restaurar les dades a partir de la còpia de seguretat.</x:String>
+    <x:String x:Key="LOCBackupOptionSettings">Configuració</x:String>
+    <x:String x:Key="LOCBackupOptionLibrary">Biblioteca de jocs</x:String>
+    <x:String x:Key="LOCBackupOptionGameMedia">Multimèdia de la biblioteca de jocs</x:String>
+    <x:String x:Key="LOCBackupOptionExtensions">Extensions instal·lades</x:String>
+    <x:String x:Key="LOCBackupOptionExtensionsData">Dades d&apos;extensions</x:String>
+    <x:String x:Key="LOCBackupOptionThemes">Temes instal·lats</x:String>
+    <x:String x:Key="LOCBackupRestoreMessage">Selecciona les dades a restaurar des del fitxer de còpia de seguretat especificat.
+    
+Playnite es reiniciarà automàticament per iniciar el procés de restauració de la còpia de seguretat.</x:String>
+    <x:String x:Key="LOCBackupDataBackupMessage">Selecciona els elements per incloure a la còpia de seguretat de les dades. La configuració de l&apos;aplicació i les dades de la biblioteca de jocs s&apos;inclouen per defecte.
+    
+Playnite es reiniciarà automàticament per iniciar el procés de còpia de seguretat.</x:String>
+    <x:String x:Key="LOCSettingsEnableAutomaticBackup">Còpia de seguretat de dades automàtica</x:String>
+    <x:String x:Key="LOCSettingsAutoBackupFrequency">Freqüència de la còpia de seguretat automàtica</x:String>
+    <x:String x:Key="LOCSettingsBackupFolder">Carpeta de còpies de seguretat</x:String>
+    <x:String x:Key="LOCSettingsRotatingBackups">Rotació de còpies de seguretat</x:String>
+    <x:String x:Key="LOCSettingsAutoBackupIncludeItems">Incloure dades addicionals:</x:String>
+    <x:String x:Key="LOCSettingsNoBackupDirSpecifiedError">És necessari definir la carpeta de còpia de seguretat si està activada la còpia de seguretat automàtica.</x:String>
+    <x:String x:Key="LOCUpdateNotifyOnlyPatches">Mostra notificacions només per a llançaments de petites actualitzacions</x:String>
+    <x:String x:Key="LOCUpdateNotifyOnlyPatchesToolip">Si s&apos;activa, només les actualitzacions disponibles per a la versió principal instal·lada actualment mostraran una notificació d&apos;actualització.
+Les noves versions principals no mostraran una notificació d&apos;actualització.</x:String>
+    <x:String x:Key="LOCSettingsPastWeekRelativeFormat">Utilitzar dates relatives per la setmana passada</x:String>
+    <x:String x:Key="LOCSettingsPastWeekRelativeFormatTooltip">Utilitzar dates relatives en format &quot;Avui&quot;, &quot;Ahir&quot;, etc. si la data és inferior a una setmana.
+    
+El format de data especificat s&apos;utilitzarà per a les altres dates.</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearch">Cerca d&apos;imatges web</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearchIconTerm">Cadena de cerca de la imatge d&apos;icona</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearchCoverTerm">Cadena de cerca de la imatge de caràtula</x:String>
+    <x:String x:Key="LOCSettingsWebImageSearchBackground">Cadena de cerca de la imatge de fons</x:String>
+    <x:String x:Key="LOCGettingsAddonInformation">Obtenint informació del complement...</x:String>
+    <x:String x:Key="LOCNoMetadataSource">No hi ha una font de metadades disponible</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettings">Configuració de l&apos;acció de Jugar</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettingsScanner">Utilitzar configuració de l&apos;escàner</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettingsSelectProfile">Seleccionar perfil en iniciar</x:String>
+    <x:String x:Key="LOCScannerConfigPlayActionSettingsSelectEmulator">Seleccionar emulador en iniciar</x:String>
+    <x:String x:Key="LOCAutomatic">Automàtic</x:String>
+    <x:String x:Key="LOCAlwaysOn">Sempre activat</x:String>
+    <x:String x:Key="LOCAlwaysOff">Sempre desactivat</x:String>
+    <x:String x:Key="LOCSettingsAccessibilityInterface">Compatibilitat d&apos;accessibilitat (lector de pantalla)</x:String>
+    <x:String x:Key="LOCApplicationMenu">Menú d&apos;aplicació</x:String>
+    <x:String x:Key="LOCGameMenu">Menú del joc</x:String>
+    <x:String x:Key="LOCProgramFolder">Carpeta del programa</x:String>
+    <x:String x:Key="LOCUserDataFolder">Directori de dades de l&apos;usuari</x:String>
+    <x:String x:Key="LOCDBCorruptionCrashMessage">S&apos;ha detectat un fitxer de la biblioteca danyat. Playnite ara es tancarà.
+    
+Obre una nova incidència a la pàgina de GitHub de Playnite amb una sol·licitud per corregir els teus fitxers danyats.</x:String>
+    <x:String x:Key="LOCUnsavedChangesAskMessage">Vols desar els canvis que has fet?</x:String>
+    <x:String x:Key="LOCPortableInstallation">Instal·lació portàtil</x:String>
+    <x:String x:Key="LOCNoControllersDetected">No s&apos;han detectat comandaments</x:String>
+</ResourceDictionary>

@@ -1586,6 +1586,21 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException(
                     $"visible={viewModel.Settings.IsVisible}, enableTray={viewModel.EnableTray}"));
 
+        viewModel.OpenSettingsCommand.Execute(null);
+        var availableLanguages = viewModel.Settings.AvailableLanguages;
+        var hasEnglish = availableLanguages.Any(option => option.Id == "english");
+        var germanOption = availableLanguages.FirstOrDefault(option => option.Id == "de_DE");
+        viewModel.Settings.SelectedLanguage = germanOption;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Language catalog bundles English plus translations and flags a restart on change", () =>
+            availableLanguages.Count > 20 && hasEnglish && germanOption != null &&
+            viewModel.Settings.RestartRequired
+                ? $"{availableLanguages.Count} languages available; selecting {germanOption.DisplayName} flagged a restart"
+                : throw new InvalidOperationException(
+                    $"count={availableLanguages.Count}, english={hasEnglish}, " +
+                    $"german={germanOption != null}, restart={viewModel.Settings.RestartRequired}"));
+
         var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(
             policyPlugin.Id,

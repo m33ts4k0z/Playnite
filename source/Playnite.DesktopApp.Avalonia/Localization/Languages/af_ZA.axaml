@@ -1,0 +1,44 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:String x:Key="LanguageName">Engels</x:String>
+    <x:String x:Key="LOCLanguageSettingsLabel">Playnite taal</x:String>
+    <x:String x:Key="LOCExitAppLabel">Gaan Uit</x:String>
+    <x:String x:Key="LOCFilterActiveLabel">Filter Aktief</x:String>
+    <x:String x:Key="LOCFilterInactiveLabel">Filter onaktief</x:String>
+    <x:String x:Key="LOCAditionalFilters">Additionele filters</x:String>
+    <x:String x:Key="LOCFilters">Filters</x:String>
+    <x:String x:Key="LOCFilter">Filter</x:String>
+    <x:String x:Key="LOCInvalidDataTitle">Ongeldige Data</x:String>
+    <x:String x:Key="LOCSaveChangesAskTitle">Stoor Veranderinge?</x:String>
+    <x:String x:Key="LOCAboutHomePageLink">Tuisblad by www.playnite.link</x:String>
+    <x:String x:Key="LOCAboutSourceLink">Bronkode by GitHub</x:String>
+    <x:String x:Key="LOCAboutCreateDiagButton">Maak diag. pakket</x:String>
+    <x:String x:Key="LOCAboutSendDiagButton">Stuur diag. inligting</x:String>
+    <x:String x:Key="LOCAboutWindowTitle">Oor Playnite</x:String>
+    <x:String x:Key="LOCAboutAuthor">Gemaak deur Josef Němec</x:String>
+    <x:String x:Key="LOCCategoryWindowTitle">Ken Kategorie Toe</x:String>
+    <x:String x:Key="LOCCategorySetButton">Stel Kategorie</x:String>
+    <x:String x:Key="LOCCategoryAddCatButton">Voeg Kategorie By</x:String>
+    <x:String x:Key="LOCCategoryTooltip">Gemerk - Ken kategorie toe
+Ongemerk - Verwyder kategorie
+Onbepaald - Geen veranderinge (wanneer vele speletjies gewysig word)</x:String>
+    <x:String x:Key="LOCNoCategory">Geen Kategorie</x:String>
+    <x:String x:Key="LOCNoPlatform">Geen Platform</x:String>
+    <x:String x:Key="LOCCrashWindowTitle">Oeps! Iets het verkeerd gegaan</x:String>
+    <x:String x:Key="LOCCrashDescription">&apos;n Onherwinbare fout het voorgekom.
+
+As jy ons wil help om hierdie kwessie op te los, beskryf asseblief die aksies wat geneem was voor die crash, en stuur dan diagnostiese inligting. As jy aanlyn is sal die pakket na die Playnite bediener opgelaai word vir ontleding.
+
+Alternatiewelik, kan jy op die &apos;Meld crash aan&apos; knoppie klik om &apos;n nuwe GitHub kwessie te maak en die crash per hand aan te meld.
+
+Dankie vir jou hulp.</x:String>
+    <x:String x:Key="LOCCrashReportIssue">Meld Crash Aan</x:String>
+    <x:String x:Key="LOCCrashRestartPlaynite">Begin Playnite Oor</x:String>
+    <x:String x:Key="LOCCrashRestartSafe">Begin oor in Veilige Modus</x:String>
+    <x:String x:Key="LOCCrashClosePlaynite">Verlaat Playnite</x:String>
+    <x:String x:Key="LOCLibraryManager">Biblioteekbestuurder</x:String>
+    <x:String x:Key="LOCGameRemoveAskTitle">Verwyder Speletjie(s)?</x:String>
+    <x:String x:Key="LOCSteamFriendsTooltip">Steam Vriende</x:String>
+    <x:String x:Key="LOCRemoveTitle">Verwyder</x:String>
+    <x:String x:Key="LOCRemoveUnusedTitle">Verwyder ongebruikte</x:String>
+</ResourceDictionary>

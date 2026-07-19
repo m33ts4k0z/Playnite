@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <x:String x:Key="LanguageName">ინგლისური</x:String>
+    <x:String x:Key="LOCLanguageSettingsLabel">Playnite ენა</x:String>
+    <x:String x:Key="LOCExitAppLabel">გამორთვა</x:String>
+    <x:String x:Key="LOCFilterInactiveLabel">ფილტრი გამორთულია</x:String>
+    <x:String x:Key="LOCAditionalFilters">დამატებითი ფილტრები</x:String>
+    <x:String x:Key="LOCFilters">ფილტრები</x:String>
+    <x:String x:Key="LOCFilter">ფილტრი</x:String>
+    <x:String x:Key="LOCInvalidDataTitle">არავალირუდი ინფორმაცია</x:String>
+    <x:String x:Key="LOCSaveChangesAskTitle">ცვლილებების შენახვა?</x:String>
+</ResourceDictionary>
