@@ -426,6 +426,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public DesktopInstalledGameImportViewModel InstalledGameImport { get; }
     public DesktopPluginSettingsViewModel PluginSettings { get; }
     public DesktopSettingsViewModel Settings { get; }
+    public DesktopScriptService Scripts { get; }
     public AvaloniaSearchSession PluginSearch { get; }
     public bool IsPluginSearchVisible => PluginSearch.IsVisible;
 
@@ -618,13 +619,18 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             }
         });
         PluginSettings.PropertyChanged += PluginSettings_PropertyChanged;
+        Scripts = new DesktopScriptService(
+            () => runtimeHost?.PluginApi,
+            () => SelectedGame?.Game);
         Settings = new DesktopSettingsViewModel(
             this.settings,
             database,
             () => runtimeHost?.MetadataPlugins.ToList() ?? new List<MetadataPlugin>(),
             () => runtimeHost?.Extensions.Plugins.Values.ToList() ?? new List<LoadedPlugin>(),
             () => runtimeHost?.V7Plugins ?? Array.Empty<V7LoadedPlugin>(),
+            () => runtimeHost?.LibraryPlugins ?? Array.Empty<LibraryPlugin>(),
             Updates,
+            Scripts.TestGameScript,
             SynchronizeLibrary,
             () =>
             {

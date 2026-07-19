@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.ClientShutdownSettingsView"
+             x:DataType="vm:ClientShutdownSettingsSection">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="24" Spacing="14">
+      <TextBlock Text="Library client shutdown" FontSize="18" FontWeight="SemiBold" />
+      <CheckBox Content="Close eligible library clients after a game session"
+                IsChecked="{Binding ShutdownLibraryClients, Mode=TwoWay}" />
+      <Grid ColumnDefinitions="260,*" RowDefinitions="Auto,Auto" RowSpacing="10" ColumnSpacing="12"
+            IsEnabled="{Binding ShutdownLibraryClients}">
+        <TextBlock Grid.Row="0" Text="Grace period after game exit (seconds)" VerticalAlignment="Center" />
+        <NumericUpDown Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="4096" Increment="1"
+                       Value="{Binding ClientShutdownGraceSeconds, Mode=TwoWay}" />
+        <TextBlock Grid.Row="1" Text="Minimum game session (seconds)" VerticalAlignment="Center" />
+        <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="4096" Increment="1"
+                       Value="{Binding ClientShutdownMinimumSessionSeconds, Mode=TwoWay}" />
+      </Grid>
+      <TextBlock Text="Clients allowed to close" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <TextBlock Text="Only loaded library plugins that explicitly advertise safe client shutdown are listed."
+                 TextWrapping="Wrap" Opacity="0.75" />
+      <ItemsControl ItemsSource="{Binding Plugins}" IsEnabled="{Binding ShutdownLibraryClients}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:ClientShutdownPluginOption">
+            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Margin="0,4" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

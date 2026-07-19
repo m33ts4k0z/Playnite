@@ -2209,17 +2209,6 @@ internal static class DesktopPilotSelfTest
                     : throw new InvalidOperationException("Update check, queue, persistence, or notification contracts diverged."));
         }
 
-        var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
-        Record(results, "Every desktop settings module supplies a passing self-check", () =>
-            settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
-            settingsSectionChecks.All(check => check.Passed)
-                ? string.Join("; ", settingsSectionChecks.Select(check => $"{check.SectionKey}: {check.Detail}"))
-                : throw new InvalidOperationException(string.Join(
-                    "; ",
-                    settingsSectionChecks.Select(check => $"{check.SectionKey}={check.Passed}: {check.Detail}"))));
-        window.RuntimeHost.Extensions.Plugins.Remove(pilotSearchPlugin.Id);
-        pilotSearchPlugin.Dispose();
-
         var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(
             policyPlugin.Id,
@@ -2234,6 +2223,76 @@ internal static class DesktopPilotSelfTest
                     "pilot-action-policy",
                     "extension.yaml")
             }));
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("Behavior settings could not be opened for the Track W self-test.");
+        }
+        viewModel.Settings.Scripting.GlobalPreScript = "settings-global-pre";
+        viewModel.Settings.Scripting.GlobalGameStartedScript = "settings-global-started";
+        viewModel.Settings.Scripting.GlobalPostScript = "settings-global-post";
+        viewModel.Settings.Scripting.AppStartupScript = "settings-app-startup";
+        viewModel.Settings.Scripting.AppShutdownScript = "settings-app-shutdown";
+        viewModel.Settings.ClientShutdown.ShutdownLibraryClients = true;
+        viewModel.Settings.ClientShutdown.ClientShutdownGraceSeconds = 75;
+        viewModel.Settings.ClientShutdown.ClientShutdownMinimumSessionSeconds = 150;
+        viewModel.Settings.ClientShutdown.Plugins.Single(plugin => plugin.Id == policyPlugin.Id).IsSelected = true;
+        viewModel.Settings.SaveCommand.Execute(null);
+        viewModel.Settings.Open();
+        var behaviorSettingsReopened =
+            viewModel.Settings.Scripting.GlobalPreScript == "settings-global-pre" &&
+            viewModel.Settings.Scripting.GlobalGameStartedScript == "settings-global-started" &&
+            viewModel.Settings.Scripting.GlobalPostScript == "settings-global-post" &&
+            viewModel.Settings.Scripting.AppStartupScript == "settings-app-startup" &&
+            viewModel.Settings.Scripting.AppShutdownScript == "settings-app-shutdown" &&
+            viewModel.Settings.ClientShutdown.ShutdownLibraryClients &&
+            viewModel.Settings.ClientShutdown.ClientShutdownGraceSeconds == 75 &&
+            viewModel.Settings.ClientShutdown.ClientShutdownMinimumSessionSeconds == 150 &&
+            viewModel.Settings.ClientShutdown.Plugins.Single(plugin => plugin.Id == policyPlugin.Id).IsSelected;
+        viewModel.Settings.CancelCommand.Execute(null);
+        Record(results, "Script and client-shutdown settings use isolated working copies", () =>
+            behaviorSettingsReopened
+                ? "five scripts and the shutdown-capable plugin policy saved and reopened"
+                : throw new InvalidOperationException("Behavior settings did not round-trip through their modules."));
+
+        var scriptRuntimes = new List<RecordingPowerShellRuntime>();
+        var scriptService = new DesktopScriptService(
+            () => window.RuntimeHost.PluginApi,
+            () => viewModel.SelectedGame?.Game,
+            _ =>
+            {
+                var runtime = new RecordingPowerShellRuntime();
+                scriptRuntimes.Add(runtime);
+                return runtime;
+            });
+        var startupScriptResult = scriptService.RunApplicationScript("app-startup", "startup");
+        var shutdownScriptResult = scriptService.RunApplicationScript("app-shutdown", "shutdown");
+        var gameScriptResult = scriptService.TestGameScript("game-test");
+        var failedScriptService = new DesktopScriptService(
+            () => window.RuntimeHost.PluginApi,
+            () => viewModel.SelectedGame?.Game,
+            _ => new RecordingPowerShellRuntime("fail-test"));
+        var failedPowerShellResult = failedScriptService.TestGameScript("fail-test");
+        Record(results, "Application and one-shot game scripts execute through real runtime contracts", () =>
+            startupScriptResult.Success && shutdownScriptResult.Success && gameScriptResult.Success &&
+            !failedPowerShellResult.Success &&
+            scriptRuntimes.Count == 3 && scriptRuntimes.All(runtime => runtime.IsDisposed) &&
+            scriptRuntimes[0].Executions.Single().Variables["PlayniteApi"] == window.RuntimeHost.PluginApi &&
+            scriptRuntimes[2].Executions.Single().Variables.ContainsKey("Game") &&
+            scriptRuntimes[2].Executions.Single().Variables.ContainsKey("StartingArgs")
+                ? "startup/shutdown and game test scripts received SDK variables, disposed, and reported failures"
+                : throw new InvalidOperationException("The script runtime lifecycle or SDK variables diverged."));
+
+        var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
+        Record(results, "Every desktop settings module supplies a passing self-check", () =>
+            settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
+            settingsSectionChecks.All(check => check.Passed)
+                ? string.Join("; ", settingsSectionChecks.Select(check => $"{check.SectionKey}: {check.Detail}"))
+                : throw new InvalidOperationException(string.Join(
+                    "; ",
+                    settingsSectionChecks.Select(check => $"{check.SectionKey}={check.Passed}: {check.Detail}"))));
+        window.RuntimeHost.Extensions.Plugins.Remove(pilotSearchPlugin.Id);
+        pilotSearchPlugin.Dispose();
+
         var policyGame = new Game("Avalonia runner policy game")
         {
             PluginId = policyPlugin.Id,
@@ -2502,6 +2561,8 @@ internal static class DesktopPilotSelfTest
                 GlobalPreScript = "global-pre",
                 GlobalGameStartedScript = "global-started",
                 GlobalPostScript = "global-post",
+                AppStartupScript = "app-startup",
+                AppShutdownScript = "app-shutdown",
                 ShutdownLibraryClients = true,
                 ClientShutdownGraceSeconds = 45,
                 ClientShutdownMinimumSessionSeconds = 90,
@@ -2628,6 +2689,8 @@ internal static class DesktopPilotSelfTest
                 loaded.GlobalPreScript != "global-pre" ||
                 loaded.GlobalGameStartedScript != "global-started" ||
                 loaded.GlobalPostScript != "global-post" ||
+                loaded.AppStartupScript != "app-startup" ||
+                loaded.AppShutdownScript != "app-shutdown" ||
                 !loaded.ShutdownLibraryClients ||
                 loaded.ClientShutdownGraceSeconds != 45 ||
                 loaded.ClientShutdownMinimumSessionSeconds != 90 ||

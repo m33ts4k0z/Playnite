@@ -11,6 +11,7 @@ namespace Playnite.DesktopApp.Avalonia;
 
 public sealed class App : Application
 {
+    private static readonly Playnite.SDK.ILogger logger = Playnite.SDK.LogManager.GetLogger();
     private DesktopLibrary library;
     private AvaloniaRuntimeHost runtimeHost;
 
@@ -142,8 +143,27 @@ public sealed class App : Application
                 viewModel.SetStatusMessage($"No URI handler is registered for '{options.UriData}'.");
             }
             viewModel.RefreshPluginSurfaces();
+            if (!options.SelfTest && !options.PluginCompatibilityTest)
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    var result = viewModel.Scripts.RunApplicationScript(settings.AppStartupScript, "startup");
+                    if (!result.Success)
+                    {
+                        runtimeHost?.ShowMessage(result.Message, true);
+                    }
+                }, DispatcherPriority.Background);
+            }
             desktop.Exit += (_, _) =>
             {
+                if (!options.SelfTest && !options.PluginCompatibilityTest)
+                {
+                    var result = viewModel.Scripts.RunApplicationScript(settings.AppShutdownScript, "shutdown");
+                    if (!result.Success)
+                    {
+                        logger.Error(result.Message);
+                    }
+                }
                 runtimeHost?.Dispose();
                 library.Dispose();
             };

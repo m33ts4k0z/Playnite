@@ -6,6 +6,8 @@ public sealed partial class DesktopSettings
     public string GlobalPreScript { get; set; }
     public string GlobalGameStartedScript { get; set; }
     public string GlobalPostScript { get; set; }
+    public string AppStartupScript { get; set; }
+    public string AppShutdownScript { get; set; }
     public bool ShutdownLibraryClients { get; set; }
     public uint ClientShutdownGraceSeconds { get; set; } = 60;
     public uint ClientShutdownMinimumSessionSeconds { get; set; } = 120;
