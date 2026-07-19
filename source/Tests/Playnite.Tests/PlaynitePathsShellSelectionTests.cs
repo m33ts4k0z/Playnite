@@ -99,5 +99,40 @@ namespace Playnite.Tests
             PlaynitePaths.RefreshShellExecutables();
             Assert.AreEqual(wpfDesktop, PlaynitePaths.DesktopExecutablePath);
         }
+
+        [Test]
+        public void SetAvaloniaShellPreferredCreatesAndRemovesFlag()
+        {
+            Assert.IsTrue(PlaynitePaths.SetAvaloniaShellPreferred(true));
+            Assert.IsTrue(File.Exists(flagFile));
+            Assert.IsTrue(PlaynitePaths.IsAvaloniaShellPreferred);
+
+            Assert.IsTrue(PlaynitePaths.SetAvaloniaShellPreferred(false));
+            Assert.IsFalse(File.Exists(flagFile));
+            Assert.IsFalse(PlaynitePaths.IsAvaloniaShellPreferred);
+        }
+
+        [Test]
+        public void SetAvaloniaShellPreferredRedirectsLaunchFunnel()
+        {
+            CreateWpfStandIn();
+            CreateAvaloniaStandIn();
+
+            PlaynitePaths.SetAvaloniaShellPreferred(true);
+            Assert.AreEqual(avaloniaDesktop, PlaynitePaths.DesktopExecutablePath);
+
+            PlaynitePaths.SetAvaloniaShellPreferred(false);
+            Assert.AreEqual(wpfDesktop, PlaynitePaths.DesktopExecutablePath);
+        }
+
+        [Test]
+        public void CanSwitchShellsRequiresBothDesktopExecutables()
+        {
+            Assert.IsFalse(PlaynitePaths.CanSwitchShells);
+            CreateWpfStandIn();
+            Assert.IsFalse(PlaynitePaths.CanSwitchShells);
+            CreateAvaloniaStandIn();
+            Assert.IsTrue(PlaynitePaths.CanSwitchShells);
+        }
     }
 }

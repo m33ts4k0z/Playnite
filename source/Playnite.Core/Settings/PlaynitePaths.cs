@@ -28,6 +28,8 @@ namespace Playnite
         public const string FullscreenConfigFileName = "fullscreenConfig.json";
         public const string WindowPositionsFileName = "windowPositions.json";
         public const string LocalizationsDirName = "Localization";
+        public const string AvaloniaShellFlagFileName = "avalonia.flag";
+        private const string AvaloniaShellEnvVariable = "PLAYNITE_AVALONIA";
 
         public static string ProgramPath { get; }
         public static string ConfigRootPath { get; private set; }
@@ -64,6 +66,12 @@ namespace Playnite
         public static string BackupActionFile { get; private set; }
         public static string RestoreBackupActionFile { get; private set; }
 
+        /// <summary>
+        /// Marker file next to the executables that opts a Windows install into
+        /// the Avalonia shells. Managed through <see cref="SetAvaloniaShellPreferred"/>.
+        /// </summary>
+        public static string AvaloniaShellFlagFile { get; private set; }
+
         public static bool IsPortable { get; }
 
         static PlaynitePaths()
@@ -78,6 +86,7 @@ namespace Playnite
             IsPortable = OperatingSystem.IsWindows() && !File.Exists(UninstallerPath);
 
             LocalizationsPath = Path.Combine(ProgramPath, LocalizationsDirName);
+            AvaloniaShellFlagFile = Path.Combine(ProgramPath, AvaloniaShellFlagFileName);
             RefreshShellExecutables();
             PlayniteAssemblyPath = Path.Combine(ProgramPath, "Playnite.dll");
             PlayniteSDKAssemblyPath = Path.Combine(ProgramPath, "Playnite.SDK.dll");
@@ -104,6 +113,55 @@ namespace Playnite
             FullscreenExecutablePath = SelectShellExecutable("Playnite.FullscreenApp");
         }
 
+        /// <summary>
+        /// True when the Avalonia shells have been opted into, either by the
+        /// avalonia.flag marker next to the executables or PLAYNITE_AVALONIA=1.
+        /// </summary>
+        public static bool IsAvaloniaShellPreferred =>
+            File.Exists(AvaloniaShellFlagFile) ||
+            Environment.GetEnvironmentVariable(AvaloniaShellEnvVariable) == "1";
+
+        /// <summary>
+        /// True when both the WPF and Avalonia desktop executables are present, so
+        /// the user can meaningfully switch between shells from settings. On
+        /// non-Windows only the Avalonia shells exist, so switching does not apply.
+        /// </summary>
+        public static bool CanSwitchShells =>
+            OperatingSystem.IsWindows() &&
+            File.Exists(Path.Combine(ProgramPath, "Playnite.DesktopApp.exe")) &&
+            File.Exists(Path.Combine(ProgramPath, "Playnite.DesktopApp.Avalonia.exe"));
+
+        /// <summary>
+        /// Opts into or out of the Avalonia shells by creating or deleting the
+        /// avalonia.flag marker next to the executables, then refreshes the launch
+        /// funnel so mode switch, restart, updater, URI and shortcut paths follow
+        /// in-process. The PLAYNITE_AVALONIA override is independent and untouched.
+        /// Returns false when the flag cannot be written (e.g. a read-only install
+        /// directory); callers should surface that to the user.
+        /// </summary>
+        public static bool SetAvaloniaShellPreferred(bool preferred)
+        {
+            try
+            {
+                if (preferred)
+                {
+                    File.WriteAllText(AvaloniaShellFlagFile, string.Empty);
+                }
+                else if (File.Exists(AvaloniaShellFlagFile))
+                {
+                    File.Delete(AvaloniaShellFlagFile);
+                }
+            }
+            catch (Exception exception) when (
+                exception is IOException || exception is UnauthorizedAccessException)
+            {
+                return false;
+            }
+
+            RefreshShellExecutables();
+            return true;
+        }
+
         private static string SelectShellExecutable(string baseName)
         {
             if (!OperatingSystem.IsWindows())
@@ -113,9 +171,7 @@ namespace Playnite
 
             var wpfPath = Path.Combine(ProgramPath, baseName + ".exe");
             var avaloniaPath = Path.Combine(ProgramPath, baseName + ".Avalonia.exe");
-            var optedIn = File.Exists(Path.Combine(ProgramPath, "avalonia.flag")) ||
-                Environment.GetEnvironmentVariable("PLAYNITE_AVALONIA") == "1";
-            if (File.Exists(avaloniaPath) && (optedIn || !File.Exists(wpfPath)))
+            if (File.Exists(avaloniaPath) && (IsAvaloniaShellPreferred || !File.Exists(wpfPath)))
             {
                 return avaloniaPath;
             }

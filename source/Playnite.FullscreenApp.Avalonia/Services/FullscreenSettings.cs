@@ -15,6 +15,9 @@ public sealed class FullscreenSettings : IAvaloniaHostSettings
     public int BackgroundVolume { get; set; } = 20;
     public string ThemePath { get; set; }
     public string Language { get; set; } = "english";
+    // Target display index carried over from the WPF fullscreen profile; -1 keeps
+    // the platform's primary screen. Applied by MainWindow via MonitorSelection.
+    public int Monitor { get; set; } = -1;
     public List<string> DisabledPlugins { get; set; } = new();
     public string GlobalPreScript { get; set; }
     public string GlobalGameStartedScript { get; set; }

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Playnite.Avalonia.App.Services;
 using Playnite.Avalonia.Input;
 using Playnite.Avalonia.Theming;
 using Playnite.FullscreenApp.Avalonia.Controls;
@@ -127,6 +128,7 @@ public sealed class MainWindow : Window
 
     private async void OnOpened(object sender, EventArgs e)
     {
+        ApplyMonitorPlacement();
         mainView.FocusSelectedGame();
         sdlInput.Start();
         audioService = new FullscreenAudioService(settings, GetThemeRoot());
@@ -135,6 +137,33 @@ public sealed class MainWindow : Window
         {
             await FullscreenPilotSelfTest.Run(this, viewModel, library);
         }
+    }
+
+    private void ApplyMonitorPlacement()
+    {
+        if (options.Windowed || options.SelfTest)
+        {
+            return;
+        }
+
+        var screens = Screens?.All;
+        if (screens == null || screens.Count == 0)
+        {
+            return;
+        }
+
+        var index = MonitorSelection.Resolve(settings.Monitor, screens.Count);
+        if (index == null)
+        {
+            return;
+        }
+
+        // Move to the requested display in the normal state, then let FullScreen
+        // fill that screen — a fullscreen window ignores an in-place move.
+        var target = screens[index.Value];
+        WindowState = WindowState.Normal;
+        Position = target.Bounds.Position;
+        WindowState = WindowState.FullScreen;
     }
 
     private void OnClosed(object sender, EventArgs e)

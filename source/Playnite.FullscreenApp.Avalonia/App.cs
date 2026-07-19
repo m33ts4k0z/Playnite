@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Themes.Fluent;
+using Playnite.Avalonia.App.Services;
 using Playnite.FullscreenApp.Avalonia.Services;
 using Playnite.FullscreenApp.Avalonia.ViewModels;
 
@@ -41,7 +42,7 @@ public sealed class App : Application
             }
 
             var settingsStore = new FullscreenSettingsStore(library.ActiveUserDataDirectory);
-            var settings = options.SelfTest ? new FullscreenSettings() : settingsStore.Load();
+            var settings = LoadOrImportSettings(settingsStore, library.ActiveUserDataDirectory, options);
             var viewModel = new FullscreenAppViewModel(library.Games, settings, startupError);
             MainWindow window = null;
             if (library.IsOpen)
@@ -79,5 +80,36 @@ public sealed class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static FullscreenSettings LoadOrImportSettings(
+        FullscreenSettingsStore settingsStore, string userDataDirectory, StartupOptions options)
+    {
+        if (options.SelfTest)
+        {
+            return new FullscreenSettings();
+        }
+
+        if (settingsStore.Exists)
+        {
+            return settingsStore.Load();
+        }
+
+        // First launch against this profile: carry the WPF language and target
+        // display across so fullscreen opens on the monitor the user chose.
+        var settings = new FullscreenSettings();
+        var defaults = WpfProfileImport.Read(userDataDirectory);
+        if (!string.IsNullOrWhiteSpace(defaults.Language))
+        {
+            settings.Language = defaults.Language;
+        }
+
+        if (defaults.FullscreenMonitor is int monitor)
+        {
+            settings.Monitor = monitor;
+        }
+
+        settingsStore.Save(settings);
+        return settings;
     }
 }

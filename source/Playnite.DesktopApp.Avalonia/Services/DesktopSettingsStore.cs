@@ -13,6 +13,10 @@ public sealed class DesktopSettingsStore
 
     public string SettingsPath => settingsPath;
 
+    // True once the shell has written its own settings file. When false the shell
+    // is running against a profile for the first time and imports WPF defaults.
+    public bool Exists => File.Exists(settingsPath);
+
     public DesktopSettingsStore(string userDataDirectory)
     {
         settingsPath = Path.Combine(userDataDirectory, "avaloniaDesktop.json");

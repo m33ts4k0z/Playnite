@@ -43,11 +43,7 @@ public sealed class App : Application
             }
 
             var settingsStore = new DesktopSettingsStore(library.ActiveUserDataDirectory);
-            var settings = options.SelfTest
-                ? new DesktopSettings()
-                : options.PluginCompatibilityTest
-                    ? new DesktopSettings { EnableTray = false, CloseToTray = false }
-                    : settingsStore.Load();
+            var settings = LoadOrImportSettings(settingsStore, library.ActiveUserDataDirectory, options);
             var viewModel = new DesktopAppViewModel(library.Games, library.Database, settings, startupError);
             MainWindow window = null;
             if (library.IsOpen)
@@ -118,5 +114,60 @@ public sealed class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static DesktopSettings LoadOrImportSettings(
+        DesktopSettingsStore settingsStore, string userDataDirectory, StartupOptions options)
+    {
+        if (options.SelfTest)
+        {
+            return new DesktopSettings();
+        }
+
+        if (options.PluginCompatibilityTest)
+        {
+            return new DesktopSettings { EnableTray = false, CloseToTray = false };
+        }
+
+        if (settingsStore.Exists)
+        {
+            return settingsStore.Load();
+        }
+
+        // First launch against this profile: carry the WPF language and main
+        // window placement across so the shell opens where the user left off.
+        var settings = new DesktopSettings();
+        ImportWpfDefaults(settings, userDataDirectory);
+        settingsStore.Save(settings);
+        return settings;
+    }
+
+    private static void ImportWpfDefaults(DesktopSettings settings, string userDataDirectory)
+    {
+        var defaults = WpfProfileImport.Read(userDataDirectory);
+        if (!string.IsNullOrWhiteSpace(defaults.Language))
+        {
+            settings.Language = defaults.Language;
+        }
+
+        var placement = defaults.MainWindow;
+        if (placement == null)
+        {
+            return;
+        }
+
+        if (placement.Width is > 0)
+        {
+            settings.WindowWidth = placement.Width.Value;
+        }
+
+        if (placement.Height is > 0)
+        {
+            settings.WindowHeight = placement.Height.Value;
+        }
+
+        settings.WindowX = placement.X;
+        settings.WindowY = placement.Y;
+        settings.WindowMaximized = placement.Maximized;
     }
 }
