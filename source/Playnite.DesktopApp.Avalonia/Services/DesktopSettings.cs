@@ -45,6 +45,7 @@ public sealed class DesktopSettings : IAvaloniaHostSettings
     public bool EnableTray { get; set; } = true;
     public bool MinimizeToTray { get; set; }
     public bool CloseToTray { get; set; } = true;
+    public TrayIconOption TrayIcon { get; set; } = TrayIconOption.Default;
     public bool StartOnBoot { get; set; }
     public bool StartOnBootClosedToTray { get; set; }
     public bool StartMinimized { get; set; }

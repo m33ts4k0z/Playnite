@@ -32,6 +32,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     private bool enableTray;
     private bool minimizeToTray;
     private bool closeToTray;
+    private TrayIconOption trayIcon;
     private bool startOnBoot;
     private bool startOnBootClosedToTray;
     private bool startMinimized;
@@ -60,6 +61,9 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
 
     public IReadOnlyList<AfterGameCloseOption> AfterGameCloseOptions { get; } =
         Enum.GetValues<AfterGameCloseOption>();
+
+    public IReadOnlyList<TrayIconOption> TrayIconOptions { get; } =
+        Enum.GetValues<TrayIconOption>();
 
     public IReadOnlyList<LanguageOption> AvailableLanguages { get; } =
         LanguageCatalog.Discover(Path.Combine(AppContext.BaseDirectory, "Localization"));
@@ -138,6 +142,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public bool TrayOptionsEnabled => EnableTray;
     public bool MinimizeToTray { get => minimizeToTray; set => SetField(ref minimizeToTray, value); }
     public bool CloseToTray { get => closeToTray; set => SetField(ref closeToTray, value); }
+    public TrayIconOption TrayIcon { get => trayIcon; set => SetField(ref trayIcon, value); }
 
     public bool StartOnBoot
     {
@@ -180,6 +185,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         enableTray = settings.EnableTray;
         minimizeToTray = settings.MinimizeToTray;
         closeToTray = settings.CloseToTray;
+        trayIcon = settings.TrayIcon;
         startOnBoot = settings.StartOnBoot;
         startOnBootClosedToTray = settings.StartOnBootClosedToTray;
         startMinimized = settings.StartMinimized;
@@ -209,6 +215,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         settings.EnableTray = EnableTray;
         settings.MinimizeToTray = MinimizeToTray;
         settings.CloseToTray = CloseToTray;
+        settings.TrayIcon = TrayIcon;
         settings.StartOnBoot = StartOnBoot;
         settings.StartOnBootClosedToTray = StartOnBootClosedToTray;
         settings.StartMinimized = StartMinimized;
@@ -287,6 +294,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(TrayOptionsEnabled));
         OnPropertyChanged(nameof(MinimizeToTray));
         OnPropertyChanged(nameof(CloseToTray));
+        OnPropertyChanged(nameof(TrayIcon));
         OnPropertyChanged(nameof(StartOnBoot));
         OnPropertyChanged(nameof(StartOnBootOptionsEnabled));
         OnPropertyChanged(nameof(StartOnBootClosedToTray));

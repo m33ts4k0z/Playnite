@@ -92,7 +92,7 @@ public sealed class MainWindow : Window
             RequestExit,
             CanOpenFullscreen,
             OpenFullscreen);
-        trayService.ApplySettings(settings.EnableTray);
+        trayService.ApplySettings(settings.EnableTray, ResolveTrayIconPath(settings.TrayIcon));
         viewModel.PluginSettings.ConfigureOwnerHandle(
             () => TryGetPlatformHandle()?.Handle ?? IntPtr.Zero);
         viewModel.InstalledGameImport.ConfigureFilePickers(PickImportFolderAsync, PickExecutableAsync);
@@ -184,6 +184,13 @@ public sealed class MainWindow : Window
         }
     }
 
+    internal string ResolveTrayIconPath(TrayIconOption option) => option switch
+    {
+        TrayIconOption.Bright => ContentPath("Assets", "tray-bright.png"),
+        TrayIconOption.Dark => ContentPath("Assets", "tray-dark.png"),
+        _ => ContentPath("Assets", "tray-default.png")
+    };
+
     private void SaveSettings()
     {
         if (settingsStore == null)
@@ -221,7 +228,7 @@ public sealed class MainWindow : Window
 
     private void ViewModel_SettingsChanged(object sender, EventArgs e)
     {
-        trayService.ApplySettings(settings.EnableTray);
+        trayService.ApplySettings(settings.EnableTray, ResolveTrayIconPath(settings.TrayIcon));
         SaveSettings();
     }
 

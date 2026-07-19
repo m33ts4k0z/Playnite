@@ -1656,6 +1656,25 @@ internal static class DesktopPilotSelfTest
                 ? "the fuzzy name-filter toggle saved and reloaded"
                 : throw new InvalidOperationException("FuzzyMatchingInNameFilter did not persist."));
 
+        var trayDefault = window.ResolveTrayIconPath(Playnite.Avalonia.App.Services.TrayIconOption.Default);
+        var trayBright = window.ResolveTrayIconPath(Playnite.Avalonia.App.Services.TrayIconOption.Bright);
+        var trayDark = window.ResolveTrayIconPath(Playnite.Avalonia.App.Services.TrayIconOption.Dark);
+        var trayIconsExist = File.Exists(trayDefault) && File.Exists(trayBright) && File.Exists(trayDark);
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.TrayIcon = Playnite.Avalonia.App.Services.TrayIconOption.Dark;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        viewModel.OpenSettingsCommand.Execute(null);
+        var trayPersisted = viewModel.Settings.TrayIcon == Playnite.Avalonia.App.Services.TrayIconOption.Dark;
+        viewModel.Settings.TrayIcon = Playnite.Avalonia.App.Services.TrayIconOption.Default;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Tray-icon variants are bundled and the picker round-trips", () =>
+            trayIconsExist && trayPersisted
+                ? "default/bright/dark tray icons resolve to existing files and the picker saved"
+                : throw new InvalidOperationException(
+                    $"trayIconsExist={trayIconsExist}, trayPersisted={trayPersisted}"));
+
         var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(
             policyPlugin.Id,

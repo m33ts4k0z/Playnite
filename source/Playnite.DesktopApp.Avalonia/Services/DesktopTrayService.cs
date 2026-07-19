@@ -13,6 +13,7 @@ internal sealed class DesktopTrayService : IDisposable
     private readonly Action openFullscreen;
     private readonly NativeMenu menu = new();
     private TrayIcon trayIcon;
+    private string currentIconPath;
 
     internal NativeMenu Menu => menu;
     internal bool IsEnabled => trayIcon != null;
@@ -38,27 +39,38 @@ internal sealed class DesktopTrayService : IDisposable
         RefreshMenu();
     }
 
-    internal void ApplySettings(bool enabled)
-    {
-        if (enabled == IsEnabled)
-        {
-            return;
-        }
+    internal void ApplySettings(bool enabled) => ApplySettings(enabled, null);
 
+    internal void ApplySettings(bool enabled, string trayIconPath)
+    {
         if (!enabled)
         {
             DisposeTrayIcon();
+            currentIconPath = null;
             return;
         }
 
-        trayIcon = new TrayIcon
+        var resolvedPath = string.IsNullOrEmpty(trayIconPath) || !File.Exists(trayIconPath)
+            ? iconPath
+            : trayIconPath;
+
+        if (trayIcon == null)
         {
-            Icon = new WindowIcon(iconPath),
-            ToolTipText = "Playnite",
-            Menu = menu,
-            IsVisible = true
-        };
-        trayIcon.Clicked += TrayIcon_Clicked;
+            trayIcon = new TrayIcon
+            {
+                Icon = new WindowIcon(resolvedPath),
+                ToolTipText = "Playnite",
+                Menu = menu,
+                IsVisible = true
+            };
+            trayIcon.Clicked += TrayIcon_Clicked;
+            currentIconPath = resolvedPath;
+        }
+        else if (resolvedPath != currentIconPath)
+        {
+            trayIcon.Icon = new WindowIcon(resolvedPath);
+            currentIconPath = resolvedPath;
+        }
     }
 
     internal void RefreshMenu()

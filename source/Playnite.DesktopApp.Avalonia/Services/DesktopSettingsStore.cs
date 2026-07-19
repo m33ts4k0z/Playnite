@@ -54,6 +54,10 @@ public sealed class DesktopSettingsStore
                 {
                     settings.AfterGameClose = Playnite.Avalonia.App.Services.AfterGameCloseOption.Restore;
                 }
+                if (!Enum.IsDefined(settings.TrayIcon))
+                {
+                    settings.TrayIcon = Playnite.Avalonia.App.Services.TrayIconOption.Default;
+                }
                 return settings;
             }
         }

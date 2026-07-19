@@ -653,6 +653,14 @@
                                             <CheckBox Content="{DynamicResource LOCSettingsCloseToTray}" Margin="18,0,0,0"
                                                       IsEnabled="{Binding Settings.TrayOptionsEnabled}"
                                                       IsChecked="{Binding Settings.CloseToTray, Mode=TwoWay}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="10" Margin="18,0,0,0"
+                                                        IsEnabled="{Binding Settings.TrayOptionsEnabled}">
+                                                <TextBlock Text="Tray icon" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource DesktopTextBrush}" />
+                                                <ComboBox MinWidth="140"
+                                                          ItemsSource="{Binding Settings.TrayIconOptions}"
+                                                          SelectedItem="{Binding Settings.TrayIcon, Mode=TwoWay}" />
+                                            </StackPanel>
 
                                             <Border Height="1" Background="#303A49" Margin="0,4" />
                                             <TextBlock Text="Library" Classes="sectionLabel" />
