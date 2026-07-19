@@ -3,6 +3,7 @@
 
     <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FFB3261E" />
     <x:String x:Key="ThemeName">Custom</x:String>
+    <x:String x:Key="LayerOrderProbe">theme-custom</x:String>
 
     <ControlTheme x:Key="{x:Type GamePanel}" TargetType="GamePanel">
         <Setter Property="Template">

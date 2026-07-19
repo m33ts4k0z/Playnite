@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Xml;
 using Avalonia.Markup.Xaml;
 
 namespace Playnite.Avalonia.Theming;
@@ -50,6 +51,19 @@ public sealed class LooseXamlLoader
     public T LoadString<T>(string xaml) where T : class
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(xaml);
+        var settings = new XmlReaderSettings
+        {
+            DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null
+        };
+        using (var textReader = new StringReader(xaml))
+        using (var xmlReader = XmlReader.Create(textReader, settings))
+        {
+            while (xmlReader.Read())
+            {
+            }
+        }
+
         return (T)AvaloniaRuntimeXamlLoader.Parse<T>(xaml, localAssembly);
     }
 }

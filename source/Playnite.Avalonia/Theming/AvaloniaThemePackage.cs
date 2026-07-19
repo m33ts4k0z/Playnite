@@ -27,6 +27,10 @@ public sealed class AvaloniaThemeManifest
 public sealed class AvaloniaThemePackage
 {
     public static readonly System.Version CurrentApiVersion = new("3.0.0");
+    private static StringComparison PathComparison =>
+        OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+    private static StringComparer PathComparer =>
+        OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 
     public string RootDirectory { get; }
     public string ManifestPath { get; }
@@ -110,7 +114,7 @@ public sealed class AvaloniaThemePackage
         var styles = (manifest.Styles ?? new List<string>())
             .Select(style => ResolvePackageFile(root, style, "selector style"))
             .ToList();
-        if (styles.Count != styles.Distinct(StringComparer.OrdinalIgnoreCase).Count())
+        if (styles.Count != styles.Distinct(PathComparer).Count())
         {
             throw new InvalidDataException("The theme manifest contains duplicate selector-style paths.");
         }
@@ -204,7 +208,7 @@ public sealed class AvaloniaThemePackage
         var rootPath = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) +
             Path.DirectorySeparatorChar;
         var candidate = Path.GetFullPath(Path.Combine(rootPath, relativePath));
-        if (!candidate.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
+        if (!candidate.StartsWith(rootPath, PathComparison))
         {
             throw new InvalidDataException($"Theme path '{relativePath}' escapes the package directory.");
         }

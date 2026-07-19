@@ -36,6 +36,7 @@ public sealed class GamepadInputBridge : IDisposable
     private readonly TopLevel topLevel;
     private readonly Dictionary<GamepadButton, ICommand> commandMap = new();
     private readonly Dictionary<GamepadButton, DispatcherTimer> repeatTimers = new();
+    private bool disposed;
 
     private static readonly Dictionary<GamepadButton, Key> navigationKeys = new()
     {
@@ -58,11 +59,22 @@ public sealed class GamepadInputBridge : IDisposable
 
     public void MapCommand(GamepadButton button, ICommand command)
     {
-        commandMap[button] = command ?? throw new ArgumentNullException(nameof(command));
+        ArgumentNullException.ThrowIfNull(command);
+        RunOnUiThread(() =>
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            commandMap[button] = command;
+        });
     }
 
     public void ButtonDown(GamepadButton button)
     {
+        RunOnUiThread(() => ButtonDownCore(button));
+    }
+
+    private void ButtonDownCore(GamepadButton button)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
         Dispatch(button);
 
         if (!navigationKeys.ContainsKey(button))
@@ -70,18 +82,26 @@ public sealed class GamepadInputBridge : IDisposable
             return;
         }
 
-        ButtonUp(button);
+        ButtonUpCore(button);
         var timer = new DispatcherTimer { Interval = RepeatDelay };
         timer.Tick += (_, _) =>
         {
             timer.Interval = RepeatRate;
-            Dispatch(button);
+            if (!disposed)
+            {
+                Dispatch(button);
+            }
         };
         repeatTimers[button] = timer;
         timer.Start();
     }
 
     public void ButtonUp(GamepadButton button)
+    {
+        RunOnUiThread(() => ButtonUpCore(button));
+    }
+
+    private void ButtonUpCore(GamepadButton button)
     {
         if (repeatTimers.Remove(button, out var timer))
         {
@@ -91,12 +111,24 @@ public sealed class GamepadInputBridge : IDisposable
 
     public void Dispose()
     {
+        RunOnUiThread(DisposeCore);
+    }
+
+    private void DisposeCore()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
         foreach (var timer in repeatTimers.Values)
         {
             timer.Stop();
         }
 
         repeatTimers.Clear();
+        commandMap.Clear();
     }
 
     private void Dispatch(GamepadButton button)
@@ -121,6 +153,18 @@ public sealed class GamepadInputBridge : IDisposable
                 Source = target
             });
             KeysSynthesized++;
+        }
+    }
+
+    private static void RunOnUiThread(Action action)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+        }
+        else
+        {
+            Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Input).GetAwaiter().GetResult();
         }
     }
 }

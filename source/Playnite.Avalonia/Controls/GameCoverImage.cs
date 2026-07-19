@@ -2,6 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
+using System.Diagnostics;
+using System.Net.Http.Headers;
 
 namespace Playnite.Avalonia.Controls;
 
@@ -11,6 +14,8 @@ namespace Playnite.Avalonia.Controls;
 /// </summary>
 public sealed class GameCoverImage : Image
 {
+    private const long MaximumDownloadBytes = 64L * 1024 * 1024;
+
     public static readonly StyledProperty<string> SourcePathProperty =
         AvaloniaProperty.Register<GameCoverImage, string>(nameof(SourcePath));
 
@@ -33,52 +38,143 @@ public sealed class GameCoverImage : Image
         }
     }
 
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        if (Source == null && !string.IsNullOrWhiteSpace(SourcePath))
+        {
+            BeginLoad(SourcePath);
+        }
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        CancelLoad();
+        ClearBitmap();
+        base.OnDetachedFromVisualTree(e);
+    }
+
     private async void BeginLoad(string path)
     {
-        loadCancellation?.Cancel();
-        loadCancellation?.Dispose();
-        loadCancellation = new CancellationTokenSource();
-        var token = loadCancellation.Token;
+        CancelLoad();
+        var cancellation = new CancellationTokenSource();
+        loadCancellation = cancellation;
+        var token = cancellation.Token;
+        Bitmap loadedBitmap = null;
 
         try
         {
-            var bitmap = await Task.Run(async () =>
-            {
-                if (string.IsNullOrWhiteSpace(path))
-                {
-                    return null;
-                }
-
-                if (Uri.TryCreate(path, UriKind.Absolute, out var uri) &&
-                    (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
-                {
-                    var bytes = await httpClient.GetByteArrayAsync(uri, token);
-                    return new Bitmap(new MemoryStream(bytes));
-                }
-
-                return File.Exists(path) ? new Bitmap(path) : null;
-            }, token);
-
-            if (token.IsCancellationRequested)
-            {
-                bitmap?.Dispose();
-                return;
-            }
-
+            loadedBitmap = await Task.Run(() => LoadBitmap(path, token), token).ConfigureAwait(false);
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
+                if (token.IsCancellationRequested || !ReferenceEquals(loadCancellation, cancellation))
+                {
+                    loadedBitmap?.Dispose();
+                    loadedBitmap = null;
+                    return;
+                }
+
                 var previous = ownedBitmap;
-                ownedBitmap = bitmap;
-                Source = bitmap;
+                ownedBitmap = loadedBitmap;
+                loadedBitmap = null;
+                Source = ownedBitmap;
                 previous?.Dispose();
+                loadCancellation = null;
+                cancellation.Dispose();
             });
         }
         catch (OperationCanceledException)
         {
+            loadedBitmap?.Dispose();
         }
-        catch
+        catch (Exception exception)
         {
-            await Dispatcher.UIThread.InvokeAsync(() => Source = null);
+            loadedBitmap?.Dispose();
+            Trace.TraceError("Failed to load game cover '{0}': {1}", path, exception);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (ReferenceEquals(loadCancellation, cancellation))
+                {
+                    loadCancellation = null;
+                    cancellation.Dispose();
+                    ClearBitmap();
+                }
+            });
         }
+    }
+
+    private static async Task<Bitmap> LoadBitmap(string path, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return null;
+        }
+
+        if (Uri.TryCreate(path, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+        {
+            using (var response = await httpClient.GetAsync(
+                uri,
+                HttpCompletionOption.ResponseHeadersRead,
+                token).ConfigureAwait(false))
+            {
+                response.EnsureSuccessStatusCode();
+                ValidateContentLength(response.Content.Headers);
+                using (var source = await response.Content.ReadAsStreamAsync(token).ConfigureAwait(false))
+                using (var image = new MemoryStream())
+                {
+                    var buffer = new byte[81920];
+                    while (true)
+                    {
+                        var read = await source.ReadAsync(buffer.AsMemory(0, buffer.Length), token).ConfigureAwait(false);
+                        if (read == 0)
+                        {
+                            break;
+                        }
+
+                        if (image.Length + read > MaximumDownloadBytes)
+                        {
+                            throw new InvalidDataException(
+                                $"Game cover exceeds the {MaximumDownloadBytes / (1024 * 1024)} MiB limit.");
+                        }
+
+                        await image.WriteAsync(buffer.AsMemory(0, read), token).ConfigureAwait(false);
+                    }
+
+                    image.Position = 0;
+                    return new Bitmap(image);
+                }
+            }
+        }
+
+        token.ThrowIfCancellationRequested();
+        return File.Exists(path) ? new Bitmap(path) : null;
+    }
+
+    private static void ValidateContentLength(HttpContentHeaders headers)
+    {
+        if (headers.ContentLength > MaximumDownloadBytes)
+        {
+            throw new InvalidDataException(
+                $"Game cover exceeds the {MaximumDownloadBytes / (1024 * 1024)} MiB limit.");
+        }
+    }
+
+    private void CancelLoad()
+    {
+        var cancellation = loadCancellation;
+        loadCancellation = null;
+        if (cancellation != null)
+        {
+            cancellation.Cancel();
+            cancellation.Dispose();
+        }
+    }
+
+    private void ClearBitmap()
+    {
+        Source = null;
+        ownedBitmap?.Dispose();
+        ownedBitmap = null;
     }
 }

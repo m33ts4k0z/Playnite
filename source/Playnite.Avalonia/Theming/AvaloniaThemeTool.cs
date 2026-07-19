@@ -5,6 +5,9 @@ namespace Playnite.Avalonia.Theming;
 
 public static class AvaloniaThemeTool
 {
+    private static StringComparison PathComparison =>
+        OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
     private static readonly HashSet<string> excludedDirectories = new(
         new[] { ".git", ".vs", "bin", "obj" },
         StringComparer.OrdinalIgnoreCase);
@@ -14,6 +17,11 @@ public static class AvaloniaThemeTool
         string name,
         string outputDirectory)
     {
+        if (!Enum.IsDefined(mode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(mode));
+        }
+
         if (string.IsNullOrWhiteSpace(name))
         {
             throw new ArgumentException("A theme name is required.", nameof(name));
@@ -86,30 +94,81 @@ public static class AvaloniaThemeTool
             destination,
             $"{SafeFileName(package.Manifest.Id)}_{SafeFileName(package.Manifest.Version)}.pthm");
         var packagePathFull = Path.GetFullPath(packagePath);
-        using var stream = new FileStream(packagePathFull, FileMode.Create, FileAccess.Write, FileShare.None);
-        using var archive = new ZipArchive(stream, ZipArchiveMode.Create);
-        foreach (var file in Directory.EnumerateFiles(
-                     package.RootDirectory,
-                     "*",
-                     SearchOption.AllDirectories))
+        if ((File.GetAttributes(package.RootDirectory) & FileAttributes.ReparsePoint) != 0)
         {
-            var fullPath = Path.GetFullPath(file);
-            if (string.Equals(fullPath, packagePathFull, StringComparison.OrdinalIgnoreCase) ||
-                ShouldExclude(package.RootDirectory, fullPath))
+            throw new InvalidDataException("A theme package root cannot be a file-system link.");
+        }
+
+        var packageFiles = EnumeratePackageFiles(package.RootDirectory)
+            .Where(file => !string.Equals(file, packagePathFull, PathComparison))
+            .OrderBy(
+                file => Path.GetRelativePath(package.RootDirectory, file),
+                StringComparer.Ordinal)
+            .ToList();
+        var temporaryPath = packagePathFull + ".tmp-" + Guid.NewGuid().ToString("N");
+        try
+        {
+            using (var stream = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
             {
-                continue;
+                foreach (var fullPath in packageFiles)
+                {
+                    var relativePath = Path.GetRelativePath(package.RootDirectory, fullPath).Replace('\\', '/');
+                    archive.CreateEntryFromFile(fullPath, relativePath, CompressionLevel.Optimal);
+                }
             }
 
-            if ((File.GetAttributes(fullPath) & FileAttributes.ReparsePoint) != 0)
+            File.Move(temporaryPath, packagePathFull, true);
+        }
+        catch (Exception packException)
+        {
+            try
             {
-                throw new InvalidDataException($"Theme packages cannot contain file links: {fullPath}");
+                File.Delete(temporaryPath);
+            }
+            catch (Exception cleanupException)
+            {
+                throw new AggregateException(
+                    "Theme packaging and temporary-file cleanup both failed.",
+                    packException,
+                    cleanupException);
             }
 
-            var relativePath = Path.GetRelativePath(package.RootDirectory, fullPath).Replace('\\', '/');
-            archive.CreateEntryFromFile(fullPath, relativePath, CompressionLevel.Optimal);
+            throw;
         }
 
         return packagePathFull;
+    }
+
+    private static IEnumerable<string> EnumeratePackageFiles(string root)
+    {
+        var pending = new Stack<string>();
+        pending.Push(root);
+        while (pending.Count > 0)
+        {
+            var directory = pending.Pop();
+            foreach (var entry in Directory.EnumerateFileSystemEntries(directory))
+            {
+                var fullPath = Path.GetFullPath(entry);
+                var attributes = File.GetAttributes(fullPath);
+                if ((attributes & FileAttributes.ReparsePoint) != 0)
+                {
+                    throw new InvalidDataException($"Theme packages cannot contain file-system links: {fullPath}");
+                }
+
+                if ((attributes & FileAttributes.Directory) != 0)
+                {
+                    if (!ShouldExclude(root, fullPath))
+                    {
+                        pending.Push(fullPath);
+                    }
+                }
+                else if (!ShouldExclude(root, fullPath))
+                {
+                    yield return fullPath;
+                }
+            }
+        }
     }
 
     private static bool ShouldExclude(string root, string path)
@@ -132,7 +191,10 @@ public static class AvaloniaThemeTool
 
     private static string SafeFileName(string value)
     {
-        var invalid = Path.GetInvalidFileNameChars();
+        var invalid = Path.GetInvalidFileNameChars()
+            .Concat(new[] { '<', '>', ':', '"', '/', '\\', '|', '?', '*' })
+            .Distinct()
+            .ToArray();
         var sanitized = new string(value
             .Select(character => invalid.Contains(character) || char.IsWhiteSpace(character) ? '_' : character)
             .ToArray())

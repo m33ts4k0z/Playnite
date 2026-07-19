@@ -166,6 +166,44 @@ public sealed class MainWindow : Window
                 return $"{tilePanel.RealizedCount} of {GalleryItemCount:N0} containers realized";
             });
 
+            tilePanel.ItemWidth = 160;
+            tilePanel.ItemHeight = 72;
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render);
+            await Task.Delay(50);
+            Record("Tile dimensions invalidate measure and arrange", () =>
+            {
+                var firstContainer = gameList.ContainerFromIndex(0) as Control;
+                if (firstContainer == null ||
+                    Math.Abs(firstContainer.Bounds.Width - 160) > 0.5 ||
+                    Math.Abs(firstContainer.Bounds.Height - 72) > 0.5)
+                {
+                    throw new InvalidOperationException(
+                        $"Container bounds were {firstContainer?.Bounds.ToString() ?? "missing"}.");
+                }
+
+                return $"container bounds={firstContainer.Bounds}";
+            });
+
+            Record("Invalid tile dimensions are rejected", () =>
+            {
+                try
+                {
+                    tilePanel.ItemWidth = 0;
+                }
+                catch (ArgumentException)
+                {
+                    return "zero width rejected";
+                }
+
+                throw new InvalidOperationException("A zero item width was accepted.");
+            });
+
+            Record("Language resources retain precedence", () =>
+                GetResourceString("LayerOrderProbe") == "language-english"
+                    ? "language overrides theme before reload"
+                    : throw new InvalidOperationException(
+                        $"Layer order was '{GetResourceString("LayerOrderProbe")}'."));
+
             gameList.ScrollIntoView(GalleryItemCount - 1);
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
             Record("Far-index ScrollIntoView", () =>
@@ -178,8 +216,8 @@ public sealed class MainWindow : Window
             ((StackPanel)Content).Children.Insert(1, freshPanel);
             await Task.Delay(150);
             Record("Custom theme overrides default resources", () =>
-                freshPanel.TemplateMarker == "custom"
-                    ? "fresh control received custom template"
+                freshPanel.TemplateMarker == "custom" && GetResourceString("LayerOrderProbe") == "language-english"
+                    ? "fresh control received custom template; language precedence preserved"
                     : throw new InvalidOperationException($"Template marker was '{freshPanel.TemplateMarker}'."));
 
             var activeCount = themeManager.ActiveThemeDictionaries.Count;
@@ -204,7 +242,7 @@ public sealed class MainWindow : Window
             ToggleLanguage();
             await Task.Delay(100);
             Record("Runtime language swap", () =>
-                localizedGreeting.Text == "Hej från Playnite"
+                localizedGreeting.Text == "Hej från Playnite" && GetResourceString("LayerOrderProbe") == "language-swedish"
                     ? localizedGreeting.Text
                     : throw new InvalidOperationException($"Greeting was '{localizedGreeting.Text}'."));
 
@@ -267,6 +305,11 @@ public sealed class MainWindow : Window
     }
 
     private void Log(string text) => logBox.Text += text + Environment.NewLine;
+
+    private static string GetResourceString(string key) =>
+        Application.Current.TryGetResource(key, Application.Current.ActualThemeVariant, out var value)
+            ? value as string
+            : null;
 
     private string BuildReport()
     {

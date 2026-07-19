@@ -2,7 +2,7 @@
 
 This project is the cross-platform UI foundation for Phase 3 of the Avalonia port.
 It targets plain `net10.0` and intentionally has no dependency on WPF, Win32, or
-the Windows-targeted `Playnite.Core` project.
+`Playnite.Core`, so it remains a reusable UI layer for either application shell.
 
 The foundation currently contains:
 

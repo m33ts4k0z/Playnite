@@ -4,6 +4,7 @@
     <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FF2D2D30" />
     <SolidColorBrush x:Key="AccentBrush" Color="#FF007ACC" />
     <x:String x:Key="ThemeName">Default</x:String>
+    <x:String x:Key="LayerOrderProbe">theme-default</x:String>
 
     <ControlTheme x:Key="{x:Type GamePanel}" TargetType="GamePanel">
         <Setter Property="Template">

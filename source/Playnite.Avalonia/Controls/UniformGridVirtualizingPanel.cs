@@ -15,10 +15,16 @@ namespace Playnite.Avalonia.Controls;
 public class UniformGridVirtualizingPanel : VirtualizingPanel
 {
     public static readonly StyledProperty<double> ItemWidthProperty =
-        AvaloniaProperty.Register<UniformGridVirtualizingPanel, double>(nameof(ItemWidth), 200);
+        AvaloniaProperty.Register<UniformGridVirtualizingPanel, double>(
+            nameof(ItemWidth),
+            200,
+            validate: IsValidItemDimension);
 
     public static readonly StyledProperty<double> ItemHeightProperty =
-        AvaloniaProperty.Register<UniformGridVirtualizingPanel, double>(nameof(ItemHeight), 300);
+        AvaloniaProperty.Register<UniformGridVirtualizingPanel, double>(
+            nameof(ItemHeight),
+            300,
+            validate: IsValidItemDimension);
 
     private readonly Dictionary<int, Control> realizedByIndex = new();
     private readonly Dictionary<Control, int> indexByControl = new();
@@ -42,6 +48,12 @@ public class UniformGridVirtualizingPanel : VirtualizingPanel
     {
         get => GetValue(ItemHeightProperty);
         set => SetValue(ItemHeightProperty, value);
+    }
+
+    static UniformGridVirtualizingPanel()
+    {
+        AffectsMeasure<UniformGridVirtualizingPanel>(ItemWidthProperty, ItemHeightProperty);
+        AffectsArrange<UniformGridVirtualizingPanel>(ItemWidthProperty, ItemHeightProperty);
     }
 
     public UniformGridVirtualizingPanel()
@@ -190,6 +202,8 @@ public class UniformGridVirtualizingPanel : VirtualizingPanel
 
         return target >= 0 && target < count ? ScrollIntoView(target) : null;
     }
+
+    private static bool IsValidItemDimension(double value) => double.IsFinite(value) && value > 0;
 
     private int ColumnsFor(double width) => Math.Max(1, (int)(width / ItemWidth));
 

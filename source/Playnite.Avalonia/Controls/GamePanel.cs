@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 
 namespace Playnite.Avalonia.Controls;
 
@@ -24,10 +25,17 @@ public class GamePanel : TemplatedControl
     public string TemplateMarker { get; private set; } = "(template never applied)";
 
     private readonly List<string> resolvedParts = new();
+    private Button actionButton;
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
+        if (actionButton != null)
+        {
+            actionButton.Click -= ActionButtonClick;
+            actionButton = null;
+        }
+
         TemplateAppliedCount++;
         resolvedParts.Clear();
 
@@ -36,14 +44,19 @@ public class GamePanel : TemplatedControl
             resolvedParts.Add("PART_TitleText");
         }
 
-        var actionButton = e.NameScope.Find<Button>("PART_ActionButton");
+        actionButton = e.NameScope.Find<Button>("PART_ActionButton");
         if (actionButton != null)
         {
             resolvedParts.Add("PART_ActionButton");
-            actionButton.Click += (_, _) => Title = $"Clicked at {DateTime.Now:HH:mm:ss}";
+            actionButton.Click += ActionButtonClick;
         }
 
         TemplateMarker = e.NameScope.Find<TextBlock>("PART_ThemeMarker")?.Text
             ?? "(no PART_ThemeMarker in template)";
+    }
+
+    private void ActionButtonClick(object sender, RoutedEventArgs e)
+    {
+        Title = $"Clicked at {DateTime.Now:HH:mm:ss}";
     }
 }
