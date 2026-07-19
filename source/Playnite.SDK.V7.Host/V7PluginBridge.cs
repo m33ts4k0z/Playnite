@@ -628,7 +628,7 @@ public sealed class V7LibraryMetadataProviderInstance : IDisposable
         this.provider = provider ?? throw new ArgumentNullException(nameof(provider));
 
     public string GetMetadata(string gameJson) =>
-        V7RpcJson.Serialize(provider.GetMetadata(V7RpcJson.Deserialize<Game>(gameJson)));
+        V7RpcJson.Serialize(provider.GetMetadata(V7RpcJson.Deserialize<Game>(gameJson)), typeof(GameMetadata));
 
     public void Dispose() => provider.Dispose();
 }

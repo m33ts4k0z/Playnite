@@ -76,6 +76,13 @@ internal static class V7RpcJson
     };
 
     public static string Serialize(object value) => JsonConvert.SerializeObject(value, settings);
+
+    // Serialize against a declared contract type so a plugin returning a
+    // subclass with extra, non-serializable members (e.g. a metadata provider
+    // returning a GameMetadata subclass carrying native library objects) cannot
+    // break the RPC boundary — only the contract's members cross.
+    public static string Serialize(object value, Type type) => JsonConvert.SerializeObject(value, type, settings);
+
     public static T Deserialize<T>(string json) => JsonConvert.DeserializeObject<T>(json, settings);
 }
 

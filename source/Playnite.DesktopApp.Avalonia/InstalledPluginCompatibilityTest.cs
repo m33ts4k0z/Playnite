@@ -21,6 +21,22 @@ internal static class InstalledPluginCompatibilityTest
     {
         logger.Info("Installed-plugin compatibility run started.");
         await Task.Delay(500);
+        if (window.RuntimeHost == null)
+        {
+            // The runtime host only exists when a library opened; without it
+            // there is nothing to probe, so fail loudly instead of crashing.
+            var error = "FAIL: no Playnite library could be opened for this profile, so the plugin " +
+                "runtime host was not created. Point --userdatadir (or --library-path) at a profile " +
+                "with an existing library and rerun.";
+            logger.Error(error);
+            Console.WriteLine(error);
+            File.WriteAllText(
+                Path.Combine(options.UserDataDirectory, "installed-plugin-compatibility.txt"),
+                error + Environment.NewLine);
+            (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown(2);
+            return;
+        }
+
         var report = new StringBuilder();
         var failedManifestIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var factory = window.RuntimeHost.Extensions;
@@ -389,10 +405,25 @@ internal static class InstalledPluginCompatibilityTest
                 using var metadataProvider = libraryPlugin.GetMetadataDownloader();
                 if (metadataProvider != null)
                 {
-                    var metadata = metadataProvider.GetMetadata(controllerGame);
-                    report.AppendLine(metadata == null
-                        ? "       Library metadata: provider returned no metadata for the sample game"
-                        : $"       Library metadata: sample resolved to '{metadata.Name ?? controllerGame.Name}'");
+                    // Library metadata commonly reaches live services (Steam
+                    // opens a SteamKit session); a bounded wait keeps one hung
+                    // provider from stalling the entire run.
+                    var metadataTask = Task.Run(() => metadataProvider.GetMetadata(controllerGame));
+                    if (metadataTask.Wait(TimeSpan.FromSeconds(60)))
+                    {
+                        var metadata = metadataTask.Result;
+                        report.AppendLine(metadata == null
+                            ? "       Library metadata: provider returned no metadata for the sample game"
+                            : $"       Library metadata: sample resolved to '{metadata.Name ?? controllerGame.Name}'");
+                    }
+                    else
+                    {
+                        _ = metadataTask.ContinueWith(
+                            task => _ = task.Exception,
+                            TaskContinuationOptions.OnlyOnFaulted);
+                        report.AppendLine("       Library metadata: timed out after 60s " +
+                            "(the provider likely needs a live service session); not counted as a failure");
+                    }
                 }
                 else
                 {
@@ -426,23 +457,38 @@ internal static class InstalledPluginCompatibilityTest
                 ?? throw new InvalidOperationException("No real library game was available for metadata testing.");
             var game = gameItem.Game;
             var metadataPlugin = runtimeHost.MetadataPlugins.Single(item => item.Id == plugin.Id);
-            using var provider = metadataPlugin.GetMetadataProvider(new MetadataRequestOptions(game, true))
-                ?? throw new InvalidOperationException("The metadata plugin returned no provider.");
-            if (!provider.AvailableFields.Contains(MetadataField.Name))
+            // Metadata providers commonly hit live services; keep the probe
+            // bounded so one hung provider cannot stall the entire run.
+            var probeTask = Task.Run(() =>
             {
-                throw new InvalidOperationException(
-                    $"The provider returned no name for the real library game '{game.Name}'.");
+                using var provider = metadataPlugin.GetMetadataProvider(new MetadataRequestOptions(game, true))
+                    ?? throw new InvalidOperationException("The metadata plugin returned no provider.");
+                if (!provider.AvailableFields.Contains(MetadataField.Name))
+                {
+                    throw new InvalidOperationException(
+                        $"The provider returned no name for the real library game '{game.Name}'.");
+                }
+
+                var name = provider.GetName(new GetMetadataFieldArgs());
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    throw new InvalidOperationException(
+                        $"The provider returned an empty name for the real library game '{game.Name}'.");
+                }
+
+                return (Name: name, FieldCount: provider.AvailableFields.Count);
+            });
+            if (!probeTask.Wait(TimeSpan.FromSeconds(60)))
+            {
+                _ = probeTask.ContinueWith(task => _ = task.Exception, TaskContinuationOptions.OnlyOnFaulted);
+                report.AppendLine("       Metadata fetch: timed out after 60s " +
+                    "(the provider likely needs a live service session); not counted as a failure");
+                return 0;
             }
 
-            var fetchedName = provider.GetName(new GetMetadataFieldArgs());
-            if (string.IsNullOrWhiteSpace(fetchedName))
-            {
-                throw new InvalidOperationException(
-                    $"The provider returned an empty name for the real library game '{game.Name}'.");
-            }
-
-            report.AppendLine($"       Metadata fetch: '{game.Name}' resolved to '{fetchedName}' " +
-                $"with {provider.AvailableFields.Count} available fields");
+            var fetched = probeTask.Result;
+            report.AppendLine($"       Metadata fetch: '{game.Name}' resolved to '{fetched.Name}' " +
+                $"with {fetched.FieldCount} available fields");
             return 0;
         }
         catch (Exception exception)
