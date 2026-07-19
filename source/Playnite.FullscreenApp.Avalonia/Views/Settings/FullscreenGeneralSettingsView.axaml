@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.FullscreenApp.Avalonia.ViewModels"
+             x:Class="Playnite.FullscreenApp.Avalonia.Views.Settings.FullscreenGeneralSettingsView"
+             x:DataType="vm:FullscreenGeneralSettingsSection">
+    <StackPanel Spacing="18">
+        <TextBlock Text="General" FontSize="24" FontWeight="SemiBold"
+                   Foreground="{DynamicResource FullscreenTextBrush}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenShowHidden}"
+                  IsChecked="{Binding ShowHiddenGames, Mode=TwoWay}" />
+    </StackPanel>
+</UserControl>

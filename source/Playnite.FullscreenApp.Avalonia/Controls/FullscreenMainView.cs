@@ -16,7 +16,7 @@ public sealed class FullscreenMainView : TemplatedControl
     private ListBox notificationsList;
     private ListBox actionList;
     private ListBox dialogOptions;
-    private CheckBox firstSetting;
+    private ContentControl settingsContent;
     private Button firstMenuButton;
     private Button detailsPrimaryButton;
     private FullscreenAppViewModel observedViewModel;
@@ -41,7 +41,7 @@ public sealed class FullscreenMainView : TemplatedControl
         notificationsList = e.NameScope.Find<ListBox>("PART_NotificationsList");
         actionList = e.NameScope.Find<ListBox>("PART_ActionList");
         dialogOptions = e.NameScope.Find<ListBox>("PART_DialogOptions");
-        firstSetting = e.NameScope.Find<CheckBox>("PART_FirstSetting");
+        settingsContent = e.NameScope.Find<ContentControl>("PART_SettingsContent");
         firstMenuButton = e.NameScope.Find<Button>("PART_MenuFirstButton");
         detailsPrimaryButton = e.NameScope.Find<Button>("PART_DetailsPrimaryButton");
         ObserveViewModel();
@@ -99,7 +99,7 @@ public sealed class FullscreenMainView : TemplatedControl
             nameof(FullscreenAppViewModel.IsSearchVisible) when observedViewModel.IsSearchVisible => searchBox,
             nameof(FullscreenAppViewModel.IsPluginSearchVisible) when observedViewModel.IsPluginSearchVisible => pluginSearchBox,
             nameof(FullscreenAppViewModel.IsFiltersVisible) when observedViewModel.IsFiltersVisible => filterList,
-            nameof(FullscreenAppViewModel.IsSettingsVisible) when observedViewModel.IsSettingsVisible => firstSetting,
+            nameof(FullscreenAppViewModel.IsSettingsVisible) when observedViewModel.IsSettingsVisible => settingsContent,
             nameof(FullscreenAppViewModel.IsNotificationsVisible) when observedViewModel.IsNotificationsVisible => notificationsList,
             nameof(FullscreenAppViewModel.IsActionPickerVisible) when observedViewModel.IsActionPickerVisible => actionList,
             nameof(FullscreenAppViewModel.IsDialogVisible) when observedViewModel.IsDialogVisible => dialogOptions,
@@ -112,7 +112,14 @@ public sealed class FullscreenMainView : TemplatedControl
         {
             Dispatcher.UIThread.Post(() =>
             {
-                if (target is ListBox listBox && listBox.ItemCount > 0)
+                if (ReferenceEquals(target, settingsContent))
+                {
+                    settingsContent.GetVisualDescendants()
+                        .OfType<Control>()
+                        .FirstOrDefault(control => control.Focusable && control.IsEffectivelyEnabled && control.IsVisible)
+                        ?.Focus();
+                }
+                else if (target is ListBox listBox && listBox.ItemCount > 0)
                 {
                     if (listBox.SelectedIndex < 0)
                     {

@@ -80,12 +80,32 @@ internal static class FullscreenPilotSelfTest
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         window.GamepadBridge.ButtonDown(GamepadButton.Confirm);
         window.GamepadBridge.ButtonUp(GamepadButton.Confirm);
-        Record(results, "Controller toggles focused settings", () =>
-            viewModel.ShowHiddenGames != hiddenBefore
-                ? "A toggled the focused Avalonia CheckBox"
-                : throw new InvalidOperationException("The focused setting did not change."));
+        var workingCopyChanged = viewModel.Settings.General.ShowHiddenGames != hiddenBefore &&
+            viewModel.ShowHiddenGames == hiddenBefore;
+        viewModel.Settings.SaveCommand.Execute(null);
+        Record(results, "Controller edits the fullscreen settings working copy and Save applies it", () =>
+            workingCopyChanged && viewModel.ShowHiddenGames != hiddenBefore && !viewModel.Settings.IsVisible
+                ? "A toggled the focused section control without mutating live settings until Save"
+                : throw new InvalidOperationException(
+                    $"workingCopyChanged={workingCopyChanged}, live={viewModel.ShowHiddenGames}, visible={viewModel.Settings.IsVisible}."));
         viewModel.ShowHiddenGames = hiddenBefore;
-        viewModel.BackCommand.Execute(null);
+
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.Audio.AudioEnabled = !viewModel.AudioEnabled;
+        viewModel.Settings.CancelCommand.Execute(null);
+        Record(results, "Fullscreen settings Cancel discards section working copies", () =>
+            !viewModel.Settings.IsVisible && viewModel.Settings.Audio.AudioEnabled != viewModel.AudioEnabled
+                ? "the Audio edit was discarded without changing the live setting"
+                : throw new InvalidOperationException("Cancel applied a fullscreen section working copy."));
+
+        var fullscreenSectionChecks = viewModel.Settings.RunSelfChecks();
+        Record(results, "Every fullscreen settings module supplies a passing self-check", () =>
+            fullscreenSectionChecks.Count == viewModel.Settings.Sections.Count &&
+            fullscreenSectionChecks.All(check => check.Passed)
+                ? string.Join("; ", fullscreenSectionChecks.Select(check => $"{check.SectionKey}: {check.Detail}"))
+                : throw new InvalidOperationException(string.Join(
+                    "; ",
+                    fullscreenSectionChecks.Select(check => $"{check.SectionKey}={check.Passed}: {check.Detail}"))));
 
         window.GamepadBridge.ButtonDown(GamepadButton.X);
         window.GamepadBridge.ButtonUp(GamepadButton.X);

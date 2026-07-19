@@ -32,7 +32,8 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <Compile Remove="App.cs;MainWindow.cs;FullscreenPilotSelfTest.cs" />
-    <Compile Remove="Controls\**\*.cs;Services\**\*.cs;ViewModels\**\*.cs" />
+    <Compile Remove="Controls\**\*.cs;Services\**\*.cs;ViewModels\**\*.cs;Views\**\*.cs" />
+    <AvaloniaXaml Remove="Views\**\*.axaml" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">

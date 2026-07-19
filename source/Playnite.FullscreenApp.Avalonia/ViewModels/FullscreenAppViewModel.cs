@@ -25,7 +25,6 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     private bool isMenuVisible;
     private bool isSearchVisible;
     private bool isFiltersVisible;
-    private bool isSettingsVisible;
     private bool isNotificationsVisible;
     private bool isActionPickerVisible;
     private bool isDialogVisible;
@@ -70,6 +69,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     public int NotificationCount => Notifications.Count;
     public int ActivateCount => activateCount;
     public AvaloniaSearchSession PluginSearch { get; }
+    public FullscreenSettingsViewModel Settings { get; }
     public bool IsPluginSearchVisible => PluginSearch.IsVisible;
 
     public GameItemViewModel SelectedGame
@@ -186,7 +186,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     public bool IsMenuVisible { get => isMenuVisible; private set => SetField(ref isMenuVisible, value); }
     public bool IsSearchVisible { get => isSearchVisible; private set => SetField(ref isSearchVisible, value); }
     public bool IsFiltersVisible { get => isFiltersVisible; private set => SetField(ref isFiltersVisible, value); }
-    public bool IsSettingsVisible { get => isSettingsVisible; private set => SetField(ref isSettingsVisible, value); }
+    public bool IsSettingsVisible => Settings.IsVisible;
     public bool IsNotificationsVisible { get => isNotificationsVisible; private set => SetField(ref isNotificationsVisible, value); }
     public bool IsActionPickerVisible { get => isActionPickerVisible; private set => SetField(ref isActionPickerVisible, value); }
     public bool IsDialogVisible { get => isDialogVisible; private set => SetField(ref isDialogVisible, value); }
@@ -237,6 +237,14 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         PluginSearch = new AvaloniaSearchSession(
             () => (true, ShowHiddenGames),
             (message, exception) => StatusText = $"{message} {exception.Message}");
+        Settings = new FullscreenSettingsViewModel(this.settings, ApplySavedSettings);
+        Settings.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(FullscreenSettingsViewModel.IsVisible))
+            {
+                OnPropertyChanged(nameof(IsSettingsVisible));
+            }
+        };
         PluginSearch.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(AvaloniaSearchSession.IsVisible))
@@ -271,7 +279,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         OpenSettingsCommand = new RelayCommand(() =>
         {
             CloseOverlays();
-            IsSettingsVisible = true;
+            Settings.Open();
         });
         ToggleNotificationsCommand = new RelayCommand(() =>
         {
@@ -573,10 +581,19 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         IsMenuVisible = false;
         IsSearchVisible = false;
         IsFiltersVisible = false;
-        IsSettingsVisible = false;
+        Settings.Close();
         IsNotificationsVisible = false;
         IsActionPickerVisible = false;
         IsDialogVisible = false;
+    }
+
+    private void ApplySavedSettings()
+    {
+        OnPropertyChanged(nameof(ShowHiddenGames));
+        OnPropertyChanged(nameof(SwapConfirmCancelButtons));
+        OnPropertyChanged(nameof(AudioEnabled));
+        ApplyFilters();
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void SelectOffset(int offset)

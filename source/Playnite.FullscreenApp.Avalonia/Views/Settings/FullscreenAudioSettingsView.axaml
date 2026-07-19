@@ -1,0 +1,12 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.FullscreenApp.Avalonia.ViewModels"
+             x:Class="Playnite.FullscreenApp.Avalonia.Views.Settings.FullscreenAudioSettingsView"
+             x:DataType="vm:FullscreenAudioSettingsSection">
+    <StackPanel Spacing="18">
+        <TextBlock Text="Audio" FontSize="24" FontWeight="SemiBold"
+                   Foreground="{DynamicResource FullscreenTextBrush}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenAudio}"
+                  IsChecked="{Binding AudioEnabled, Mode=TwoWay}" />
+    </StackPanel>
+</UserControl>

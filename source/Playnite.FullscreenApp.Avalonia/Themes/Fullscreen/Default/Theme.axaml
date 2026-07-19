@@ -296,29 +296,45 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsSettingsVisible}"
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding Settings.IsVisible}"
                           Background="#D9000000">
-                        <Border Width="720" Padding="38" CornerRadius="16"
+                        <Border Width="900" MaxHeight="720" Padding="38" CornerRadius="16"
                                 Background="{DynamicResource FullscreenSurfaceStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <StackPanel Spacing="18">
+                            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="24">
                                 <TextBlock Text="{DynamicResource LOCFullscreenSettings}"
                                            FontSize="36" FontWeight="Bold"
                                            Foreground="{DynamicResource FullscreenTextBrush}" />
-                                <CheckBox Name="PART_FirstSetting"
-                                          Content="{DynamicResource LOCFullscreenShowHidden}"
-                                          IsChecked="{Binding ShowHiddenGames, Mode=TwoWay}" />
-                                <CheckBox Content="{DynamicResource LOCFullscreenSwapButtons}"
-                                          IsChecked="{Binding SwapConfirmCancelButtons, Mode=TwoWay}" />
-                                <CheckBox Content="{DynamicResource LOCFullscreenAudio}"
-                                          IsChecked="{Binding AudioEnabled, Mode=TwoWay}" />
-                                <Border Background="#301F2937" CornerRadius="8" Padding="14">
-                                    <TextBlock Text="{Binding PluginSummary}"
-                                               Foreground="{DynamicResource FullscreenMutedTextBrush}" />
-                                </Border>
-                                <Button Command="{Binding BackCommand}"
-                                        Content="{DynamicResource LOCFullscreenReturn}" />
-                            </StackPanel>
+
+                                <Grid Grid.Row="1" ColumnDefinitions="220,*" ColumnSpacing="24">
+                                    <ListBox Name="PART_SettingsSections"
+                                             ItemsSource="{Binding Settings.Sections}"
+                                             SelectedItem="{Binding Settings.SelectedSection, Mode=TwoWay}"
+                                             Background="Transparent" BorderThickness="0">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Title}" Padding="8,12"
+                                                           FontSize="20"
+                                                           Foreground="{DynamicResource FullscreenTextBrush}" />
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    <ContentControl Name="PART_SettingsContent" Grid.Column="1"
+                                                    Content="{Binding Settings.SelectedSection.Content}" />
+                                </Grid>
+
+                                <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                                    <TextBlock Text="Restart required to apply this change."
+                                               IsVisible="{Binding Settings.RestartRequired}"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource FullscreenAccentBrush}" />
+                                    <Button Grid.Column="1" Classes="primary"
+                                            Command="{Binding Settings.SaveCommand}"
+                                            Content="Save" />
+                                    <Button Grid.Column="2" Command="{Binding Settings.CancelCommand}"
+                                            Content="Cancel" />
+                                </Grid>
+                            </Grid>
                         </Border>
                     </Grid>
 
