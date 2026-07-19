@@ -40,6 +40,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public ImportExclusionsSettingsSection ImportExclusions { get; }
     public SearchSettingsSection Search { get; }
     public UpdatesSettingsSection Updates { get; }
+    public BackupSettingsSection Backup { get; }
     public ScriptingSettingsSection Scripting { get; }
     public ClientShutdownSettingsSection ClientShutdown { get; }
     public ICommand SaveCommand { get; }
@@ -53,6 +54,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         Func<IReadOnlyList<V7LoadedPlugin>> v7Plugins,
         Func<IReadOnlyList<LibraryPlugin>> libraryPlugins,
         DesktopUpdateCoordinator updates,
+        DesktopBackupCoordinator backups,
+        Func<string> selectBackupFolder,
         Func<string, DesktopScriptExecutionResult> testScript,
         Action libraryUpdated,
         Action onSaved,
@@ -76,6 +79,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         ImportExclusions = new ImportExclusionsSettingsSection(database);
         Search = new SearchSettingsSection(settings, plugins, v7Plugins);
         Updates = new UpdatesSettingsSection(settings, updates);
+        Backup = new BackupSettingsSection(settings, backups, selectBackupFolder);
         Scripting = new ScriptingSettingsSection(settings, testScript, this.showMessage);
         ClientShutdown = new ClientShutdownSettingsSection(settings, libraryPlugins);
         Sections = new ObservableCollection<ISettingsSection>
@@ -94,6 +98,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             ImportExclusions,
             Search,
             Updates,
+            Backup,
             Scripting,
             ClientShutdown
         };

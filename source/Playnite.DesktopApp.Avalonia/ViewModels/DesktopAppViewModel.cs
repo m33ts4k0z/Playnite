@@ -423,6 +423,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public DesktopMetadataDownloadViewModel MetadataDownload { get; }
     public DesktopLibrarySyncViewModel LibrarySync { get; }
     public DesktopUpdateCoordinator Updates { get; }
+    public DesktopBackupCoordinator Backups { get; }
     public DesktopInstalledGameImportViewModel InstalledGameImport { get; }
     public DesktopPluginSettingsViewModel PluginSettings { get; }
     public DesktopSettingsViewModel Settings { get; }
@@ -459,11 +460,13 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         IReadOnlyList<DesktopGameItemViewModel> games,
         GameDatabase database,
         DesktopSettings settings,
+        DesktopBackupCoordinator backups,
         string startupError)
     {
         allGames = games?.ToList() ?? new List<DesktopGameItemViewModel>();
         this.database = database;
         this.settings = settings ?? new DesktopSettings();
+        Backups = backups ?? throw new ArgumentNullException(nameof(backups));
         foreach (var game in allGames)
         {
             game.ApplyAppearance(this.settings);
@@ -630,6 +633,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             () => runtimeHost?.V7Plugins ?? Array.Empty<V7LoadedPlugin>(),
             () => runtimeHost?.LibraryPlugins ?? Array.Empty<LibraryPlugin>(),
             Updates,
+            Backups,
+            () => dialogService?.SelectFolder(),
             Scripts.TestGameScript,
             SynchronizeLibrary,
             () =>

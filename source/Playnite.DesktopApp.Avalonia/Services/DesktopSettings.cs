@@ -5,7 +5,7 @@ using Playnite.SDK.Plugins;
 
 namespace Playnite.DesktopApp.Avalonia.Services;
 
-public sealed partial class DesktopSettings : IAvaloniaHostSettings
+public sealed partial class DesktopSettings : IAvaloniaHostSettings, global::Playnite.IAutoBackupSettings
 {
     public int Version { get; set; } = 1;
     public bool IsMusicMuted { get; set; }

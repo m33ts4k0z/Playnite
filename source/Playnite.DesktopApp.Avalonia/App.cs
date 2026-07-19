@@ -28,24 +28,52 @@ public sealed class App : Application
             var options = Program.Options;
             library = new DesktopLibrary(options.UserDataDirectory, options.LibraryPath);
             string startupError = null;
-            try
+            if (options.SelfTest)
             {
-                if (options.SelfTest)
+                try
                 {
                     library.OpenTemporaryLibrary(1_000);
                 }
-                else
+                catch (Exception exception)
                 {
-                    library.OpenExistingLibrary();
+                    startupError = exception.Message;
                 }
-            }
-            catch (Exception exception)
-            {
-                startupError = exception.Message;
             }
 
             var settingsStore = new DesktopSettingsStore(library.ActiveUserDataDirectory);
             var settings = LoadOrImportSettings(settingsStore, library.ActiveUserDataDirectory, options);
+            var backupCoordinator = new DesktopBackupCoordinator(
+                settings,
+                library.ActiveUserDataDirectory,
+                options.SelfTest && library.Database != null
+                    ? library.Database.DatabasePath
+                    : options.LibraryPath,
+                () => settingsStore.Save(settings));
+            if (!options.SelfTest)
+            {
+                if (!options.PluginCompatibilityTest)
+                {
+                    try
+                    {
+                        backupCoordinator.RunIfDueAsync(DateTime.Now).GetAwaiter().GetResult();
+                    }
+                    catch (Exception exception)
+                    {
+                        startupError = $"Automatic backup failed: {exception.Message}";
+                    }
+                }
+
+                try
+                {
+                    library.OpenExistingLibrary();
+                }
+                catch (Exception exception)
+                {
+                    startupError = startupError == null
+                        ? exception.Message
+                        : $"{startupError} Library unavailable: {exception.Message}";
+                }
+            }
             string extensionUpdateError = null;
             if (!options.SelfTest && !options.PluginCompatibilityTest)
             {
@@ -71,7 +99,12 @@ public sealed class App : Application
                 return;
             }
 
-            var viewModel = new DesktopAppViewModel(library.Games, library.Database, settings, startupError);
+            var viewModel = new DesktopAppViewModel(
+                library.Games,
+                library.Database,
+                settings,
+                backupCoordinator,
+                startupError);
             MainWindow window = null;
             if (library.IsOpen)
             {

@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.BackupSettingsView"
+             x:DataType="vm:BackupSettingsSection">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="24" Spacing="14">
+      <TextBlock Text="Automatic backup" FontSize="18" FontWeight="SemiBold" />
+      <CheckBox Content="Create automatic backups before the library opens"
+                IsChecked="{Binding AutoBackupEnabled, Mode=TwoWay}" />
+      <StackPanel Spacing="12" IsEnabled="{Binding AutoBackupEnabled}">
+        <Grid ColumnDefinitions="210,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+          <TextBlock Grid.Row="0" Text="Frequency" VerticalAlignment="Center" />
+          <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Frequencies}"
+                    SelectedItem="{Binding AutoBackupFrequency, Mode=TwoWay}" />
+          <TextBlock Grid.Row="1" Text="Backup folder" VerticalAlignment="Center" />
+          <Grid Grid.Row="1" Grid.Column="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <TextBox Text="{Binding AutoBackupDir, Mode=TwoWay}" PlaceholderText="Choose a writable folder" />
+            <Button Grid.Column="1" Content="Browse…" Command="{Binding SelectFolderCommand}" />
+          </Grid>
+          <TextBlock Grid.Row="2" Text="Older rotating backups to keep" VerticalAlignment="Center" />
+          <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="10" Increment="1"
+                         Value="{Binding RotatingBackups, Mode=TwoWay}" />
+        </Grid>
+        <TextBlock Text="Always included: settings and the library database" FontWeight="SemiBold" />
+        <CheckBox Content="Game media files" IsChecked="{Binding AutoBackupIncludeLibFiles, Mode=TwoWay}" />
+        <CheckBox Content="Installed extensions" IsChecked="{Binding AutoBackupIncludeExtensions, Mode=TwoWay}" />
+        <CheckBox Content="Installed themes" IsChecked="{Binding AutoBackupIncludeThemes, Mode=TwoWay}" />
+        <CheckBox Content="Extension data" IsChecked="{Binding AutoBackupIncludeExtensionsData, Mode=TwoWay}" />
+      </StackPanel>
+      <Separator Margin="0,4" />
+      <TextBlock Text="Backups run at startup so LiteDB collection files are closed and internally consistent."
+                 TextWrapping="Wrap" Opacity="0.75" />
+      <TextBlock Text="{Binding Coordinator.StatusText}" TextWrapping="Wrap" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

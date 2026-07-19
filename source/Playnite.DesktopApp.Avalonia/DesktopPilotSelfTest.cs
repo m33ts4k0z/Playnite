@@ -2282,6 +2282,80 @@ internal static class DesktopPilotSelfTest
                 ? "startup/shutdown and game test scripts received SDK variables, disposed, and reported failures"
                 : throw new InvalidOperationException("The script runtime lifecycle or SDK variables diverged."));
 
+        var backupFixtureRoot = Path.Combine(library.ActiveUserDataDirectory, "track-w-backup-fixture");
+        var backupDataDirectory = Path.Combine(backupFixtureRoot, "profile");
+        var backupLibraryDirectory = Path.Combine(backupFixtureRoot, "library");
+        var backupOutputDirectory = Path.Combine(backupFixtureRoot, "output");
+        Directory.CreateDirectory(backupDataDirectory);
+        Directory.CreateDirectory(backupLibraryDirectory);
+        File.WriteAllText(Path.Combine(backupDataDirectory, PlaynitePaths.ConfigFileName), "{\"pilot\":true}");
+        File.WriteAllText(Path.Combine(backupLibraryDirectory, "database.json"), "{\"Version\":3}");
+        File.WriteAllBytes(Path.Combine(backupLibraryDirectory, "games.db"), new byte[] { 1, 2, 3, 4 });
+        var backupSettings = new DesktopSettings
+        {
+            AutoBackupEnabled = true,
+            AutoBackupFrequency = AutoBackupFrequency.OnceADay,
+            AutoBackupDir = backupOutputDirectory,
+            RotatingBackups = 1,
+            LastAutoBackup = DateTime.Now.AddDays(-2)
+        };
+        var backupSettingsSaved = 0;
+        var backupCoordinator = new DesktopBackupCoordinator(
+            backupSettings,
+            backupDataDirectory,
+            backupLibraryDirectory,
+            () => backupSettingsSaved++);
+        var backupTimestamp = DateTime.Now;
+        var automaticBackupRan = await backupCoordinator.RunIfDueAsync(backupTimestamp);
+        var automaticBackupSkippedSecondRun = !await backupCoordinator.RunIfDueAsync(backupTimestamp);
+        var backupArchivePath = Directory.GetFiles(backupOutputDirectory, "PlayniteBackup-*.zip").Single();
+        using var backupArchive = System.IO.Compression.ZipFile.OpenRead(backupArchivePath);
+        var backupEntries = backupArchive.Entries.Select(entry => entry.FullName).ToHashSet();
+        Record(results, "Automatic backup scheduler creates a real Core archive before library open", () =>
+            automaticBackupRan && automaticBackupSkippedSecondRun &&
+            backupSettingsSaved == 1 && backupSettings.LastAutoBackup == backupTimestamp &&
+            backupEntries.Contains(PlaynitePaths.ConfigFileName) &&
+            backupEntries.Contains(Path.Combine("library", "database.json")) &&
+            backupEntries.Contains(Path.Combine("library", "games.db")) &&
+            DesktopBackupCoordinator.ShouldRun(new DesktopSettings
+            {
+                AutoBackupEnabled = true,
+                AutoBackupFrequency = AutoBackupFrequency.OnceAWeek,
+                AutoBackupDir = backupOutputDirectory,
+                LastAutoBackup = backupTimestamp.AddDays(-8)
+            }, backupTimestamp)
+                ? "daily/weekly due checks, Core archive contents, timestamps, and duplicate-run prevention passed"
+                : throw new InvalidOperationException("Automatic backup scheduling or archive contents diverged."));
+
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("Backup settings could not be opened for the Track W self-test.");
+        }
+        viewModel.Settings.Backup.AutoBackupEnabled = true;
+        viewModel.Settings.Backup.AutoBackupFrequency = AutoBackupFrequency.OnceADay;
+        viewModel.Settings.Backup.AutoBackupDir = backupOutputDirectory;
+        viewModel.Settings.Backup.RotatingBackups = 3;
+        viewModel.Settings.Backup.AutoBackupIncludeLibFiles = false;
+        viewModel.Settings.Backup.AutoBackupIncludeExtensions = true;
+        viewModel.Settings.Backup.AutoBackupIncludeThemes = true;
+        viewModel.Settings.Backup.AutoBackupIncludeExtensionsData = false;
+        viewModel.Settings.SaveCommand.Execute(null);
+        viewModel.Settings.Open();
+        var backupSettingsReopened =
+            viewModel.Settings.Backup.AutoBackupEnabled &&
+            viewModel.Settings.Backup.AutoBackupFrequency == AutoBackupFrequency.OnceADay &&
+            viewModel.Settings.Backup.AutoBackupDir == Path.GetFullPath(backupOutputDirectory) &&
+            viewModel.Settings.Backup.RotatingBackups == 3 &&
+            !viewModel.Settings.Backup.AutoBackupIncludeLibFiles &&
+            viewModel.Settings.Backup.AutoBackupIncludeExtensions &&
+            viewModel.Settings.Backup.AutoBackupIncludeThemes &&
+            !viewModel.Settings.Backup.AutoBackupIncludeExtensionsData;
+        viewModel.Settings.CancelCommand.Execute(null);
+        Record(results, "Backup settings use a validated persisted working copy", () =>
+            backupSettingsReopened
+                ? "folder, frequency, rotation, and all optional data groups saved and reopened"
+                : throw new InvalidOperationException("Backup settings did not round-trip."));
+
         var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every desktop settings module supplies a passing self-check", () =>
             settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
@@ -2478,6 +2552,15 @@ internal static class DesktopPilotSelfTest
                 LastAddonUpdateCheck = new DateTime(2026, 7, 17, 12, 0, 0),
                 LastLibraryUpdateCheck = new DateTime(2026, 7, 16, 12, 0, 0),
                 LastEmulatedLibraryUpdateCheck = new DateTime(2026, 7, 15, 12, 0, 0),
+                AutoBackupEnabled = true,
+                AutoBackupFrequency = AutoBackupFrequency.OnceADay,
+                AutoBackupDir = backupOutputDirectory,
+                RotatingBackups = 4,
+                AutoBackupIncludeLibFiles = false,
+                AutoBackupIncludeExtensions = true,
+                AutoBackupIncludeThemes = true,
+                AutoBackupIncludeExtensionsData = false,
+                LastAutoBackup = new DateTime(2026, 7, 14, 12, 0, 0),
                 LibraryPluginIds = new List<Guid> { libraryPlugin.Id },
                 LibraryPluginSelectionConfigured = true,
                 GameScannerIds = new List<Guid> { scannerConfig.Id },
@@ -2615,6 +2698,15 @@ internal static class DesktopPilotSelfTest
                 loaded.LastAddonUpdateCheck != new DateTime(2026, 7, 17, 12, 0, 0) ||
                 loaded.LastLibraryUpdateCheck != new DateTime(2026, 7, 16, 12, 0, 0) ||
                 loaded.LastEmulatedLibraryUpdateCheck != new DateTime(2026, 7, 15, 12, 0, 0) ||
+                !loaded.AutoBackupEnabled ||
+                loaded.AutoBackupFrequency != AutoBackupFrequency.OnceADay ||
+                loaded.AutoBackupDir != backupOutputDirectory ||
+                loaded.RotatingBackups != 4 ||
+                loaded.AutoBackupIncludeLibFiles ||
+                !loaded.AutoBackupIncludeExtensions ||
+                !loaded.AutoBackupIncludeThemes ||
+                loaded.AutoBackupIncludeExtensionsData ||
+                loaded.LastAutoBackup != new DateTime(2026, 7, 14, 12, 0, 0) ||
                 !loaded.LibraryPluginIds.SequenceEqual(new[] { libraryPlugin.Id }) ||
                 !loaded.LibraryPluginSelectionConfigured ||
                 !loaded.GameScannerIds.SequenceEqual(new[] { scannerConfig.Id }) ||
