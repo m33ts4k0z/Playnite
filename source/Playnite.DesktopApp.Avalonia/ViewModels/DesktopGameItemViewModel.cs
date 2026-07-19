@@ -2,8 +2,11 @@ using System.ComponentModel;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using Avalonia;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Playnite.Database;
+using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK.Models;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
@@ -12,6 +15,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
 {
     private static readonly Regex htmlTags = new("<[^>]+>", RegexOptions.Compiled);
     private readonly GameDatabase database;
+    private DesktopSettings appearanceSettings = new();
     private string groupHeader;
     private bool showGroupHeader;
 
@@ -29,9 +33,21 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
                 : Game.IsUninstalling
                     ? "Uninstalling"
                     : IsInstalled ? "Installed" : "Not installed";
-    public string PlaytimeText => Game.Playtime == 0
-        ? "Not played"
-        : $"{TimeSpan.FromSeconds(Game.Playtime).TotalHours:0.#} hours played";
+    public string PlaytimeText
+    {
+        get
+        {
+            if (Game.Playtime == 0)
+            {
+                return "Not played";
+            }
+
+            var playtime = TimeSpan.FromSeconds(Game.Playtime);
+            return appearanceSettings.PlaytimeUseDaysFormat && playtime.TotalHours >= 24
+                ? $"{playtime.TotalDays:0.#} days played"
+                : $"{playtime.TotalHours:0.#} hours played";
+        }
+    }
     public string LastPlayedText => Game.LastActivity.HasValue
         ? $"Last played {Game.LastActivity.Value:d}"
         : "Never played";
@@ -64,6 +80,13 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public string MetadataLine => BuildMetadataLine(Game, database);
     public string DescriptionText => ToPlainText(Game.Description);
     public string CoverPath => ResolveMediaPath(Game.CoverImage, database);
+    public Stretch CoverArtStretch => appearanceSettings.CoverArtStretch;
+    public Thickness GridItemMargin => new(appearanceSettings.GridItemMargin);
+    public bool ShowGridItemBackground => appearanceSettings.ShowGridItemBackground;
+    public bool ShowNamesUnderCovers => appearanceSettings.ShowNamesUnderCovers;
+    public bool ShowEmptyCoverName => appearanceSettings.ShowNameEmptyCover && string.IsNullOrWhiteSpace(CoverPath);
+    public double GridItemOpacity => appearanceSettings.DarkenUninstalledGamesGrid && !IsInstalled ? 0.5 : 1;
+    public bool ShowListIcon => appearanceSettings.ShowIconsOnList;
     public string GroupHeader => groupHeader;
     public bool ShowGroupHeader => showGroupHeader;
 
@@ -92,6 +115,19 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     internal void Refresh()
     {
         OnPropertyChanged(string.Empty);
+    }
+
+    internal void ApplyAppearance(DesktopSettings settings)
+    {
+        appearanceSettings = settings ?? new DesktopSettings();
+        OnPropertyChanged(nameof(PlaytimeText));
+        OnPropertyChanged(nameof(CoverArtStretch));
+        OnPropertyChanged(nameof(GridItemMargin));
+        OnPropertyChanged(nameof(ShowGridItemBackground));
+        OnPropertyChanged(nameof(ShowNamesUnderCovers));
+        OnPropertyChanged(nameof(ShowEmptyCoverName));
+        OnPropertyChanged(nameof(GridItemOpacity));
+        OnPropertyChanged(nameof(ShowListIcon));
     }
 
     private void Game_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -135,6 +171,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(InstallationDetailsText));
         OnPropertyChanged(nameof(ScriptsText));
         OnPropertyChanged(nameof(CoverPath));
+        OnPropertyChanged(nameof(ShowEmptyCoverName));
+        OnPropertyChanged(nameof(GridItemOpacity));
     }
 
     private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>

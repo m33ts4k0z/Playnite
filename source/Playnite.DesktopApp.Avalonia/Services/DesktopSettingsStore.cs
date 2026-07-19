@@ -59,6 +59,21 @@ public sealed class DesktopSettingsStore
                 {
                     settings.TrayIcon = Playnite.Avalonia.App.Services.TrayIconOption.Default;
                 }
+                if (!Enum.IsDefined(settings.CoverArtStretch))
+                {
+                    settings.CoverArtStretch = global::Avalonia.Media.Stretch.UniformToFill;
+                }
+                settings.GridItemWidth = Math.Clamp(settings.GridItemWidth, 80, 600);
+                settings.GridItemWidthRatio = Math.Clamp(settings.GridItemWidthRatio, 1, 20);
+                settings.GridItemHeightRatio = Math.Clamp(settings.GridItemHeightRatio, 1, 20);
+                settings.GridItemSpacing = Math.Clamp(settings.GridItemSpacing, 0, 80);
+                settings.GridItemMargin = Math.Clamp(settings.GridItemMargin, 0, 40);
+                settings.GridViewScrollSensitivity = Math.Clamp(settings.GridViewScrollSensitivity, 0.1, 10);
+                settings.ListViewScrollSensitivity = Math.Clamp(settings.ListViewScrollSensitivity, 0.1, 10);
+                settings.GridViewScrollDurationMilliseconds =
+                    Math.Clamp(settings.GridViewScrollDurationMilliseconds, 16, 5000);
+                settings.ListViewScrollDurationMilliseconds =
+                    Math.Clamp(settings.ListViewScrollDurationMilliseconds, 16, 5000);
                 return settings;
             }
         }

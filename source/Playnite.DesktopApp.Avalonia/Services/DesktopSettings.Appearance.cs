@@ -1,3 +1,4 @@
+using Avalonia.Media;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 
@@ -11,4 +12,26 @@ public sealed partial class DesktopSettings
     public SortOrderDirection SortDirection { get; set; } = SortOrderDirection.Ascending;
     public GroupableField Grouping { get; set; } = GroupableField.None;
     public Guid ActiveFilterPreset { get; set; }
+
+    public bool ShowGroupCount { get; set; } = true;
+    public bool PlaytimeUseDaysFormat { get; set; }
+
+    public double GridItemWidth { get; set; } = 180;
+    public int GridItemWidthRatio { get; set; } = 3;
+    public int GridItemHeightRatio { get; set; } = 4;
+    public Stretch CoverArtStretch { get; set; } = Stretch.UniformToFill;
+    public double GridItemSpacing { get; set; } = 12;
+    public double GridItemMargin { get; set; } = 6;
+    public bool ShowGridItemBackground { get; set; } = true;
+    public bool ShowNamesUnderCovers { get; set; } = true;
+    public bool ShowNameEmptyCover { get; set; } = true;
+    public bool DarkenUninstalledGamesGrid { get; set; }
+    public double GridViewScrollSensitivity { get; set; } = 1.5;
+    public int GridViewScrollDurationMilliseconds { get; set; } = 250;
+    public bool GridViewSmoothScrollEnabled { get; set; }
+
+    public bool ShowIconsOnList { get; set; } = true;
+    public double ListViewScrollSensitivity { get; set; } = 1.5;
+    public int ListViewScrollDurationMilliseconds { get; set; } = 250;
+    public bool ListViewSmoothScrollEnabled { get; set; }
 }

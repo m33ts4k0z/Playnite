@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using Avalonia;
 using Playnite.Avalonia.App.Services;
 using Playnite.Controllers;
 using Playnite.Database;
@@ -244,6 +245,19 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public IReadOnlyList<FilterPreset> FilterPresets { get; }
     public bool IsGridView => SelectedViewMode == "Grid";
     public bool IsListView => SelectedViewMode == "List";
+    public double GridItemWidth => settings.GridItemWidth;
+    public double GridItemHeight =>
+        settings.GridItemWidth * settings.GridItemHeightRatio / settings.GridItemWidthRatio +
+        (settings.ShowNamesUnderCovers ? 52 : 0);
+    public double GridItemSpacing => settings.GridItemSpacing;
+    public double GridViewScrollSensitivity => settings.GridViewScrollSensitivity;
+    public TimeSpan GridViewScrollDuration =>
+        TimeSpan.FromMilliseconds(settings.GridViewScrollDurationMilliseconds);
+    public bool GridViewSmoothScrollEnabled => settings.GridViewSmoothScrollEnabled;
+    public double ListViewScrollSensitivity => settings.ListViewScrollSensitivity;
+    public TimeSpan ListViewScrollDuration =>
+        TimeSpan.FromMilliseconds(settings.ListViewScrollDurationMilliseconds);
+    public bool ListViewSmoothScrollEnabled => settings.ListViewSmoothScrollEnabled;
     public bool EnableTray
     {
         get => settings.EnableTray;
@@ -399,6 +413,10 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         allGames = games?.ToList() ?? new List<DesktopGameItemViewModel>();
         this.database = database;
         this.settings = settings ?? new DesktopSettings();
+        foreach (var game in allGames)
+        {
+            game.ApplyAppearance(this.settings);
+        }
         this.games = allGames;
         selectedGame = allGames.FirstOrDefault();
         selectedViewMode = this.settings.ViewMode is "Grid" or "List" ? this.settings.ViewMode : "Grid";
@@ -496,7 +514,11 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         PluginSettings.PropertyChanged += PluginSettings_PropertyChanged;
         Settings = new DesktopSettingsViewModel(
             this.settings,
-            () => SettingsChanged?.Invoke(this, EventArgs.Empty),
+            () =>
+            {
+                ApplyAppearanceSettings();
+                SettingsChanged?.Invoke(this, EventArgs.Empty);
+            },
             (message, error) =>
             {
                 if (runtimeHost != null)
@@ -1081,12 +1103,18 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
                 .OrderBy(group => group.Key, StringComparer.CurrentCultureIgnoreCase)
                 .SelectMany(group => SortGames(group))
                 .ToList();
+        var groupCounts = selectedGrouping == GroupableField.None
+            ? new Dictionary<string, int>()
+            : materialized.GroupBy(GetGroupName).ToDictionary(group => group.Key, group => group.Count());
         string previousGroup = null;
         foreach (var game in materialized)
         {
             var group = selectedGrouping == GroupableField.None ? string.Empty : GetGroupName(game);
             var startsGroup = selectedGrouping != GroupableField.None && group != previousGroup;
-            game.SetGroup(group, startsGroup);
+            var displayGroup = settings.ShowGroupCount && groupCounts.TryGetValue(group, out var count)
+                ? $"{group} ({count:N0})"
+                : group;
+            game.SetGroup(displayGroup, startsGroup);
             previousGroup = group;
         }
 
@@ -1128,6 +1156,25 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         _ => string.Empty
     };
 
+    private void ApplyAppearanceSettings()
+    {
+        foreach (var game in allGames)
+        {
+            game.ApplyAppearance(settings);
+        }
+
+        OnPropertyChanged(nameof(GridItemWidth));
+        OnPropertyChanged(nameof(GridItemHeight));
+        OnPropertyChanged(nameof(GridItemSpacing));
+        OnPropertyChanged(nameof(GridViewScrollSensitivity));
+        OnPropertyChanged(nameof(GridViewScrollDuration));
+        OnPropertyChanged(nameof(GridViewSmoothScrollEnabled));
+        OnPropertyChanged(nameof(ListViewScrollSensitivity));
+        OnPropertyChanged(nameof(ListViewScrollDuration));
+        OnPropertyChanged(nameof(ListViewSmoothScrollEnabled));
+        ApplyFilters();
+    }
+
     private void RaiseGameCommandStates()
     {
         ((AppRelayCommand)ActivateCommand).RaiseCanExecuteChanged();
@@ -1158,7 +1205,9 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         var existingIds = allGames.Select(game => game.Game.Id).ToHashSet();
         foreach (var game in databaseGames.Where(game => !existingIds.Contains(game.Id)))
         {
-            allGames.Add(new DesktopGameItemViewModel(game, database));
+            var wrapper = new DesktopGameItemViewModel(game, database);
+            wrapper.ApplyAppearance(settings);
+            allGames.Add(wrapper);
         }
 
         foreach (var game in allGames)

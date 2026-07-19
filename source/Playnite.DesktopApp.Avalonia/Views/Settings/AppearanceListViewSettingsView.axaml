@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.AppearanceListViewSettingsView"
+             x:DataType="vm:AppearanceListViewSettingsSection">
+    <ScrollViewer MaxHeight="470" Padding="18,0,4,0">
+        <StackPanel Spacing="14">
+            <TextBlock Text="List presentation" Classes="sectionLabel" />
+            <CheckBox Content="Show cover icons in the list"
+                      IsChecked="{Binding ShowIconsOnList, Mode=TwoWay}" />
+
+            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <TextBlock Text="Scrolling" Classes="sectionLabel" />
+            <CheckBox Content="Smooth scrolling"
+                      IsChecked="{Binding SmoothScrollEnabled, Mode=TwoWay}" />
+            <Grid ColumnDefinitions="220,150" RowDefinitions="Auto,Auto" RowSpacing="8" ColumnSpacing="12">
+                <TextBlock Text="Wheel sensitivity" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Column="1" Minimum="0.1" Maximum="10" Increment="0.1"
+                               FormatString="0.0" Value="{Binding ScrollSensitivity, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Text="Animation duration (ms)" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="16" Maximum="5000" Increment="25"
+                               Value="{Binding ScrollDurationMilliseconds, Mode=TwoWay}" />
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

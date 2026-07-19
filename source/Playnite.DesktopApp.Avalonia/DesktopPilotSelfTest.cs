@@ -1695,6 +1695,59 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException(
                     $"appearanceSelectable={appearanceSelectable}, hasDefaultTheme={hasDefaultTheme}"));
 
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.AppearanceGeneral.ShowGroupCount = true;
+        viewModel.Settings.AppearanceGeneral.PlaytimeUseDaysFormat = true;
+        viewModel.Settings.AppearanceGridView.GridItemWidth = 210;
+        viewModel.Settings.AppearanceGridView.GridItemWidthRatio = 2;
+        viewModel.Settings.AppearanceGridView.GridItemHeightRatio = 3;
+        viewModel.Settings.AppearanceGridView.GridItemSpacing = 16;
+        viewModel.Settings.AppearanceGridView.GridItemMargin = 4;
+        viewModel.Settings.AppearanceGridView.CoverArtStretch = global::Avalonia.Media.Stretch.Uniform;
+        viewModel.Settings.AppearanceGridView.ShowGridItemBackground = false;
+        viewModel.Settings.AppearanceGridView.ShowNamesUnderCovers = false;
+        viewModel.Settings.AppearanceGridView.ShowNameEmptyCover = false;
+        viewModel.Settings.AppearanceGridView.DarkenUninstalledGamesGrid = true;
+        viewModel.Settings.AppearanceGridView.ScrollSensitivity = 2;
+        viewModel.Settings.AppearanceGridView.ScrollDurationMilliseconds = 300;
+        viewModel.Settings.AppearanceGridView.SmoothScrollEnabled = true;
+        viewModel.Settings.AppearanceListView.ShowIconsOnList = false;
+        viewModel.Settings.AppearanceListView.ScrollSensitivity = 2.5;
+        viewModel.Settings.AppearanceListView.ScrollDurationMilliseconds = 350;
+        viewModel.Settings.AppearanceListView.SmoothScrollEnabled = true;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        viewModel.SelectedGrouping = GroupableField.Source;
+        var longPlaytimeGame = viewModel.LibraryGames.First();
+        var originalPlaytime = longPlaytimeGame.Game.Playtime;
+        longPlaytimeGame.Game.Playtime = 60ul * 60 * 48;
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var tilePanel = window.MainView.TilePanel;
+        var gridScroll = window.MainView.GridScrollViewer;
+        var listScroll = window.MainView.ListScrollViewer;
+        var groupCountVisible = viewModel.Games.FirstOrDefault(game => game.ShowGroupHeader)?.GroupHeader.Contains('(') == true;
+        var appearanceApplied = tilePanel != null &&
+            Math.Abs(tilePanel.ItemWidth - 210) < 0.01 &&
+            Math.Abs(tilePanel.ItemHeight - 315) < 0.01 &&
+            Math.Abs(tilePanel.ItemSpacing - 16) < 0.01 &&
+            longPlaytimeGame.PlaytimeText.Contains("2 days", StringComparison.Ordinal) &&
+            longPlaytimeGame.CoverArtStretch == global::Avalonia.Media.Stretch.Uniform &&
+            !longPlaytimeGame.ShowGridItemBackground &&
+            !longPlaytimeGame.ShowNamesUnderCovers &&
+            !longPlaytimeGame.ShowListIcon &&
+            groupCountVisible &&
+            gridScroll != null && listScroll != null &&
+            Playnite.Avalonia.Controls.ScrollBehavior.GetSmoothScrollingEnabled(gridScroll) &&
+            Playnite.Avalonia.Controls.ScrollBehavior.GetSmoothScrollingEnabled(listScroll) &&
+            Math.Abs(Playnite.Avalonia.Controls.ScrollBehavior.GetWheelSensitivity(gridScroll) - 2) < 0.01 &&
+            Math.Abs(Playnite.Avalonia.Controls.ScrollBehavior.GetWheelSensitivity(listScroll) - 2.5) < 0.01;
+        longPlaytimeGame.Game.Playtime = originalPlaytime;
+        viewModel.SelectedGrouping = GroupableField.None;
+        Record(results, "Desktop grid and list appearance settings apply live", () =>
+            appearanceApplied
+                ? "geometry, cover presentation, group counts, playtime, icons, and both scroll behaviors updated"
+                : throw new InvalidOperationException("One or more W-A1 appearance settings did not reach the live view."));
+
         var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every desktop settings module supplies a passing self-check", () =>
             settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
@@ -1870,6 +1923,25 @@ internal static class DesktopPilotSelfTest
                 WindowY = 80,
                 WindowMaximized = true,
                 ThemePath = @"C:\Themes\Pilot",
+                ShowGroupCount = false,
+                PlaytimeUseDaysFormat = true,
+                GridItemWidth = 240,
+                GridItemWidthRatio = 2,
+                GridItemHeightRatio = 3,
+                CoverArtStretch = global::Avalonia.Media.Stretch.Uniform,
+                GridItemSpacing = 18,
+                GridItemMargin = 5,
+                ShowGridItemBackground = false,
+                ShowNamesUnderCovers = false,
+                ShowNameEmptyCover = false,
+                DarkenUninstalledGamesGrid = true,
+                GridViewScrollSensitivity = 2.25,
+                GridViewScrollDurationMilliseconds = 325,
+                GridViewSmoothScrollEnabled = true,
+                ShowIconsOnList = false,
+                ListViewScrollSensitivity = 2.75,
+                ListViewScrollDurationMilliseconds = 375,
+                ListViewSmoothScrollEnabled = true,
                 GlobalPreScript = "global-pre",
                 GlobalGameStartedScript = "global-started",
                 GlobalPostScript = "global-post",
@@ -1906,6 +1978,25 @@ internal static class DesktopPilotSelfTest
                 loaded.WindowY != 80 ||
                 !loaded.WindowMaximized ||
                 loaded.ThemePath != @"C:\Themes\Pilot" ||
+                loaded.ShowGroupCount ||
+                !loaded.PlaytimeUseDaysFormat ||
+                loaded.GridItemWidth != 240 ||
+                loaded.GridItemWidthRatio != 2 ||
+                loaded.GridItemHeightRatio != 3 ||
+                loaded.CoverArtStretch != global::Avalonia.Media.Stretch.Uniform ||
+                loaded.GridItemSpacing != 18 ||
+                loaded.GridItemMargin != 5 ||
+                loaded.ShowGridItemBackground ||
+                loaded.ShowNamesUnderCovers ||
+                loaded.ShowNameEmptyCover ||
+                !loaded.DarkenUninstalledGamesGrid ||
+                loaded.GridViewScrollSensitivity != 2.25 ||
+                loaded.GridViewScrollDurationMilliseconds != 325 ||
+                !loaded.GridViewSmoothScrollEnabled ||
+                loaded.ShowIconsOnList ||
+                loaded.ListViewScrollSensitivity != 2.75 ||
+                loaded.ListViewScrollDurationMilliseconds != 375 ||
+                !loaded.ListViewSmoothScrollEnabled ||
                 loaded.GlobalPreScript != "global-pre" ||
                 loaded.GlobalGameStartedScript != "global-started" ||
                 loaded.GlobalPostScript != "global-post" ||

@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.AppearanceGridViewSettingsView"
+             x:DataType="vm:AppearanceGridViewSettingsSection">
+    <ScrollViewer MaxHeight="470" Padding="18,0,4,0">
+        <StackPanel Spacing="14">
+            <TextBlock Text="Cover geometry" Classes="sectionLabel" />
+            <Grid ColumnDefinitions="220,150" RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+                  RowSpacing="8" ColumnSpacing="12">
+                <TextBlock Text="Item width" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Column="1" Minimum="80" Maximum="600" Increment="10"
+                               Value="{Binding GridItemWidth, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Text="Cover width ratio" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="1" Maximum="20"
+                               Value="{Binding GridItemWidthRatio, Mode=TwoWay}" />
+                <TextBlock Grid.Row="2" Text="Cover height ratio" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="1" Maximum="20"
+                               Value="{Binding GridItemHeightRatio, Mode=TwoWay}" />
+                <TextBlock Grid.Row="3" Text="Spacing" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="80"
+                               Value="{Binding GridItemSpacing, Mode=TwoWay}" />
+                <TextBlock Grid.Row="4" Text="Item margin" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="40"
+                               Value="{Binding GridItemMargin, Mode=TwoWay}" />
+            </Grid>
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock Text="Cover scaling" Width="208" VerticalAlignment="Center" />
+                <ComboBox Width="150" ItemsSource="{Binding CoverStretchOptions}"
+                          SelectedItem="{Binding CoverArtStretch, Mode=TwoWay}" />
+            </StackPanel>
+
+            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <TextBlock Text="Grid items" Classes="sectionLabel" />
+            <CheckBox Content="Show item background"
+                      IsChecked="{Binding ShowGridItemBackground, Mode=TwoWay}" />
+            <CheckBox Content="Show names under covers"
+                      IsChecked="{Binding ShowNamesUnderCovers, Mode=TwoWay}" />
+            <CheckBox Content="Show game name when cover art is missing"
+                      IsChecked="{Binding ShowNameEmptyCover, Mode=TwoWay}" />
+            <CheckBox Content="Darken uninstalled games"
+                      IsChecked="{Binding DarkenUninstalledGamesGrid, Mode=TwoWay}" />
+
+            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <TextBlock Text="Scrolling" Classes="sectionLabel" />
+            <CheckBox Content="Smooth scrolling"
+                      IsChecked="{Binding SmoothScrollEnabled, Mode=TwoWay}" />
+            <Grid ColumnDefinitions="220,150" RowDefinitions="Auto,Auto" RowSpacing="8" ColumnSpacing="12">
+                <TextBlock Text="Wheel sensitivity" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Column="1" Minimum="0.1" Maximum="10" Increment="0.1"
+                               FormatString="0.0" Value="{Binding ScrollSensitivity, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Text="Animation duration (ms)" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="16" Maximum="5000" Increment="25"
+                               Value="{Binding ScrollDurationMilliseconds, Mode=TwoWay}" />
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

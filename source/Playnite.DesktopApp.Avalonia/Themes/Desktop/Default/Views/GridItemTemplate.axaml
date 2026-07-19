@@ -2,20 +2,23 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:foundation="using:Playnite.Avalonia.Controls">
     <DataTemplate x:Key="DesktopGridItemTemplate">
-        <Border Classes="desktopTile" Margin="6" CornerRadius="8"
-                Background="{DynamicResource DesktopPanelBrush}"
+        <Border Classes="desktopTile" Margin="{Binding GridItemMargin}" CornerRadius="8"
+                Background="Transparent" Opacity="{Binding GridItemOpacity}"
                 BorderBrush="Transparent" BorderThickness="2"
                 ClipToBounds="True">
             <Grid RowDefinitions="*,Auto">
+                <Border Grid.RowSpan="2" Background="{DynamicResource DesktopPanelBrush}"
+                        IsVisible="{Binding ShowGridItemBackground}" />
                 <Border Background="#222B37">
                     <Grid>
                         <TextBlock Text="{Binding Name}" Margin="14"
                                    FontSize="22" FontWeight="Bold"
                                    TextAlignment="Center" TextWrapping="Wrap"
                                    Foreground="#536579"
+                                   IsVisible="{Binding ShowEmptyCoverName}"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                         <foundation:GameCoverImage SourcePath="{Binding CoverPath}"
-                                                   Stretch="UniformToFill" />
+                                                   Stretch="{Binding CoverArtStretch}" />
                         <Border IsVisible="{Binding ShowGroupHeader}"
                                 VerticalAlignment="Top" Padding="8,4"
                                 Background="#E600A8E8">
@@ -29,7 +32,8 @@
                         </Border>
                     </Grid>
                 </Border>
-                <StackPanel Grid.Row="1" Margin="11,8" Spacing="2">
+                <StackPanel Grid.Row="1" Margin="11,8" Spacing="2"
+                            IsVisible="{Binding ShowNamesUnderCovers}">
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
                                TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource DesktopTextBrush}" />

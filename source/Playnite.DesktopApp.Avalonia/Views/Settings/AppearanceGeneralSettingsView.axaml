@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.AppearanceGeneralSettingsView"
+             x:DataType="vm:AppearanceGeneralSettingsSection">
+    <ScrollViewer MaxHeight="470" Padding="18,0,4,0">
+        <StackPanel Spacing="14">
+            <TextBlock Text="Library presentation" Classes="sectionLabel" />
+            <CheckBox Content="Show the number of games in group headings"
+                      IsChecked="{Binding ShowGroupCount, Mode=TwoWay}" />
+            <CheckBox Content="Format long playtimes using days"
+                      IsChecked="{Binding PlaytimeUseDaysFormat, Mode=TwoWay}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

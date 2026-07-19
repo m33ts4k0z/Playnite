@@ -23,6 +23,10 @@ public sealed class DesktopMainView : TemplatedControl
     public TextBox PluginSearchBox => pluginSearchBox ??= FindVisualPart<TextBox>("PART_PluginSearchBox");
     public UniformGridVirtualizingPanel TilePanel =>
         gridGameList?.GetVisualDescendants().OfType<UniformGridVirtualizingPanel>().FirstOrDefault();
+    public ScrollViewer GridScrollViewer =>
+        gridGameList?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+    public ScrollViewer ListScrollViewer =>
+        listGameList?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
@@ -37,6 +41,7 @@ public sealed class DesktopMainView : TemplatedControl
         {
             searchBox ??= FindVisualPart<TextBox>("PART_SearchBox");
             pluginSearchBox ??= FindVisualPart<TextBox>("PART_PluginSearchBox");
+            ApplyScrollSettings();
             FocusSelectedGame();
         }, DispatcherPriority.Loaded);
     }
@@ -88,6 +93,16 @@ public sealed class DesktopMainView : TemplatedControl
 
     private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(DesktopAppViewModel.GridViewScrollSensitivity) or
+            nameof(DesktopAppViewModel.GridViewScrollDuration) or
+            nameof(DesktopAppViewModel.GridViewSmoothScrollEnabled) or
+            nameof(DesktopAppViewModel.ListViewScrollSensitivity) or
+            nameof(DesktopAppViewModel.ListViewScrollDuration) or
+            nameof(DesktopAppViewModel.ListViewSmoothScrollEnabled))
+        {
+            ApplyScrollSettings();
+        }
+
         if (e.PropertyName != nameof(DesktopAppViewModel.IsPluginSearchVisible) ||
             observedViewModel?.IsPluginSearchVisible != true || pluginSearchBox == null)
         {
@@ -103,4 +118,41 @@ public sealed class DesktopMainView : TemplatedControl
 
     private T FindVisualPart<T>(string name) where T : Control =>
         this.GetVisualDescendants().OfType<T>().FirstOrDefault(control => control.Name == name);
+
+    private void ApplyScrollSettings()
+    {
+        if (observedViewModel == null)
+        {
+            return;
+        }
+
+        ConfigureScrollViewer(
+            gridGameList,
+            observedViewModel.GridViewScrollSensitivity,
+            observedViewModel.GridViewSmoothScrollEnabled,
+            observedViewModel.GridViewScrollDuration);
+        ConfigureScrollViewer(
+            listGameList,
+            observedViewModel.ListViewScrollSensitivity,
+            observedViewModel.ListViewSmoothScrollEnabled,
+            observedViewModel.ListViewScrollDuration);
+    }
+
+    private static void ConfigureScrollViewer(
+        ListBox listBox,
+        double sensitivity,
+        bool smoothScrolling,
+        TimeSpan duration)
+    {
+        var viewer = listBox?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+        if (viewer == null)
+        {
+            return;
+        }
+
+        ScrollBehavior.SetWheelSensitivity(viewer, sensitivity);
+        ScrollBehavior.SetSmoothScrollingEnabled(viewer, smoothScrolling);
+        ScrollBehavior.SetSmoothScrollDuration(viewer, duration);
+        ScrollBehavior.SetIsEnabled(viewer, true);
+    }
 }

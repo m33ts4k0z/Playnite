@@ -74,7 +74,10 @@
                                      ItemTemplate="{DynamicResource DesktopGridItemTemplate}">
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <foundation:UniformGridVirtualizingPanel ItemWidth="180" ItemHeight="258" />
+                                        <foundation:UniformGridVirtualizingPanel
+                                            ItemWidth="{Binding GridItemWidth}"
+                                            ItemHeight="{Binding GridItemHeight}"
+                                            ItemSpacing="{Binding GridItemSpacing}" />
                                     </ItemsPanelTemplate>
                                 </ListBox.ItemsPanel>
                             </ListBox>
