@@ -6,7 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+#if WINDOWS
 using Playnite.Native;
+#endif
 
 namespace Playnite.Common
 {
@@ -18,6 +20,7 @@ namespace Playnite.Common
 
         public static string GetFinalPathName(string path)
         {
+#if WINDOWS
             var h = Kernel32.CreateFile(path,
                 0,
                 FileShare.ReadWrite | FileShare.Delete,
@@ -59,6 +62,9 @@ namespace Playnite.Common
             {
                 Kernel32.CloseHandle(h);
             }
+#else
+            return Path.GetFullPath(path);
+#endif
         }
 
         public static bool IsValidFilePath(string path)
@@ -102,7 +108,7 @@ namespace Playnite.Common
             for (int i = 0; i < path.Length; i++)
             {
                 var current = path[i];
-                if (current == Path.AltDirectorySeparatorChar)
+                if (current == Path.AltDirectorySeparatorChar || (!OperatingSystem.IsWindows() && current == '\\'))
                 {
                     current = Path.DirectorySeparatorChar;
                 }
@@ -136,7 +142,8 @@ namespace Playnite.Common
                 // this shound't happen
             }
 
-            return Path.GetFullPath(formatted).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).ToUpperInvariant();
+            var normalized = Path.GetFullPath(formatted).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return OperatingSystem.IsWindows() ? normalized.ToUpperInvariant() : normalized;
         }
 
         public static bool AreEqual(string path1, string path2)
@@ -169,8 +176,9 @@ namespace Playnite.Common
 
         // .NET (Core) removed '"', '<', '>' and '|' from GetInvalidPathChars;
         // keep rejecting them like .NET Framework did, Windows paths can't contain them.
-        private static readonly char[] invalidPathChars =
-            Path.GetInvalidPathChars().Concat(new[] { '"', '<', '>', '|' }).ToArray();
+        private static readonly char[] invalidPathChars = OperatingSystem.IsWindows()
+            ? Path.GetInvalidPathChars().Concat(new[] { '"', '<', '>', '|' }).ToArray()
+            : Path.GetInvalidPathChars();
 
         public static bool ContainsInvalidPathChars(string path)
         {
@@ -190,8 +198,11 @@ namespace Playnite.Common
                 return false;
             }
 
-            // Don't use Path.IsPathRooted because it fails on paths starting with one backslash.
-            return Regex.IsMatch(path, @"^([a-zA-Z]:\\|\\\\)");
+            // Don't use Path.IsPathRooted on Windows because it accepts a path
+            // starting with one backslash as fully qualified.
+            return OperatingSystem.IsWindows()
+                ? Regex.IsMatch(path, @"^([a-zA-Z]:\\|\\\\)")
+                : Path.IsPathFullyQualified(path);
         }
 
         public static string GetCommonDirectory(string[] paths)
@@ -233,6 +244,7 @@ namespace Playnite.Common
                 return false;
             }
 
+#if WINDOWS
             if (pattern.Contains(';'))
             {
                 return Shlwapi.PathMatchSpecExW(filePath, pattern, MatchPatternFlags.Multiple) == 0;
@@ -241,11 +253,25 @@ namespace Playnite.Common
             {
                 return Shlwapi.PathMatchSpecExW(filePath, pattern, MatchPatternFlags.Normal) == 0;
             }
+#else
+            return pattern.Split(';').Any(filePattern =>
+                {
+                    var expression = "^" + Regex.Escape(filePattern.Trim())
+                        .Replace("\\*", ".*")
+                        .Replace("\\?", ".") + "$";
+                    return Regex.IsMatch(filePath, expression, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+                });
+#endif
         }
 
         public static string FixPathLength(string path, bool forcePrefix = false)
         {
             if (path.IsNullOrWhiteSpace())
+            {
+                return path;
+            }
+
+            if (!OperatingSystem.IsWindows())
             {
                 return path;
             }
@@ -278,6 +304,11 @@ namespace Playnite.Common
         public static string TrimLongPathPrefix(string path)
         {
             if (path.IsNullOrWhiteSpace())
+            {
+                return path;
+            }
+
+            if (!OperatingSystem.IsWindows())
             {
                 return path;
             }

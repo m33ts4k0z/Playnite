@@ -30,6 +30,7 @@
     <Compile Include="..\PlayniteSDK\ApplicationMode.cs" Link="ApplicationMode.cs" />
     <Compile Include="..\PlayniteSDK\BuiltInExtensions.cs" Link="BuiltInExtensions.cs" />
     <Compile Include="..\PlayniteSDK\Collections\ObservableConcurrentDictionary.cs" Link="Collections\ObservableConcurrentDictionary.cs" />
+    <Compile Include="..\PlayniteSDK\Collections\ComparableList.cs" Link="Collections\ComparableList.cs" />
     <Compile Include="..\PlayniteSDK\Collections\ObservableObject.cs" Link="Collections\ObservableObject.cs" />
     <Compile Include="..\PlayniteSDK\Collections\RangeObservableCollection.cs" Link="Collections\RangeObservableCollection.cs" />
     <Compile Include="..\PlayniteSDK\Data\*.cs" Link="Data\%(Filename)%(Extension)" />

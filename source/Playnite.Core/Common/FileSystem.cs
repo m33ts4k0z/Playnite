@@ -8,7 +8,9 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using Playnite.SDK;
 using System.Diagnostics;
+#if WINDOWS
 using Playnite.Native;
+#endif
 using System.Runtime.InteropServices;
 
 namespace Playnite.Common
@@ -398,6 +400,7 @@ namespace Playnite.Common
                 return 0;
             }
 
+#if WINDOWS
             // Method will fail when checking a file that's not valid on Windows,
             // for example files used by Proton containing a colon (:).
             // 'Directory' will be null when encountering such a file.
@@ -423,6 +426,11 @@ namespace Playnite.Common
 
             var size = (long)hosize << 32 | losize;
             return ((size + clusterSize - 1) / clusterSize) * clusterSize;
+#else
+            // .NET has no portable allocated-block-size API. Logical size is
+            // the safe cross-platform fallback and never undercounts content.
+            return fileInfo.Length;
+#endif
         }
 
         private static bool IsDirectorySubdirSafeToRecurse(DirectoryInfo childDirectory)

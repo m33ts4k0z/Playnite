@@ -90,6 +90,11 @@ IconIndex=0";
 
         private static List<UninstallProgram> GetUninstallProgsFromView(RegistryView view)
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                return new List<UninstallProgram>();
+            }
+
             var rootString = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\";
             void SearchRoot(RegistryHive hive, List<UninstallProgram> programs)
             {
@@ -145,6 +150,11 @@ IconIndex=0";
         public static List<UninstallProgram> GetUnistallProgramsList()
         {
             var progs = new List<UninstallProgram>();
+
+            if (!OperatingSystem.IsWindows())
+            {
+                return progs;
+            }
 
             if (Environment.Is64BitOperatingSystem)
             {

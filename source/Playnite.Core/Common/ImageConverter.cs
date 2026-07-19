@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
-using Playnite.Common.Media.Icons;
 using Playnite.SDK;
+#if WINDOWS
+using Playnite.Common.Media.Icons;
+#endif
 
 namespace Playnite.Common
 {
@@ -24,6 +26,7 @@ namespace Playnite.Common
             FileSystem.CreateDirectory(Path.GetDirectoryName(outFileRoot));
             if (imagePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
             {
+#if WINDOWS
                 var icoPath = outFileRoot + ".ico";
                 if (IconExtractor.ExtractMainIconFromFile(imagePath, icoPath))
                 {
@@ -33,6 +36,10 @@ namespace Playnite.Common
                 {
                     return null;
                 }
+#else
+                logger.Warn("Executable icon extraction is only available on Windows.");
+                return null;
+#endif
             }
             else if (imagePath.EndsWith(".tga", StringComparison.OrdinalIgnoreCase))
             {

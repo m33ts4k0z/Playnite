@@ -1,5 +1,7 @@
 ﻿using Playnite.SDK;
+#if WINDOWS
 using Playnite.Native;
+#endif
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,9 +15,9 @@ namespace Playnite.Common
 {
     public static class CmdLineTools
     {
-        public const string TaskKill = "taskkill";
-        public const string Cmd = "cmd";
-        public const string IPConfig = "ipconfig";
+        public static string TaskKill => OperatingSystem.IsWindows() ? "taskkill" : "kill";
+        public static string Cmd => OperatingSystem.IsWindows() ? "cmd" : "/bin/sh";
+        public static string IPConfig => OperatingSystem.IsWindows() ? "ipconfig" : "ip";
     }
 
     public static class ProcessStarter
@@ -25,6 +27,7 @@ namespace Playnite.Common
         public static int ShellExecute(string cmdLine)
         {
             logger.Debug($"Executing shell command: {cmdLine}");
+#if WINDOWS
             var startInfo = new STARTUPINFO();
             var procInfo = new PROCESS_INFORMATION();
             var procAtt = new SECURITY_ATTRIBUTES();
@@ -65,6 +68,15 @@ namespace Playnite.Common
                     Kernel32.CloseHandle(procInfo.hThread);
                 }
             }
+#else
+            var shellInfo = new ProcessStartInfo("/bin/sh")
+            {
+                UseShellExecute = false
+            };
+            shellInfo.ArgumentList.Add("-c");
+            shellInfo.ArgumentList.Add(cmdLine);
+            return Process.Start(shellInfo).Id;
+#endif
         }
 
         public static Process StartUrl(string url)
@@ -72,13 +84,21 @@ namespace Playnite.Common
             logger.Debug($"Opening URL: {url}");
             try
             {
-                return Process.Start(url);
+                return Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
             }
             catch (Exception e)
             {
                 // There are some crash report with 0x80004005 error when opening standard URL.
                 logger.Error(e, "Failed to open URL.");
-                return Process.Start(CmdLineTools.Cmd, $"/C start {url}");
+                if (OperatingSystem.IsWindows())
+                {
+                    return Process.Start(CmdLineTools.Cmd, $"/C start {url}");
+                }
+
+                var opener = OperatingSystem.IsMacOS() ? "open" : "xdg-open";
+                var info = new ProcessStartInfo(opener) { UseShellExecute = false };
+                info.ArgumentList.Add(url);
+                return Process.Start(info);
             }
         }
 
@@ -109,12 +129,21 @@ namespace Playnite.Common
             var info = new ProcessStartInfo(startupPath)
             {
                 Arguments = arguments,
-                WorkingDirectory = string.IsNullOrEmpty(workDir) ? (new FileInfo(startupPath)).Directory.FullName : workDir
+                WorkingDirectory = GetWorkingDirectory(startupPath, workDir)
             };
 
             if (asAdmin)
             {
-                info.Verb = "runas";
+                if (OperatingSystem.IsWindows())
+                {
+                    info.UseShellExecute = true;
+                    info.Verb = "runas";
+                }
+                else
+                {
+                    info.FileName = "pkexec";
+                    info.Arguments = QuoteArgument(startupPath) + (string.IsNullOrWhiteSpace(arguments) ? string.Empty : " " + arguments);
+                }
             }
 
             return Process.Start(info);
@@ -137,7 +166,7 @@ namespace Playnite.Common
             var info = new ProcessStartInfo(startupPath)
             {
                 Arguments = arguments,
-                WorkingDirectory = string.IsNullOrEmpty(workDir) ? (new FileInfo(startupPath)).Directory.FullName : workDir
+                WorkingDirectory = GetWorkingDirectory(startupPath, workDir)
             };
 
             if (noWindow)
@@ -175,7 +204,7 @@ namespace Playnite.Common
             var info = new ProcessStartInfo(startupPath)
             {
                 Arguments = arguments,
-                WorkingDirectory = string.IsNullOrEmpty(workDir) ? (new FileInfo(startupPath)).Directory.FullName : workDir,
+                WorkingDirectory = GetWorkingDirectory(startupPath, workDir),
                 RedirectStandardError = true,
                 RedirectStandardOutput = true,
                 CreateNoWindow = true,
@@ -211,6 +240,21 @@ namespace Playnite.Common
                 stdError = stderr;
                 return proc.ExitCode;
             }
+        }
+
+        private static string GetWorkingDirectory(string executablePath, string requestedDirectory)
+        {
+            if (!string.IsNullOrEmpty(requestedDirectory))
+            {
+                return requestedDirectory;
+            }
+
+            return Path.GetDirectoryName(executablePath) ?? Environment.CurrentDirectory;
+        }
+
+        private static string QuoteArgument(string argument)
+        {
+            return "\"" + argument.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
         }
     }
 }

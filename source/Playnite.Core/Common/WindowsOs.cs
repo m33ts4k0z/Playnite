@@ -21,6 +21,11 @@ namespace Playnite.Common
         {
             get
             {
+                if (!OperatingSystem.IsWindows())
+                {
+                    return WindowsVersion.Unknown;
+                }
+
                 var version = Environment.OSVersion.Version;
                 if (version.Major == 6 && version.Minor == 1)
                 {
@@ -52,6 +57,11 @@ namespace Playnite.Common
 
         public static int GetWindowsReleaseId()
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                return 0;
+            }
+
             var relVal = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ReleaseId", "");
             if (relVal?.ToString().IsNullOrEmpty() == true)
             {
@@ -65,6 +75,11 @@ namespace Playnite.Common
 
         public static string GetWindowsProductName()
         {
+            if (!OperatingSystem.IsWindows())
+            {
+                return null;
+            }
+
             return Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ProductName", "")?.ToString();
         }
     }

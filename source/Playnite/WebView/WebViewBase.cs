@@ -1,5 +1,4 @@
 ﻿using CefSharp;
-using DiscordRPC;
 using Playnite.SDK;
 using System;
 using System.Collections.Generic;

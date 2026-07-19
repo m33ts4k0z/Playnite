@@ -77,16 +77,28 @@ namespace Playnite
 
         public GoogleImageDownloader()
         {
+#if WINDOWS
             webView = CreateOffscreenView(new WebViewSettings
             {
                 PassResourceContentStreamToCallback = true,
                 ShouldPassResourceContentFunc = (a) => UrlMatchesDdgImageSearch(a.Request.Url),
                 ResourceLoadedCallback = ResourceLoadedCallback
             });
+#else
+            webView = CreateOffscreenView(new WebViewSettings
+            {
+                CaptureResponseContent = true,
+                ShouldCaptureResponseContent = (request, response) => UrlMatchesDdgImageSearch(request.Url)
+            });
+            webView.ResourceLoaded += ResourceLoaded;
+#endif
         }
 
         public void Dispose()
         {
+#if !WINDOWS
+            webView.ResourceLoaded -= ResourceLoaded;
+#endif
             webView.Dispose();
         }
 
@@ -95,6 +107,7 @@ namespace Playnite
             return url?.Contains("duckduckgo.com/i.js", StringComparison.OrdinalIgnoreCase) == true;
         }
 
+#if WINDOWS
         private void ResourceLoadedCallback(WebViewResourceLoadedCallback args)
         {
             if (!UrlMatchesDdgImageSearch(args.Request.Url))
@@ -102,12 +115,31 @@ namespace Playnite
 
             args.ResponseContent.Seek(0, SeekOrigin.Begin);
             if (Serialization.TryFromJsonStream<DDGImageSearchResult>(args.ResponseContent, out var searchResult))
-                ddgResult.SetResult(searchResult);
+                ddgResult.TrySetResult(searchResult);
         }
+#else
+        private void ResourceLoaded(object sender, WebViewResourceLoadedEventArgs args)
+        {
+            if (!UrlMatchesDdgImageSearch(args.Request?.Url) || args.ResponseContent == null)
+            {
+                return;
+            }
+
+            if (args.ResponseContent.CanSeek)
+            {
+                args.ResponseContent.Seek(0, SeekOrigin.Begin);
+            }
+
+            if (Serialization.TryFromJsonStream<DDGImageSearchResult>(args.ResponseContent, out var searchResult))
+            {
+                ddgResult?.TrySetResult(searchResult);
+            }
+        }
+#endif
 
         public List<GoogleImage> GetDdgImages(string searchTerm, bool transparent = false)
         {
-            ddgResult = new TaskCompletionSource<DDGImageSearchResult>();
+            ddgResult = new TaskCompletionSource<DDGImageSearchResult>(TaskCreationOptions.RunContinuationsAsynchronously);
             var url = new Url("https://duckduckgo.com");
             url.SetQueryParam("ia", "images");
             url.SetQueryParam("iax", "images");
@@ -116,7 +148,11 @@ namespace Playnite
             if (transparent)
                 url.SetQueryParam("iaf", "type:transparent");
 
+#if WINDOWS
             webView.NavigateAndWait(url.ToString());
+#else
+            webView.NavigateAsync(new Uri(url.ToString())).GetAwaiter().GetResult();
+#endif
             if (!ddgResult.Task.Wait(TimeSpan.FromSeconds(10)))
                 return new List<GoogleImage>();
 
@@ -159,13 +195,23 @@ namespace Playnite
                 url.SetQueryParam("tbs", "ic:trans");
             }
 
+#if WINDOWS
             webView.NavigateAndWait(url.ToString());
-            if (webView.GetCurrentAddress().StartsWith(@"https://consent.google.com", StringComparison.OrdinalIgnoreCase))
+            var currentAddress = webView.GetCurrentAddress();
+#else
+            await webView.NavigateAsync(new Uri(url.ToString())).ConfigureAwait(false);
+            var currentAddress = webView.Address?.ToString();
+#endif
+            if (currentAddress?.StartsWith(@"https://consent.google.com", StringComparison.OrdinalIgnoreCase) == true)
             {
                 // This rejects Google's consent form for cookies
                 await webView.EvaluateScriptAsync(@"document.getElementsByTagName('form')[0].submit();");
                 await Task.Delay(3000);
+#if WINDOWS
                 webView.NavigateAndWait(url.ToString());
+#else
+                await webView.NavigateAsync(new Uri(url.ToString())).ConfigureAwait(false);
+#endif
             }
 
             var googleContent = await webView.GetPageSourceAsync();

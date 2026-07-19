@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,9 @@ namespace Playnite
 
     public static class PlayniteEnvironment
     {
+        [DllImport("libc")]
+        private static extern uint geteuid();
+
         public static ReleaseChannel ReleaseChannel
         {
             get
@@ -62,6 +66,11 @@ namespace Playnite
         {
             get
             {
+                if (!OperatingSystem.IsWindows())
+                {
+                    return geteuid() == 0;
+                }
+
                 using (var identity = WindowsIdentity.GetCurrent())
                 {
                     var principal = new WindowsPrincipal(identity);

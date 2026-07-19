@@ -1,57 +1,54 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
     <RootNamespace>Playnite</RootNamespace>
     <AssemblyName>Playnite.Core</AssemblyName>
     <LangVersion>7.3</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>x86;x64</Platforms>
     <OutputPath>bin\$(Platform)\$(Configuration)\</OutputPath>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
-    <!-- UI-free engine assembly: no UseWPF, no UI packages. Keeps the Playnite.*
-         namespaces so consumers compile unchanged. Windows-only internals
-         (Native P/Invoke, registry) are permitted here for now and get pushed
-         behind OS abstractions as Linux implementations arrive. -->
+    <!-- UI-free engine assembly: the portable target uses SDK v7 and excludes
+         Win32/COM implementations; the Windows target preserves SDK v6/WPF
+         compatibility while the side-by-side applications migrate. -->
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PlayniteSDK\Playnite.SDK.csproj" />
+    <ProjectReference Include="..\PlayniteSDK.V7\Playnite.SDK.V7.csproj" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <ProjectReference Include="..\PlayniteSDK\Playnite.SDK.csproj" Condition="'$(TargetFramework)' != 'net10.0'" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.5.2" />
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="Crc32.NET" Version="1.2.0" />
+    <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" />
     <PackageReference Include="LiteDB" Version="5.0.21" />
     <PackageReference Include="Markdig.Signed" Version="0.44.0" />
     <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.6.3" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.10" Condition="'$(TargetFramework)' == 'net10.0'" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.4" Condition="'$(TargetFramework)' == 'net10.0'" />
     <PackageReference Include="Flurl" Version="2.7.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Nett" Version="0.10.1" />
     <PackageReference Include="NLog" Version="4.7.6" />
     <PackageReference Include="Polly" Version="5.1.0" />
+    <PackageReference Include="SharpCompress" Version="0.50.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.5" />
-    <PackageReference Include="System.Management" Version="10.0.5" />
+    <PackageReference Include="System.Management" Version="10.0.5" Condition="'$(TargetFramework)' != 'net10.0'" />
     <PackageReference Include="YamlDotNet" Version="5.4.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="DiscordRPC">
-      <HintPath>..\..\references\DiscordRPC.dll</HintPath>
-    </Reference>
-    <Reference Include="SharpCompress">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\references\SharpCompress.dll</HintPath>
-    </Reference>
-    <Reference Include="SQLNado">
+    <Reference Include="SQLNado" Condition="'$(TargetFramework)' != 'net10.0'">
       <HintPath>..\..\references\SQLNado.dll</HintPath>
     </Reference>
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">
     <!-- Windows Script Host interop for .lnk shortcut handling (Programs2.cs).
          Interop types are embedded, so consumers need no extra runtime file.
          Requires VS MSBuild to build (dotnet CLI can't resolve COMReference). -->
@@ -66,6 +63,19 @@
     </COMReference>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <Compile Remove="Common\Programs2.cs" />
+    <Compile Remove="Common\Sqlite.cs" />
+    <Compile Remove="Emulators\EmulationDatabase.cs" />
+    <Compile Remove="Emulators\DatModels.cs" />
+    <Compile Remove="SystemIntegration.cs" />
+    <Compile Remove="Common\Media\Icons\IconExtractor.cs" />
+    <Compile Remove="Common\Media\Icons\IconUtil.cs" />
+    <Compile Remove="Common\TGASharpLib.cs" />
+    <Compile Remove="HdrUtilities.cs" />
+    <Compile Remove="Native\**\*.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Playnite" />
     <InternalsVisibleTo Include="Playnite.DesktopApp" />
@@ -77,7 +87,7 @@
     <None Update="Emulation\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">
     <ContentWithTargetPath Include="..\..\references\sqlite3.x86.dll" Condition="'$(Platform)' == 'x86'" Link="Dependencies\sqlite3.x86.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="sqlite3.x86.dll" />
     <ContentWithTargetPath Include="..\..\references\x64\sqlite3.x64.dll" Condition="'$(Platform)' == 'x64'" Link="Dependencies\sqlite3.x64.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="sqlite3.x64.dll" />
     <ContentWithTargetPath Include="..\..\references\SDL2.dll" Condition="'$(Platform)' == 'x86'" Link="Dependencies\SDL2.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2.dll" />

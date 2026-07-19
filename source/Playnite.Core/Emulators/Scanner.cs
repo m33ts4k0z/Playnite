@@ -1,6 +1,8 @@
 ﻿using Playnite.Common;
 using Playnite.Database;
+#if WINDOWS
 using Playnite.Native;
+#endif
 using Playnite.Scripting.PowerShell;
 using Playnite.SDK;
 using Playnite.SDK.Models;
@@ -1251,6 +1253,7 @@ namespace Playnite.Emulators
                 return false;
             }
 
+#if WINDOWS
             var longPath = @"\\?\" + path;
             var att = Kernel32.GetFileAttributesW(longPath);
             if ((Winnt.FILE_ATTRIBUTE_OFFLINE & att) > 0)
@@ -1294,6 +1297,7 @@ namespace Playnite.Emulators
                     logger.Error(e, $"Failed to get file metadata from Google Drive file. {longPath}");
                 }
             }
+#endif
 
             return true;
         }

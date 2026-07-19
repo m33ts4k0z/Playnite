@@ -5,12 +5,15 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+#if WINDOWS
 using Playnite.Native;
+#endif
 
 namespace Playnite.Common
 {
     public class SigningTools
     {
+#if WINDOWS
         private static uint WinVerifyTrust(string fileName)
         {
             Guid wintrust_action_generic_verify_v2 = new Guid("{00AAC56B-CD44-11d0-8CC2-00C04FC295EE}");
@@ -44,10 +47,17 @@ namespace Playnite.Common
 
             return result;
         }
+#endif
 
         public static bool IsTrusted(string path)
         {
+#if WINDOWS
             return WinVerifyTrust(path) == 0;
+#else
+            // Authenticode trust is a Windows policy. Never claim an
+            // unverifiable signature is trusted on another platform.
+            return false;
+#endif
         }
     }
 }

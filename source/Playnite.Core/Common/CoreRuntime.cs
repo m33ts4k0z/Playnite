@@ -14,6 +14,9 @@ namespace Playnite
         public static Func<Version> ApplicationVersion { get; set; } = () =>
             Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0);
 
+        public static Func<string> ApplicationExecutablePath { get; set; } = () =>
+            Environment.ProcessPath ?? Assembly.GetEntryAssembly()?.Location;
+
         /// <summary>
         /// Host-supplied system info collector; screen enumeration needs the UI
         /// framework so the full implementation lives in the host.

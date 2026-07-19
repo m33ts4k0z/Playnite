@@ -79,6 +79,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playnite.SDK.V7.Host.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playnite.Avalonia.App.V7.Tests", "Tests\Playnite.Avalonia.App.V7.Tests\Playnite.Avalonia.App.V7.Tests.csproj", "{3D92C1C5-6FE1-4DBF-B66B-493D3ED6204E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playnite.Core.Portable.Tests", "Tests\Playnite.Core.Portable.Tests\Playnite.Core.Portable.Tests.csproj", "{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -433,6 +435,18 @@ Global
 		{3D92C1C5-6FE1-4DBF-B66B-493D3ED6204E}.Release|x64.ActiveCfg = Release|x64
 		{3D92C1C5-6FE1-4DBF-B66B-493D3ED6204E}.Release|x64.Build.0 = Release|x64
 		{3D92C1C5-6FE1-4DBF-B66B-493D3ED6204E}.Release|x86.ActiveCfg = Release|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Debug|Any CPU.Build.0 = Debug|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Debug|x64.ActiveCfg = Debug|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Debug|x64.Build.0 = Debug|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Debug|x86.ActiveCfg = Debug|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Debug|x86.Build.0 = Debug|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Release|Any CPU.ActiveCfg = Release|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Release|Any CPU.Build.0 = Release|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Release|x64.ActiveCfg = Release|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Release|x64.Build.0 = Release|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Release|x86.ActiveCfg = Release|x64
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -454,6 +468,7 @@ Global
 		{D18E6A25-0248-4C47-8D75-8E17D7420462} = {FBE3E4C8-611E-435D-B47C-FE006AAA8C4A}
 		{CFDC1664-156F-4432-A39A-799C1569911E} = {FBE3E4C8-611E-435D-B47C-FE006AAA8C4A}
 		{3D92C1C5-6FE1-4DBF-B66B-493D3ED6204E} = {FBE3E4C8-611E-435D-B47C-FE006AAA8C4A}
+		{861F5D4C-4C53-4D40-87DE-A475CA7F70B6} = {FBE3E4C8-611E-435D-B47C-FE006AAA8C4A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3300FF38-9F6F-4C0F-87F3-776D6C64846D}

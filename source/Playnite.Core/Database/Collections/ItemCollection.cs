@@ -1,7 +1,6 @@
 ﻿using LiteDB;
 using Playnite.SDK;
 using Playnite.SDK.Models;
-using SqlNado;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;

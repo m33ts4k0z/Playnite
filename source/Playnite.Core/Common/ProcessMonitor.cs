@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Management;
 using System.Threading;
 using System.IO;
 using Playnite.SDK;
@@ -84,7 +83,13 @@ namespace Playnite.Common
 
             if (FileSystem.DirectoryExists(dir))
             {
-                var executables = Directory.GetFiles(dir, "*.exe", SearchOption.AllDirectories);
+                var executables = OperatingSystem.IsWindows()
+                    ? Directory.GetFiles(dir, "*.exe", SearchOption.AllDirectories).ToList()
+                    : Programs.GetExecutablesFromFolder(dir, SearchOption.AllDirectories, CancellationToken.None)
+                        .GetAwaiter().GetResult()
+                        .Select(program => program.Path)
+                        .Where(path => !string.IsNullOrWhiteSpace(path))
+                        .ToList();
                 procNames = executables.Select(a => Path.GetFileName(a)).ToList();
                 procNamesNoExt = executables.Select(a => Path.GetFileNameWithoutExtension(a)).ToList();
             }
@@ -154,7 +159,7 @@ namespace Playnite.Common
             foreach (var process in Process.GetProcesses().Where(a => a.SessionId != 0))
             {
                 if (process.TryGetMainModuleFileName(out var procPath) &&
-                    procPath.StartsWith(dir, StringComparison.OrdinalIgnoreCase))
+                    procPath.StartsWith(dir, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
                 {
                     return process.Id;
                 }

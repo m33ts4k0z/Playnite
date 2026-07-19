@@ -53,21 +53,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="DiscordRPC">
-      <HintPath>..\..\references\DiscordRPC.dll</HintPath>
-    </Reference>
     <Reference Include="HtmlRenderer">
       <HintPath>..\..\references\HtmlRenderer.dll</HintPath>
     </Reference>
     <Reference Include="HtmlRenderer.WPF">
       <HintPath>..\..\references\HtmlRenderer.WPF.dll</HintPath>
-    </Reference>
-    <Reference Include="SharpCompress">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\references\SharpCompress.dll</HintPath>
-    </Reference>
-    <Reference Include="SQLNado">
-      <HintPath>..\..\references\SQLNado.dll</HintPath>
     </Reference>
   </ItemGroup>
 

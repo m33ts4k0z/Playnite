@@ -13,7 +13,6 @@ using Microsoft.PowerShell;
 using Playnite.Common;
 using Playnite.SDK;
 using System.Diagnostics;
-using Playnite.Native;
 
 namespace Playnite.Scripting.PowerShell
 {
@@ -94,15 +93,33 @@ namespace Playnite.Scripting.PowerShell
         {
             get
             {
-                return Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\PowerShell\3", "Install", null)?.ToString() == "1";
+                if (OperatingSystem.IsWindows())
+                {
+                    return Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\PowerShell\3", "Install", null)?.ToString() == "1";
+                }
+
+                return FindExecutableOnPath("pwsh") != null;
             }
+        }
+
+        private static string FindExecutableOnPath(string executableName)
+        {
+            var path = Environment.GetEnvironmentVariable("PATH");
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            return path.Split(Path.PathSeparator)
+                .Select(directory => Path.Combine(directory, executableName))
+                .FirstOrDefault(File.Exists);
         }
 
         public PowerShellRuntime(string runspaceName)
         {
             if (!IsInstalled)
             {
-                throw new Exception("PowerShell 5.1 is not installed.");
+                throw new Exception(OperatingSystem.IsWindows() ? "PowerShell 5.1 is not installed." : "PowerShell (pwsh) is not installed.");
             }
 
             initialSessionState = InitialSessionState.CreateDefault();
@@ -132,7 +149,9 @@ namespace Playnite.Scripting.PowerShell
             interactiveRuntime = new PowerShellRuntime("PSInteractive");
             variables?.ForEach(a => interactiveRuntime.SetVariable(a.Key, a.Value));
             interactiveProcess = new Process();
-            interactiveProcess.StartInfo.FileName = @"c:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe";
+            interactiveProcess.StartInfo.FileName = OperatingSystem.IsWindows()
+                ? @"c:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+                : FindExecutableOnPath("pwsh");
 
             // This is really sad solution, but there's currently no way how to initialize these variables automatically, because:
             // - Enter-PSHostProcess is blocking so we can't pass any command after it
@@ -157,9 +176,12 @@ namespace Playnite.Scripting.PowerShell
             };
 
             interactiveProcess.Start();
-            ClipboardService.SetText(@"$PlayniteRunspace = Get-Runspace -Name 'PSInteractive'
+            if (OperatingSystem.IsWindows())
+            {
+                ClipboardService.SetText(@"$PlayniteRunspace = Get-Runspace -Name 'PSInteractive'
 $PlayniteApi = $PlayniteRunspace.SessionStateProxy.GetVariable('PlayniteApi')
 ");
+            }
         }
 
         public void ImportModule(string path)

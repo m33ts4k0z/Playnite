@@ -75,11 +75,13 @@ namespace Playnite
             // parent directory.)
             ProgramPath = AppDomain.CurrentDomain.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             UninstallerPath = Path.Combine(ProgramPath, "unins000.exe");
-            IsPortable = !File.Exists(UninstallerPath);
+            IsPortable = OperatingSystem.IsWindows() && !File.Exists(UninstallerPath);
 
             LocalizationsPath = Path.Combine(ProgramPath, LocalizationsDirName);
-            DesktopExecutablePath = Path.Combine(ProgramPath, "Playnite.DesktopApp.exe");
-            FullscreenExecutablePath = Path.Combine(ProgramPath, "Playnite.FullscreenApp.exe");
+            DesktopExecutablePath = Path.Combine(ProgramPath,
+                OperatingSystem.IsWindows() ? "Playnite.DesktopApp.exe" : "Playnite.DesktopApp.Avalonia");
+            FullscreenExecutablePath = Path.Combine(ProgramPath,
+                OperatingSystem.IsWindows() ? "Playnite.FullscreenApp.exe" : "Playnite.FullscreenApp.Avalonia");
             PlayniteAssemblyPath = Path.Combine(ProgramPath, "Playnite.dll");
             PlayniteSDKAssemblyPath = Path.Combine(ProgramPath, "Playnite.SDK.dll");
             ExtensionsProgramPath = Path.Combine(ProgramPath, ExtensionsDirName);

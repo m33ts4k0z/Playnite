@@ -10,10 +10,8 @@ using Playnite.Common;
 using Playnite.SDK.Plugins;
 using System.Net;
 using Playnite.Common.Web;
-using System.Drawing.Imaging;
 using System.Threading;
 using System.Collections.Concurrent;
-using Playnite.Common.Media.Icons;
 using System.Reflection;
 using SdkModels = Playnite.SDK.Models;
 
@@ -436,7 +434,9 @@ namespace Playnite.Database
             }
             else
             {
-                return @"%AppData%\Playnite\library";
+                return OperatingSystem.IsWindows()
+                    ? @"%AppData%\Playnite\library"
+                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Playnite", "library");
             }
         }
 

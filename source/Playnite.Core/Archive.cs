@@ -15,7 +15,7 @@ namespace Playnite
     {
         public static List<string> GetArchiveFiles(string archivePath)
         {
-            using (var archive = ArchiveFactory.Open(archivePath))
+            using (var archive = ArchiveFactory.OpenArchive(archivePath))
             {
                 return archive.Entries.Where(a => !a.IsDirectory).Select(a => a.Key).ToList();
             }
@@ -23,7 +23,7 @@ namespace Playnite
 
         public static Tuple<Stream, IDisposable> GetEntryStream(string archivePath, string entryName)
         {
-            var archive = ArchiveFactory.Open(archivePath);
+            var archive = ArchiveFactory.OpenArchive(archivePath);
             var entry = archive.Entries.FirstOrDefault(a => a.Key == entryName);
             if (entry == null)
             {

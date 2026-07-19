@@ -1,0 +1,235 @@
+using NUnit.Framework;
+using Playnite.Common;
+using Playnite.Database;
+using Playnite.Emulators;
+using Playnite.SDK.Data;
+using Playnite.SDK.Models;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
+
+namespace Playnite.Core.Portable.Tests
+{
+    [TestFixture]
+    public class PortableCoreTests
+    {
+        private string temporaryDirectory;
+
+        [SetUp]
+        public void SetUp()
+        {
+            temporaryDirectory = Path.Combine(Path.GetTempPath(), "PlaynitePortableTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(temporaryDirectory);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (Directory.Exists(temporaryDirectory))
+            {
+                Directory.Delete(temporaryDirectory, true);
+            }
+        }
+
+        [Test]
+        public void PortableAssemblyDoesNotImportWindowsNativeLibraries()
+        {
+            var windowsLibraries = new[] { "kernel32", "user32", "shell32", "ntdll", "shlwapi", "advapi32", "wintrust" };
+            var imports = typeof(GameDatabase).Assembly.GetTypes()
+                .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance))
+                .Select(method => method.GetCustomAttribute<DllImportAttribute>())
+                .Where(attribute => attribute != null)
+                .Select(attribute => attribute.Value)
+                .ToList();
+
+            Assert.That(imports.Where(library => windowsLibraries.Any(windowsLibrary =>
+                library.IndexOf(windowsLibrary, StringComparison.OrdinalIgnoreCase) >= 0)), Is.Empty);
+        }
+
+        [Test]
+        public void DesktopShortcutRoundTripsCommandData()
+        {
+            var shortcutPath = Path.Combine(temporaryDirectory, "sample.desktop");
+            Programs.CreateShortcut("/opt/My Game/game", "--profile \"Player One\"", "/opt/My Game/icon.png", shortcutPath);
+
+            var shortcut = Programs.GetLnkShortcutData(shortcutPath);
+
+            Assert.That(shortcut.Path, Is.EqualTo("/opt/My Game/game"));
+            Assert.That(shortcut.Arguments, Is.EqualTo("--profile \"Player One\""));
+            Assert.That(shortcut.Icon, Is.EqualTo("/opt/My Game/icon.png"));
+            Assert.That(shortcut.WorkDir, Is.EqualTo(Path.GetDirectoryName("/opt/My Game/game")));
+        }
+
+        [Test]
+        public void DesktopDiscoverySkipsHiddenEntries()
+        {
+            File.WriteAllText(Path.Combine(temporaryDirectory, "visible.desktop"),
+                "[Desktop Entry]\nType=Application\nName=Visible\nExec=/opt/visible\n");
+            File.WriteAllText(Path.Combine(temporaryDirectory, "hidden.desktop"),
+                "[Desktop Entry]\nType=Application\nName=Hidden\nExec=/opt/hidden\nNoDisplay=true\n");
+
+            var programs = Programs.GetShortcutProgramsFromFolder(temporaryDirectory).GetAwaiter().GetResult();
+
+            Assert.That(programs.Select(program => program.Name), Is.EqualTo(new[] { "Visible" }));
+        }
+
+        [Test]
+        public void PortablePatternMatchingSupportsMultipleGlobs()
+        {
+            Assert.That(Paths.MathcesFilePattern("game.CUE", "*.iso;*.cue"), Is.True);
+            Assert.That(Paths.MathcesFilePattern("game.zip", "*.iso;*.cue"), Is.False);
+            Assert.That(Paths.MathcesFilePattern("disc1.bin", "disc?.bin"), Is.True);
+        }
+
+        [Test]
+        public void CoreDatabasePersistsOnPortableRuntime()
+        {
+            var databasePath = Path.Combine(temporaryDirectory, "library");
+            var gameId = Guid.NewGuid();
+            using (var database = new GameDatabase(databasePath))
+            {
+                database.OpenDatabase();
+                database.Games.Add(new Game("Linux Test") { Id = gameId });
+            }
+
+            using (var database = new GameDatabase(databasePath))
+            {
+                database.OpenDatabase();
+                Assert.That(database.Games.Get(gameId)?.Name, Is.EqualTo("Linux Test"));
+            }
+        }
+
+        [Test]
+        public void CurrentArchiveProviderReadsZipEntries()
+        {
+            var archivePath = Path.Combine(temporaryDirectory, "sample.zip");
+            using (var archive = ZipFile.Open(archivePath, ZipArchiveMode.Create))
+            {
+                var entry = archive.CreateEntry("folder/data.txt");
+                using (var writer = new StreamWriter(entry.Open()))
+                {
+                    writer.Write("portable archive");
+                }
+            }
+
+            Assert.That(Archive.GetArchiveFiles(archivePath), Is.EqualTo(new[] { "folder/data.txt" }));
+            var streamAndArchive = Archive.GetEntryStream(archivePath, "folder/data.txt");
+            using (streamAndArchive.Item2)
+            using (streamAndArchive.Item1)
+            using (var reader = new StreamReader(streamAndArchive.Item1))
+            {
+                Assert.That(reader.ReadToEnd(), Is.EqualTo("portable archive"));
+            }
+        }
+
+        [Test]
+        public void SqliteUsesThePlatformNativeLibrary()
+        {
+            var databasePath = Path.Combine(temporaryDirectory, "portable.db");
+            using (var database = new Sqlite(databasePath, SqliteOpenFlags.ReadWrite | SqliteOpenFlags.Create))
+            {
+                var result = database.Query<ScalarResult>("SELECT ? AS Value", 42);
+                Assert.That(result.Single().Value, Is.EqualTo(42));
+            }
+        }
+
+        [Test]
+        public void PortableEmulationDatabaseUsesParameterizedQueries()
+        {
+            var databasePath = Path.Combine(temporaryDirectory, "Nintendo.db");
+            using (var database = new Sqlite(databasePath, SqliteOpenFlags.ReadWrite | SqliteOpenFlags.Create))
+            {
+                database.Query<ScalarResult>(
+                    "CREATE TABLE DatGame (Id INTEGER, Name TEXT, Region TEXT, ReleaseYear TEXT, Serial TEXT, RomCrc TEXT, RomName TEXT)");
+                database.Query<ScalarResult>(
+                    "INSERT INTO DatGame (Id, Name, Region, ReleaseYear, Serial, RomCrc, RomName) " +
+                    "VALUES (1, 'Example', 'World', '2026', $p0, 'ABCD', 'Example (World).rom')",
+                    "SER-001");
+            }
+
+            using (var database = EmulationDatabase.GetDatabase("Nintendo", temporaryDirectory))
+            {
+                Assert.That(database.GetBySerial("ser-001").Single().Name, Is.EqualTo("Example"));
+                Assert.That(database.GetByRomNamePartial("world").Single().RomCrc, Is.EqualTo("ABCD"));
+            }
+        }
+
+        [Test]
+        public void LinuxProcessInspectionUsesProcfs()
+        {
+            if (!OperatingSystem.IsLinux())
+            {
+                Assert.Ignore("Linux-specific runtime contract.");
+            }
+
+            using (var process = Process.GetCurrentProcess())
+            {
+                Assert.That(process.TryGetParentId(out var parentId), Is.True);
+                Assert.That(parentId, Is.GreaterThan(0));
+                Assert.That(process.GetCommandLine(), Is.Not.Empty);
+                Assert.That(process.TryGetMainModuleFileName(out var executable), Is.True);
+                Assert.That(executable, Is.Not.Empty);
+            }
+        }
+
+        [Test]
+        public void LinuxPathDefaultsUseNativeLocationsAndSeparators()
+        {
+            if (!OperatingSystem.IsLinux())
+            {
+                Assert.Ignore("Linux-specific runtime contract.");
+            }
+
+            Assert.That(Paths.FixSeparators(@"games\library\title"), Is.EqualTo("games/library/title"));
+            Assert.That(GameDatabase.GetDefaultPath(false, null), Does.Not.Contain("%AppData%"));
+            Assert.That(Path.IsPathFullyQualified(GameDatabase.GetDefaultPath(false, null)), Is.True);
+            Assert.That(PlaynitePaths.IsPortable, Is.False);
+        }
+
+        [Test]
+        public void LinuxRegistrationUsesSeparateXdgEntries()
+        {
+            if (!OperatingSystem.IsLinux())
+            {
+                Assert.Ignore("Linux-specific runtime contract.");
+            }
+
+            var oldDataHome = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
+            var oldConfigHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+            var oldExecutable = CoreRuntime.ApplicationExecutablePath;
+            try
+            {
+                var dataHome = Path.Combine(temporaryDirectory, "data");
+                var configHome = Path.Combine(temporaryDirectory, "config");
+                Environment.SetEnvironmentVariable("XDG_DATA_HOME", dataHome);
+                Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", configHome);
+                CoreRuntime.ApplicationExecutablePath = () => "/opt/playnite/playnite";
+
+                SystemIntegration.RegisterPlayniteUriProtocol();
+                SystemIntegration.RegisterFileExtensions();
+                SystemIntegration.SetBootupStateRegistration(true, true);
+
+                var applications = Path.Combine(dataHome, "applications");
+                Assert.That(File.Exists(Path.Combine(applications, "playnite-uri.desktop")), Is.True);
+                Assert.That(File.Exists(Path.Combine(applications, "playnite-extension.desktop")), Is.True);
+                Assert.That(File.Exists(Path.Combine(configHome, "autostart", "playnite.desktop")), Is.True);
+                Assert.That(File.Exists(Path.Combine(dataHome, "mime", "packages", "playnite.xml")), Is.True);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("XDG_DATA_HOME", oldDataHome);
+                Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", oldConfigHome);
+                CoreRuntime.ApplicationExecutablePath = oldExecutable;
+            }
+        }
+
+        public class ScalarResult
+        {
+            public int Value { get; set; }
+        }
+    }
+}
