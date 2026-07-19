@@ -132,6 +132,14 @@ public class WpfProfileImportTests
     }
 
     [Test]
+    public void Read_FullscreenVolume_IntegerOneRemainsOnePercent()
+    {
+        WriteFile("fullscreenConfig.json", """{ "InterfaceVolume": 1 }""");
+
+        Assert.That(WpfProfileImport.Read(profileDir).FullscreenInterfaceVolume, Is.EqualTo(1));
+    }
+
+    [Test]
     public void Read_FullscreenLayoutAndVisualDefaults()
     {
         WriteFile("config.json", """{ "FullscreenItemSpacing": 24 }""");

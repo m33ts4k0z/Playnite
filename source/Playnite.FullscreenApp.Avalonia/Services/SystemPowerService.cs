@@ -62,10 +62,10 @@ public sealed class SystemPowerService
     {
         var (fileName, arguments) = action switch
         {
-            SystemPowerAction.Shutdown => ("systemctl", new[] { "poweroff" }),
-            SystemPowerAction.Restart => ("systemctl", new[] { "reboot" }),
-            SystemPowerAction.Suspend => ("systemctl", new[] { "suspend" }),
-            SystemPowerAction.Hibernate => ("systemctl", new[] { "hibernate" }),
+            SystemPowerAction.Shutdown => ("systemctl", new[] { "--no-block", "poweroff" }),
+            SystemPowerAction.Restart => ("systemctl", new[] { "--no-block", "reboot" }),
+            SystemPowerAction.Suspend => ("systemctl", new[] { "--no-block", "suspend" }),
+            SystemPowerAction.Hibernate => ("systemctl", new[] { "--no-block", "hibernate" }),
             SystemPowerAction.Lock => ("loginctl", new[] { "lock-session", sessionId ?? string.Empty }),
             SystemPowerAction.Logout => ("loginctl", new[] { "terminate-session", sessionId ?? string.Empty }),
             _ => throw new ArgumentOutOfRangeException(nameof(action), action, null)
@@ -86,10 +86,7 @@ public sealed class SystemPowerService
     private static SystemPowerResult StartLinuxCommand(SystemPowerAction action)
     {
         var sessionId = Environment.GetEnvironmentVariable("XDG_SESSION_ID");
-        var process = Process.Start(CreateLinuxStartInfo(action, sessionId));
-        return process == null
-            ? new SystemPowerResult(false, $"The {action} command could not be started.")
-            : new SystemPowerResult(true, $"{action} was requested.");
+        return RunCommand(CreateLinuxStartInfo(action, sessionId), action);
     }
 
     private static SystemPowerResult ExecuteWindows(SystemPowerAction action)
@@ -124,10 +121,25 @@ public sealed class SystemPowerService
         startInfo.ArgumentList.Add(operation);
         startInfo.ArgumentList.Add("/t");
         startInfo.ArgumentList.Add("0");
-        var process = Process.Start(startInfo);
-        return process == null
-            ? new SystemPowerResult(false, "The Windows shutdown command could not be started.")
-            : new SystemPowerResult(true, "The Windows power action was requested.");
+        return RunCommand(startInfo, operation == "/r" ? SystemPowerAction.Restart : SystemPowerAction.Shutdown);
+    }
+
+    private static SystemPowerResult RunCommand(ProcessStartInfo startInfo, SystemPowerAction action)
+    {
+        using var process = Process.Start(startInfo);
+        if (process == null)
+        {
+            return new SystemPowerResult(false, $"The {action} command could not be started.");
+        }
+
+        if (!process.WaitForExit(5_000))
+        {
+            return new SystemPowerResult(false, $"The {action} command did not acknowledge the request in time.");
+        }
+
+        return process.ExitCode == 0
+            ? new SystemPowerResult(true, $"{action} was requested.")
+            : new SystemPowerResult(false, $"The {action} command exited with code {process.ExitCode}.");
     }
 
     private static SystemPowerResult WindowsFailure(string action) =>

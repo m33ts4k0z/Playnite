@@ -60,7 +60,8 @@
                                     <TextBlock Text="{DynamicResource LOCFullscreenLibrary}"
                                                Foreground="{DynamicResource FullscreenMutedTextBrush}"
                                                HorizontalAlignment="Right" />
-                                    <TextBlock Text="{Binding LibrarySummary}" FontSize="20"
+                                    <TextBlock Text="{Binding LibrarySummary}"
+                                               FontSize="{DynamicResource FullscreenFontSize}"
                                                Foreground="{DynamicResource FullscreenTextBrush}"
                                                HorizontalAlignment="Right" />
                                 </StackPanel>
@@ -120,7 +121,7 @@
                                         <StackPanel Grid.Row="1" Margin="14,11" Spacing="3">
                                             <TextBlock Text="{Binding Name}"
                                                        IsVisible="{Binding ShowTitle}"
-                                                       FontSize="18"
+                                                       FontSize="{DynamicResource FullscreenFontSizeSmall}"
                                                        FontWeight="SemiBold"
                                                        TextTrimming="CharacterEllipsis"
                                                        Foreground="{DynamicResource FullscreenTextBrush}" />

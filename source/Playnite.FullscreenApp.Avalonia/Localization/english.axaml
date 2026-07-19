@@ -29,6 +29,7 @@
     <x:String x:Key="LOCFullscreenShowBattery">Show battery status</x:String>
     <x:String x:Key="LOCFullscreenShowBatteryPercentage">Show battery percentage</x:String>
     <x:String x:Key="LOCFullscreenMinimizeAfterGameStartup">Minimize after a game starts</x:String>
+    <x:String x:Key="LOCFullscreenSkiaImageSettingsNote">Image scaler selection and the legacy Fullscreen async-image switch do not apply to the Avalonia renderer; Skia manages scaling and image presentation.</x:String>
     <x:String x:Key="LOCFullscreenHorizontalLayout">Use horizontal library layout</x:String>
     <x:String x:Key="LOCFullscreenColumns">Columns</x:String>
     <x:String x:Key="LOCFullscreenRows">Rows</x:String>

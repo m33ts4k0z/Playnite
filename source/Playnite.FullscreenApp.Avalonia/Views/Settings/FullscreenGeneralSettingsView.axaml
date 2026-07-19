@@ -22,5 +22,8 @@
                   IsChecked="{Binding ShowBatteryPercentage, Mode=TwoWay}" />
         <CheckBox Content="{DynamicResource LOCFullscreenMinimizeAfterGameStartup}"
                   IsChecked="{Binding MinimizeAfterGameStartup, Mode=TwoWay}" />
+        <TextBlock Text="{DynamicResource LOCFullscreenSkiaImageSettingsNote}"
+                   TextWrapping="Wrap"
+                   Foreground="{DynamicResource FullscreenMutedTextBrush}" />
     </StackPanel>
 </UserControl>

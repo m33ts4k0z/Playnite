@@ -358,7 +358,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
                 runtimeHost?.Notifications.Remove(message.Id);
             }
         });
-        MinimizeCommand = new RelayCommand(() => MinimizeRequested?.Invoke(this, EventArgs.Empty));
+        MinimizeCommand = new RelayCommand(Minimize);
         RestartCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Restart));
         ShutdownCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Shutdown));
         SuspendCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Suspend));
@@ -715,6 +715,12 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
                     PowerActionRequested?.Invoke(action);
                 }
             });
+    }
+
+    private void Minimize()
+    {
+        CloseOverlays();
+        MinimizeRequested?.Invoke(this, EventArgs.Empty);
     }
 
     private void OpenMenuInformation(string caption, string message) =>

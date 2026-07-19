@@ -180,7 +180,8 @@ public static class WpfProfileImport
             var value = token.Value<double>();
             // WPF persists these values as 0..1 floats. Also accept an integer
             // percentage so profiles written by preview builds remain usable.
-            return Math.Clamp((int)Math.Round(value <= 1 ? value * 100 : value), 0, 100);
+            var percentage = token.Type == JTokenType.Float && value <= 1 ? value * 100 : value;
+            return Math.Clamp((int)Math.Round(percentage), 0, 100);
         });
 
     private static WindowPlacement ReadMainWindowPlacement(string userDataDirectory) =>

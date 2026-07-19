@@ -190,7 +190,7 @@ internal static class FullscreenPilotSelfTest
         var linuxLock = SystemPowerService.CreateLinuxStartInfo(SystemPowerAction.Lock, "7");
         Record(results, "Menu actions are safe and the cross-platform power bridge is explicit", () =>
             toolsDialogOpened && restartConfirmationOpened && !powerActionRaised &&
-            linuxShutdown.FileName == "systemctl" && linuxShutdown.ArgumentList.SequenceEqual(new[] { "poweroff" }) &&
+            linuxShutdown.FileName == "systemctl" && linuxShutdown.ArgumentList.SequenceEqual(new[] { "--no-block", "poweroff" }) &&
             linuxLock.FileName == "loginctl" && linuxLock.ArgumentList.SequenceEqual(new[] { "lock-session", "7" }) &&
             window.PowerService.IsSupported(SystemPowerAction.Shutdown)
                 ? "tools opens a controller dialog, destructive actions confirm, and Linux commands use systemd session APIs"

@@ -776,8 +776,12 @@ internal static class DesktopPilotSelfTest
         viewModel.MetadataDownload.DownloadBackgroundsImmediately = true;
         var metadataDownloaded = await viewModel.MetadataDownload.StartDownloadAsync();
         var downloadedGame = library.Database.Games[metadataGame.Id];
-        var downloadedCoverPath = library.Database.GetFullFilePath(downloadedGame.CoverImage);
-        var downloadedIconPath = library.Database.GetFullFilePath(downloadedGame.Icon);
+        var downloadedCoverPath = string.IsNullOrWhiteSpace(downloadedGame.CoverImage)
+            ? null
+            : library.Database.GetFullFilePath(downloadedGame.CoverImage);
+        var downloadedIconPath = string.IsNullOrWhiteSpace(downloadedGame.Icon)
+            ? null
+            : library.Database.GetFullFilePath(downloadedGame.Icon);
 
         Record(results, "Provider metadata and remote cover/icon files persist through Core", () =>
         {
@@ -791,7 +795,9 @@ internal static class DesktopPilotSelfTest
                 downloadedGame.Description == PilotMetadataPlugin.DownloadedDescription &&
                 downloadedGame.CriticScore == 93 &&
                 downloadedGenreNames.Contains(PilotMetadataPlugin.DownloadedGenre) &&
+                !string.IsNullOrWhiteSpace(downloadedGame.CoverImage) &&
                 !downloadedGame.CoverImage.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(downloadedGame.Icon) &&
                 !downloadedGame.Icon.StartsWith("http", StringComparison.OrdinalIgnoreCase) &&
                 File.Exists(downloadedCoverPath) &&
                 File.Exists(downloadedIconPath) &&

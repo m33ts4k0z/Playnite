@@ -169,7 +169,7 @@ public sealed class MainWindow : Window
 
     private void ApplyMonitorPlacement()
     {
-        if (options.Windowed || options.SelfTest || settings.UsePrimaryDisplay)
+        if (options.Windowed || options.SelfTest)
         {
             return;
         }
@@ -180,15 +180,25 @@ public sealed class MainWindow : Window
             return;
         }
 
-        var index = MonitorSelection.Resolve(settings.Monitor, screens.Count);
-        if (index == null)
+        // Move to the requested display in the normal state, then let FullScreen
+        // fill that screen — a fullscreen window ignores an in-place move.
+        var target = Screens.Primary;
+        if (!settings.UsePrimaryDisplay)
+        {
+            var index = MonitorSelection.Resolve(settings.Monitor, screens.Count);
+            if (index == null)
+            {
+                return;
+            }
+
+            target = screens[index.Value];
+        }
+
+        if (target == null)
         {
             return;
         }
 
-        // Move to the requested display in the normal state, then let FullScreen
-        // fill that screen — a fullscreen window ignores an in-place move.
-        var target = screens[index.Value];
         WindowState = WindowState.Normal;
         Position = target.Bounds.Position;
         WindowState = WindowState.FullScreen;
@@ -210,7 +220,8 @@ public sealed class MainWindow : Window
         var names = screens == null
             ? Array.Empty<string>()
             : screens.Select((screen, index) =>
-                $"Display {index + 1} — {screen.Bounds.Width}×{screen.Bounds.Height}").ToArray();
+                $"Display {index + 1}{(screen.IsPrimary ? " (Primary)" : string.Empty)} — " +
+                $"{screen.Bounds.Width}×{screen.Bounds.Height}").ToArray();
         viewModel.Settings.General.SetMonitors(names);
     }
 
