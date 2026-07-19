@@ -12,7 +12,10 @@
                     <BlurEffect Radius="{Binding BackgroundImageBlurRadius}" />
                 </foundation:GameCoverImage.Effect>
             </foundation:GameCoverImage>
-            <Border Background="Black" Opacity="{Binding SelectedGame.WindowBackgroundDarkOpacity}"
+            <!-- FallbackValue keeps the overlay transparent when no game is selected;
+                 a failed binding would otherwise leave Opacity at its default of 1. -->
+            <Border Background="Black"
+                    Opacity="{Binding SelectedGame.WindowBackgroundDarkOpacity, FallbackValue=0}"
                     IsVisible="{Binding ShowWindowBackgroundImage}" />
         </Grid>
     </ControlTemplate>
