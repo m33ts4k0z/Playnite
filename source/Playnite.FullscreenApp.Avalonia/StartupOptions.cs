@@ -39,10 +39,8 @@ internal sealed class StartupOptions
             }
         }
 
-        options.UserDataDirectory ??= Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Playnite");
-        options.LibraryPath ??= Path.Combine(options.UserDataDirectory, "library");
+        options.UserDataDirectory ??= Playnite.Avalonia.App.Services.CanonicalProfile.ResolveDefaultUserDataDirectory();
+        options.LibraryPath ??= Playnite.Avalonia.App.Services.CanonicalProfile.ResolveDefaultLibraryPath(options.UserDataDirectory);
         return options;
     }
 }
