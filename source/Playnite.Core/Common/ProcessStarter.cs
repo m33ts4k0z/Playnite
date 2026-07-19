@@ -75,7 +75,7 @@ namespace Playnite.Common
             };
             shellInfo.ArgumentList.Add("-c");
             shellInfo.ArgumentList.Add(cmdLine);
-            return Process.Start(shellInfo).Id;
+            return Process.Start(PrepareForFlatpak(shellInfo)).Id;
 #endif
         }
 
@@ -146,7 +146,7 @@ namespace Playnite.Common
                 }
             }
 
-            return Process.Start(info);
+            return Process.Start(PrepareForFlatpak(info));
         }
 
         public static int StartProcessWait(string path, string arguments, string workDir, bool noWindow = false)
@@ -175,7 +175,7 @@ namespace Playnite.Common
                 info.UseShellExecute = false;
             }
 
-            using (var proc = Process.Start(info))
+            using (var proc = Process.Start(PrepareForFlatpak(info)))
             {
                 proc.WaitForExit();
                 return proc.ExitCode;
@@ -215,7 +215,7 @@ namespace Playnite.Common
             var stderr = string.Empty;
             using (var proc = new Process())
             {
-                proc.StartInfo = info;
+                proc.StartInfo = PrepareForFlatpak(info);
                 proc.OutputDataReceived += (_, e) =>
                 {
                     if (e.Data != null)
@@ -250,6 +250,46 @@ namespace Playnite.Common
             }
 
             return Path.GetDirectoryName(executablePath) ?? Environment.CurrentDirectory;
+        }
+
+        internal static ProcessStartInfo PrepareForFlatpak(
+            ProcessStartInfo target,
+            bool? isFlatpakOverride = null)
+        {
+            if (target == null)
+            {
+                throw new ArgumentNullException(nameof(target));
+            }
+
+            var isFlatpak = isFlatpakOverride ??
+                (!OperatingSystem.IsWindows() &&
+                 (File.Exists("/.flatpak-info") ||
+                  !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("FLATPAK_ID"))));
+            if (!isFlatpak)
+            {
+                return target;
+            }
+
+            var hostWorkingDirectory = string.IsNullOrWhiteSpace(target.WorkingDirectory)
+                ? Environment.CurrentDirectory
+                : target.WorkingDirectory;
+            var targetArguments = target.ArgumentList.Count > 0
+                ? string.Join(" ", target.ArgumentList.Select(QuoteArgument))
+                : target.Arguments;
+            var wrapped = new ProcessStartInfo("flatpak-spawn")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = target.CreateNoWindow,
+                RedirectStandardError = target.RedirectStandardError,
+                RedirectStandardInput = target.RedirectStandardInput,
+                RedirectStandardOutput = target.RedirectStandardOutput,
+                WorkingDirectory = Environment.CurrentDirectory,
+                Arguments = "--host --directory=" + QuoteArgument(hostWorkingDirectory) + " " +
+                    QuoteArgument(target.FileName) +
+                    (string.IsNullOrWhiteSpace(targetArguments) ? string.Empty : " " + targetArguments)
+            };
+
+            return wrapped;
         }
 
         private static string QuoteArgument(string argument)

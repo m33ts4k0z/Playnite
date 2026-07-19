@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.m33ts4k0z.Playnite</id>
+  <name>Playnite</name>
+  <summary>Manage and launch games from one library</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.m33ts4k0z">
+    <name>Playnite contributors</name>
+  </developer>
+  <description>
+    <p>Playnite is a video game library manager with desktop and controller-driven fullscreen interfaces.</p>
+  </description>
+  <launchable type="desktop-id">io.github.m33ts4k0z.Playnite.desktop</launchable>
+  <provides>
+    <binary>playnite</binary>
+  </provides>
+  <url type="homepage">https://playnite.link/</url>
+  <url type="bugtracker">https://github.com/m33ts4k0z/Playnite/issues</url>
+  <content_rating type="oars-1.1" />
+</component>

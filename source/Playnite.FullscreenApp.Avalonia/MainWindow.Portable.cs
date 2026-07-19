@@ -8,6 +8,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Playnite.Avalonia.Input;
+using Playnite.Controllers;
 using Playnite.FullscreenApp.Avalonia.Input;
 using Playnite.SDK.Models;
 
@@ -38,7 +39,8 @@ public sealed class MainWindow : Window
 
         status = new TextBlock
         {
-            Text = startupError ?? "Choose a game with the controller",
+            Text = startupError ??
+                "Choose a game with the controller; SDK v6 WPF plugins require Windows.",
             FontSize = 16,
             Foreground = new SolidColorBrush(startupError == null
                 ? Color.Parse("#B7C3D3")
@@ -118,6 +120,71 @@ public sealed class MainWindow : Window
         KeyDown += OnKeyDown;
         Opened += OnOpened;
         Closed += OnClosed;
+    }
+
+    internal void RestoreAndActivate()
+    {
+        Show();
+        if (WindowState == WindowState.Minimized)
+        {
+            WindowState = options.Windowed ? WindowState.Normal : WindowState.FullScreen;
+        }
+
+        Activate();
+    }
+
+    internal bool ProcessUri(string uri)
+    {
+        try
+        {
+            var parsed = PlayniteUriHandler.ParseUri(uri);
+            if (!string.Equals(parsed.source, "playnite", StringComparison.OrdinalIgnoreCase) ||
+                parsed.arguments.Length < 2)
+            {
+                status.Text = $"No URI handler is registered for '{uri}'.";
+                return false;
+            }
+
+            var command = parsed.arguments[0];
+            if (!string.Equals(command, UriCommands.StartGame, StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(command, UriCommands.ShowGame, StringComparison.OrdinalIgnoreCase))
+            {
+                status.Text = $"Unsupported Playnite URI '{uri}'.";
+                return false;
+            }
+
+            if (!Guid.TryParse(parsed.arguments[1], out var gameId))
+            {
+                status.Text = $"Invalid game identifier '{parsed.arguments[1]}'.";
+                return false;
+            }
+
+            var game = library.Games.FirstOrDefault(candidate => candidate.Id == gameId);
+            if (game == null)
+            {
+                status.Text = $"Game {gameId} was not found.";
+                return false;
+            }
+
+            gameList.SelectedItem = game;
+            gameList.ScrollIntoView(game);
+            RestoreAndActivate();
+            if (string.Equals(command, UriCommands.StartGame, StringComparison.OrdinalIgnoreCase))
+            {
+                ActivateSelected();
+            }
+            else
+            {
+                status.Text = $"Selected {game.Name}.";
+            }
+
+            return true;
+        }
+        catch (Exception exception)
+        {
+            status.Text = $"Invalid Playnite URI: {exception.Message}";
+            return false;
+        }
     }
 
     private static Control CreateArtworkPlaceholder(Game game)
@@ -217,7 +284,20 @@ public sealed class MainWindow : Window
         }
 
         activations++;
-        status.Text = $"Controller activation: {game.Name}";
+        if (options.SelfTest)
+        {
+            status.Text = $"Controller activation: {game.Name}";
+            return;
+        }
+
+        try
+        {
+            status.Text = PortableGameActionLauncher.Launch(game);
+        }
+        catch (Exception exception)
+        {
+            status.Text = $"Could not start {game.Name}: {exception.Message}";
+        }
     }
 
     private async Task RunSelfTest()

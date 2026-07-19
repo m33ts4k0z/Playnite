@@ -2,12 +2,25 @@ namespace Playnite.DesktopApp.Avalonia;
 
 internal sealed class StartupOptions
 {
+    internal enum LinuxIntegrationCommand
+    {
+        None,
+        Register,
+        EnableAutostart,
+        EnableClosedAutostart,
+        DisableAutostart
+    }
+
     public bool SelfTest { get; private set; }
     public bool PluginCompatibilityTest { get; private set; }
     public string UserDataDirectory { get; private set; }
     public string LibraryPath { get; private set; }
     public string CustomThemePath { get; private set; }
     public string UriData { get; private set; }
+    public bool StartClosedToTray { get; private set; }
+    public bool Shutdown { get; private set; }
+    public bool HostLaunchSelfTest { get; private set; }
+    public LinuxIntegrationCommand IntegrationCommand { get; private set; }
 
     public static StartupOptions Parse(string[] args)
     {
@@ -34,6 +47,27 @@ internal sealed class StartupOptions
                     break;
                 case "--uridata" when index + 1 < args.Length:
                     options.UriData = args[++index];
+                    break;
+                case "--startclosedtotray":
+                    options.StartClosedToTray = true;
+                    break;
+                case "--register-desktop":
+                    options.IntegrationCommand = LinuxIntegrationCommand.Register;
+                    break;
+                case "--enable-autostart":
+                    options.IntegrationCommand = LinuxIntegrationCommand.EnableAutostart;
+                    break;
+                case "--enable-autostart-closed":
+                    options.IntegrationCommand = LinuxIntegrationCommand.EnableClosedAutostart;
+                    break;
+                case "--disable-autostart":
+                    options.IntegrationCommand = LinuxIntegrationCommand.DisableAutostart;
+                    break;
+                case "--shutdown":
+                    options.Shutdown = true;
+                    break;
+                case "--host-launch-self-test":
+                    options.HostLaunchSelfTest = true;
                     break;
             }
         }

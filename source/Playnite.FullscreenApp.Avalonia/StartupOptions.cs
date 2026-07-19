@@ -8,6 +8,7 @@ internal sealed class StartupOptions
     public string LibraryPath { get; private set; }
     public string CustomThemePath { get; private set; }
     public string UriData { get; private set; }
+    public bool Shutdown { get; private set; }
 
     public static StartupOptions Parse(string[] args)
     {
@@ -35,6 +36,9 @@ internal sealed class StartupOptions
                     break;
                 case "--uridata" when index + 1 < args.Length:
                     options.UriData = args[++index];
+                    break;
+                case "--shutdown":
+                    options.Shutdown = true;
                     break;
             }
         }

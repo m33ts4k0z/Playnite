@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+set -eu
+app_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ "${1:-}" = "--fullscreen" ]; then
+    shift
+    exec "$app_dir/usr/lib/playnite/fullscreen/Playnite.FullscreenApp.Avalonia" "$@"
+fi
+exec "$app_dir/usr/lib/playnite/desktop/Playnite.DesktopApp.Avalonia" "$@"

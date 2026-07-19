@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Playnite.Avalonia.Controls;
 using Playnite.Common;
+using Playnite.Controllers;
 using Playnite.SDK.Models;
 
 namespace Playnite.DesktopApp.Avalonia;
@@ -16,20 +17,25 @@ public sealed class MainWindow : Window
 {
     private readonly DesktopLibrary library;
     private readonly bool selfTest;
+    private readonly bool startClosedToTray;
     private readonly ListBox gameList;
     private readonly TextBlock summary;
     private readonly TextBlock status;
     private UniformGridVirtualizingPanel tilePanel;
 
-    internal MainWindow(DesktopLibrary library, string startupError, bool selfTest)
+    internal PortableTrayService TrayService { get; set; }
+
+    internal MainWindow(DesktopLibrary library, string startupError, StartupOptions options)
     {
         this.library = library;
-        this.selfTest = selfTest;
+        selfTest = options.SelfTest;
+        startClosedToTray = options.StartClosedToTray;
         Title = "Playnite — Avalonia Linux Preview";
         Width = 1180;
         Height = 760;
         MinWidth = 760;
         MinHeight = 520;
+        ShowInTaskbar = !startClosedToTray;
         Background = new SolidColorBrush(Color.Parse("#10141B"));
 
         var search = new TextBox
@@ -46,7 +52,8 @@ public sealed class MainWindow : Window
         };
         status = new TextBlock
         {
-            Text = startupError ?? "Native .NET 10 / Avalonia 12 Linux shell",
+            Text = startupError ??
+                "Native .NET 10 / Avalonia 12 Linux shell; SDK v6 WPF plugins require Windows.",
             Foreground = new SolidColorBrush(startupError == null
                 ? Color.Parse("#9EABBA")
                 : Color.Parse("#FF8A80"))
@@ -92,6 +99,7 @@ public sealed class MainWindow : Window
                 }
             }, supportsRecycling: true)
         };
+        gameList.DoubleTapped += (_, _) => LaunchSelectedGame();
 
         var header = new Grid
         {
@@ -108,10 +116,106 @@ public sealed class MainWindow : Window
         Content = content;
         ApplySearch(string.Empty);
         Opened += OnOpened;
+        Closing += OnClosing;
+    }
+
+    internal void RestoreAndActivate()
+    {
+        ShowInTaskbar = true;
+        Show();
+        if (WindowState == WindowState.Minimized)
+        {
+            WindowState = WindowState.Normal;
+        }
+
+        Activate();
+    }
+
+    internal bool ProcessUri(string uri)
+    {
+        try
+        {
+            var parsed = PlayniteUriHandler.ParseUri(uri);
+            if (!string.Equals(parsed.source, "playnite", StringComparison.OrdinalIgnoreCase) ||
+                parsed.arguments.Length == 0)
+            {
+                status.Text = $"No URI handler is registered for '{uri}'.";
+                return false;
+            }
+
+            var command = parsed.arguments[0];
+            if ((string.Equals(command, UriCommands.StartGame, StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(command, UriCommands.ShowGame, StringComparison.OrdinalIgnoreCase)) &&
+                parsed.arguments.Length >= 2 &&
+                Guid.TryParse(parsed.arguments[1], out var gameId))
+            {
+                var game = library.Games.FirstOrDefault(candidate => candidate.Id == gameId);
+                if (game == null)
+                {
+                    status.Text = $"Game {gameId} was not found.";
+                    return false;
+                }
+
+                gameList.SelectedItem = game;
+                gameList.ScrollIntoView(game);
+                RestoreAndActivate();
+                if (string.Equals(command, UriCommands.StartGame, StringComparison.OrdinalIgnoreCase))
+                {
+                    LaunchSelectedGame();
+                }
+                else
+                {
+                    status.Text = $"Selected {game.Name}.";
+                }
+
+                return true;
+            }
+
+            if (string.Equals(command, UriCommands.Search, StringComparison.OrdinalIgnoreCase) &&
+                parsed.arguments.Length >= 2)
+            {
+                ApplySearch(parsed.arguments[1]);
+                RestoreAndActivate();
+                status.Text = $"Searching for {parsed.arguments[1]}.";
+                return true;
+            }
+
+            status.Text = $"Unsupported Playnite URI '{uri}'.";
+            return false;
+        }
+        catch (Exception exception)
+        {
+            status.Text = $"Invalid Playnite URI: {exception.Message}";
+            return false;
+        }
+    }
+
+    private void LaunchSelectedGame()
+    {
+        if (gameList.SelectedItem is not Game game)
+        {
+            status.Text = "Select a game first.";
+            return;
+        }
+
+        try
+        {
+            status.Text = PortableGameActionLauncher.Launch(game);
+        }
+        catch (Exception exception)
+        {
+            status.Text = $"Could not start {game.Name}: {exception.Message}";
+        }
     }
 
     private async void OnOpened(object sender, EventArgs e)
     {
+        if (startClosedToTray && !selfTest)
+        {
+            Hide();
+            return;
+        }
+
         if (!selfTest)
         {
             return;
@@ -141,6 +245,11 @@ public sealed class MainWindow : Window
                 return programs != null ? $"{programs.Count:N0} desktop/package applications discovered" :
                     throw new InvalidOperationException("Application discovery was cancelled unexpectedly.");
             });
+            Record(results, "StatusNotifier tray contract is available", () =>
+                TrayService != null && TrayService.MenuItemCount == 4
+                    ? "native tray icon and Open/Fullscreen/Exit menu created"
+                    : throw new InvalidOperationException(
+                        $"Tray menu contained {TrayService?.MenuItemCount ?? 0} items."));
             foreach (var webViewResult in await PortableWebViewSelfTest.RunAsync())
             {
                 results.Add((webViewResult.Name, true, webViewResult.Detail));
@@ -160,6 +269,18 @@ public sealed class MainWindow : Window
         {
             desktop.Shutdown(exitCode);
         }
+    }
+
+    private void OnClosing(object sender, WindowClosingEventArgs e)
+    {
+        if (selfTest || e.CloseReason is WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown)
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        ShowInTaskbar = false;
+        Hide();
     }
 
     private void ApplySearch(string term)

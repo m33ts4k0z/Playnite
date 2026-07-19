@@ -166,7 +166,7 @@ namespace Playnite
         {
             if (!OperatingSystem.IsWindows())
             {
-                return Path.Combine(ProgramPath, baseName + ".Avalonia");
+                return SelectPortableShellExecutable(ProgramPath, baseName);
             }
 
             var wpfPath = Path.Combine(ProgramPath, baseName + ".exe");
@@ -177,6 +177,26 @@ namespace Playnite
             }
 
             return wpfPath;
+        }
+
+        internal static string SelectPortableShellExecutable(string programPath, string baseName)
+        {
+            var executableName = baseName + ".Avalonia";
+            var directPath = Path.Combine(programPath, executableName);
+            if (File.Exists(directPath))
+            {
+                return directPath;
+            }
+
+            var shellDirectory = baseName.EndsWith("FullscreenApp", StringComparison.Ordinal)
+                ? "fullscreen"
+                : "desktop";
+            var siblingPath = Path.GetFullPath(Path.Combine(
+                programPath,
+                "..",
+                shellDirectory,
+                executableName));
+            return File.Exists(siblingPath) ? siblingPath : directPath;
         }
 
         public static void UpdateUserDataDir(string dir)

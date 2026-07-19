@@ -1,0 +1,24 @@
+id: io.github.m33ts4k0z.Playnite
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: playnite
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=x11
+  - --socket=pulseaudio
+  - --device=all
+  - --filesystem=host
+  - --talk-name=org.freedesktop.Flatpak
+  - --talk-name=org.kde.StatusNotifierWatcher
+
+modules:
+  - name: playnite
+    buildsystem: simple
+    sources:
+      - type: dir
+        path: payload
+    build-commands:
+      - cp -a bin lib share /app/

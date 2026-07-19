@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using Avalonia.Themes.Fluent;
 using Playnite.Avalonia.App.Services;
 using Playnite.DesktopApp.Avalonia.Services;
@@ -101,7 +102,11 @@ public sealed class App : Application
             // Parse the loose theme before third-party assemblies enter the process. A plugin
             // with an incompatible dependency must not interfere with Avalonia's XAML discovery.
             runtimeHost?.InitializePlugins(!options.SelfTest);
-            if (!string.IsNullOrWhiteSpace(options.UriData) && runtimeHost?.ProcessUri(options.UriData) == false)
+            Program.InstanceCoordinator?.SetCommandHandler(command =>
+                Dispatcher.UIThread.Post(() =>
+                    ProcessCommand(command, window, desktop, runtimeHost, viewModel)));
+            if (!string.IsNullOrWhiteSpace(options.UriData) &&
+                !ProcessUri(options.UriData, runtimeHost, viewModel))
             {
                 viewModel.SetStatusMessage($"No URI handler is registered for '{options.UriData}'.");
             }
@@ -114,6 +119,47 @@ public sealed class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static void ProcessCommand(
+        CommandExecutedEventArgs command,
+        MainWindow window,
+        IClassicDesktopStyleApplicationLifetime desktop,
+        AvaloniaRuntimeHost host,
+        DesktopAppViewModel viewModel)
+    {
+        switch (command.Command)
+        {
+            case CmdlineCommand.Focus:
+                window.RestoreFromTray();
+                break;
+            case CmdlineCommand.UriRequest:
+                window.RestoreFromTray();
+                if (!ProcessUri(command.Args, host, viewModel))
+                {
+                    viewModel.SetStatusMessage($"No URI handler is registered for '{command.Args}'.");
+                }
+                break;
+            case CmdlineCommand.Shutdown:
+                desktop.Shutdown();
+                break;
+        }
+    }
+
+    private static bool ProcessUri(
+        string uri,
+        AvaloniaRuntimeHost host,
+        DesktopAppViewModel viewModel)
+    {
+        try
+        {
+            return host?.ProcessUri(uri) == true;
+        }
+        catch (Exception exception)
+        {
+            viewModel.SetStatusMessage($"Invalid Playnite URI: {exception.Message}");
+            return false;
+        }
     }
 
     private static DesktopSettings LoadOrImportSettings(

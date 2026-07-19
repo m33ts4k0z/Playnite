@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">
-    <Compile Remove="App.Portable.cs;MainWindow.Portable.cs;DesktopLibrary.Portable.cs;PortableWebViewSelfTest.cs" />
+    <Compile Remove="App.Portable.cs;MainWindow.Portable.cs;DesktopLibrary.Portable.cs;PortableTrayService.cs;PortableWebViewSelfTest.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -50,6 +50,10 @@
     <Content Include="Themes\**\*.axaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Themes\**\theme.yaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Localization\**\*.axaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Playnite.DesktopApp\Themes\Desktop\Default\Images\applogo.png"
+             Condition="'$(TargetFramework)' == 'net10.0'"
+             Link="Assets\applogo.png"
+             CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\Playnite.DesktopApp\Themes\Desktop\Default\Images\applogo.ico"
              Condition="'$(TargetFramework)' != 'net10.0'"
              Link="Assets\applogo.ico"

@@ -1,0 +1,4 @@
+payload/
+build-dir/
+repo/
+*.flatpak

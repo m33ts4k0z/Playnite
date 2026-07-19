@@ -228,9 +228,9 @@ namespace Playnite
             {
                 serverTask?.Wait(2000);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                // Server task teardown failures are not actionable during shutdown.
+                logger.Error(exception, "Pipe server failed while stopping.");
             }
 
             cancelSource?.Dispose();

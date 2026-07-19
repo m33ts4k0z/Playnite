@@ -1,5 +1,7 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Threading;
 using Avalonia.Themes.Fluent;
 
 namespace Playnite.DesktopApp.Avalonia;
@@ -7,6 +9,7 @@ namespace Playnite.DesktopApp.Avalonia;
 public sealed class App : Application
 {
     private DesktopLibrary library;
+    private PortableTrayService trayService;
 
     public override void Initialize()
     {
@@ -17,6 +20,7 @@ public sealed class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             var options = Program.Options;
             library = new DesktopLibrary(options.UserDataDirectory, options.LibraryPath);
             string startupError = null;
@@ -36,10 +40,50 @@ public sealed class App : Application
                 startupError = exception.Message;
             }
 
-            desktop.MainWindow = new MainWindow(library, startupError, options.SelfTest);
-            desktop.Exit += (_, _) => library.Dispose();
+            var window = new MainWindow(library, startupError, options);
+            desktop.MainWindow = window;
+            Program.InstanceCoordinator?.SetCommandHandler(command =>
+                Dispatcher.UIThread.Post(() => ProcessCommand(command, window, desktop)));
+
+            var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "applogo.png");
+            trayService = new PortableTrayService(
+                iconPath,
+                window.RestoreAndActivate,
+                () => desktop.Shutdown(),
+                !options.SelfTest);
+            window.TrayService = trayService;
+
+            if (!string.IsNullOrWhiteSpace(options.UriData))
+            {
+                window.ProcessUri(options.UriData);
+            }
+
+            desktop.Exit += (_, _) =>
+            {
+                trayService.Dispose();
+                library.Dispose();
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static void ProcessCommand(
+        CommandExecutedEventArgs command,
+        MainWindow window,
+        IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        switch (command.Command)
+        {
+            case CmdlineCommand.Focus:
+                window.RestoreAndActivate();
+                break;
+            case CmdlineCommand.UriRequest:
+                window.ProcessUri(command.Args);
+                break;
+            case CmdlineCommand.Shutdown:
+                desktop.Shutdown();
+                break;
+        }
     }
 }

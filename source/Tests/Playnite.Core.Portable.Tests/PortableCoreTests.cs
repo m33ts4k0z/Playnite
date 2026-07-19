@@ -336,10 +336,30 @@ namespace Playnite.Core.Portable.Tests
                 SystemIntegration.SetBootupStateRegistration(true, true);
 
                 var applications = Path.Combine(dataHome, "applications");
-                Assert.That(File.Exists(Path.Combine(applications, "playnite-uri.desktop")), Is.True);
-                Assert.That(File.Exists(Path.Combine(applications, "playnite-extension.desktop")), Is.True);
-                Assert.That(File.Exists(Path.Combine(configHome, "autostart", "playnite.desktop")), Is.True);
+                var uriEntry = Path.Combine(applications, "playnite-uri.desktop");
+                var extensionEntry = Path.Combine(applications, "playnite-extension.desktop");
+                var autostartEntry = Path.Combine(configHome, "autostart", "playnite.desktop");
+                Assert.That(File.Exists(uriEntry), Is.True);
+                Assert.That(File.ReadAllText(uriEntry), Does.Contain(
+                    "Exec=\"/opt/playnite/playnite\" --uridata %u"));
+                Assert.That(File.ReadAllText(uriEntry), Does.Contain("x-scheme-handler/playnite;"));
+                Assert.That(File.Exists(extensionEntry), Is.True);
+                Assert.That(File.Exists(autostartEntry), Is.True);
+                Assert.That(File.ReadAllText(autostartEntry), Does.Contain("--startclosedtotray"));
                 Assert.That(File.Exists(Path.Combine(dataHome, "mime", "packages", "playnite.xml")), Is.True);
+
+                var shortcut = Path.Combine(temporaryDirectory, "Linux Game.desktop");
+                Programs.CreateShortcut(
+                    "/opt/games/example game",
+                    "--profile linux",
+                    "/opt/games/icon.png",
+                    shortcut);
+                var shortcutText = File.ReadAllText(shortcut);
+                Assert.That(shortcutText, Does.Contain("Exec=\"/opt/games/example game\" --profile linux"));
+                Assert.That(shortcutText, Does.Contain("Icon=/opt/games/icon.png"));
+
+                SystemIntegration.SetBootupStateRegistration(false, false);
+                Assert.That(File.Exists(autostartEntry), Is.False);
             }
             finally
             {
@@ -347,6 +367,97 @@ namespace Playnite.Core.Portable.Tests
                 Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", oldConfigHome);
                 CoreRuntime.ApplicationExecutablePath = oldExecutable;
             }
+        }
+
+        [Test]
+        public void SingleInstanceCoordinatorForwardsAndQueuesCommands()
+        {
+            var endpoint = SingleInstanceCoordinator.CreateEndpoint(
+                "desktop",
+                Path.Combine(temporaryDirectory, Guid.NewGuid().ToString("N")));
+            using (var primary = new SingleInstanceCoordinator(endpoint))
+            {
+                Assert.That(primary.IsPrimary, Is.True);
+                bool? secondaryWasPrimary = null;
+                Exception secondaryError = null;
+                var secondaryThread = new Thread(() =>
+                {
+                    try
+                    {
+                        using (var secondary = new SingleInstanceCoordinator(endpoint))
+                        {
+                            secondaryWasPrimary = secondary.IsPrimary;
+                            secondary.SendToPrimary(CmdlineCommand.UriRequest, "playnite://test/queued");
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        secondaryError = exception;
+                    }
+                });
+                secondaryThread.Start();
+                Assert.That(secondaryThread.Join(TimeSpan.FromSeconds(5)), Is.True);
+                Assert.That(secondaryError, Is.Null);
+                Assert.That(secondaryWasPrimary, Is.False);
+
+                var received = new ManualResetEventSlim();
+                CommandExecutedEventArgs command = null;
+                primary.SetCommandHandler(args =>
+                {
+                    command = args;
+                    received.Set();
+                });
+
+                Assert.That(received.Wait(TimeSpan.FromSeconds(5)), Is.True);
+                Assert.That(command.Command, Is.EqualTo(CmdlineCommand.UriRequest));
+                Assert.That(command.Args, Is.EqualTo("playnite://test/queued"));
+            }
+
+            using (var replacement = new SingleInstanceCoordinator(endpoint))
+            {
+                Assert.That(replacement.IsPrimary, Is.True);
+            }
+        }
+
+        [Test]
+        public void FlatpakProcessLaunchesAreDelegatedToTheHost()
+        {
+            var target = new ProcessStartInfo("/opt/games/Example Game")
+            {
+                Arguments = "--profile \"Deck User\"",
+                WorkingDirectory = "/mnt/games/Example Library",
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+
+            var wrapped = ProcessStarter.PrepareForFlatpak(target, true);
+            Assert.That(wrapped.FileName, Is.EqualTo("flatpak-spawn"));
+            Assert.That(wrapped.Arguments, Does.StartWith("--host "));
+            Assert.That(wrapped.Arguments, Does.Contain(
+                "--directory=\"/mnt/games/Example Library\""));
+            Assert.That(wrapped.Arguments, Does.Contain("\"/opt/games/Example Game\""));
+            Assert.That(wrapped.Arguments, Does.EndWith("--profile \"Deck User\""));
+            Assert.That(wrapped.RedirectStandardOutput, Is.True);
+            Assert.That(wrapped.UseShellExecute, Is.False);
+        }
+
+        [Test]
+        public void PortableShellResolverSupportsSplitPackageLayout()
+        {
+            var desktopDirectory = Path.Combine(temporaryDirectory, "lib", "playnite", "desktop");
+            var fullscreenDirectory = Path.Combine(temporaryDirectory, "lib", "playnite", "fullscreen");
+            Directory.CreateDirectory(desktopDirectory);
+            Directory.CreateDirectory(fullscreenDirectory);
+            var fullscreenExecutable = Path.Combine(
+                fullscreenDirectory,
+                "Playnite.FullscreenApp.Avalonia");
+            File.WriteAllText(fullscreenExecutable, string.Empty);
+
+            Assert.That(
+                PlaynitePaths.SelectPortableShellExecutable(
+                    desktopDirectory,
+                    "Playnite.FullscreenApp"),
+                Is.EqualTo(fullscreenExecutable));
         }
 
         public class ScalarResult

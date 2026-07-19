@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=Playnite
+Comment=Video game library manager
+Exec=playnite %u
+TryExec=playnite
+Icon=io.github.m33ts4k0z.Playnite
+Terminal=false
+Categories=Game;
+MimeType=x-scheme-handler/playnite;
+StartupNotify=true
+Actions=Fullscreen;
+
+[Desktop Action Fullscreen]
+Name=Open Fullscreen
+Exec=playnite --fullscreen

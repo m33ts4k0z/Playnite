@@ -84,6 +84,7 @@
     <InternalsVisibleTo Include="Playnite.DesktopApp" />
     <InternalsVisibleTo Include="Playnite.FullscreenApp" />
     <InternalsVisibleTo Include="Playnite.Tests" />
+    <InternalsVisibleTo Include="Playnite.Core.Portable.Tests" />
   </ItemGroup>
 
   <ItemGroup>
