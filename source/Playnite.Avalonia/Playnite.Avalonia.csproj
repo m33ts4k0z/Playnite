@@ -16,4 +16,8 @@
     <PackageReference Include="YamlDotNet" Version="5.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Playnite.SDL\Playnite.SDL.csproj" />
+  </ItemGroup>
+
 </Project>

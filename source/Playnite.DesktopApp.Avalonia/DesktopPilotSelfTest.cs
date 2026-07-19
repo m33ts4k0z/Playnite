@@ -1858,6 +1858,8 @@ internal static class DesktopPilotSelfTest
                 GameScannerSelectionConfigured = true,
                 LibraryPlaytimeImportMode = PlaytimeImportMode.Always,
                 DownloadMetadataOnImport = false,
+                EnableGameControllerSupport = false,
+                DisabledGameControllers = new List<string> { "pilot-controller" },
                 EnableTray = false,
                 MinimizeToTray = true,
                 CloseToTray = false,
@@ -1892,6 +1894,8 @@ internal static class DesktopPilotSelfTest
                 !loaded.GameScannerSelectionConfigured ||
                 loaded.LibraryPlaytimeImportMode != PlaytimeImportMode.Always ||
                 loaded.DownloadMetadataOnImport ||
+                loaded.EnableGameControllerSupport ||
+                loaded.DisabledGameControllers.SingleOrDefault() != "pilot-controller" ||
                 loaded.EnableTray ||
                 !loaded.MinimizeToTray ||
                 loaded.CloseToTray ||

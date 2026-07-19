@@ -34,6 +34,7 @@ public sealed class FullscreenSettingsStore
                 settings.ActiveFilter ??= "All";
                 settings.Language ??= "english";
                 settings.DisabledPlugins ??= new List<string>();
+                settings.DisabledGameControllers ??= new List<string>();
                 settings.InterfaceVolume = Math.Clamp(settings.InterfaceVolume, 0, 100);
                 settings.BackgroundVolume = Math.Clamp(settings.BackgroundVolume, 0, 100);
                 return settings;

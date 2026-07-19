@@ -1,8 +1,9 @@
-using System.Windows.Input;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using ICommand = System.Windows.Input.ICommand;
+using Key = Avalonia.Input.Key;
 
 namespace Playnite.Avalonia.Input;
 

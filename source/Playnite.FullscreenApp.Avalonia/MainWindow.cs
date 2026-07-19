@@ -76,7 +76,10 @@ public sealed class MainWindow : Window
         gamepadBridge.MapCommand(GamepadButton.RightShoulder, viewModel.SelectNextCommand);
         gamepadBridge.MapCommand(GamepadButton.RightStick, viewModel.ToggleFiltersCommand);
         gamepadBridge.MapCommand(GamepadButton.LeftStick, viewModel.ToggleNotificationsCommand);
-        sdlInput = new SdlGamepadInputSource(gamepadBridge);
+        sdlInput = new SdlGamepadInputSource(
+            gamepadBridge,
+            settings.EnableGameControllerSupport,
+            settings.DisabledGameControllers);
 
         viewModel.LibraryFocusRequested += (_, _) =>
             Dispatcher.UIThread.Post(mainView.FocusSelectedGame, DispatcherPriority.Input);

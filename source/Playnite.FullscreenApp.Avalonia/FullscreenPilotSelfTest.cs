@@ -162,6 +162,8 @@ internal static class FullscreenPilotSelfTest
                 GlobalGameStartedScript = "global-started",
                 GlobalPostScript = "global-post",
                 ShutdownLibraryClients = true,
+                EnableGameControllerSupport = false,
+                DisabledGameControllers = new List<string> { "pilot-controller" },
                 ClientShutdownGraceSeconds = 45,
                 ClientShutdownMinimumSessionSeconds = 90,
                 ClientShutdownPluginIds = new List<Guid> { Guid.Parse("f4737f44-2dde-4c06-99f0-0a0569f1bcfd") }
@@ -174,6 +176,8 @@ internal static class FullscreenPilotSelfTest
                 loaded.GlobalGameStartedScript != "global-started" ||
                 loaded.GlobalPostScript != "global-post" ||
                 !loaded.ShutdownLibraryClients ||
+                loaded.EnableGameControllerSupport ||
+                loaded.DisabledGameControllers.SingleOrDefault() != "pilot-controller" ||
                 loaded.ClientShutdownGraceSeconds != 45 ||
                 loaded.ClientShutdownMinimumSessionSeconds != 90 ||
                 loaded.ClientShutdownPluginIds.SingleOrDefault() !=

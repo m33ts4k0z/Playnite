@@ -10,6 +10,8 @@ public sealed class FullscreenSettings : IAvaloniaHostSettings
     public bool SwapConfirmCancelButtons { get; set; }
     public bool SwapStartDetailsAction { get; set; }
     public bool GuideButtonFocus { get; set; } = true;
+    public bool EnableGameControllerSupport { get; set; } = true;
+    public List<string> DisabledGameControllers { get; set; } = new();
     public bool AudioEnabled { get; set; } = true;
     public int InterfaceVolume { get; set; } = 70;
     public int BackgroundVolume { get; set; } = 20;
