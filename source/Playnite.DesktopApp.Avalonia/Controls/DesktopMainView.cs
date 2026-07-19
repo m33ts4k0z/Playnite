@@ -19,8 +19,8 @@ public sealed class DesktopMainView : TemplatedControl
     public ListBox GameList => gridGameList?.IsVisible == true ? gridGameList : listGameList;
     public ListBox GridGameList => gridGameList;
     public ListBox ListGameList => listGameList;
-    public TextBox SearchBox => searchBox;
-    public TextBox PluginSearchBox => pluginSearchBox;
+    public TextBox SearchBox => searchBox ??= FindVisualPart<TextBox>("PART_SearchBox");
+    public TextBox PluginSearchBox => pluginSearchBox ??= FindVisualPart<TextBox>("PART_PluginSearchBox");
     public UniformGridVirtualizingPanel TilePanel =>
         gridGameList?.GetVisualDescendants().OfType<UniformGridVirtualizingPanel>().FirstOrDefault();
 
@@ -33,7 +33,12 @@ public sealed class DesktopMainView : TemplatedControl
         searchBox = e.NameScope.Find<TextBox>("PART_SearchBox");
         pluginSearchBox = e.NameScope.Find<TextBox>("PART_PluginSearchBox");
         ObserveViewModel();
-        Dispatcher.UIThread.Post(FocusSelectedGame, DispatcherPriority.Loaded);
+        Dispatcher.UIThread.Post(() =>
+        {
+            searchBox ??= FindVisualPart<TextBox>("PART_SearchBox");
+            pluginSearchBox ??= FindVisualPart<TextBox>("PART_PluginSearchBox");
+            FocusSelectedGame();
+        }, DispatcherPriority.Loaded);
     }
 
     protected override void OnDataContextChanged(EventArgs e)
@@ -95,4 +100,7 @@ public sealed class DesktopMainView : TemplatedControl
             pluginSearchBox.SelectAll();
         }, DispatcherPriority.Input);
     }
+
+    private T FindVisualPart<T>(string name) where T : Control =>
+        this.GetVisualDescendants().OfType<T>().FirstOrDefault(control => control.Name == name);
 }

@@ -56,139 +56,13 @@
                   TargetType="local:DesktopMainView">
         <Setter Property="Template">
             <ControlTemplate>
-                <Grid Background="{DynamicResource DesktopBackgroundBrush}"
-                      RowDefinitions="64,*,34">
-                    <Border Background="{DynamicResource DesktopPanelStrongBrush}"
-                            BorderBrush="#303A49" BorderThickness="0,0,0,1"
-                            Padding="24,0">
-                        <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                                <Border Width="34" Height="34" CornerRadius="9"
-                                        Background="{DynamicResource DesktopAccentBrush}">
-                                    <TextBlock Text="P" FontSize="20" FontWeight="Bold"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                </Border>
-                                <TextBlock Text="Playnite" FontSize="23" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource DesktopTextBrush}"
-                                           VerticalAlignment="Center" />
-                                <Border Background="#263140" CornerRadius="12" Padding="9,4">
-                                    <TextBlock Text="Avalonia Desktop" FontSize="12"
-                                               Foreground="{DynamicResource DesktopAccentBrush}" />
-                                </Border>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12"
-                                        VerticalAlignment="Center">
-                                <ItemsControl ItemsSource="{Binding PluginTopPanelItems}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" Spacing="8" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Button Command="{Binding Command}" IsVisible="{Binding Visible}"
-                                                    ToolTip.Tip="{Binding PluginName}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <ContentPresenter Content="{Binding Icon}" MaxWidth="18" MaxHeight="18" />
-                                                    <TextBlock Text="{Binding Title}" />
-                                                </StackPanel>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <TextBlock Text="{Binding LibrarySummary}" VerticalAlignment="Center"
-                                           Foreground="{DynamicResource DesktopMutedBrush}" />
-                                <Button Command="{Binding ToggleNotificationsCommand}"
-                                        Content="{Binding NotificationCount, StringFormat='Notifications ({0})'}" />
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                <Grid RowDefinitions="64,*,34">
+                    <ContentControl Grid.RowSpan="3" IsHitTestVisible="False"
+                                    Template="{DynamicResource DesktopBackgroundLayerTemplate}" />
+                    <ContentControl Template="{DynamicResource DesktopTopPanelTemplate}" />
 
                     <Grid Grid.Row="1" ColumnDefinitions="270,*,390">
-                        <Border Background="{DynamicResource DesktopPanelBrush}"
-                                BorderBrush="#303A49" BorderThickness="0,0,1,0"
-                                Padding="20">
-                            <ScrollViewer>
-                                <StackPanel Spacing="12">
-                                    <TextBlock Text="{DynamicResource LOCDesktopLibrary}"
-                                               FontSize="25" FontWeight="Bold"
-                                               Foreground="{DynamicResource DesktopTextBrush}" />
-                                    <TextBox Name="PART_SearchBox"
-                                             Text="{Binding SearchText, Mode=TwoWay}"
-                                             Watermark="Search games"
-                                             Padding="12,9" />
-                                    <TextBlock Text="{Binding LibrarySummary}"
-                                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                                    <Border Height="1" Background="#303A49" Margin="0,5" />
-                                    <TextBlock Text="{DynamicResource LOCDesktopPreset}" Classes="sectionLabel" />
-                                    <ComboBox ItemsSource="{Binding FilterPresets}"
-                                              SelectedItem="{Binding SelectedFilterPreset, Mode=TwoWay}" />
-                                    <CheckBox Content="{DynamicResource LOCDesktopInstalled}"
-                                              IsChecked="{Binding InstalledOnly, Mode=TwoWay}" />
-                                    <CheckBox Content="{DynamicResource LOCDesktopFavorites}"
-                                              IsChecked="{Binding FavoritesOnly, Mode=TwoWay}" />
-                                    <Border Height="1" Background="#303A49" Margin="0,5" />
-                                    <TextBlock Text="{DynamicResource LOCDesktopView}" Classes="sectionLabel" />
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button Classes="nav" Command="{Binding SetGridViewCommand}"
-                                                Content="Grid" />
-                                        <Button Classes="nav" Command="{Binding SetListViewCommand}"
-                                                Content="List" />
-                                    </StackPanel>
-                                    <TextBlock Text="{DynamicResource LOCDesktopSort}" Classes="sectionLabel" />
-                                    <ComboBox ItemsSource="{Binding SortOptions}"
-                                              SelectedItem="{Binding SelectedSortOrder, Mode=TwoWay}" />
-                                    <ComboBox ItemsSource="{Binding SortDirectionOptions}"
-                                              SelectedItem="{Binding SelectedSortDirection, Mode=TwoWay}" />
-                                    <TextBlock Text="{DynamicResource LOCDesktopGroup}" Classes="sectionLabel" />
-                                    <ComboBox ItemsSource="{Binding GroupingOptions}"
-                                              SelectedItem="{Binding SelectedGrouping, Mode=TwoWay}" />
-                                    <Border Background="#202A37" CornerRadius="7" Padding="10" Margin="0,8,0,0">
-                                        <TextBlock Text="{Binding PluginSummary}" FontSize="11"
-                                                   TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
-                                    </Border>
-                                    <TextBlock Text="{DynamicResource LOCDesktopWindowTray}" Classes="sectionLabel" />
-                                    <CheckBox Content="{DynamicResource LOCDesktopEnableTray}"
-                                              IsChecked="{Binding EnableTray, Mode=TwoWay}" />
-                                    <CheckBox Content="{DynamicResource LOCDesktopMinimizeTray}"
-                                              IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" />
-                                    <CheckBox Content="{DynamicResource LOCDesktopCloseTray}"
-                                              IsChecked="{Binding CloseToTray, Mode=TwoWay}" />
-                                    <Button Content="{DynamicResource LOCDesktopUpdateLibraries}"
-                                            Command="{Binding OpenLibrarySyncCommand}" />
-                                    <Button Content="{DynamicResource LOCDesktopImportInstalled}"
-                                            Command="{Binding OpenInstalledGameImportCommand}" />
-                                    <Button Content="{DynamicResource LOCDesktopAddManualGame}"
-                                            Command="{Binding AddManualGameCommand}" />
-                                    <Button Content="Settings"
-                                            Command="{Binding OpenSettingsCommand}" />
-                                    <Button Content="{DynamicResource LOCDesktopPluginSettings}"
-                                            Command="{Binding OpenPluginSettingsListCommand}" />
-                                    <Button Content="{DynamicResource LOCDesktopPluginCommands}"
-                                            Command="{Binding OpenPluginMainMenuCommand}" />
-                                    <TextBlock Text="{DynamicResource LOCDesktopPluginExtensions}"
-                                               Classes="sectionLabel" Margin="0,6,0,0" />
-                                    <ItemsControl ItemsSource="{Binding PluginSidebarItems}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel IsVisible="{Binding Visible}" Spacing="2">
-                                                    <Button Command="{Binding Command}"
-                                                            ToolTip.Tip="{Binding PluginName}">
-                                                        <StackPanel Orientation="Horizontal" Spacing="7">
-                                                            <ContentPresenter Content="{Binding Icon}" MaxWidth="20" MaxHeight="20" />
-                                                            <TextBlock Text="{Binding Title}" />
-                                                        </StackPanel>
-                                                    </Button>
-                                                    <ProgressBar Height="3" Value="{Binding ProgressValue}"
-                                                                 Maximum="{Binding ProgressMaximum}" />
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Border>
+                        <ContentControl Template="{DynamicResource DesktopSidebarTemplate}" />
 
                         <Grid Grid.Column="1">
                             <ListBox Name="PART_GridGameList"
@@ -196,52 +70,13 @@
                                      IsVisible="{Binding IsGridView}"
                                      Background="Transparent"
                                      ItemsSource="{Binding Games}"
-                                     SelectedItem="{Binding SelectedGame, Mode=TwoWay}">
+                                     SelectedItem="{Binding SelectedGame, Mode=TwoWay}"
+                                     ItemTemplate="{DynamicResource DesktopGridItemTemplate}">
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <foundation:UniformGridVirtualizingPanel ItemWidth="180" ItemHeight="258" />
                                     </ItemsPanelTemplate>
                                 </ListBox.ItemsPanel>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Classes="desktopTile" Margin="6" CornerRadius="8"
-                                                Background="{DynamicResource DesktopPanelBrush}"
-                                                BorderBrush="Transparent" BorderThickness="2"
-                                                ClipToBounds="True">
-                                            <Grid RowDefinitions="*,Auto">
-                                                <Border Background="#222B37">
-                                                    <Grid>
-                                                        <TextBlock Text="{Binding Name}" Margin="14"
-                                                                   FontSize="22" FontWeight="Bold"
-                                                                   TextAlignment="Center" TextWrapping="Wrap"
-                                                                   Foreground="#536579"
-                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                        <foundation:GameCoverImage SourcePath="{Binding CoverPath}"
-                                                                                    Stretch="UniformToFill" />
-                                                        <Border IsVisible="{Binding ShowGroupHeader}"
-                                                                VerticalAlignment="Top" Padding="8,4"
-                                                                Background="#E600A8E8">
-                                                            <TextBlock Text="{Binding GroupHeader}" FontSize="11"
-                                                                       FontWeight="Bold" Foreground="White" />
-                                                        </Border>
-                                                        <Border IsVisible="{Binding Favorite}" HorizontalAlignment="Right"
-                                                                VerticalAlignment="Bottom" Padding="7,3"
-                                                                Background="#D900A8E8" CornerRadius="6,0,0,0">
-                                                            <TextBlock Text="★" Foreground="White" />
-                                                        </Border>
-                                                    </Grid>
-                                                </Border>
-                                                <StackPanel Grid.Row="1" Margin="11,8" Spacing="2">
-                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               Foreground="{DynamicResource DesktopTextBrush}" />
-                                                    <TextBlock Text="{Binding StateText}" FontSize="11"
-                                                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                                                </StackPanel>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
                             </ListBox>
 
                             <ListBox Name="PART_ListGameList"
@@ -249,131 +84,12 @@
                                      IsVisible="{Binding IsListView}"
                                      Background="Transparent"
                                      ItemsSource="{Binding Games}"
-                                     SelectedItem="{Binding SelectedGame, Mode=TwoWay}">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel>
-                                            <Border IsVisible="{Binding ShowGroupHeader}"
-                                                    Margin="4,14,4,4" Padding="10,5"
-                                                    Background="#26394A" CornerRadius="5">
-                                                <TextBlock Text="{Binding GroupHeader}" FontWeight="Bold"
-                                                           Foreground="{DynamicResource DesktopAccentBrush}" />
-                                            </Border>
-                                            <Border Classes="desktopRow" Margin="3" Padding="10"
-                                                    CornerRadius="6" Background="{DynamicResource DesktopPanelBrush}"
-                                                    BorderBrush="Transparent" BorderThickness="1">
-                                                <Grid ColumnDefinitions="48,2*,*,*,Auto" ColumnSpacing="12">
-                                                    <Border Width="42" Height="56" Background="#222B37"
-                                                            CornerRadius="4" ClipToBounds="True">
-                                                        <foundation:GameCoverImage SourcePath="{Binding CoverPath}"
-                                                                                    Stretch="UniformToFill" />
-                                                    </Border>
-                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource DesktopTextBrush}" />
-                                                        <TextBlock Text="{Binding MetadataLine}" FontSize="11"
-                                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
-                                                    </StackPanel>
-                                                    <TextBlock Grid.Column="2" Text="{Binding StateText}"
-                                                               VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                                                    <TextBlock Grid.Column="3" Text="{Binding PlaytimeText}"
-                                                               VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                                                    <TextBlock Grid.Column="4" Text="{Binding LastPlayedText}"
-                                                               VerticalAlignment="Center"
-                                                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                                                </Grid>
-                                            </Border>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
+                                     SelectedItem="{Binding SelectedGame, Mode=TwoWay}"
+                                     ItemTemplate="{DynamicResource DesktopListItemTemplate}" />
                         </Grid>
 
-                        <Border Grid.Column="2" Background="{DynamicResource DesktopPanelBrush}"
-                                BorderBrush="#303A49" BorderThickness="1,0,0,0">
-                            <ScrollViewer>
-                                <StackPanel Margin="26" Spacing="15">
-                                    <Border Height="310" CornerRadius="10" Background="#222B37"
-                                            ClipToBounds="True">
-                                        <foundation:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
-                                                                    Stretch="UniformToFill" />
-                                    </Border>
-                                    <TextBlock Text="{Binding SelectedGame.Name}" FontSize="32"
-                                               FontWeight="Bold" TextWrapping="Wrap"
-                                               Foreground="{DynamicResource DesktopTextBrush}" />
-                                    <TextBlock Text="{Binding SelectedGame.MetadataLine}"
-                                               Foreground="{DynamicResource DesktopAccentBrush}" />
-                                    <TextBlock Text="{Binding SelectedGame.SourceName}"
-                                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                                    <TextBlock Text="{Binding SelectedGame.CompletionStatusName}"
-                                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                                    <TextBlock Text="{Binding SelectedGame.UserScoreText}"
-                                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                                    <TextBlock Text="{Binding SelectedGame.CriticScoreText}"
-                                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                                    <TextBlock Text="{Binding SelectedGame.CommunityScoreText}"
-                                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                                    <StackPanel Spacing="3">
-                                        <TextBlock Text="{Binding SelectedGame.GenresText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.PlatformsText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.CategoriesText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.TagsText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.DevelopersText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.PublishersText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.FeaturesText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.SeriesText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.AgeRatingsText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.RegionsText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.LinksText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.GameActionsText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.RomsText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.InstallationDetailsText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.ScriptsText}" FontSize="11"
-                                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal" Spacing="16">
-                                        <TextBlock Text="{Binding SelectedGame.PlaytimeText}"
-                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
-                                        <TextBlock Text="{Binding SelectedGame.LastPlayedText}"
-                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
-                                    </StackPanel>
-                                    <TextBlock Text="{Binding SelectedGame.DescriptionText}"
-                                               TextWrapping="Wrap" LineHeight="23"
-                                               Foreground="{DynamicResource DesktopTextBrush}" />
-                                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
-                                        <Button Classes="primary" Command="{Binding ActivateCommand}"
-                                                Content="{DynamicResource LOCDesktopPlay}" />
-                                        <Button Command="{Binding InstallCommand}"
-                                                Content="{DynamicResource LOCDesktopInstall}" />
-                                        <Button Command="{Binding UninstallCommand}"
-                                                Content="{DynamicResource LOCDesktopUninstall}" />
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal" Spacing="10">
-                                        <Button Content="{DynamicResource LOCDesktopEdit}" Command="{Binding EditCommand}" />
-                                        <Button Content="{DynamicResource LOCDesktopDownloadMetadata}"
-                                                Command="{Binding OpenMetadataDownloadCommand}" />
-                                        <Button Content="{DynamicResource LOCDesktopPluginCommands}"
-                                                Command="{Binding OpenPluginGameMenuCommand}" />
-                                    </StackPanel>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </Border>
+                        <ContentControl Grid.Column="2"
+                                        Template="{DynamicResource DesktopDetailsPanelTemplate}" />
                     </Grid>
 
                     <Border Grid.Row="2" Background="#0C1016" Padding="18,0">

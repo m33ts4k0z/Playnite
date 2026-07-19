@@ -1,0 +1,50 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ControlTemplate x:Key="DesktopTopPanelTemplate">
+        <Border Background="{DynamicResource DesktopPanelStrongBrush}"
+                BorderBrush="#303A49" BorderThickness="0,0,0,1"
+                Padding="24,0">
+            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Border Width="34" Height="34" CornerRadius="9"
+                            Background="{DynamicResource DesktopAccentBrush}">
+                        <TextBlock Text="P" FontSize="20" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="Playnite" FontSize="23" FontWeight="SemiBold"
+                               Foreground="{DynamicResource DesktopTextBrush}"
+                               VerticalAlignment="Center" />
+                    <Border Background="#263140" CornerRadius="12" Padding="9,4">
+                        <TextBlock Text="Avalonia Desktop" FontSize="12"
+                                   Foreground="{DynamicResource DesktopAccentBrush}" />
+                    </Border>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12"
+                            VerticalAlignment="Center">
+                    <ItemsControl ItemsSource="{Binding PluginTopPanelItems}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding Command}" IsVisible="{Binding Visible}"
+                                        ToolTip.Tip="{Binding PluginName}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <ContentPresenter Content="{Binding Icon}" MaxWidth="18" MaxHeight="18" />
+                                        <TextBlock Text="{Binding Title}" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="{Binding LibrarySummary}" VerticalAlignment="Center"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <Button Command="{Binding ToggleNotificationsCommand}"
+                            Content="{Binding NotificationCount, StringFormat='Notifications ({0})'}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+</ResourceDictionary>

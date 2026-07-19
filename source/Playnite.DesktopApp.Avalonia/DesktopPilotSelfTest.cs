@@ -49,9 +49,10 @@ internal static class DesktopPilotSelfTest
         Record(results, "Avalonia theme API 3 package contract validates", () =>
             window.ActiveThemePackage.Mode == AvaloniaThemeMode.Desktop &&
             window.ActiveThemePackage.Manifest?.ThemeApiVersion == AvaloniaThemePackage.CurrentApiVersion.ToString() &&
-            window.ActiveThemePackage.ResourceDictionaries.Count == 1 &&
+            window.ActiveThemePackage.ResourceDictionaries.Count == 7 &&
             window.ActiveThemePackage.SelectorStyles.Count == 1
-                ? $"{window.ActiveThemePackage.Name} targets theme API {AvaloniaThemePackage.CurrentApiVersion}"
+                ? $"{window.ActiveThemePackage.Name} targets theme API {AvaloniaThemePackage.CurrentApiVersion} " +
+                  "with six modular main-view dictionaries"
                 : throw new InvalidOperationException("The default Desktop theme package is incomplete."));
 
         Record(results, "Avalonia 12 native window chrome contract applies", () =>

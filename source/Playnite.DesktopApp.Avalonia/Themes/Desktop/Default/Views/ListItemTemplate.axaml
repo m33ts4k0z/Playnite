@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:foundation="using:Playnite.Avalonia.Controls">
+    <DataTemplate x:Key="DesktopListItemTemplate">
+        <StackPanel>
+            <Border IsVisible="{Binding ShowGroupHeader}"
+                    Margin="4,14,4,4" Padding="10,5"
+                    Background="#26394A" CornerRadius="5">
+                <TextBlock Text="{Binding GroupHeader}" FontWeight="Bold"
+                           Foreground="{DynamicResource DesktopAccentBrush}" />
+            </Border>
+            <Border Classes="desktopRow" Margin="3" Padding="10"
+                    CornerRadius="6" Background="{DynamicResource DesktopPanelBrush}"
+                    BorderBrush="Transparent" BorderThickness="1">
+                <Grid ColumnDefinitions="48,2*,*,*,Auto" ColumnSpacing="12">
+                    <Border Width="42" Height="56" Background="#222B37"
+                            CornerRadius="4" ClipToBounds="True">
+                        <foundation:GameCoverImage SourcePath="{Binding CoverPath}"
+                                                   Stretch="UniformToFill" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource DesktopTextBrush}" />
+                        <TextBlock Text="{Binding MetadataLine}" FontSize="11"
+                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding StateText}"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Grid.Column="3" Text="{Binding PlaytimeText}"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Grid.Column="4" Text="{Binding LastPlayedText}"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                </Grid>
+            </Border>
+        </StackPanel>
+    </DataTemplate>
+</ResourceDictionary>

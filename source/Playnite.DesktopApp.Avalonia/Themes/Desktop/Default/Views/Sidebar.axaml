@@ -1,0 +1,85 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ControlTemplate x:Key="DesktopSidebarTemplate">
+        <Border Background="{DynamicResource DesktopPanelBrush}"
+                BorderBrush="#303A49" BorderThickness="0,0,1,0"
+                Padding="20">
+            <ScrollViewer>
+                <StackPanel Spacing="12">
+                    <TextBlock Text="{DynamicResource LOCDesktopLibrary}"
+                               FontSize="25" FontWeight="Bold"
+                               Foreground="{DynamicResource DesktopTextBrush}" />
+                    <TextBox Name="PART_SearchBox"
+                             Text="{Binding SearchText, Mode=TwoWay}"
+                             Watermark="Search games"
+                             Padding="12,9" />
+                    <TextBlock Text="{Binding LibrarySummary}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <Border Height="1" Background="#303A49" Margin="0,5" />
+                    <TextBlock Text="{DynamicResource LOCDesktopPreset}" Classes="sectionLabel" />
+                    <ComboBox ItemsSource="{Binding FilterPresets}"
+                              SelectedItem="{Binding SelectedFilterPreset, Mode=TwoWay}" />
+                    <CheckBox Content="{DynamicResource LOCDesktopInstalled}"
+                              IsChecked="{Binding InstalledOnly, Mode=TwoWay}" />
+                    <CheckBox Content="{DynamicResource LOCDesktopFavorites}"
+                              IsChecked="{Binding FavoritesOnly, Mode=TwoWay}" />
+                    <Border Height="1" Background="#303A49" Margin="0,5" />
+                    <TextBlock Text="{DynamicResource LOCDesktopView}" Classes="sectionLabel" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="nav" Command="{Binding SetGridViewCommand}" Content="Grid" />
+                        <Button Classes="nav" Command="{Binding SetListViewCommand}" Content="List" />
+                    </StackPanel>
+                    <TextBlock Text="{DynamicResource LOCDesktopSort}" Classes="sectionLabel" />
+                    <ComboBox ItemsSource="{Binding SortOptions}"
+                              SelectedItem="{Binding SelectedSortOrder, Mode=TwoWay}" />
+                    <ComboBox ItemsSource="{Binding SortDirectionOptions}"
+                              SelectedItem="{Binding SelectedSortDirection, Mode=TwoWay}" />
+                    <TextBlock Text="{DynamicResource LOCDesktopGroup}" Classes="sectionLabel" />
+                    <ComboBox ItemsSource="{Binding GroupingOptions}"
+                              SelectedItem="{Binding SelectedGrouping, Mode=TwoWay}" />
+                    <Border Background="#202A37" CornerRadius="7" Padding="10" Margin="0,8,0,0">
+                        <TextBlock Text="{Binding PluginSummary}" FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                    </Border>
+                    <TextBlock Text="{DynamicResource LOCDesktopWindowTray}" Classes="sectionLabel" />
+                    <CheckBox Content="{DynamicResource LOCDesktopEnableTray}"
+                              IsChecked="{Binding EnableTray, Mode=TwoWay}" />
+                    <CheckBox Content="{DynamicResource LOCDesktopMinimizeTray}"
+                              IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" />
+                    <CheckBox Content="{DynamicResource LOCDesktopCloseTray}"
+                              IsChecked="{Binding CloseToTray, Mode=TwoWay}" />
+                    <Button Content="{DynamicResource LOCDesktopUpdateLibraries}"
+                            Command="{Binding OpenLibrarySyncCommand}" />
+                    <Button Content="{DynamicResource LOCDesktopImportInstalled}"
+                            Command="{Binding OpenInstalledGameImportCommand}" />
+                    <Button Content="{DynamicResource LOCDesktopAddManualGame}"
+                            Command="{Binding AddManualGameCommand}" />
+                    <Button Content="Settings" Command="{Binding OpenSettingsCommand}" />
+                    <Button Content="{DynamicResource LOCDesktopPluginSettings}"
+                            Command="{Binding OpenPluginSettingsListCommand}" />
+                    <Button Content="{DynamicResource LOCDesktopPluginCommands}"
+                            Command="{Binding OpenPluginMainMenuCommand}" />
+                    <TextBlock Text="{DynamicResource LOCDesktopPluginExtensions}"
+                               Classes="sectionLabel" Margin="0,6,0,0" />
+                    <ItemsControl ItemsSource="{Binding PluginSidebarItems}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel IsVisible="{Binding Visible}" Spacing="2">
+                                    <Button Command="{Binding Command}" ToolTip.Tip="{Binding PluginName}">
+                                        <StackPanel Orientation="Horizontal" Spacing="7">
+                                            <ContentPresenter Content="{Binding Icon}" MaxWidth="20" MaxHeight="20" />
+                                            <TextBlock Text="{Binding Title}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <ProgressBar Height="3" Value="{Binding ProgressValue}"
+                                                 Maximum="{Binding ProgressMaximum}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </ControlTemplate>
+</ResourceDictionary>

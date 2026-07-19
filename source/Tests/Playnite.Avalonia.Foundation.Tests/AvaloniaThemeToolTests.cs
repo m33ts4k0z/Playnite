@@ -106,4 +106,74 @@ public sealed class AvaloniaThemeToolTests
         Assert.Throws<InvalidDataException>(() =>
             AvaloniaThemeTool.Validate(themeRoot, AvaloniaThemeMode.Desktop));
     }
+
+    [Test]
+    public void PackageLoadsOrderedResourceDictionariesBeforeEntryPoint()
+    {
+        var themeRoot = AvaloniaThemeTool.Create(
+            AvaloniaThemeMode.Desktop,
+            "Modular Theme",
+            Path.Combine(testRoot, "theme"));
+        var viewsRoot = Path.Combine(themeRoot, "Views");
+        Directory.CreateDirectory(viewsRoot);
+        File.WriteAllText(
+            Path.Combine(viewsRoot, "Library.axaml"),
+            "<ResourceDictionary xmlns=\"https://github.com/avaloniaui\" />");
+        var manifestPath = Path.Combine(themeRoot, "theme.yaml");
+        File.WriteAllText(
+            manifestPath,
+            File.ReadAllText(manifestPath).Replace(
+                "EntryPoint: Theme.axaml",
+                "EntryPoint: Theme.axaml\nResources:\n  - Views/Library.axaml",
+                StringComparison.Ordinal));
+
+        var package = AvaloniaThemePackage.Load(themeRoot, AvaloniaThemeMode.Desktop);
+
+        CollectionAssert.AreEqual(
+            new[] { "Library.axaml", "Theme.axaml" },
+            package.ResourceDictionaries.Select(Path.GetFileName));
+        Assert.DoesNotThrow(package.ValidateMarkupStructure);
+    }
+
+    [Test]
+    public void PackageRejectsDuplicateResourceDictionaryPaths()
+    {
+        var themeRoot = AvaloniaThemeTool.Create(
+            AvaloniaThemeMode.Desktop,
+            "Duplicate Resources",
+            Path.Combine(testRoot, "theme"));
+        var manifestPath = Path.Combine(themeRoot, "theme.yaml");
+        File.WriteAllText(
+            manifestPath,
+            File.ReadAllText(manifestPath).Replace(
+                "EntryPoint: Theme.axaml",
+                "EntryPoint: Theme.axaml\nResources:\n  - Theme.axaml",
+                StringComparison.Ordinal));
+
+        Assert.Throws<InvalidDataException>(() =>
+            AvaloniaThemePackage.Load(themeRoot, AvaloniaThemeMode.Desktop));
+    }
+
+    [Test]
+    public void PackageRejectsResourceDictionaryEscape()
+    {
+        var themeRoot = AvaloniaThemeTool.Create(
+            AvaloniaThemeMode.Desktop,
+            "Escaping Resources",
+            Path.Combine(testRoot, "theme"));
+        var outsidePath = Path.Combine(testRoot, "Outside.axaml");
+        File.WriteAllText(
+            outsidePath,
+            "<ResourceDictionary xmlns=\"https://github.com/avaloniaui\" />");
+        var manifestPath = Path.Combine(themeRoot, "theme.yaml");
+        File.WriteAllText(
+            manifestPath,
+            File.ReadAllText(manifestPath).Replace(
+                "EntryPoint: Theme.axaml",
+                "EntryPoint: Theme.axaml\nResources:\n  - ../Outside.axaml",
+                StringComparison.Ordinal));
+
+        Assert.Throws<InvalidDataException>(() =>
+            AvaloniaThemePackage.Load(themeRoot, AvaloniaThemeMode.Desktop));
+    }
 }

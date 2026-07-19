@@ -1,0 +1,89 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:foundation="using:Playnite.Avalonia.Controls">
+    <ControlTemplate x:Key="DesktopDetailsPanelTemplate">
+        <Border Background="{DynamicResource DesktopPanelBrush}"
+                BorderBrush="#303A49" BorderThickness="1,0,0,0">
+            <ScrollViewer>
+                <StackPanel Margin="26" Spacing="15">
+                    <Border Height="310" CornerRadius="10" Background="#222B37"
+                            ClipToBounds="True">
+                        <foundation:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
+                                                   Stretch="UniformToFill" />
+                    </Border>
+                    <TextBlock Text="{Binding SelectedGame.Name}" FontSize="32"
+                               FontWeight="Bold" TextWrapping="Wrap"
+                               Foreground="{DynamicResource DesktopTextBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.MetadataLine}"
+                               Foreground="{DynamicResource DesktopAccentBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.SourceName}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.CompletionStatusName}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.UserScoreText}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.CriticScoreText}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.CommunityScoreText}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <StackPanel Spacing="3">
+                        <TextBlock Text="{Binding SelectedGame.GenresText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.PlatformsText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.CategoriesText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.TagsText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.DevelopersText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.PublishersText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.FeaturesText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.SeriesText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.AgeRatingsText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.RegionsText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.LinksText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.GameActionsText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.RomsText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.InstallationDetailsText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.ScriptsText}" FontSize="11"
+                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="16">
+                        <TextBlock Text="{Binding SelectedGame.PlaytimeText}"
+                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <TextBlock Text="{Binding SelectedGame.LastPlayedText}"
+                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding SelectedGame.DescriptionText}"
+                               TextWrapping="Wrap" LineHeight="23"
+                               Foreground="{DynamicResource DesktopTextBrush}" />
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+                        <Button Classes="primary" Command="{Binding ActivateCommand}"
+                                Content="{DynamicResource LOCDesktopPlay}" />
+                        <Button Command="{Binding InstallCommand}"
+                                Content="{DynamicResource LOCDesktopInstall}" />
+                        <Button Command="{Binding UninstallCommand}"
+                                Content="{DynamicResource LOCDesktopUninstall}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button Content="{DynamicResource LOCDesktopEdit}" Command="{Binding EditCommand}" />
+                        <Button Content="{DynamicResource LOCDesktopDownloadMetadata}"
+                                Command="{Binding OpenMetadataDownloadCommand}" />
+                        <Button Content="{DynamicResource LOCDesktopPluginCommands}"
+                                Command="{Binding OpenPluginGameMenuCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </ControlTemplate>
+</ResourceDictionary>

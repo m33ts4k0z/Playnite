@@ -6,5 +6,12 @@ Mode: Desktop
 ThemeApiVersion: 3.0.0
 Framework: Avalonia
 EntryPoint: Theme.axaml
+Resources:
+  - Views/BackgroundLayer.axaml
+  - Views/TopPanel.axaml
+  - Views/Sidebar.axaml
+  - Views/GridItemTemplate.axaml
+  - Views/ListItemTemplate.axaml
+  - Views/DetailsPanel.axaml
 Styles:
   - Styles.axaml

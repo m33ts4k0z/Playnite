@@ -6,4 +6,7 @@ template parts, lives in the consolidated document:
 
 Desktop specifics in short: `Mode: Desktop`, restart-applied packages via
 `--theme` or `ThemePath` in `avaloniaDesktop.json`; the stable contract covers
-the `DesktopMainView` and `DesktopWindowChrome` control themes.
+the `DesktopMainView` and `DesktopWindowChrome` control themes. Theme packages
+can declare an ordered `Resources` list in `theme.yaml`; those loose resource
+dictionaries load before `EntryPoint`, allowing independently maintained view
+templates without giving up runtime-editable theme markup.

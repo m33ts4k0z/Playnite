@@ -21,6 +21,7 @@ public sealed class AvaloniaThemeManifest
     public string ThemeApiVersion { get; set; }
     public string Framework { get; set; }
     public string EntryPoint { get; set; } = "Theme.axaml";
+    public List<string> Resources { get; set; } = new();
     public List<string> Styles { get; set; } = new();
 }
 
@@ -110,7 +111,16 @@ public sealed class AvaloniaThemePackage
         }
 
         var mode = Validate(manifest, expectedMode);
-        var dictionary = ResolvePackageFile(root, manifest.EntryPoint, "entry point");
+        var dictionaries = (manifest.Resources ?? new List<string>())
+            .Select(resource => ResolvePackageFile(root, resource, "resource dictionary"))
+            .Append(ResolvePackageFile(root, manifest.EntryPoint, "entry point"))
+            .ToList();
+        if (dictionaries.Count != dictionaries.Distinct(PathComparer).Count())
+        {
+            throw new InvalidDataException(
+                "The theme manifest contains duplicate resource-dictionary paths.");
+        }
+
         var styles = (manifest.Styles ?? new List<string>())
             .Select(style => ResolvePackageFile(root, style, "selector style"))
             .ToList();
@@ -125,7 +135,7 @@ public sealed class AvaloniaThemePackage
             manifest.Name,
             mode,
             manifest,
-            new[] { dictionary },
+            dictionaries,
             styles,
             false);
     }

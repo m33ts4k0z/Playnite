@@ -15,11 +15,14 @@ Mode: Desktop            # or Fullscreen
 ThemeApiVersion: 3.0.0
 Framework: Avalonia
 EntryPoint: Theme.axaml
+Resources:
+  - Views/GridItemTemplate.axaml
+  - Views/DetailsPanel.axaml
 Styles:
   - Styles.axaml
 ```
 
-`Theme.axaml` overrides resources and the `ControlTheme` contracts of the target shell. Optional Avalonia selector styles live in the files named by `Styles`. All package-relative paths must stay inside the theme directory. The application parses every dictionary and style **before** replacing active resources, so an invalid package leaves the built-in theme active instead of breaking the app.
+`Theme.axaml` overrides resources and the `ControlTheme` contracts of the target shell. Optional resource dictionaries named by `Resources` load in declaration order before the entry point, so large themes can keep independently maintained view templates in separate files. Optional Avalonia selector styles live in the files named by `Styles`. Resource, entry-point, and style paths must be unique within their respective lists, and every package-relative path must stay inside the theme directory. The application parses every dictionary and style **before** replacing active resources, so an invalid package leaves the built-in theme active instead of breaking the app.
 
 For quick iteration, `--theme path/to/Overrides.axaml` is accepted as a raw resource override without a manifest. Packaged themes are the compatibility contract intended for distribution.
 
