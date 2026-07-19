@@ -658,6 +658,8 @@
                                             <TextBlock Text="Library" Classes="sectionLabel" />
                                             <CheckBox Content="{DynamicResource LOCSettingsDownloadMetadataOnImport}"
                                                       IsChecked="{Binding Settings.DownloadMetadataOnImport, Mode=TwoWay}" />
+                                            <CheckBox Content="{DynamicResource NameFilterUseFuzzyMatching}"
+                                                      IsChecked="{Binding Settings.FuzzyMatchingInNameFilter, Mode=TwoWay}" />
                                             <StackPanel Orientation="Horizontal" Spacing="10">
                                                 <TextBlock Text="{DynamicResource LOCSettingsPlaytimeImportMode}" VerticalAlignment="Center"
                                                            Foreground="{DynamicResource DesktopTextBrush}" />

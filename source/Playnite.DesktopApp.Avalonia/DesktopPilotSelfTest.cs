@@ -1637,6 +1637,20 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException(
                     $"minimizedAfterLaunch={minimizedAfterLaunch}, restoredAfterClose={restoredAfterClose}"));
 
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.FuzzyMatchingInNameFilter = false;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        viewModel.OpenSettingsCommand.Execute(null);
+        var fuzzyPersisted = !viewModel.Settings.FuzzyMatchingInNameFilter;
+        viewModel.Settings.FuzzyMatchingInNameFilter = true;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Fuzzy name-matching preference round-trips through the settings", () =>
+            fuzzyPersisted
+                ? "the fuzzy name-filter toggle saved and reloaded"
+                : throw new InvalidOperationException("FuzzyMatchingInNameFilter did not persist."));
+
         var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(
             policyPlugin.Id,

@@ -1053,7 +1053,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         if (database != null)
         {
             var filterSettings = SelectedFilterPreset?.Settings ?? new FilterPresetSettings();
-            filtered = filtered.Where(game => database.GetGameMatchesFilter(game.Game, filterSettings));
+            filtered = filtered.Where(game =>
+                database.GetGameMatchesFilter(game.Game, filterSettings, settings.FuzzyMatchingInNameFilter));
         }
 
         if (InstalledOnly)

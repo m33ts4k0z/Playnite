@@ -39,6 +39,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     private bool originalStartOnBootClosedToTray;
     private AfterLaunchOption afterLaunch;
     private AfterGameCloseOption afterGameClose;
+    private bool fuzzyMatchingInNameFilter;
     private bool downloadMetadataOnImport;
     private PlaytimeImportMode playtimeImportMode;
     private bool useAvaloniaShell;
@@ -154,6 +155,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public bool StartMinimized { get => startMinimized; set => SetField(ref startMinimized, value); }
     public AfterLaunchOption AfterLaunch { get => afterLaunch; set => SetField(ref afterLaunch, value); }
     public AfterGameCloseOption AfterGameClose { get => afterGameClose; set => SetField(ref afterGameClose, value); }
+    public bool FuzzyMatchingInNameFilter { get => fuzzyMatchingInNameFilter; set => SetField(ref fuzzyMatchingInNameFilter, value); }
     public bool DownloadMetadataOnImport { get => downloadMetadataOnImport; set => SetField(ref downloadMetadataOnImport, value); }
     public PlaytimeImportMode PlaytimeImportMode { get => playtimeImportMode; set => SetField(ref playtimeImportMode, value); }
     public bool UseAvaloniaShell { get => useAvaloniaShell; set => SetField(ref useAvaloniaShell, value); }
@@ -183,6 +185,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         originalStartOnBootClosedToTray = settings.StartOnBootClosedToTray;
         afterLaunch = settings.AfterLaunch;
         afterGameClose = settings.AfterGameClose;
+        fuzzyMatchingInNameFilter = settings.FuzzyMatchingInNameFilter;
         downloadMetadataOnImport = settings.DownloadMetadataOnImport;
         playtimeImportMode = settings.LibraryPlaytimeImportMode;
         useAvaloniaShell = global::Playnite.PlaynitePaths.IsAvaloniaShellPreferred;
@@ -208,6 +211,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         settings.StartMinimized = StartMinimized;
         settings.AfterLaunch = AfterLaunch;
         settings.AfterGameClose = AfterGameClose;
+        settings.FuzzyMatchingInNameFilter = FuzzyMatchingInNameFilter;
         settings.DownloadMetadataOnImport = DownloadMetadataOnImport;
         settings.LibraryPlaytimeImportMode = PlaytimeImportMode;
 
@@ -285,6 +289,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(StartMinimized));
         OnPropertyChanged(nameof(AfterLaunch));
         OnPropertyChanged(nameof(AfterGameClose));
+        OnPropertyChanged(nameof(FuzzyMatchingInNameFilter));
         OnPropertyChanged(nameof(DownloadMetadataOnImport));
         OnPropertyChanged(nameof(PlaytimeImportMode));
         OnPropertyChanged(nameof(UseAvaloniaShell));
