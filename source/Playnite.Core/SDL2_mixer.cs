@@ -40,6 +40,11 @@ namespace SDL2
 		/* Used by DllImport to load the native library. */
 		private const string nativeLibName = "SDL2_mixer";
 
+		static SDL_mixer()
+		{
+			SDL.InitializeNativeLibraryResolver();
+		}
+
 		#endregion
 
 		#region SDL_mixer.h

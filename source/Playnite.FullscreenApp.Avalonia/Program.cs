@@ -13,6 +13,7 @@ internal static class Program
     {
         Options = StartupOptions.Parse(args);
         var logDirectory = Options.SelfTest ? AppContext.BaseDirectory : Options.UserDataDirectory;
+        Directory.CreateDirectory(logDirectory);
         LogManager.Init(new NLogLogProvider(Path.Combine(logDirectory, "avaloniaFullscreen.log")));
         return BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }

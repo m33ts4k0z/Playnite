@@ -43,6 +43,61 @@ namespace SDL2
 		#region SDL2# Variables
 
 		private const string nativeLibName = "SDL2";
+		private static bool resolverInstalled;
+
+		static SDL()
+		{
+			InitializeNativeLibraryResolver();
+		}
+
+		internal static void InitializeNativeLibraryResolver()
+		{
+			if (resolverInstalled)
+			{
+				return;
+			}
+
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ||
+				RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+			{
+				NativeLibrary.SetDllImportResolver(typeof(SDL).Assembly, ResolveNativeLibrary);
+				resolverInstalled = true;
+			}
+		}
+
+		private static IntPtr ResolveNativeLibrary(
+			string libraryName,
+			System.Reflection.Assembly assembly,
+			DllImportSearchPath? searchPath)
+		{
+			string[] candidates;
+			if (libraryName == "SDL2")
+			{
+				candidates = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+					? new[] { "libSDL2-2.0.so.0", "libSDL2.so" }
+					: new[] { "libSDL2-2.0.0.dylib", "libSDL2.dylib" };
+			}
+			else if (libraryName == "SDL2_mixer")
+			{
+				candidates = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+					? new[] { "libSDL2_mixer-2.0.so.0", "libSDL2_mixer.so" }
+					: new[] { "libSDL2_mixer-2.0.0.dylib", "libSDL2_mixer.dylib" };
+			}
+			else
+			{
+				return IntPtr.Zero;
+			}
+
+			foreach (var candidate in candidates)
+			{
+				if (NativeLibrary.TryLoad(candidate, out var handle))
+				{
+					return handle;
+				}
+			}
+
+			return IntPtr.Zero;
+		}
 
 		#endregion
 
