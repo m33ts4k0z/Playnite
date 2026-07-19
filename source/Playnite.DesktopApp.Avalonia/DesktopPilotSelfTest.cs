@@ -1563,6 +1563,29 @@ internal static class DesktopPilotSelfTest
                 ? "the close role hid the window while explicit application shutdown remains available"
                 : throw new InvalidOperationException("Close-to-tray destroyed or failed to restore the window."));
 
+        viewModel.EnableTray = false;
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        viewModel.OpenSettingsCommand.Execute(null);
+        var settingsOpened = viewModel.Settings.IsVisible && viewModel.Settings.IsGeneralSelected;
+        viewModel.Settings.EnableTray = true;
+        var settingsDeferred = !viewModel.EnableTray;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Settings overlay applies the working copy only on Save", () =>
+            settingsOpened && settingsDeferred && viewModel.EnableTray && !viewModel.Settings.IsVisible
+                ? "opened to General, deferred the edit, then applied and closed on Save"
+                : throw new InvalidOperationException(
+                    $"opened={settingsOpened}, deferred={settingsDeferred}, applied={viewModel.EnableTray}, visible={viewModel.Settings.IsVisible}"));
+
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.EnableTray = false;
+        viewModel.Settings.CancelCommand.Execute(null);
+        Record(results, "Settings overlay Cancel discards the working copy", () =>
+            !viewModel.Settings.IsVisible && viewModel.EnableTray
+                ? "cancelled without applying the working-copy change"
+                : throw new InvalidOperationException(
+                    $"visible={viewModel.Settings.IsVisible}, enableTray={viewModel.EnableTray}"));
+
         var policyPlugin = new PilotActionPolicyPlugin(window.RuntimeHost.PluginApi);
         window.RuntimeHost.Extensions.Plugins.Add(
             policyPlugin.Id,

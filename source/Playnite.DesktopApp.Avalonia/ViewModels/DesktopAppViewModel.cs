@@ -362,6 +362,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public DesktopLibrarySyncViewModel LibrarySync { get; }
     public DesktopInstalledGameImportViewModel InstalledGameImport { get; }
     public DesktopPluginSettingsViewModel PluginSettings { get; }
+    public DesktopSettingsViewModel Settings { get; }
     public AvaloniaSearchSession PluginSearch { get; }
     public bool IsPluginSearchVisible => PluginSearch.IsVisible;
 
@@ -374,6 +375,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand OpenInstalledGameImportCommand { get; }
     public ICommand AddManualGameCommand { get; }
     public ICommand OpenPluginSettingsListCommand { get; }
+    public ICommand OpenSettingsCommand { get; }
     public ICommand OpenPluginMainMenuCommand { get; }
     public ICommand OpenPluginGameMenuCommand { get; }
     public ICommand InvokePluginMenuItemCommand { get; }
@@ -492,6 +494,21 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             }
         });
         PluginSettings.PropertyChanged += PluginSettings_PropertyChanged;
+        Settings = new DesktopSettingsViewModel(
+            this.settings,
+            () => SettingsChanged?.Invoke(this, EventArgs.Empty),
+            (message, error) =>
+            {
+                if (runtimeHost != null)
+                {
+                    runtimeHost.ShowMessage(message, error);
+                }
+                else
+                {
+                    StatusText = message;
+                }
+            });
+        Settings.PropertyChanged += Settings_PropertyChanged;
 
         ActivateCommand = new AppRelayCommand(
             () => RunOperation(SelectedGame?.IsInstalled == true ? GameOperationKind.Play : GameOperationKind.Install),
@@ -539,6 +556,11 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
                 !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+        OpenSettingsCommand = new AppRelayCommand(OpenSettings,
+            () => !Editor.IsVisible &&
+                !MetadataDownload.IsRunning && !LibrarySync.IsRunning &&
+                !InstalledGameImport.IsRunning && !PluginSettings.IsRunning &&
+                !Settings.IsVisible);
         OpenPluginMainMenuCommand = new AppRelayCommand(
             () => OpenPluginMenu(false),
             () => runtimeHost != null && !Editor.IsVisible &&
@@ -840,6 +862,13 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         }
     }
 
+    private void OpenSettings()
+    {
+        CloseOverlays();
+        Settings.Open();
+        RaiseGameCommandStates();
+    }
+
     private void OpenPluginSettingsList()
     {
         CloseOverlays();
@@ -1015,6 +1044,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         IsPluginMenuVisible = false;
         SelectedPluginMenuItem = null;
         ClosePluginSidebar();
+        Settings.Close();
     }
 
     private void ApplyFilters()
@@ -1108,6 +1138,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)OpenInstalledGameImportCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)AddManualGameCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginSettingsListCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenSettingsCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginMainMenuCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginGameMenuCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)InvokePluginMenuItemCommand).RaiseCanExecuteChanged();
@@ -1178,6 +1209,14 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     {
         if (e.PropertyName is nameof(DesktopPluginSettingsViewModel.IsVisible) or
             nameof(DesktopPluginSettingsViewModel.IsRunning))
+        {
+            RaiseGameCommandStates();
+        }
+    }
+
+    private void Settings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(DesktopSettingsViewModel.IsVisible))
         {
             RaiseGameCommandStates();
         }

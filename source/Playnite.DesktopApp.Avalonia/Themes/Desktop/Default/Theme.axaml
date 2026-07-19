@@ -161,6 +161,8 @@
                                             Command="{Binding OpenInstalledGameImportCommand}" />
                                     <Button Content="{DynamicResource LOCDesktopAddManualGame}"
                                             Command="{Binding AddManualGameCommand}" />
+                                    <Button Content="Settings"
+                                            Command="{Binding OpenSettingsCommand}" />
                                     <Button Content="{DynamicResource LOCDesktopPluginSettings}"
                                             Command="{Binding OpenPluginSettingsListCommand}" />
                                     <Button Content="{DynamicResource LOCDesktopPluginCommands}"
@@ -604,6 +606,87 @@
                                         </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding Settings.IsVisible}"
+                          Background="#E6000000">
+                        <Border Width="840" MaxHeight="720" CornerRadius="14"
+                                Background="{DynamicResource DesktopPanelStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,*,Auto">
+                                <StackPanel Margin="30,26,30,12" Spacing="6">
+                                    <TextBlock Text="Settings" FontSize="30" FontWeight="Bold"
+                                               Foreground="{DynamicResource DesktopTextBrush}" />
+                                    <TextBlock Text="Configure how Playnite looks and behaves."
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                </StackPanel>
+
+                                <Grid Grid.Row="1" ColumnDefinitions="200,*" Margin="30,0">
+                                    <ListBox ItemsSource="{Binding Settings.Sections}"
+                                             SelectedItem="{Binding Settings.SelectedSection, Mode=TwoWay}"
+                                             Background="Transparent" BorderThickness="0">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Title}" Padding="6,8"
+                                                           Foreground="{DynamicResource DesktopTextBrush}" />
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+
+                                    <ScrollViewer Grid.Column="1" MaxHeight="470" Padding="18,0,4,0">
+                                        <StackPanel IsVisible="{Binding Settings.IsGeneralSelected}" Spacing="14">
+                                            <TextBlock Text="Window &amp; tray" Classes="sectionLabel" />
+                                            <CheckBox Content="Show tray icon"
+                                                      IsChecked="{Binding Settings.EnableTray, Mode=TwoWay}" />
+                                            <CheckBox Content="Minimize to tray" Margin="18,0,0,0"
+                                                      IsEnabled="{Binding Settings.TrayOptionsEnabled}"
+                                                      IsChecked="{Binding Settings.MinimizeToTray, Mode=TwoWay}" />
+                                            <CheckBox Content="Close to tray" Margin="18,0,0,0"
+                                                      IsEnabled="{Binding Settings.TrayOptionsEnabled}"
+                                                      IsChecked="{Binding Settings.CloseToTray, Mode=TwoWay}" />
+
+                                            <Border Height="1" Background="#303A49" Margin="0,4" />
+                                            <TextBlock Text="Library" Classes="sectionLabel" />
+                                            <CheckBox Content="Download metadata for newly imported games"
+                                                      IsChecked="{Binding Settings.DownloadMetadataOnImport, Mode=TwoWay}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                                <TextBlock Text="Playtime import" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource DesktopTextBrush}" />
+                                                <ComboBox MinWidth="180"
+                                                          ItemsSource="{Binding Settings.PlaytimeImportModes}"
+                                                          SelectedItem="{Binding Settings.PlaytimeImportMode, Mode=TwoWay}" />
+                                            </StackPanel>
+
+                                            <StackPanel IsVisible="{Binding Settings.CanSwitchShells}" Spacing="6">
+                                                <Border Height="1" Background="#303A49" Margin="0,4" />
+                                                <TextBlock Text="Interface" Classes="sectionLabel" />
+                                                <CheckBox Content="Use the new Playnite interface (restart required)"
+                                                          IsChecked="{Binding Settings.UseAvaloniaShell, Mode=TwoWay}" />
+                                                <TextBlock Text="Switches Playnite to the modernized interface. You can switch back here at any time."
+                                                           TextWrapping="Wrap" FontSize="11"
+                                                           Foreground="{DynamicResource DesktopMutedBrush}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </Grid>
+
+                                <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="#303A49"
+                                        Padding="30,14">
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                        <TextBlock Text="Some changes require a restart to take effect."
+                                                   VerticalAlignment="Center"
+                                                   IsVisible="{Binding Settings.RestartRequired}"
+                                                   Foreground="{DynamicResource DesktopAccentBrush}" />
+                                        <Button Grid.Column="1" Classes="primary" Content="Save"
+                                                Margin="0,0,10,0"
+                                                Command="{Binding Settings.SaveCommand}" />
+                                        <Button Grid.Column="2" Content="Cancel"
+                                                Command="{Binding Settings.CancelCommand}" />
+                                    </Grid>
+                                </Border>
                             </Grid>
                         </Border>
                     </Grid>
