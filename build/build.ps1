@@ -100,11 +100,15 @@ function StageAvaloniaShell()
         throw "Avalonia shell build failed: $ProjectName"
     }
 
+    # The shells multi-target net10.0 (portable/Linux) and net10.0-windows; the
+    # Windows package must ship the -windows build (WPF plugin support, win-x64
+    # RID), so select that TFM directory explicitly — NOT "the first one", which
+    # is the net10.0 Linux leg alphabetically.
     $binRoot = "..\source\$ProjectName\bin\x64\$Configuration"
-    $tfmDir = Get-ChildItem $binRoot -Directory | Select-Object -First 1
+    $tfmDir = Get-ChildItem $binRoot -Directory | Where-Object { $_.Name -like "*-windows*" } | Select-Object -First 1
     if (!$tfmDir)
     {
-        throw "Avalonia shell output not found under $binRoot for $ProjectName."
+        throw "Avalonia shell Windows output not found under $binRoot for $ProjectName (expected a *-windows* target framework directory)."
     }
 
     Copy-Item "$($tfmDir.FullName)\*" $OutputDir -Recurse -Force
