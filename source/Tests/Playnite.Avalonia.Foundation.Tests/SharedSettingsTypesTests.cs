@@ -2,6 +2,8 @@ using Avalonia.Input;
 using NUnit.Framework;
 using Playnite.Avalonia.App.Services;
 using System.Collections.Generic;
+using System.Globalization;
+using System;
 
 namespace Playnite.Avalonia.Foundation.Tests;
 
@@ -68,6 +70,37 @@ public sealed class SharedSettingsTypesTests
             Assert.That(destination.Name, Is.False);
             Assert.That(destination.CoverImage, Is.False);
             Assert.That(destination.UserScore, Is.True);
+        });
+    }
+
+    [Test]
+    public void DateFormattingSupportsRelativeAndPartialDates()
+    {
+        var culture = CultureInfo.GetCultureInfo("en-US");
+        var relative = new DateFormattingOptions { Format = "yyyy-MM-dd", PastWeekRelativeFormat = true };
+        var release = new ReleaseDateFormattingOptions { Format = "yyyy-MM-dd", PartialFormat = "MMMM yyyy" };
+        var today = new DateTime(2026, 7, 19);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(DateFormattingService.Format(today, relative, today, culture), Is.EqualTo("Today"));
+            Assert.That(DateFormattingService.Format(today.AddDays(-1), relative, today, culture), Is.EqualTo("Yesterday"));
+            Assert.That(DateFormattingService.Format(today.AddDays(-3), relative, today, culture), Is.EqualTo("Thursday"));
+            Assert.That(DateFormattingService.FormatReleaseDate(
+                new DateTime(2026, 4, 1), true, false, release, today, culture), Is.EqualTo("April 2026"));
+            Assert.That(DateFormattingService.FormatReleaseDate(
+                new DateTime(2026, 1, 1), false, false, release, today, culture), Is.EqualTo("2026"));
+        });
+    }
+
+    [Test]
+    public void InvalidDateFormatsAreRejectedAndNormalized()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(DateFormattingService.IsValidFormat("yyyy-MM-dd"), Is.True);
+            Assert.That(DateFormattingService.IsValidFormat("%"), Is.False);
+            Assert.That(DateFormattingService.NormalizeFormat("%", "d"), Is.EqualTo("d"));
         });
     }
 }

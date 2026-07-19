@@ -1746,7 +1746,13 @@ internal static class DesktopPilotSelfTest
         Record(results, "Desktop grid and list appearance settings apply live", () =>
             appearanceApplied
                 ? "geometry, cover presentation, group counts, playtime, icons, and both scroll behaviors updated"
-                : throw new InvalidOperationException("One or more W-A1 appearance settings did not reach the live view."));
+                : throw new InvalidOperationException(
+                    $"tile={tilePanel != null}, width={tilePanel?.ItemWidth}, height={tilePanel?.ItemHeight}, spacing={tilePanel?.ItemSpacing}, " +
+                    $"playtime={longPlaytimeGame.PlaytimeText}, stretch={longPlaytimeGame.CoverArtStretch}, " +
+                    $"background={longPlaytimeGame.ShowGridItemBackground}, names={longPlaytimeGame.ShowNamesUnderCovers}, " +
+                    $"listIcon={longPlaytimeGame.ShowListIcon}, groupCount={groupCountVisible}, " +
+                    $"gridScroll={gridScroll != null}/{(gridScroll == null ? 0 : Playnite.Avalonia.Controls.ScrollBehavior.GetWheelSensitivity(gridScroll))}, " +
+                    $"listScroll={listScroll != null}/{(listScroll == null ? 0 : Playnite.Avalonia.Controls.ScrollBehavior.GetWheelSensitivity(listScroll))}"));
 
         viewModel.OpenSettingsCommand.Execute(null);
         viewModel.Settings.AppearanceDetailsView.Visibility.Name = false;
@@ -1780,7 +1786,109 @@ internal static class DesktopPilotSelfTest
         Record(results, "Desktop details visibility and layout settings apply live", () =>
             detailsApplied
                 ? "field visibility, cover/indent/icon geometry, left layout, width, separators, and scrolling updated"
-                : throw new InvalidOperationException("One or more W-A2 details settings did not reach the live view."));
+                : throw new InvalidOperationException(
+                    $"name={window.MainView.DetailsName.IsVisible}, cover={window.MainView.DetailsCover.IsVisible}/{window.MainView.DetailsCover.Height}, " +
+                    $"column={Grid.GetColumn(window.MainView.DetailsPanel)}, width={viewModel.FirstContentColumnWidth.Value}, " +
+                    $"border={viewModel.DetailsBorderThickness}, margin={viewModel.DetailsContentMargin.Left}, " +
+                    $"icon={viewModel.SelectedGame.ListIconHeight}, scroll={detailsScroll != null}/" +
+                    $"{(detailsScroll == null ? 0 : Playnite.Avalonia.Controls.ScrollBehavior.GetWheelSensitivity(detailsScroll))}"));
+
+        viewModel.OpenSettingsCommand.Execute(null);
+        var advanced = viewModel.Settings.AppearanceAdvanced;
+        advanced.ShowBackgroundImageOnWindow = true;
+        advanced.ShowBackImageOnGridView = true;
+        advanced.BlurWindowBackgroundImage = true;
+        advanced.BackgroundImageBlurAmount = 24;
+        advanced.DarkenWindowBackgroundImage = true;
+        advanced.BackgroundImageDarkAmount = 0.4;
+        advanced.BackgroundImageAnimation = false;
+        advanced.FontFamilyName = "Arial";
+        advanced.MonospaceFontFamilyName = "Courier New";
+        advanced.FontSizeSmall = 11;
+        advanced.FontSize = 13;
+        advanced.FontSizeLarge = 17;
+        advanced.FontSizeLarger = 21;
+        advanced.FontSizeLargest = 31;
+        advanced.DefaultIconSource = Playnite.Avalonia.App.Services.DefaultIconSourceOptions.General;
+        advanced.DefaultCoverSource = Playnite.Avalonia.App.Services.DefaultCoverSourceOptions.General;
+        advanced.DefaultBackgroundSource = Playnite.Avalonia.App.Services.DefaultBackgroundSourceOptions.Cover;
+        advanced.DateTimeFormatAdded.Format = "yyyy-MM-dd";
+        advanced.DateTimeFormatAdded.PastWeekRelativeFormat = false;
+        advanced.DateTimeFormatModified.Format = "yyyy-MM-dd";
+        advanced.DateTimeFormatModified.PastWeekRelativeFormat = false;
+        advanced.DateTimeFormatRecentActivity.Format = "yyyy-MM-dd";
+        advanced.DateTimeFormatRecentActivity.PastWeekRelativeFormat = false;
+        advanced.DateTimeFormatReleaseDate.Format = "yyyy-MM-dd";
+        advanced.DateTimeFormatReleaseDate.PartialFormat = "yyyy-MM";
+        advanced.DateTimeFormatReleaseDate.PastWeekRelativeFormat = false;
+        advanced.DateTimeFormatLastPlayed.Format = "yyyy-MM-dd";
+        advanced.DateTimeFormatLastPlayed.PastWeekRelativeFormat = false;
+        viewModel.Settings.AppearanceTopPanel.PluginTopPanelAlignment = Dock.Left;
+        viewModel.Settings.SaveCommand.Execute(null);
+        viewModel.SelectedViewMode = "Grid";
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+
+        var advancedGame = viewModel.SelectedGame;
+        var originalIcon = advancedGame.Game.Icon;
+        var originalCover = advancedGame.Game.CoverImage;
+        var originalBackground = advancedGame.Game.BackgroundImage;
+        var originalAdded = advancedGame.Game.Added;
+        var originalModified = advancedGame.Game.Modified;
+        var originalLastActivity = advancedGame.Game.LastActivity;
+        var originalReleaseDate = advancedGame.Game.ReleaseDate;
+        advancedGame.Game.Icon = null;
+        advancedGame.Game.CoverImage = null;
+        advancedGame.Game.BackgroundImage = null;
+        advancedGame.Game.Added = new DateTime(2026, 7, 1);
+        advancedGame.Game.Modified = new DateTime(2026, 7, 2);
+        advancedGame.Game.LastActivity = new DateTime(2026, 7, 3);
+        advancedGame.Game.ReleaseDate = new ReleaseDate(2026, 7);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var generalIconPath = advancedGame.IconPath;
+        var generalCoverPath = advancedGame.CoverPath;
+        var bundledCoverPath = Path.Combine(AppContext.BaseDirectory, "Assets", "custom_cover_background.png");
+        advancedGame.Game.CoverImage = bundledCoverPath;
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var coverBackgroundPath = advancedGame.BackgroundPath;
+        var advancedApplied = viewModel.ShowWindowBackgroundImage &&
+            Math.Abs(viewModel.BackgroundImageBlurRadius - 24) < 0.01 &&
+            Math.Abs(viewModel.BackgroundImageDarkOpacity - 0.4) < 0.01 &&
+            viewModel.BackgroundImageFadeDuration == TimeSpan.Zero &&
+            viewModel.ShowPluginTopPanelItemsLeft && !viewModel.ShowPluginTopPanelItemsRight &&
+            window.FontFamily.ToString().Contains("Arial", StringComparison.OrdinalIgnoreCase) &&
+            Equals(window.Resources["DesktopFontSizeLargest"], 31d) &&
+            File.Exists(generalIconPath) && File.Exists(generalCoverPath) &&
+            string.Equals(coverBackgroundPath, bundledCoverPath, StringComparison.OrdinalIgnoreCase) &&
+            advancedGame.AddedText.Contains("2026-07-01", StringComparison.Ordinal) &&
+            advancedGame.ModifiedText.Contains("2026-07-02", StringComparison.Ordinal) &&
+            advancedGame.LastPlayedText.Contains("2026-07-03", StringComparison.Ordinal) &&
+            advancedGame.ReleaseDateText.Contains("2026-07", StringComparison.Ordinal);
+        Record(results, "Desktop advanced appearance settings apply live", () =>
+            advancedApplied
+                ? "background effects, fade policy, fonts, fallbacks, dates, and plugin alignment updated"
+                : throw new InvalidOperationException(
+                    $"background={viewModel.ShowWindowBackgroundImage}/{viewModel.BackgroundImageBlurRadius}/{viewModel.BackgroundImageDarkOpacity}, " +
+                    $"fade={viewModel.BackgroundImageFadeDuration}, top={viewModel.ShowPluginTopPanelItemsLeft}, " +
+                    $"font={window.FontFamily}, icon={generalIconPath}, cover={generalCoverPath}, coverBackground={coverBackgroundPath}, " +
+                    $"dates={advancedGame.AddedText}/{advancedGame.ModifiedText}/{advancedGame.LastPlayedText}/{advancedGame.ReleaseDateText}"));
+        advancedGame.Game.Icon = originalIcon;
+        advancedGame.Game.CoverImage = originalCover;
+        advancedGame.Game.BackgroundImage = originalBackground;
+        advancedGame.Game.Added = originalAdded;
+        advancedGame.Game.Modified = originalModified;
+        advancedGame.Game.LastActivity = originalLastActivity;
+        advancedGame.Game.ReleaseDate = originalReleaseDate;
+
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.AppearanceAdvanced.DateTimeFormatAdded.Format = "%";
+        viewModel.Settings.SaveCommand.Execute(null);
+        var invalidFormatBlocked = viewModel.Settings.IsVisible;
+        viewModel.Settings.AppearanceAdvanced.DateTimeFormatAdded.Format = "d";
+        viewModel.Settings.Close();
+        Record(results, "Desktop settings reject invalid date formats", () =>
+            invalidFormatBlocked
+                ? "invalid .NET date formats kept the settings overlay open and selected the failing module"
+                : throw new InvalidOperationException("An invalid date format was saved."));
 
         var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every desktop settings module supplies a passing self-check", () =>
@@ -1992,6 +2100,34 @@ internal static class DesktopPilotSelfTest
                 GridViewDetailsPosition = Dock.Left,
                 GridDetailsWidth = 430,
                 ShowPanelSeparators = false,
+                ShowBackgroundImageOnWindow = false,
+                BlurWindowBackgroundImage = false,
+                BackgroundImageBlurAmount = 36,
+                DarkenWindowBackgroundImage = false,
+                BackgroundImageDarkAmount = 0.35,
+                ShowBackImageOnGridView = true,
+                BackgroundImageAnimation = false,
+                FontFamilyName = "Arial",
+                MonospaceFontFamilyName = "Courier New",
+                FontSizeSmall = 11,
+                FontSize = 13,
+                FontSizeLarge = 17,
+                FontSizeLarger = 21,
+                FontSizeLargest = 31,
+                DefaultIconSource = Playnite.Avalonia.App.Services.DefaultIconSourceOptions.Platform,
+                DefaultCoverSource = Playnite.Avalonia.App.Services.DefaultCoverSourceOptions.None,
+                DefaultBackgroundSource = Playnite.Avalonia.App.Services.DefaultBackgroundSourceOptions.Cover,
+                DateTimeFormatAdded = new Playnite.Avalonia.App.Services.DateFormattingOptions
+                {
+                    Format = "yyyy-MM-dd",
+                    PastWeekRelativeFormat = true
+                },
+                DateTimeFormatReleaseDate = new Playnite.Avalonia.App.Services.ReleaseDateFormattingOptions
+                {
+                    Format = "yyyy-MM-dd",
+                    PartialFormat = "yyyy-MM"
+                },
+                PluginTopPanelAlignment = Dock.Left,
                 GlobalPreScript = "global-pre",
                 GlobalGameStartedScript = "global-started",
                 GlobalPostScript = "global-post",
@@ -2060,6 +2196,28 @@ internal static class DesktopPilotSelfTest
                 loaded.GridViewDetailsPosition != Dock.Left ||
                 loaded.GridDetailsWidth != 430 ||
                 loaded.ShowPanelSeparators ||
+                loaded.ShowBackgroundImageOnWindow ||
+                loaded.BlurWindowBackgroundImage ||
+                loaded.BackgroundImageBlurAmount != 36 ||
+                loaded.DarkenWindowBackgroundImage ||
+                loaded.BackgroundImageDarkAmount != 0.35 ||
+                !loaded.ShowBackImageOnGridView ||
+                loaded.BackgroundImageAnimation ||
+                loaded.FontFamilyName != "Arial" ||
+                loaded.MonospaceFontFamilyName != "Courier New" ||
+                loaded.FontSizeSmall != 11 ||
+                loaded.FontSize != 13 ||
+                loaded.FontSizeLarge != 17 ||
+                loaded.FontSizeLarger != 21 ||
+                loaded.FontSizeLargest != 31 ||
+                loaded.DefaultIconSource != Playnite.Avalonia.App.Services.DefaultIconSourceOptions.Platform ||
+                loaded.DefaultCoverSource != Playnite.Avalonia.App.Services.DefaultCoverSourceOptions.None ||
+                loaded.DefaultBackgroundSource != Playnite.Avalonia.App.Services.DefaultBackgroundSourceOptions.Cover ||
+                loaded.DateTimeFormatAdded.Format != "yyyy-MM-dd" ||
+                !loaded.DateTimeFormatAdded.PastWeekRelativeFormat ||
+                loaded.DateTimeFormatReleaseDate.Format != "yyyy-MM-dd" ||
+                loaded.DateTimeFormatReleaseDate.PartialFormat != "yyyy-MM" ||
+                loaded.PluginTopPanelAlignment != Dock.Left ||
                 loaded.GlobalPreScript != "global-pre" ||
                 loaded.GlobalGameStartedScript != "global-started" ||
                 loaded.GlobalPostScript != "global-post" ||

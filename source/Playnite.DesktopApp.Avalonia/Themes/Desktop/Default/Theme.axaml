@@ -1117,7 +1117,7 @@
                                                                     <TextBlock Text="{DynamicResource LOCDesktopScript}" FontSize="11"
                                                                                Foreground="{DynamicResource DesktopMutedBrush}" />
                                                                     <TextBox Text="{Binding Script, Mode=TwoWay}" AcceptsReturn="True"
-                                                                             FontFamily="Consolas" MinHeight="90" />
+                                                                             FontFamily="{DynamicResource DesktopMonospaceFontFamily}" MinHeight="90" />
                                                                 </StackPanel>
                                                                 <StackPanel IsVisible="{Binding ShowTracking}" Spacing="7">
                                                                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
@@ -1284,7 +1284,7 @@
                                                     </StackPanel>
                                                     <TextBox Text="{Binding Editor.PreScript, Mode=TwoWay}"
                                                              IsEnabled="{Binding Editor.CanEditPreScript}"
-                                                             AcceptsReturn="True" FontFamily="Consolas" MinHeight="80" />
+                                                             AcceptsReturn="True" FontFamily="{DynamicResource DesktopMonospaceFontFamily}" MinHeight="80" />
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                                         <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                                   IsChecked="{Binding Editor.ApplyUseGlobalPreScript, Mode=TwoWay}"
@@ -1305,7 +1305,7 @@
                                                     </StackPanel>
                                                     <TextBox Text="{Binding Editor.GameStartedScript, Mode=TwoWay}"
                                                              IsEnabled="{Binding Editor.CanEditGameStartedScript}"
-                                                             AcceptsReturn="True" FontFamily="Consolas" MinHeight="80" />
+                                                             AcceptsReturn="True" FontFamily="{DynamicResource DesktopMonospaceFontFamily}" MinHeight="80" />
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                                         <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                                   IsChecked="{Binding Editor.ApplyUseGlobalGameStartedScript, Mode=TwoWay}"
@@ -1326,7 +1326,7 @@
                                                     </StackPanel>
                                                     <TextBox Text="{Binding Editor.PostScript, Mode=TwoWay}"
                                                              IsEnabled="{Binding Editor.CanEditPostScript}"
-                                                             AcceptsReturn="True" FontFamily="Consolas" MinHeight="80" />
+                                                             AcceptsReturn="True" FontFamily="{DynamicResource DesktopMonospaceFontFamily}" MinHeight="80" />
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                                         <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                                   IsChecked="{Binding Editor.ApplyUseGlobalPostScript, Mode=TwoWay}"

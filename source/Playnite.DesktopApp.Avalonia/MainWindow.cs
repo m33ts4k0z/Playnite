@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using Avalonia.Media;
 using System.Diagnostics;
 using Playnite.Avalonia.Theming;
 using Playnite.Avalonia.App.Services;
@@ -75,6 +76,7 @@ public sealed class MainWindow : Window
 
         themeManager = new RuntimeThemeManager(Application.Current, typeof(DesktopMainView).Assembly);
         ApplyRuntimeTheme();
+        ApplyTypographyResources();
         themeManager.ApplyLanguage(
             Playnite.Avalonia.App.Services.LanguageCatalog.ResolveLanguagePaths(
                 ContentPath("Localization"), settings.Language));
@@ -228,8 +230,24 @@ public sealed class MainWindow : Window
 
     private void ViewModel_SettingsChanged(object sender, EventArgs e)
     {
+        ApplyTypographyResources();
         trayService.ApplySettings(settings.EnableTray, ResolveTrayIconPath(settings.TrayIcon));
         SaveSettings();
+    }
+
+    private void ApplyTypographyResources()
+    {
+        var interfaceFont = new FontFamily(settings.FontFamilyName);
+        var monospaceFont = new FontFamily(settings.MonospaceFontFamilyName);
+        FontFamily = interfaceFont;
+        FontSize = settings.FontSize;
+        Resources["DesktopFontFamily"] = interfaceFont;
+        Resources["DesktopMonospaceFontFamily"] = monospaceFont;
+        Resources["DesktopFontSizeSmall"] = settings.FontSizeSmall;
+        Resources["DesktopFontSize"] = settings.FontSize;
+        Resources["DesktopFontSizeLarge"] = settings.FontSizeLarge;
+        Resources["DesktopFontSizeLarger"] = settings.FontSizeLarger;
+        Resources["DesktopFontSizeLargest"] = settings.FontSizeLargest;
     }
 
     private void OnClosing(object sender, WindowClosingEventArgs e)

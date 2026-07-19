@@ -22,7 +22,7 @@
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
                                    Foreground="{DynamicResource DesktopTextBrush}" />
-                        <TextBlock Text="{Binding MetadataLine}" FontSize="11"
+                        <TextBlock Text="{Binding MetadataLine}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    Foreground="{DynamicResource DesktopMutedBrush}" />
                     </StackPanel>
                     <TextBlock Grid.Column="2" Text="{Binding StateText}"

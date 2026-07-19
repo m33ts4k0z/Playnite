@@ -36,6 +36,17 @@ public sealed class DesktopSettingsStore
                 settings.DisabledPlugins ??= new List<string>();
                 settings.DisabledGameControllers ??= new List<string>();
                 settings.DetailsVisibility ??= new Playnite.Avalonia.App.Services.DetailsVisibilitySettings();
+                settings.DateTimeFormatAdded ??= new Playnite.Avalonia.App.Services.DateFormattingOptions();
+                settings.DateTimeFormatModified ??= new Playnite.Avalonia.App.Services.DateFormattingOptions();
+                settings.DateTimeFormatRecentActivity ??= new Playnite.Avalonia.App.Services.DateFormattingOptions
+                {
+                    PastWeekRelativeFormat = true
+                };
+                settings.DateTimeFormatReleaseDate ??= new Playnite.Avalonia.App.Services.ReleaseDateFormattingOptions();
+                settings.DateTimeFormatLastPlayed ??= new Playnite.Avalonia.App.Services.DateFormattingOptions
+                {
+                    PastWeekRelativeFormat = true
+                };
                 settings.MetadataSourceIds ??= new List<Guid>();
                 settings.MetadataFields ??= DesktopSettings.GetDefaultMetadataFields();
                 settings.LibraryPluginIds ??= new List<Guid>();
@@ -82,10 +93,49 @@ public sealed class DesktopSettingsStore
                 settings.GameDetailsCoverHeight = Math.Clamp(settings.GameDetailsCoverHeight, 100, 800);
                 settings.DetailsViewListIconSize = Math.Clamp(settings.DetailsViewListIconSize, 20, 160);
                 settings.GridDetailsWidth = Math.Clamp(settings.GridDetailsWidth, 240, 800);
+                settings.BackgroundImageBlurAmount = Math.Clamp(settings.BackgroundImageBlurAmount, 0, 100);
+                settings.BackgroundImageDarkAmount = Math.Clamp(settings.BackgroundImageDarkAmount, 0, 1);
+                settings.FontSizeSmall = Math.Clamp(settings.FontSizeSmall, 9, 100);
+                settings.FontSize = Math.Clamp(settings.FontSize, 9, 100);
+                settings.FontSizeLarge = Math.Clamp(settings.FontSizeLarge, 9, 100);
+                settings.FontSizeLarger = Math.Clamp(settings.FontSizeLarger, 9, 100);
+                settings.FontSizeLargest = Math.Clamp(settings.FontSizeLargest, 9, 100);
+                settings.FontFamilyName = string.IsNullOrWhiteSpace(settings.FontFamilyName)
+                    ? "Trebuchet MS"
+                    : settings.FontFamilyName.Trim();
+                settings.MonospaceFontFamilyName = string.IsNullOrWhiteSpace(settings.MonospaceFontFamilyName)
+                    ? "Consolas"
+                    : settings.MonospaceFontFamilyName.Trim();
+                NormalizeDateFormat(settings.DateTimeFormatAdded);
+                NormalizeDateFormat(settings.DateTimeFormatModified);
+                NormalizeDateFormat(settings.DateTimeFormatRecentActivity);
+                NormalizeDateFormat(settings.DateTimeFormatLastPlayed);
+                NormalizeDateFormat(settings.DateTimeFormatReleaseDate);
+                settings.DateTimeFormatReleaseDate.PartialFormat =
+                    Playnite.Avalonia.App.Services.DateFormattingService.NormalizeFormat(
+                        settings.DateTimeFormatReleaseDate.PartialFormat,
+                        Playnite.Avalonia.App.Services.DateFormattingService.DefaultPartialFormat);
+                if (!Enum.IsDefined(settings.DefaultIconSource))
+                {
+                    settings.DefaultIconSource = Playnite.Avalonia.App.Services.DefaultIconSourceOptions.General;
+                }
+                if (!Enum.IsDefined(settings.DefaultCoverSource))
+                {
+                    settings.DefaultCoverSource = Playnite.Avalonia.App.Services.DefaultCoverSourceOptions.General;
+                }
+                if (!Enum.IsDefined(settings.DefaultBackgroundSource))
+                {
+                    settings.DefaultBackgroundSource = Playnite.Avalonia.App.Services.DefaultBackgroundSourceOptions.None;
+                }
                 if (settings.GridViewDetailsPosition is not global::Avalonia.Controls.Dock.Left and
                     not global::Avalonia.Controls.Dock.Right)
                 {
                     settings.GridViewDetailsPosition = global::Avalonia.Controls.Dock.Right;
+                }
+                if (settings.PluginTopPanelAlignment is not global::Avalonia.Controls.Dock.Left and
+                    not global::Avalonia.Controls.Dock.Right)
+                {
+                    settings.PluginTopPanelAlignment = global::Avalonia.Controls.Dock.Right;
                 }
                 return settings;
             }
@@ -103,5 +153,12 @@ public sealed class DesktopSettingsStore
         var temporaryPath = settingsPath + ".tmp";
         File.WriteAllText(temporaryPath, JsonSerializer.Serialize(settings, serializerOptions));
         File.Move(temporaryPath, settingsPath, true);
+    }
+
+    private static void NormalizeDateFormat(Playnite.Avalonia.App.Services.DateFormattingOptions options)
+    {
+        options.Format = Playnite.Avalonia.App.Services.DateFormattingService.NormalizeFormat(
+            options.Format,
+            Playnite.Avalonia.App.Services.DateFormattingService.DefaultFormat);
     }
 }

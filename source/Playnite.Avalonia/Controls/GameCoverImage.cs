@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Avalonia.Animation;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 
@@ -18,6 +19,8 @@ public sealed class GameCoverImage : Image
 
     public static readonly StyledProperty<string> SourcePathProperty =
         AvaloniaProperty.Register<GameCoverImage, string>(nameof(SourcePath));
+    public static readonly StyledProperty<TimeSpan> FadeDurationProperty =
+        AvaloniaProperty.Register<GameCoverImage, TimeSpan>(nameof(FadeDuration));
 
     private static readonly HttpClient httpClient = new();
     private CancellationTokenSource loadCancellation;
@@ -27,6 +30,12 @@ public sealed class GameCoverImage : Image
     {
         get => GetValue(SourcePathProperty);
         set => SetValue(SourcePathProperty, value);
+    }
+
+    public TimeSpan FadeDuration
+    {
+        get => GetValue(FadeDurationProperty);
+        set => SetValue(FadeDurationProperty, value);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -77,7 +86,9 @@ public sealed class GameCoverImage : Image
                 var previous = ownedBitmap;
                 ownedBitmap = loadedBitmap;
                 loadedBitmap = null;
+                PrepareFadeTransition();
                 Source = ownedBitmap;
+                Opacity = 1;
                 previous?.Dispose();
                 loadCancellation = null;
                 cancellation.Dispose();
@@ -176,5 +187,22 @@ public sealed class GameCoverImage : Image
         Source = null;
         ownedBitmap?.Dispose();
         ownedBitmap = null;
+    }
+
+    private void PrepareFadeTransition()
+    {
+        Transitions = null;
+        Opacity = FadeDuration > TimeSpan.Zero ? 0 : 1;
+        if (FadeDuration > TimeSpan.Zero)
+        {
+            Transitions = new Transitions
+            {
+                new DoubleTransition
+                {
+                    Property = OpacityProperty,
+                    Duration = FadeDuration
+                }
+            };
+        }
     }
 }

@@ -104,6 +104,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
             selectedGame = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowWindowBackgroundImage));
             MetadataDownload?.RefreshTargetSummary();
             RaiseGameCommandStates();
         }
@@ -157,6 +158,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
                 settings.ViewMode = resolved;
                 OnPropertyChanged(nameof(IsGridView));
                 OnPropertyChanged(nameof(IsListView));
+                OnPropertyChanged(nameof(ShowWindowBackgroundImage));
                 SettingsChanged?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -287,6 +289,19 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         : settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
             ? new Thickness(0, 0, 1, 0)
             : new Thickness(1, 0, 0, 0);
+    public bool ShowWindowBackgroundImage =>
+        settings.ShowBackgroundImageOnWindow && (!IsGridView || settings.ShowBackImageOnGridView);
+    public double BackgroundImageBlurRadius => settings.BlurWindowBackgroundImage
+        ? settings.BackgroundImageBlurAmount
+        : 0;
+    public double BackgroundImageDarkOpacity => settings.DarkenWindowBackgroundImage
+        ? settings.BackgroundImageDarkAmount
+        : 0;
+    public TimeSpan BackgroundImageFadeDuration => settings.BackgroundImageAnimation
+        ? TimeSpan.FromMilliseconds(250)
+        : TimeSpan.Zero;
+    public bool ShowPluginTopPanelItemsLeft => settings.PluginTopPanelAlignment == global::Avalonia.Controls.Dock.Left;
+    public bool ShowPluginTopPanelItemsRight => !ShowPluginTopPanelItemsLeft;
     public bool EnableTray
     {
         get => settings.EnableTray;
@@ -668,6 +683,10 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             host.NotifyLibraryUpdated);
         InstalledGameImport.ConfigureLibraryUpdated(host.NotifyLibraryUpdated);
         PluginSettings.Configure(host.Extensions, host.V7Plugins);
+        foreach (var game in allGames)
+        {
+            ConfigureLibraryMedia(game);
+        }
         RefreshPluginSurfaces();
         RaiseGameCommandStates();
     }
@@ -1215,6 +1234,12 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(SecondContentColumnWidth));
         OnPropertyChanged(nameof(SidebarBorderThickness));
         OnPropertyChanged(nameof(DetailsBorderThickness));
+        OnPropertyChanged(nameof(ShowWindowBackgroundImage));
+        OnPropertyChanged(nameof(BackgroundImageBlurRadius));
+        OnPropertyChanged(nameof(BackgroundImageDarkOpacity));
+        OnPropertyChanged(nameof(BackgroundImageFadeDuration));
+        OnPropertyChanged(nameof(ShowPluginTopPanelItemsLeft));
+        OnPropertyChanged(nameof(ShowPluginTopPanelItemsRight));
         ApplyFilters();
     }
 
@@ -1250,6 +1275,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         {
             var wrapper = new DesktopGameItemViewModel(game, database);
             wrapper.ApplyAppearance(settings);
+            ConfigureLibraryMedia(wrapper);
             allGames.Add(wrapper);
         }
 
@@ -1270,6 +1296,12 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         Playnite.Metadata.MetadataGamesSource.AllFromDB => allGames.Select(game => game.Game).ToList(),
         _ => Array.Empty<Game>()
     };
+
+    private void ConfigureLibraryMedia(DesktopGameItemViewModel game)
+    {
+        var libraryPlugin = runtimeHost?.LibraryPlugins.FirstOrDefault(plugin => plugin.Id == game.Game.PluginId);
+        game.ConfigureLibraryMedia(libraryPlugin?.LibraryIcon, libraryPlugin?.LibraryBackground);
+    }
 
     private void MetadataDownload_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {

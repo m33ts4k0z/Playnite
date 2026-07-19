@@ -12,6 +12,7 @@ public abstract class SettingsSectionBase : ISettingsSection, INotifyPropertyCha
     public event PropertyChangedEventHandler PropertyChanged;
 
     public abstract void Open();
+    public virtual SettingsSectionValidationResult Validate() => SettingsSectionValidationResult.Valid;
     public abstract SettingsSectionSaveResult Save();
     public abstract SettingsSectionSelfCheckResult SelfCheck();
 

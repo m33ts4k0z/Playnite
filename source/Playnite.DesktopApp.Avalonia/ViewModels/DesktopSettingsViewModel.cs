@@ -29,6 +29,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public AppearanceListViewSettingsSection AppearanceListView { get; }
     public AppearanceDetailsViewSettingsSection AppearanceDetailsView { get; }
     public AppearanceLayoutSettingsSection AppearanceLayout { get; }
+    public AppearanceAdvancedSettingsSection AppearanceAdvanced { get; }
+    public AppearanceTopPanelSettingsSection AppearanceTopPanel { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
@@ -48,6 +50,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         AppearanceListView = new AppearanceListViewSettingsSection(settings);
         AppearanceDetailsView = new AppearanceDetailsViewSettingsSection(settings);
         AppearanceLayout = new AppearanceLayoutSettingsSection(settings);
+        AppearanceAdvanced = new AppearanceAdvancedSettingsSection(settings);
+        AppearanceTopPanel = new AppearanceTopPanelSettingsSection(settings);
         Sections = new ObservableCollection<ISettingsSection>
         {
             General,
@@ -56,7 +60,9 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             AppearanceGridView,
             AppearanceListView,
             AppearanceDetailsView,
-            AppearanceLayout
+            AppearanceLayout,
+            AppearanceAdvanced,
+            AppearanceTopPanel
         };
         selectedSection = Sections[0];
         SaveCommand = new AppRelayCommand(Save, () => IsVisible);
@@ -110,6 +116,17 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         if (!IsVisible)
         {
             return;
+        }
+
+        foreach (var section in Sections)
+        {
+            var validation = section.Validate();
+            if (!validation.IsValid)
+            {
+                SelectedSection = section;
+                showMessage(validation.Message, true);
+                return;
+            }
         }
 
         RestartRequired = Sections.Aggregate(

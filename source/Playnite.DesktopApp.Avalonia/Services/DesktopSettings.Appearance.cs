@@ -49,4 +49,38 @@ public sealed partial class DesktopSettings
     public Dock GridViewDetailsPosition { get; set; } = Dock.Right;
     public double GridDetailsWidth { get; set; } = 390;
     public bool ShowPanelSeparators { get; set; } = true;
+
+    public bool ShowBackgroundImageOnWindow { get; set; } = true;
+    public bool BlurWindowBackgroundImage { get; set; } = true;
+    public double BackgroundImageBlurAmount { get; set; } = 60;
+    public bool DarkenWindowBackgroundImage { get; set; } = true;
+    public double BackgroundImageDarkAmount { get; set; } = 0.7;
+    public bool ShowBackImageOnGridView { get; set; }
+    public bool BackgroundImageAnimation { get; set; } = true;
+
+    public string FontFamilyName { get; set; } = "Trebuchet MS";
+    public string MonospaceFontFamilyName { get; set; } = "Consolas";
+    public double FontSize { get; set; } = 14;
+    public double FontSizeSmall { get; set; } = 12;
+    public double FontSizeLarge { get; set; } = 15;
+    public double FontSizeLarger { get; set; } = 20;
+    public double FontSizeLargest { get; set; } = 29;
+
+    public DefaultIconSourceOptions DefaultIconSource { get; set; } = DefaultIconSourceOptions.General;
+    public DefaultCoverSourceOptions DefaultCoverSource { get; set; } = DefaultCoverSourceOptions.General;
+    public DefaultBackgroundSourceOptions DefaultBackgroundSource { get; set; } = DefaultBackgroundSourceOptions.None;
+
+    public DateFormattingOptions DateTimeFormatAdded { get; set; } = new();
+    public DateFormattingOptions DateTimeFormatModified { get; set; } = new();
+    public DateFormattingOptions DateTimeFormatRecentActivity { get; set; } = new()
+    {
+        PastWeekRelativeFormat = true
+    };
+    public ReleaseDateFormattingOptions DateTimeFormatReleaseDate { get; set; } = new();
+    public DateFormattingOptions DateTimeFormatLastPlayed { get; set; } = new()
+    {
+        PastWeekRelativeFormat = true
+    };
+
+    public Dock PluginTopPanelAlignment { get; set; } = Dock.Right;
 }

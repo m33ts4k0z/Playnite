@@ -22,14 +22,14 @@
                         <foundation:GameCoverImage SourcePath="{Binding SelectedGame.BackgroundPath}"
                                                    Stretch="UniformToFill" />
                     </Border>
-                    <TextBlock Name="PART_DetailsName" Text="{Binding SelectedGame.Name}" FontSize="32"
+                    <TextBlock Name="PART_DetailsName" Text="{Binding SelectedGame.Name}" FontSize="{DynamicResource DesktopFontSizeLargest}"
                                FontWeight="Bold" TextWrapping="Wrap"
                                IsVisible="{Binding DetailsVisibility.Name}"
                                Foreground="{DynamicResource DesktopTextBrush}" />
                     <TextBlock Text="{Binding SelectedGame.MetadataLine}"
                                IsVisible="{Binding DetailsVisibility.Platform}"
                                Foreground="{DynamicResource DesktopAccentBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.ReleaseYearText}"
+                    <TextBlock Text="{Binding SelectedGame.ReleaseDateText}"
                                IsVisible="{Binding DetailsVisibility.ReleaseDate}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <TextBlock Text="{Binding SelectedGame.LibraryText}"
@@ -63,46 +63,46 @@
                                IsVisible="{Binding DetailsVisibility.Added}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <StackPanel Spacing="3">
-                        <TextBlock Text="{Binding SelectedGame.GenresText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.GenresText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Genres}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.PlatformsText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.PlatformsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Platform}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.CategoriesText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.CategoriesText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Categories}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.TagsText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.TagsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Tags}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.DevelopersText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.DevelopersText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Developers}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.PublishersText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.PublishersText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Publishers}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.FeaturesText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.FeaturesText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Features}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.SeriesText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.SeriesText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Series}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.AgeRatingsText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.AgeRatingsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.AgeRating}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.RegionsText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.RegionsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Region}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.LinksText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.LinksText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Links}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.GameActionsText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.GameActionsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.RomsText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.RomsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.InstallationDetailsText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.InstallationDetailsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.ScriptsText}" FontSize="11"
+                        <TextBlock Text="{Binding SelectedGame.ScriptsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="16">
@@ -113,7 +113,7 @@
                                    IsVisible="{Binding DetailsVisibility.LastPlayed}"
                                    Foreground="{DynamicResource DesktopMutedBrush}" />
                     </StackPanel>
-                    <TextBlock Text="{Binding SelectedGame.LastPlayedText}"
+                    <TextBlock Text="{Binding SelectedGame.RecentActivityText}"
                                IsVisible="{Binding DetailsVisibility.RecentActivity}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <TextBlock Text="{Binding SelectedGame.NotesText}"

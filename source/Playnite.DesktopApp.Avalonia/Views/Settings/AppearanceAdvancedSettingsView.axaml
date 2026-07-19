@@ -1,0 +1,90 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.AppearanceAdvancedSettingsView"
+             x:DataType="vm:AppearanceAdvancedSettingsSection">
+    <ScrollViewer MaxHeight="470" Padding="18,0,4,0">
+        <StackPanel Spacing="14">
+            <TextBlock Text="Window background" Classes="sectionLabel" />
+            <CheckBox Content="Show the selected game's background on the window"
+                      IsChecked="{Binding ShowBackgroundImageOnWindow, Mode=TwoWay}" />
+            <CheckBox Content="Show the background while using grid view"
+                      IsChecked="{Binding ShowBackImageOnGridView, Mode=TwoWay}" />
+            <Grid ColumnDefinitions="Auto,190,*" ColumnSpacing="10">
+                <CheckBox Content="Blur" IsChecked="{Binding BlurWindowBackgroundImage, Mode=TwoWay}"
+                          VerticalAlignment="Center" />
+                <Slider Grid.Column="1" Minimum="0" Maximum="100" TickFrequency="1"
+                        Value="{Binding BackgroundImageBlurAmount, Mode=TwoWay}" />
+                <TextBlock Grid.Column="2" Text="{Binding BackgroundImageBlurAmount, StringFormat='{}{0:0} px'}"
+                           VerticalAlignment="Center" />
+            </Grid>
+            <Grid ColumnDefinitions="Auto,190,*" ColumnSpacing="10">
+                <CheckBox Content="Darken" IsChecked="{Binding DarkenWindowBackgroundImage, Mode=TwoWay}"
+                          VerticalAlignment="Center" />
+                <Slider Grid.Column="1" Minimum="0" Maximum="1" TickFrequency="0.05"
+                        Value="{Binding BackgroundImageDarkAmount, Mode=TwoWay}" />
+                <TextBlock Grid.Column="2" Text="{Binding BackgroundImageDarkAmount, StringFormat='{}{0:P0}'}"
+                           VerticalAlignment="Center" />
+            </Grid>
+            <CheckBox Content="Fade between selected-game backgrounds"
+                      IsChecked="{Binding BackgroundImageAnimation, Mode=TwoWay}" />
+            <TextBlock Text="High-quality blur is not exposed because Avalonia/Skia has one portable blur pipeline; the radius above is applied directly."
+                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource DesktopMutedBrush}" />
+
+            <TextBlock Text="Typography" Classes="sectionLabel" Margin="0,8,0,0" />
+            <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto" RowSpacing="8" ColumnSpacing="10">
+                <TextBlock Text="Interface font" VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" Text="{Binding FontFamilyName, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Text="Monospace font" VerticalAlignment="Center" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding MonospaceFontFamilyName, Mode=TwoWay}" />
+            </Grid>
+            <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="8">
+                <StackPanel Spacing="4"><TextBlock Text="Small" /><NumericUpDown Minimum="9" Maximum="100" Value="{Binding FontSizeSmall, Mode=TwoWay}" /></StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4"><TextBlock Text="Normal" /><NumericUpDown Minimum="9" Maximum="100" Value="{Binding FontSize, Mode=TwoWay}" /></StackPanel>
+                <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="Large" /><NumericUpDown Minimum="9" Maximum="100" Value="{Binding FontSizeLarge, Mode=TwoWay}" /></StackPanel>
+                <StackPanel Grid.Column="3" Spacing="4"><TextBlock Text="Larger" /><NumericUpDown Minimum="9" Maximum="100" Value="{Binding FontSizeLarger, Mode=TwoWay}" /></StackPanel>
+                <StackPanel Grid.Column="4" Spacing="4"><TextBlock Text="Largest" /><NumericUpDown Minimum="9" Maximum="100" Value="{Binding FontSizeLargest, Mode=TwoWay}" /></StackPanel>
+            </Grid>
+            <Button Content="Reset font sizes" Command="{Binding ResetFontSizesCommand}" HorizontalAlignment="Left" />
+
+            <TextBlock Text="Fallback media" Classes="sectionLabel" Margin="0,8,0,0" />
+            <Grid ColumnDefinitions="150,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="10">
+                <TextBlock Text="Default icon" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding IconSources}" SelectedItem="{Binding DefaultIconSource, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Text="Default cover" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding CoverSources}" SelectedItem="{Binding DefaultCoverSource, Mode=TwoWay}" />
+                <TextBlock Grid.Row="2" Text="Default background" VerticalAlignment="Center" />
+                <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding BackgroundSources}" SelectedItem="{Binding DefaultBackgroundSource, Mode=TwoWay}" />
+            </Grid>
+
+            <TextBlock Text="Date formatting" Classes="sectionLabel" Margin="0,8,0,0" />
+            <Grid ColumnDefinitions="150,120,Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="10">
+                <TextBlock Text="Added" VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" Text="{Binding DateTimeFormatAdded.Format, Mode=TwoWay}" />
+                <CheckBox Grid.Column="2" Content="Relative week" IsChecked="{Binding DateTimeFormatAdded.PastWeekRelativeFormat, Mode=TwoWay}" />
+                <TextBlock Grid.Column="3" Text="{Binding AddedDateExample}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="1" Text="Modified" VerticalAlignment="Center" />
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding DateTimeFormatModified.Format, Mode=TwoWay}" />
+                <CheckBox Grid.Row="1" Grid.Column="2" Content="Relative week" IsChecked="{Binding DateTimeFormatModified.PastWeekRelativeFormat, Mode=TwoWay}" />
+                <TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding ModifiedDateExample}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="2" Text="Recent activity" VerticalAlignment="Center" />
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding DateTimeFormatRecentActivity.Format, Mode=TwoWay}" />
+                <CheckBox Grid.Row="2" Grid.Column="2" Content="Relative week" IsChecked="{Binding DateTimeFormatRecentActivity.PastWeekRelativeFormat, Mode=TwoWay}" />
+                <TextBlock Grid.Row="2" Grid.Column="3" Text="{Binding RecentActivityDateExample}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="3" Text="Release date" VerticalAlignment="Center" />
+                <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding DateTimeFormatReleaseDate.Format, Mode=TwoWay}" />
+                <CheckBox Grid.Row="3" Grid.Column="2" Content="Relative week" IsChecked="{Binding DateTimeFormatReleaseDate.PastWeekRelativeFormat, Mode=TwoWay}" />
+                <TextBlock Grid.Row="3" Grid.Column="3" Text="{Binding ReleaseDateExample}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="4" Text="Partial release" VerticalAlignment="Center" />
+                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding DateTimeFormatReleaseDate.PartialFormat, Mode=TwoWay}" />
+                <TextBlock Grid.Row="5" Text="Last played" VerticalAlignment="Center" />
+                <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding DateTimeFormatLastPlayed.Format, Mode=TwoWay}" />
+                <CheckBox Grid.Row="5" Grid.Column="2" Content="Relative week" IsChecked="{Binding DateTimeFormatLastPlayed.PastWeekRelativeFormat, Mode=TwoWay}" />
+                <TextBlock Grid.Row="5" Grid.Column="3" Text="{Binding LastPlayedDateExample}" VerticalAlignment="Center" />
+            </Grid>
+            <Button Content="Reset date formats" Command="{Binding ResetDateFormatsCommand}" HorizontalAlignment="Left" />
+            <TextBlock Text="Formats use .NET date format strings (for example d, yyyy-MM-dd, or MMMM yyyy)."
+                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource DesktopMutedBrush}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

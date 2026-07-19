@@ -1,6 +1,19 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:foundation="using:Playnite.Avalonia.Controls">
     <ControlTemplate x:Key="DesktopBackgroundLayerTemplate">
-        <Border Background="{DynamicResource DesktopBackgroundBrush}" />
+        <Grid>
+            <Border Background="{DynamicResource DesktopBackgroundBrush}" />
+            <foundation:GameCoverImage SourcePath="{Binding SelectedGame.BackgroundPath}"
+                                       FadeDuration="{Binding BackgroundImageFadeDuration}"
+                                       Stretch="UniformToFill"
+                                       IsVisible="{Binding ShowWindowBackgroundImage}">
+                <foundation:GameCoverImage.Effect>
+                    <BlurEffect Radius="{Binding BackgroundImageBlurRadius}" />
+                </foundation:GameCoverImage.Effect>
+            </foundation:GameCoverImage>
+            <Border Background="Black" Opacity="{Binding SelectedGame.WindowBackgroundDarkOpacity}"
+                    IsVisible="{Binding ShowWindowBackgroundImage}" />
+        </Grid>
     </ControlTemplate>
 </ResourceDictionary>

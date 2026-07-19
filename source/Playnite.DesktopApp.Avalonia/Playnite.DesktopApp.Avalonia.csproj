@@ -52,8 +52,10 @@
     <Content Include="Themes\**\theme.yaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Localization\**\*.axaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\Playnite.DesktopApp\Themes\Desktop\Default\Images\applogo.png"
-             Condition="'$(TargetFramework)' == 'net10.0'"
              Link="Assets\applogo.png"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Playnite.DesktopApp\Themes\Desktop\Default\Images\custom_cover_background.png"
+             Link="Assets\custom_cover_background.png"
              CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\Playnite.DesktopApp\Themes\Desktop\Default\Images\applogo.ico"
              Condition="'$(TargetFramework)' != 'net10.0'"

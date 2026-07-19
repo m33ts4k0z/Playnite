@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.AppearanceTopPanelSettingsView"
+             x:DataType="vm:AppearanceTopPanelSettingsSection">
+    <ScrollViewer MaxHeight="470" Padding="18,0,4,0">
+        <StackPanel Spacing="14">
+            <TextBlock Text="Plugin items" Classes="sectionLabel" />
+            <Grid ColumnDefinitions="160,*" ColumnSpacing="10">
+                <TextBlock Text="Alignment" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" Width="160" HorizontalAlignment="Left"
+                          ItemsSource="{Binding AlignmentOptions}"
+                          SelectedItem="{Binding PluginTopPanelAlignment, Mode=TwoWay}" />
+            </Grid>
+            <TextBlock Text="Built-in navigation remains in the sidebar; this controls only plugin-provided top-panel items."
+                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource DesktopMutedBrush}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

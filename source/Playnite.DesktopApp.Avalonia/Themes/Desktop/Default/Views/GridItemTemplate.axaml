@@ -12,7 +12,7 @@
                 <Border Background="#222B37">
                     <Grid>
                         <TextBlock Text="{Binding Name}" Margin="14"
-                                   FontSize="22" FontWeight="Bold"
+                                   FontSize="{DynamicResource DesktopFontSizeLarger}" FontWeight="Bold"
                                    TextAlignment="Center" TextWrapping="Wrap"
                                    Foreground="#536579"
                                    IsVisible="{Binding ShowEmptyCoverName}"
@@ -22,7 +22,7 @@
                         <Border IsVisible="{Binding ShowGroupHeader}"
                                 VerticalAlignment="Top" Padding="8,4"
                                 Background="#E600A8E8">
-                            <TextBlock Text="{Binding GroupHeader}" FontSize="11"
+                            <TextBlock Text="{Binding GroupHeader}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                        FontWeight="Bold" Foreground="White" />
                         </Border>
                         <Border IsVisible="{Binding Favorite}" HorizontalAlignment="Right"
@@ -37,7 +37,7 @@
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
                                TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource DesktopTextBrush}" />
-                    <TextBlock Text="{Binding StateText}" FontSize="11"
+                    <TextBlock Text="{Binding StateText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                 </StackPanel>
             </Grid>

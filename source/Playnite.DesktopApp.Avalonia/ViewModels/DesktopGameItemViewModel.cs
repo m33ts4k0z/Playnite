@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using Playnite.Database;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK.Models;
+using Playnite.Avalonia.App.Services;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
@@ -18,6 +19,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     private DesktopSettings appearanceSettings = new();
     private string groupHeader;
     private bool showGroupHeader;
+    private string libraryIconPath;
+    private string libraryBackgroundPath;
 
     public event PropertyChangedEventHandler PropertyChanged;
     public Game Game { get; }
@@ -49,9 +52,20 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         }
     }
     public string LastPlayedText => Game.LastActivity.HasValue
-        ? $"Last played {Game.LastActivity.Value:d}"
+        ? $"Last played {DateFormattingService.Format(Game.LastActivity.Value, appearanceSettings.DateTimeFormatLastPlayed)}"
         : "Never played";
-    public string AddedText => Game.Added.HasValue ? Game.Added.Value.ToString("d") : "Unknown";
+    public string AddedText => Game.Added.HasValue
+        ? $"Added {DateFormattingService.Format(Game.Added.Value, appearanceSettings.DateTimeFormatAdded)}"
+        : "Added: Unknown";
+    public string ModifiedText => Game.Modified.HasValue
+        ? $"Modified {DateFormattingService.Format(Game.Modified.Value, appearanceSettings.DateTimeFormatModified)}"
+        : "Modified: Unknown";
+    public string RecentActivityText => Game.RecentActivity.HasValue
+        ? $"Recent activity {DateFormattingService.Format(Game.RecentActivity.Value, appearanceSettings.DateTimeFormatRecentActivity)}"
+        : "Recent activity: None";
+    public string ReleaseDateText => Game.ReleaseDate.HasValue
+        ? FormatReleaseDate(Game.ReleaseDate.Value)
+        : "Release date: Unknown";
     public string ReleaseYearText => Game.ReleaseYear?.ToString() ?? "Unknown";
     public string LibraryText => $"Library: {Game.PluginId}";
     public string VersionText => string.IsNullOrWhiteSpace(Game.Version) ? "Version: Unknown" : $"Version: {Game.Version}";
@@ -88,9 +102,13 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public string ScriptsText => FormatScripts(Game);
     public string MetadataLine => BuildMetadataLine(Game, database);
     public string DescriptionText => ToPlainText(Game.Description);
-    public string CoverPath => ResolveMediaPath(Game.CoverImage, database);
-    public string IconPath => ResolveMediaPath(Game.Icon, database);
-    public string BackgroundPath => ResolveMediaPath(Game.BackgroundImage, database);
+    public string CoverPath => ResolveCoverPath();
+    public string IconPath => ResolveIconPath();
+    public string BackgroundPath => ResolveBackgroundPath();
+    public double WindowBackgroundDarkOpacity => string.IsNullOrWhiteSpace(BackgroundPath) ||
+        !appearanceSettings.DarkenWindowBackgroundImage
+            ? 0
+            : appearanceSettings.BackgroundImageDarkAmount;
     public Stretch CoverArtStretch => appearanceSettings.CoverArtStretch;
     public Thickness GridItemMargin => new(appearanceSettings.GridItemMargin);
     public bool ShowGridItemBackground => appearanceSettings.ShowGridItemBackground;
@@ -143,6 +161,24 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ShowListIcon));
         OnPropertyChanged(nameof(ListIconHeight));
         OnPropertyChanged(nameof(ListIconWidth));
+        OnPropertyChanged(nameof(LastPlayedText));
+        OnPropertyChanged(nameof(AddedText));
+        OnPropertyChanged(nameof(ModifiedText));
+        OnPropertyChanged(nameof(RecentActivityText));
+        OnPropertyChanged(nameof(ReleaseDateText));
+        OnPropertyChanged(nameof(CoverPath));
+        OnPropertyChanged(nameof(IconPath));
+        OnPropertyChanged(nameof(BackgroundPath));
+        OnPropertyChanged(nameof(WindowBackgroundDarkOpacity));
+    }
+
+    internal void ConfigureLibraryMedia(string iconPath, string backgroundPath)
+    {
+        libraryIconPath = iconPath;
+        libraryBackgroundPath = backgroundPath;
+        OnPropertyChanged(nameof(IconPath));
+        OnPropertyChanged(nameof(BackgroundPath));
+        OnPropertyChanged(nameof(WindowBackgroundDarkOpacity));
     }
 
     private void Game_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -162,6 +198,10 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(StateText));
         OnPropertyChanged(nameof(PlaytimeText));
         OnPropertyChanged(nameof(LastPlayedText));
+        OnPropertyChanged(nameof(AddedText));
+        OnPropertyChanged(nameof(ModifiedText));
+        OnPropertyChanged(nameof(RecentActivityText));
+        OnPropertyChanged(nameof(ReleaseDateText));
         OnPropertyChanged(nameof(MetadataLine));
         OnPropertyChanged(nameof(SourceName));
         OnPropertyChanged(nameof(CompletionStatusName));
@@ -193,6 +233,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(CoverPath));
         OnPropertyChanged(nameof(IconPath));
         OnPropertyChanged(nameof(BackgroundPath));
+        OnPropertyChanged(nameof(WindowBackgroundDarkOpacity));
         OnPropertyChanged(nameof(ShowEmptyCoverName));
         OnPropertyChanged(nameof(GridItemOpacity));
     }
@@ -240,6 +281,70 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
 
         return Path.IsPathFullyQualified(path) ? path : database.GetFullFilePath(path);
     }
+
+    private string ResolveIconPath()
+    {
+        if (!string.IsNullOrWhiteSpace(Game.Icon))
+        {
+            return ResolveMediaPath(Game.Icon, database);
+        }
+
+        var fallback = appearanceSettings.DefaultIconSource switch
+        {
+            DefaultIconSourceOptions.Library => libraryIconPath,
+            DefaultIconSourceOptions.Platform => FirstPlatformMedia(platform => platform.Icon),
+            DefaultIconSourceOptions.General => Path.Combine(AppContext.BaseDirectory, "Assets", "applogo.png"),
+            _ => null
+        };
+        return ResolveMediaPath(fallback, database);
+    }
+
+    private string ResolveCoverPath()
+    {
+        if (!string.IsNullOrWhiteSpace(Game.CoverImage))
+        {
+            return ResolveMediaPath(Game.CoverImage, database);
+        }
+
+        var fallback = appearanceSettings.DefaultCoverSource switch
+        {
+            DefaultCoverSourceOptions.Platform => FirstPlatformMedia(platform => platform.Cover),
+            DefaultCoverSourceOptions.General => Path.Combine(AppContext.BaseDirectory, "Assets", "custom_cover_background.png"),
+            _ => null
+        };
+        return ResolveMediaPath(fallback, database);
+    }
+
+    private string ResolveBackgroundPath()
+    {
+        if (!string.IsNullOrWhiteSpace(Game.BackgroundImage))
+        {
+            return ResolveMediaPath(Game.BackgroundImage, database);
+        }
+
+        var fallback = appearanceSettings.DefaultBackgroundSource switch
+        {
+            DefaultBackgroundSourceOptions.Library => libraryBackgroundPath,
+            DefaultBackgroundSourceOptions.Platform => FirstPlatformMedia(platform => platform.Background),
+            DefaultBackgroundSourceOptions.Cover => Game.CoverImage,
+            _ => null
+        };
+        return ResolveMediaPath(fallback, database);
+    }
+
+    private string FirstPlatformMedia(Func<Platform, string> selector) =>
+        (Game.PlatformIds ?? new List<Guid>())
+            .Select(id => database.Platforms[id])
+            .Where(platform => platform != null)
+            .Select(selector)
+            .FirstOrDefault(path => !string.IsNullOrWhiteSpace(path));
+
+    private string FormatReleaseDate(ReleaseDate releaseDate) =>
+        "Released " + DateFormattingService.FormatReleaseDate(
+            releaseDate.Date,
+            releaseDate.Month.HasValue,
+            releaseDate.Day.HasValue,
+            appearanceSettings.DateTimeFormatReleaseDate);
 
     private static string FormatNames(
         string label,
