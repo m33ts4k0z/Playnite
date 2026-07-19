@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Globalization;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -175,26 +176,139 @@ namespace Playnite.Common
                 throw new InvalidDataException("The desktop entry is not a visible application.");
             }
 
+            values.TryGetValue("Name", out var defaultName);
+            var name = GetLocalizedDesktopValue(values, "Name") ?? defaultName;
+            values.TryGetValue("Icon", out var icon);
             values.TryGetValue("Exec", out var exec);
-            var command = SplitDesktopCommand(exec);
+            var command = ExpandDesktopCommand(SplitDesktopCommand(exec), name, icon, path);
             if (command.Count == 0)
             {
                 throw new InvalidDataException("The desktop entry has no executable command.");
             }
-            values.TryGetValue("Name", out var name);
-            values.TryGetValue("Icon", out var icon);
+
             values.TryGetValue("Path", out var workDir);
+            var appId = GetDesktopApplicationId(values, path);
             return new Program
             {
                 Path = command.FirstOrDefault(),
-                Arguments = string.Join(" ", command.Skip(1)
-                    .Where(argument => !argument.StartsWith("%", StringComparison.Ordinal))
-                    .Select(QuoteProcessArgumentIfNeeded)),
+                Arguments = string.Join(" ", command.Skip(1).Select(QuoteProcessArgumentIfNeeded)),
                 Icon = icon,
                 WorkDir = workDir,
                 Name = string.IsNullOrWhiteSpace(name) ? Path.GetFileNameWithoutExtension(path) : name,
-                AppId = path.MD5()
+                AppId = appId
             };
+        }
+
+        private static string GetLocalizedDesktopValue(IReadOnlyDictionary<string, string> values, string key)
+        {
+            var culture = CultureInfo.CurrentUICulture;
+            while (!string.IsNullOrEmpty(culture.Name))
+            {
+                var locale = culture.Name.Replace('-', '_');
+                if (values.TryGetValue($"{key}[{locale}]", out var localized))
+                {
+                    return localized;
+                }
+
+                culture = culture.Parent;
+            }
+
+            return values.TryGetValue(key, out var fallback) ? fallback : null;
+        }
+
+        private static string GetDesktopApplicationId(IReadOnlyDictionary<string, string> values, string path)
+        {
+            if (values.TryGetValue("X-Flatpak", out var flatpakId) && !string.IsNullOrWhiteSpace(flatpakId))
+            {
+                return "flatpak:" + flatpakId.Trim();
+            }
+
+            if (values.TryGetValue("X-SnapInstanceName", out var snapInstance) &&
+                !string.IsNullOrWhiteSpace(snapInstance))
+            {
+                values.TryGetValue("X-SnapAppName", out var snapApplication);
+                return "snap:" + snapInstance.Trim() +
+                    (string.IsNullOrWhiteSpace(snapApplication) ? string.Empty : "." + snapApplication.Trim());
+            }
+
+            if (values.TryGetValue("Exec", out var exec))
+            {
+                const string steamLaunchMarker = "steam://rungameid/";
+                var markerIndex = exec.IndexOf(steamLaunchMarker, StringComparison.OrdinalIgnoreCase);
+                if (markerIndex >= 0)
+                {
+                    var appId = new string(exec
+                        .Skip(markerIndex + steamLaunchMarker.Length)
+                        .TakeWhile(character => character >= '0' && character <= '9')
+                        .ToArray());
+                    if (appId.Length > 0)
+                    {
+                        return "steam:" + appId;
+                    }
+                }
+            }
+
+            return path.MD5();
+        }
+
+        private static List<string> ExpandDesktopCommand(
+            IReadOnlyList<string> command,
+            string applicationName,
+            string icon,
+            string desktopFile)
+        {
+            var expanded = new List<string>();
+            foreach (var argument in command)
+            {
+                if (argument == "%i")
+                {
+                    if (!string.IsNullOrWhiteSpace(icon))
+                    {
+                        expanded.Add("--icon");
+                        expanded.Add(icon);
+                    }
+
+                    continue;
+                }
+
+                var value = new StringBuilder();
+                for (var index = 0; index < argument.Length; index++)
+                {
+                    if (argument[index] != '%' || index + 1 >= argument.Length)
+                    {
+                        value.Append(argument[index]);
+                        continue;
+                    }
+
+                    var code = argument[++index];
+                    switch (code)
+                    {
+                        case '%':
+                            value.Append('%');
+                            break;
+                        case 'c':
+                            value.Append(applicationName);
+                            break;
+                        case 'k':
+                            value.Append(desktopFile);
+                            break;
+                        case 'f':
+                        case 'F':
+                        case 'u':
+                        case 'U':
+                            break;
+                        default:
+                            throw new InvalidDataException($"The desktop entry contains unsupported field code %{code}.");
+                    }
+                }
+
+                if (value.Length > 0)
+                {
+                    expanded.Add(value.ToString());
+                }
+            }
+
+            return expanded;
         }
 
         private static List<string> SplitDesktopCommand(string command)
@@ -287,7 +401,10 @@ namespace Playnite.Common
                     {
                         var application = ReadDesktopEntry(shortcut.FullName);
                         if (!string.IsNullOrEmpty(application.Path) &&
-                            applications.All(existing => !string.Equals(existing.Path, application.Path, StringComparison.Ordinal)))
+                            applications.All(existing => !string.Equals(
+                                GetProgramIdentity(existing),
+                                GetProgramIdentity(application),
+                                StringComparison.Ordinal)))
                         {
                             applications.Add(application);
                         }
@@ -313,12 +430,7 @@ namespace Playnite.Common
         public static async Task<List<Program>> GetInstalledPrograms(CancellationToken cancelToken)
         {
             var applications = new List<Program>();
-            var roots = new[]
-            {
-                "/usr/local/share/applications",
-                "/usr/share/applications",
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".local", "share", "applications")
-            };
+            var roots = GetLinuxApplicationRoots();
 
             using (var cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(cancelToken))
             {
@@ -335,12 +447,68 @@ namespace Playnite.Common
                         return null;
                     }
 
-                    applications.AddRange(discovered.Where(application =>
-                        applications.All(existing => !string.Equals(existing.Path, application.Path, StringComparison.Ordinal))));
+                    applications.AddRange(discovered.Where(application => applications.All(existing =>
+                        !string.Equals(
+                            GetProgramIdentity(existing),
+                            GetProgramIdentity(application),
+                            StringComparison.Ordinal))));
+                }
+            }
+
+            if (OperatingSystem.IsLinux())
+            {
+                foreach (var steamGame in LinuxSteam.GetInstalledGames())
+                {
+                    var application = steamGame.ToProgram();
+                    if (applications.All(existing => !string.Equals(
+                        GetProgramIdentity(existing),
+                        GetProgramIdentity(application),
+                        StringComparison.Ordinal)))
+                    {
+                        applications.Add(application);
+                    }
                 }
             }
 
             return applications;
+        }
+
+        private static IReadOnlyList<string> GetLinuxApplicationRoots()
+        {
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var dataHome = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
+            if (string.IsNullOrWhiteSpace(dataHome))
+            {
+                dataHome = Path.Combine(userProfile, ".local", "share");
+            }
+
+            var dataDirectories = Environment.GetEnvironmentVariable("XDG_DATA_DIRS");
+            if (string.IsNullOrWhiteSpace(dataDirectories))
+            {
+                dataDirectories = "/usr/local/share:/usr/share";
+            }
+
+            var roots = new List<string>
+            {
+                Path.Combine(dataHome, "applications"),
+                Path.Combine(dataHome, "flatpak", "exports", "share", "applications"),
+                "/var/lib/flatpak/exports/share/applications",
+                "/var/lib/snapd/desktop/applications"
+            };
+            roots.AddRange(dataDirectories
+                .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(directory => Path.Combine(directory, "applications")));
+            return roots.Distinct(StringComparer.Ordinal).ToList();
+        }
+
+        private static string GetProgramIdentity(Program program)
+        {
+            if (!string.IsNullOrWhiteSpace(program.AppId))
+            {
+                return program.AppId;
+            }
+
+            return (program.Path ?? string.Empty) + "\0" + (program.Arguments ?? string.Empty);
         }
 
         public static List<Program> GetUWPApps()

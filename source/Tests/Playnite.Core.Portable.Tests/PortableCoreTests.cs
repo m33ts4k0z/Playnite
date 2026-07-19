@@ -11,6 +11,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Playnite.Core.Portable.Tests
 {
@@ -75,6 +76,127 @@ namespace Playnite.Core.Portable.Tests
             var programs = Programs.GetShortcutProgramsFromFolder(temporaryDirectory).GetAwaiter().GetResult();
 
             Assert.That(programs.Select(program => program.Name), Is.EqualTo(new[] { "Visible" }));
+        }
+
+        [Test]
+        public void DesktopEntriesPreserveFlatpakAndSnapIdentity()
+        {
+            File.WriteAllText(Path.Combine(temporaryDirectory, "flatpak-one.desktop"),
+                "[Desktop Entry]\nType=Application\nName=Flatpak One\n" +
+                "Exec=/usr/bin/flatpak run com.example.One %U\nX-Flatpak=com.example.One\n");
+            File.WriteAllText(Path.Combine(temporaryDirectory, "flatpak-two.desktop"),
+                "[Desktop Entry]\nType=Application\nName=Flatpak Two\n" +
+                "Exec=/usr/bin/flatpak run com.example.Two %U\nX-Flatpak=com.example.Two\n");
+            File.WriteAllText(Path.Combine(temporaryDirectory, "snap.desktop"),
+                "[Desktop Entry]\nType=Application\nName=Snap Game\n" +
+                "Exec=/snap/bin/example.game %U\nX-SnapInstanceName=example\nX-SnapAppName=game\n");
+
+            var programs = Programs.GetShortcutProgramsFromFolder(temporaryDirectory).GetAwaiter().GetResult();
+
+            Assert.That(programs.Select(program => program.AppId), Is.EquivalentTo(new[]
+            {
+                "flatpak:com.example.One",
+                "flatpak:com.example.Two",
+                "snap:example.game"
+            }));
+            Assert.That(programs.Single(program => program.Name == "Flatpak One").Arguments,
+                Is.EqualTo("run com.example.One"));
+        }
+
+        [Test]
+        public void DesktopEntryExpandsStandardFieldCodes()
+        {
+            var shortcutPath = Path.Combine(temporaryDirectory, "field-codes.desktop");
+            File.WriteAllText(shortcutPath,
+                "[Desktop Entry]\nType=Application\nName=Field Code Game\nIcon=game-icon\n" +
+                "Exec=/opt/game --title=%c --desktop=%k %i %% %f\n");
+
+            var program = Programs.GetLnkShortcutData(shortcutPath);
+
+            Assert.That(program.Arguments, Does.Contain("\"--title=Field Code Game\""));
+            Assert.That(program.Arguments, Does.Contain("--desktop="));
+            Assert.That(program.Arguments, Does.Contain("--icon game-icon"));
+            Assert.That(program.Arguments, Does.EndWith("%"));
+            Assert.That(program.Arguments, Does.Not.Contain("%f"));
+        }
+
+        [Test]
+        public void LinuxInstalledDiscoveryHonorsXdgAndPackageExports()
+        {
+            if (!OperatingSystem.IsLinux())
+            {
+                Assert.Ignore("Linux-specific discovery roots.");
+            }
+
+            var previousDataHome = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
+            var previousDataDirectories = Environment.GetEnvironmentVariable("XDG_DATA_DIRS");
+            try
+            {
+                var dataHome = Path.Combine(temporaryDirectory, "data-home");
+                var dataDirectory = Path.Combine(temporaryDirectory, "data-dir");
+                var flatpakDirectory = Path.Combine(dataHome, "flatpak", "exports", "share", "applications");
+                var xdgDirectory = Path.Combine(dataDirectory, "applications");
+                Directory.CreateDirectory(flatpakDirectory);
+                Directory.CreateDirectory(xdgDirectory);
+                File.WriteAllText(Path.Combine(flatpakDirectory, "flatpak.desktop"),
+                    "[Desktop Entry]\nType=Application\nName=Flatpak Fixture\n" +
+                    "Exec=/usr/bin/flatpak run com.example.Fixture\nX-Flatpak=com.example.Fixture\n");
+                File.WriteAllText(Path.Combine(xdgDirectory, "xdg.desktop"),
+                    "[Desktop Entry]\nType=Application\nName=XDG Fixture\nExec=/opt/xdg-fixture\n");
+                Environment.SetEnvironmentVariable("XDG_DATA_HOME", dataHome);
+                Environment.SetEnvironmentVariable("XDG_DATA_DIRS", dataDirectory);
+
+                var programs = Programs.GetInstalledPrograms(CancellationToken.None).GetAwaiter().GetResult();
+
+                Assert.That(programs.Any(program => program.Name == "Flatpak Fixture"), Is.True);
+                Assert.That(programs.Any(program => program.Name == "XDG Fixture"), Is.True);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("XDG_DATA_HOME", previousDataHome);
+                Environment.SetEnvironmentVariable("XDG_DATA_DIRS", previousDataDirectories);
+            }
+        }
+
+        [Test]
+        public void LinuxSteamDiscoversLibrariesManifestsAndProtonData()
+        {
+            var steamRoot = Path.Combine(temporaryDirectory, ".var", "app", "com.valvesoftware.Steam", "data", "Steam");
+            var secondLibrary = Path.Combine(temporaryDirectory, "Steam Library");
+            Directory.CreateDirectory(Path.Combine(steamRoot, "steamapps"));
+            Directory.CreateDirectory(Path.Combine(secondLibrary, "steamapps", "common", "Proton Game"));
+            Directory.CreateDirectory(Path.Combine(secondLibrary, "steamapps", "compatdata", "12345"));
+            File.WriteAllText(Path.Combine(steamRoot, "steamapps", "libraryfolders.vdf"),
+                "\"libraryfolders\"\n{\n  \"0\" { \"path\" \"" + EscapeVdf(steamRoot) + "\" }\n" +
+                "  \"1\" { \"path\" \"" + EscapeVdf(secondLibrary) + "\" }\n}\n");
+            File.WriteAllText(Path.Combine(secondLibrary, "steamapps", "appmanifest_12345.acf"),
+                "\"AppState\"\n{\n  \"appid\" \"12345\"\n  \"name\" \"Proton Game\"\n" +
+                "  \"installdir\" \"Proton Game\"\n}\n");
+
+            var games = LinuxSteam.GetInstalledGames(steamRoot);
+
+            Assert.That(games, Has.Count.EqualTo(1));
+            var game = games.Single();
+            Assert.That(game.Name, Is.EqualTo("Proton Game"));
+            Assert.That(game.InstallDirectory, Is.EqualTo(Path.Combine(secondLibrary, "steamapps", "common", "Proton Game")));
+            Assert.That(game.UsesProton, Is.True);
+            Assert.That(game.Distribution, Is.EqualTo(LinuxSteamDistribution.Flatpak));
+            Assert.That(game.ToProgram().Path, Is.EqualTo("flatpak"));
+            Assert.That(game.ToProgram().Arguments,
+                Is.EqualTo("run com.valvesoftware.Steam steam://rungameid/12345"));
+        }
+
+        [Test]
+        public void SteamDesktopEntryUsesManifestIdentity()
+        {
+            var shortcutPath = Path.Combine(temporaryDirectory, "steam-12345.desktop");
+            File.WriteAllText(shortcutPath,
+                "[Desktop Entry]\nType=Application\nName=Steam Game\n" +
+                "Exec=steam steam://rungameid/12345\n");
+
+            var program = Programs.GetLnkShortcutData(shortcutPath);
+
+            Assert.That(program.AppId, Is.EqualTo("steam:12345"));
         }
 
         [Test]
@@ -231,5 +353,7 @@ namespace Playnite.Core.Portable.Tests
         {
             public int Value { get; set; }
         }
+
+        private static string EscapeVdf(string value) => value.Replace("\\", "\\\\");
     }
 }
