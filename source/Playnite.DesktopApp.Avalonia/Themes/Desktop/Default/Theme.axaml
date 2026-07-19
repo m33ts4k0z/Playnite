@@ -61,10 +61,15 @@
                                     Template="{DynamicResource DesktopBackgroundLayerTemplate}" />
                     <ContentControl Template="{DynamicResource DesktopTopPanelTemplate}" />
 
-                    <Grid Grid.Row="1" ColumnDefinitions="270,*,390">
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="270" />
+                            <ColumnDefinition Width="{Binding FirstContentColumnWidth}" />
+                            <ColumnDefinition Width="{Binding SecondContentColumnWidth}" />
+                        </Grid.ColumnDefinitions>
                         <ContentControl Template="{DynamicResource DesktopSidebarTemplate}" />
 
-                        <Grid Grid.Column="1">
+                        <Grid Grid.Column="{Binding LibraryContentColumn}">
                             <ListBox Name="PART_GridGameList"
                                      Margin="18,14"
                                      IsVisible="{Binding IsGridView}"
@@ -91,7 +96,8 @@
                                      ItemTemplate="{DynamicResource DesktopListItemTemplate}" />
                         </Grid>
 
-                        <ContentControl Grid.Column="2"
+                        <ContentControl Name="PART_DetailsPanel"
+                                        Grid.Column="{Binding DetailsContentColumn}"
                                         Template="{DynamicResource DesktopDetailsPanelTemplate}" />
                     </Grid>
 

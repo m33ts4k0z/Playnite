@@ -27,6 +27,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public AppearanceGeneralSettingsSection AppearanceGeneral { get; }
     public AppearanceGridViewSettingsSection AppearanceGridView { get; }
     public AppearanceListViewSettingsSection AppearanceListView { get; }
+    public AppearanceDetailsViewSettingsSection AppearanceDetailsView { get; }
+    public AppearanceLayoutSettingsSection AppearanceLayout { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
@@ -44,13 +46,17 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         AppearanceGeneral = new AppearanceGeneralSettingsSection(settings);
         AppearanceGridView = new AppearanceGridViewSettingsSection(settings);
         AppearanceListView = new AppearanceListViewSettingsSection(settings);
+        AppearanceDetailsView = new AppearanceDetailsViewSettingsSection(settings);
+        AppearanceLayout = new AppearanceLayoutSettingsSection(settings);
         Sections = new ObservableCollection<ISettingsSection>
         {
             General,
             Appearance,
             AppearanceGeneral,
             AppearanceGridView,
-            AppearanceListView
+            AppearanceListView,
+            AppearanceDetailsView,
+            AppearanceLayout
         };
         selectedSection = Sections[0];
         SaveCommand = new AppRelayCommand(Save, () => IsVisible);

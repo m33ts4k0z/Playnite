@@ -35,6 +35,7 @@ public sealed class DesktopSettingsStore
                 settings.ViewMode = settings.ViewMode is "Grid" or "List" ? settings.ViewMode : "Grid";
                 settings.DisabledPlugins ??= new List<string>();
                 settings.DisabledGameControllers ??= new List<string>();
+                settings.DetailsVisibility ??= new Playnite.Avalonia.App.Services.DetailsVisibilitySettings();
                 settings.MetadataSourceIds ??= new List<Guid>();
                 settings.MetadataFields ??= DesktopSettings.GetDefaultMetadataFields();
                 settings.LibraryPluginIds ??= new List<Guid>();
@@ -74,6 +75,18 @@ public sealed class DesktopSettingsStore
                     Math.Clamp(settings.GridViewScrollDurationMilliseconds, 16, 5000);
                 settings.ListViewScrollDurationMilliseconds =
                     Math.Clamp(settings.ListViewScrollDurationMilliseconds, 16, 5000);
+                settings.DetailsViewScrollSensitivity = Math.Clamp(settings.DetailsViewScrollSensitivity, 0.1, 10);
+                settings.DetailsViewScrollDurationMilliseconds =
+                    Math.Clamp(settings.DetailsViewScrollDurationMilliseconds, 16, 5000);
+                settings.GameDetailsIndentation = Math.Clamp(settings.GameDetailsIndentation, 0, 200);
+                settings.GameDetailsCoverHeight = Math.Clamp(settings.GameDetailsCoverHeight, 100, 800);
+                settings.DetailsViewListIconSize = Math.Clamp(settings.DetailsViewListIconSize, 20, 160);
+                settings.GridDetailsWidth = Math.Clamp(settings.GridDetailsWidth, 240, 800);
+                if (settings.GridViewDetailsPosition is not global::Avalonia.Controls.Dock.Left and
+                    not global::Avalonia.Controls.Dock.Right)
+                {
+                    settings.GridViewDetailsPosition = global::Avalonia.Controls.Dock.Right;
+                }
                 return settings;
             }
         }

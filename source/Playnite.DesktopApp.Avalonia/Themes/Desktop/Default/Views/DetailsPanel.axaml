@@ -3,51 +3,98 @@
                     xmlns:foundation="using:Playnite.Avalonia.Controls">
     <ControlTemplate x:Key="DesktopDetailsPanelTemplate">
         <Border Background="{DynamicResource DesktopPanelBrush}"
-                BorderBrush="#303A49" BorderThickness="1,0,0,0">
+                BorderBrush="#303A49" BorderThickness="{Binding DetailsBorderThickness}">
             <ScrollViewer>
-                <StackPanel Margin="26" Spacing="15">
-                    <Border Height="310" CornerRadius="10" Background="#222B37"
-                            ClipToBounds="True">
+                <StackPanel Margin="{Binding DetailsContentMargin}" Spacing="15">
+                    <Border Width="64" Height="64" CornerRadius="8" Background="#222B37"
+                            HorizontalAlignment="Left" ClipToBounds="True"
+                            IsVisible="{Binding DetailsVisibility.Icon}">
+                        <foundation:GameCoverImage SourcePath="{Binding SelectedGame.IconPath}"
+                                                   Stretch="UniformToFill" />
+                    </Border>
+                    <Border Name="PART_DetailsCover" Height="{Binding GameDetailsCoverHeight}" CornerRadius="10" Background="#222B37"
+                            ClipToBounds="True" IsVisible="{Binding DetailsVisibility.CoverImage}">
                         <foundation:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
                                                    Stretch="UniformToFill" />
                     </Border>
-                    <TextBlock Text="{Binding SelectedGame.Name}" FontSize="32"
+                    <Border Height="110" CornerRadius="8" Background="#222B37"
+                            ClipToBounds="True" IsVisible="{Binding DetailsVisibility.BackgroundImage}">
+                        <foundation:GameCoverImage SourcePath="{Binding SelectedGame.BackgroundPath}"
+                                                   Stretch="UniformToFill" />
+                    </Border>
+                    <TextBlock Name="PART_DetailsName" Text="{Binding SelectedGame.Name}" FontSize="32"
                                FontWeight="Bold" TextWrapping="Wrap"
+                               IsVisible="{Binding DetailsVisibility.Name}"
                                Foreground="{DynamicResource DesktopTextBrush}" />
                     <TextBlock Text="{Binding SelectedGame.MetadataLine}"
+                               IsVisible="{Binding DetailsVisibility.Platform}"
                                Foreground="{DynamicResource DesktopAccentBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.ReleaseYearText}"
+                               IsVisible="{Binding DetailsVisibility.ReleaseDate}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.LibraryText}"
+                               IsVisible="{Binding DetailsVisibility.Library}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
                     <TextBlock Text="{Binding SelectedGame.SourceName}"
+                               IsVisible="{Binding DetailsVisibility.Source}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <TextBlock Text="{Binding SelectedGame.CompletionStatusName}"
+                               IsVisible="{Binding DetailsVisibility.CompletionStatus}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <TextBlock Text="{Binding SelectedGame.UserScoreText}"
+                               IsVisible="{Binding DetailsVisibility.UserScore}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <TextBlock Text="{Binding SelectedGame.CriticScoreText}"
+                               IsVisible="{Binding DetailsVisibility.CriticScore}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <TextBlock Text="{Binding SelectedGame.CommunityScoreText}"
+                               IsVisible="{Binding DetailsVisibility.CommunityScore}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.VersionText}"
+                               IsVisible="{Binding DetailsVisibility.Version}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.InstallSizeText}"
+                               IsVisible="{Binding DetailsVisibility.InstallSize}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.InstallDirectoryText}"
+                               IsVisible="{Binding DetailsVisibility.InstallDirectory}"
+                               TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.AddedText}"
+                               IsVisible="{Binding DetailsVisibility.Added}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <StackPanel Spacing="3">
                         <TextBlock Text="{Binding SelectedGame.GenresText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.Genres}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.PlatformsText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.Platform}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.CategoriesText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.Categories}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.TagsText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.Tags}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.DevelopersText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.Developers}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.PublishersText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.Publishers}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.FeaturesText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.Features}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.SeriesText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.Series}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.AgeRatingsText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.AgeRating}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.RegionsText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.Region}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.LinksText}" FontSize="11"
+                                   IsVisible="{Binding DetailsVisibility.Links}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.GameActionsText}" FontSize="11"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
@@ -60,11 +107,20 @@
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="16">
                         <TextBlock Text="{Binding SelectedGame.PlaytimeText}"
+                                   IsVisible="{Binding DetailsVisibility.PlayTime}"
                                    Foreground="{DynamicResource DesktopMutedBrush}" />
                         <TextBlock Text="{Binding SelectedGame.LastPlayedText}"
+                                   IsVisible="{Binding DetailsVisibility.LastPlayed}"
                                    Foreground="{DynamicResource DesktopMutedBrush}" />
                     </StackPanel>
+                    <TextBlock Text="{Binding SelectedGame.LastPlayedText}"
+                               IsVisible="{Binding DetailsVisibility.RecentActivity}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Text="{Binding SelectedGame.NotesText}"
+                               IsVisible="{Binding DetailsVisibility.Notes}"
+                               TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
                     <TextBlock Text="{Binding SelectedGame.DescriptionText}"
+                               IsVisible="{Binding DetailsVisibility.Description}"
                                TextWrapping="Wrap" LineHeight="23"
                                Foreground="{DynamicResource DesktopTextBrush}" />
                     <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">

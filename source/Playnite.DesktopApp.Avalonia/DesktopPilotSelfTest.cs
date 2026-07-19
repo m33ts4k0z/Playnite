@@ -1748,6 +1748,40 @@ internal static class DesktopPilotSelfTest
                 ? "geometry, cover presentation, group counts, playtime, icons, and both scroll behaviors updated"
                 : throw new InvalidOperationException("One or more W-A1 appearance settings did not reach the live view."));
 
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.AppearanceDetailsView.Visibility.Name = false;
+        viewModel.Settings.AppearanceDetailsView.Visibility.Source = false;
+        viewModel.Settings.AppearanceDetailsView.Visibility.Description = false;
+        viewModel.Settings.AppearanceDetailsView.Visibility.CoverImage = true;
+        viewModel.Settings.AppearanceDetailsView.IndentGameDetails = true;
+        viewModel.Settings.AppearanceDetailsView.GameDetailsIndentation = 40;
+        viewModel.Settings.AppearanceDetailsView.GameDetailsCoverHeight = 360;
+        viewModel.Settings.AppearanceDetailsView.DetailsViewListIconSize = 72;
+        viewModel.Settings.AppearanceDetailsView.ScrollSensitivity = 3;
+        viewModel.Settings.AppearanceDetailsView.ScrollDurationMilliseconds = 400;
+        viewModel.Settings.AppearanceDetailsView.SmoothScrollEnabled = true;
+        viewModel.Settings.AppearanceLayout.DetailsPosition = Dock.Left;
+        viewModel.Settings.AppearanceLayout.DetailsWidth = 420;
+        viewModel.Settings.AppearanceLayout.ShowPanelSeparators = false;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var detailsScroll = window.MainView.DetailsScrollViewer;
+        var detailsApplied = !window.MainView.DetailsName.IsVisible &&
+            window.MainView.DetailsCover.IsVisible &&
+            Math.Abs(window.MainView.DetailsCover.Height - 360) < 0.01 &&
+            Grid.GetColumn(window.MainView.DetailsPanel) == 1 &&
+            Math.Abs(viewModel.FirstContentColumnWidth.Value - 420) < 0.01 &&
+            viewModel.DetailsBorderThickness == default &&
+            Math.Abs(viewModel.DetailsContentMargin.Left - 40) < 0.01 &&
+            Math.Abs(viewModel.SelectedGame.ListIconHeight - 72) < 0.01 &&
+            detailsScroll != null &&
+            Playnite.Avalonia.Controls.ScrollBehavior.GetSmoothScrollingEnabled(detailsScroll) &&
+            Math.Abs(Playnite.Avalonia.Controls.ScrollBehavior.GetWheelSensitivity(detailsScroll) - 3) < 0.01;
+        Record(results, "Desktop details visibility and layout settings apply live", () =>
+            detailsApplied
+                ? "field visibility, cover/indent/icon geometry, left layout, width, separators, and scrolling updated"
+                : throw new InvalidOperationException("One or more W-A2 details settings did not reach the live view."));
+
         var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every desktop settings module supplies a passing self-check", () =>
             settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
@@ -1942,6 +1976,22 @@ internal static class DesktopPilotSelfTest
                 ListViewScrollSensitivity = 2.75,
                 ListViewScrollDurationMilliseconds = 375,
                 ListViewSmoothScrollEnabled = true,
+                DetailsVisibility = new Playnite.Avalonia.App.Services.DetailsVisibilitySettings
+                {
+                    Name = false,
+                    CoverImage = false,
+                    UserScore = true
+                },
+                DetailsViewScrollSensitivity = 3.25,
+                DetailsViewScrollDurationMilliseconds = 425,
+                DetailsViewSmoothScrollEnabled = true,
+                IndentGameDetails = true,
+                GameDetailsIndentation = 44,
+                GameDetailsCoverHeight = 380,
+                DetailsViewListIconSize = 76,
+                GridViewDetailsPosition = Dock.Left,
+                GridDetailsWidth = 430,
+                ShowPanelSeparators = false,
                 GlobalPreScript = "global-pre",
                 GlobalGameStartedScript = "global-started",
                 GlobalPostScript = "global-post",
@@ -1997,6 +2047,19 @@ internal static class DesktopPilotSelfTest
                 loaded.ListViewScrollSensitivity != 2.75 ||
                 loaded.ListViewScrollDurationMilliseconds != 375 ||
                 !loaded.ListViewSmoothScrollEnabled ||
+                loaded.DetailsVisibility.Name ||
+                loaded.DetailsVisibility.CoverImage ||
+                !loaded.DetailsVisibility.UserScore ||
+                loaded.DetailsViewScrollSensitivity != 3.25 ||
+                loaded.DetailsViewScrollDurationMilliseconds != 425 ||
+                !loaded.DetailsViewSmoothScrollEnabled ||
+                !loaded.IndentGameDetails ||
+                loaded.GameDetailsIndentation != 44 ||
+                loaded.GameDetailsCoverHeight != 380 ||
+                loaded.DetailsViewListIconSize != 76 ||
+                loaded.GridViewDetailsPosition != Dock.Left ||
+                loaded.GridDetailsWidth != 430 ||
+                loaded.ShowPanelSeparators ||
                 loaded.GlobalPreScript != "global-pre" ||
                 loaded.GlobalGameStartedScript != "global-started" ||
                 loaded.GlobalPostScript != "global-post" ||

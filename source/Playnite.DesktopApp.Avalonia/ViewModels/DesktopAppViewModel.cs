@@ -258,6 +258,35 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public TimeSpan ListViewScrollDuration =>
         TimeSpan.FromMilliseconds(settings.ListViewScrollDurationMilliseconds);
     public bool ListViewSmoothScrollEnabled => settings.ListViewSmoothScrollEnabled;
+    public Playnite.Avalonia.App.Services.DetailsVisibilitySettings DetailsVisibility => settings.DetailsVisibility;
+    public double DetailsViewScrollSensitivity => settings.DetailsViewScrollSensitivity;
+    public TimeSpan DetailsViewScrollDuration =>
+        TimeSpan.FromMilliseconds(settings.DetailsViewScrollDurationMilliseconds);
+    public bool DetailsViewSmoothScrollEnabled => settings.DetailsViewSmoothScrollEnabled;
+    public double GameDetailsCoverHeight => settings.GameDetailsCoverHeight;
+    public double ListIconHeight => settings.DetailsViewListIconSize;
+    public double ListIconWidth => settings.DetailsViewListIconSize * 0.75;
+    public Thickness DetailsContentMargin => settings.IndentGameDetails
+        ? new Thickness(settings.GameDetailsIndentation, 26, 26, 26)
+        : new Thickness(26);
+    public int LibraryContentColumn => settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left ? 2 : 1;
+    public int DetailsContentColumn => settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left ? 1 : 2;
+    public global::Avalonia.Controls.GridLength FirstContentColumnWidth =>
+        settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
+            ? new global::Avalonia.Controls.GridLength(settings.GridDetailsWidth)
+            : new global::Avalonia.Controls.GridLength(1, global::Avalonia.Controls.GridUnitType.Star);
+    public global::Avalonia.Controls.GridLength SecondContentColumnWidth =>
+        settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
+            ? new global::Avalonia.Controls.GridLength(1, global::Avalonia.Controls.GridUnitType.Star)
+            : new global::Avalonia.Controls.GridLength(settings.GridDetailsWidth);
+    public Thickness SidebarBorderThickness => settings.ShowPanelSeparators
+        ? new Thickness(0, 0, 1, 0)
+        : default;
+    public Thickness DetailsBorderThickness => !settings.ShowPanelSeparators
+        ? default
+        : settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
+            ? new Thickness(0, 0, 1, 0)
+            : new Thickness(1, 0, 0, 0);
     public bool EnableTray
     {
         get => settings.EnableTray;
@@ -1172,6 +1201,20 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ListViewScrollSensitivity));
         OnPropertyChanged(nameof(ListViewScrollDuration));
         OnPropertyChanged(nameof(ListViewSmoothScrollEnabled));
+        OnPropertyChanged(nameof(DetailsVisibility));
+        OnPropertyChanged(nameof(DetailsViewScrollSensitivity));
+        OnPropertyChanged(nameof(DetailsViewScrollDuration));
+        OnPropertyChanged(nameof(DetailsViewSmoothScrollEnabled));
+        OnPropertyChanged(nameof(GameDetailsCoverHeight));
+        OnPropertyChanged(nameof(ListIconHeight));
+        OnPropertyChanged(nameof(ListIconWidth));
+        OnPropertyChanged(nameof(DetailsContentMargin));
+        OnPropertyChanged(nameof(LibraryContentColumn));
+        OnPropertyChanged(nameof(DetailsContentColumn));
+        OnPropertyChanged(nameof(FirstContentColumnWidth));
+        OnPropertyChanged(nameof(SecondContentColumnWidth));
+        OnPropertyChanged(nameof(SidebarBorderThickness));
+        OnPropertyChanged(nameof(DetailsBorderThickness));
         ApplyFilters();
     }
 

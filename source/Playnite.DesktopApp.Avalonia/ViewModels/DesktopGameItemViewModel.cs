@@ -53,6 +53,15 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         : "Never played";
     public string AddedText => Game.Added.HasValue ? Game.Added.Value.ToString("d") : "Unknown";
     public string ReleaseYearText => Game.ReleaseYear?.ToString() ?? "Unknown";
+    public string LibraryText => $"Library: {Game.PluginId}";
+    public string VersionText => string.IsNullOrWhiteSpace(Game.Version) ? "Version: Unknown" : $"Version: {Game.Version}";
+    public string InstallSizeText => Game.InstallSize.HasValue
+        ? $"Install size: {Game.InstallSize.Value / 1024d / 1024d:0.##} MB"
+        : "Install size: Unknown";
+    public string InstallDirectoryText => string.IsNullOrWhiteSpace(Game.InstallDirectory)
+        ? "Install directory: Unknown"
+        : $"Install directory: {Game.InstallDirectory}";
+    public string NotesText => string.IsNullOrWhiteSpace(Game.Notes) ? "Notes: None" : $"Notes: {Game.Notes}";
     public string SourceName => database.Sources[Game.SourceId]?.Name ?? "No source";
     public string PlatformName => Game.PlatformIds?.Select(id => database.Platforms[id]?.Name)
         .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? "No platform";
@@ -80,6 +89,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public string MetadataLine => BuildMetadataLine(Game, database);
     public string DescriptionText => ToPlainText(Game.Description);
     public string CoverPath => ResolveMediaPath(Game.CoverImage, database);
+    public string IconPath => ResolveMediaPath(Game.Icon, database);
+    public string BackgroundPath => ResolveMediaPath(Game.BackgroundImage, database);
     public Stretch CoverArtStretch => appearanceSettings.CoverArtStretch;
     public Thickness GridItemMargin => new(appearanceSettings.GridItemMargin);
     public bool ShowGridItemBackground => appearanceSettings.ShowGridItemBackground;
@@ -87,6 +98,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public bool ShowEmptyCoverName => appearanceSettings.ShowNameEmptyCover && string.IsNullOrWhiteSpace(CoverPath);
     public double GridItemOpacity => appearanceSettings.DarkenUninstalledGamesGrid && !IsInstalled ? 0.5 : 1;
     public bool ShowListIcon => appearanceSettings.ShowIconsOnList;
+    public double ListIconHeight => appearanceSettings.DetailsViewListIconSize;
+    public double ListIconWidth => appearanceSettings.DetailsViewListIconSize * 0.75;
     public string GroupHeader => groupHeader;
     public bool ShowGroupHeader => showGroupHeader;
 
@@ -128,6 +141,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ShowEmptyCoverName));
         OnPropertyChanged(nameof(GridItemOpacity));
         OnPropertyChanged(nameof(ShowListIcon));
+        OnPropertyChanged(nameof(ListIconHeight));
+        OnPropertyChanged(nameof(ListIconWidth));
     }
 
     private void Game_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -151,6 +166,11 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(SourceName));
         OnPropertyChanged(nameof(CompletionStatusName));
         OnPropertyChanged(nameof(ReleaseYearText));
+        OnPropertyChanged(nameof(LibraryText));
+        OnPropertyChanged(nameof(VersionText));
+        OnPropertyChanged(nameof(InstallSizeText));
+        OnPropertyChanged(nameof(InstallDirectoryText));
+        OnPropertyChanged(nameof(NotesText));
         OnPropertyChanged(nameof(UserScoreText));
         OnPropertyChanged(nameof(CriticScoreText));
         OnPropertyChanged(nameof(CommunityScoreText));
@@ -171,6 +191,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(InstallationDetailsText));
         OnPropertyChanged(nameof(ScriptsText));
         OnPropertyChanged(nameof(CoverPath));
+        OnPropertyChanged(nameof(IconPath));
+        OnPropertyChanged(nameof(BackgroundPath));
         OnPropertyChanged(nameof(ShowEmptyCoverName));
         OnPropertyChanged(nameof(GridItemOpacity));
     }

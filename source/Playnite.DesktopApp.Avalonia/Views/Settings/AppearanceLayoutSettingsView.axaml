@@ -1,0 +1,23 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.AppearanceLayoutSettingsView"
+             x:DataType="vm:AppearanceLayoutSettingsSection">
+    <ScrollViewer MaxHeight="470" Padding="18,0,4,0">
+        <StackPanel Spacing="14">
+            <TextBlock Text="Library layout" Classes="sectionLabel" />
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock Text="Details panel position" Width="228" VerticalAlignment="Center" />
+                <ComboBox Width="150" ItemsSource="{Binding DetailsPositions}"
+                          SelectedItem="{Binding DetailsPosition, Mode=TwoWay}" />
+            </StackPanel>
+            <Grid ColumnDefinitions="240,150" ColumnSpacing="12">
+                <TextBlock Text="Details panel width" VerticalAlignment="Center" />
+                <NumericUpDown Grid.Column="1" Minimum="240" Maximum="800" Increment="10"
+                               Value="{Binding DetailsWidth, Mode=TwoWay}" />
+            </Grid>
+            <CheckBox Content="Show panel separators"
+                      IsChecked="{Binding ShowPanelSeparators, Mode=TwoWay}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,4 +1,6 @@
 using Avalonia.Media;
+using Avalonia.Controls;
+using Playnite.Avalonia.App.Services;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 
@@ -34,4 +36,17 @@ public sealed partial class DesktopSettings
     public double ListViewScrollSensitivity { get; set; } = 1.5;
     public int ListViewScrollDurationMilliseconds { get; set; } = 250;
     public bool ListViewSmoothScrollEnabled { get; set; }
+
+    public DetailsVisibilitySettings DetailsVisibility { get; set; } = new();
+    public double DetailsViewScrollSensitivity { get; set; } = 1.5;
+    public int DetailsViewScrollDurationMilliseconds { get; set; } = 250;
+    public bool DetailsViewSmoothScrollEnabled { get; set; }
+    public bool IndentGameDetails { get; set; }
+    public double GameDetailsIndentation { get; set; } = 26;
+    public double GameDetailsCoverHeight { get; set; } = 310;
+    public double DetailsViewListIconSize { get; set; } = 56;
+
+    public Dock GridViewDetailsPosition { get; set; } = Dock.Right;
+    public double GridDetailsWidth { get; set; } = 390;
+    public bool ShowPanelSeparators { get; set; } = true;
 }

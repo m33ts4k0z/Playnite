@@ -13,6 +13,7 @@ public sealed class DesktopMainView : TemplatedControl
     private ListBox listGameList;
     private TextBox searchBox;
     private TextBox pluginSearchBox;
+    private Control detailsPanel;
     private DesktopAppViewModel observedViewModel;
 
     public int TemplateAppliedCount { get; private set; }
@@ -27,6 +28,11 @@ public sealed class DesktopMainView : TemplatedControl
         gridGameList?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
     public ScrollViewer ListScrollViewer =>
         listGameList?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+    public ScrollViewer DetailsScrollViewer =>
+        detailsPanel?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+    public Control DetailsPanel => detailsPanel;
+    public TextBlock DetailsName => FindVisualPart<TextBlock>("PART_DetailsName");
+    public Border DetailsCover => FindVisualPart<Border>("PART_DetailsCover");
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
@@ -36,6 +42,7 @@ public sealed class DesktopMainView : TemplatedControl
         listGameList = e.NameScope.Find<ListBox>("PART_ListGameList");
         searchBox = e.NameScope.Find<TextBox>("PART_SearchBox");
         pluginSearchBox = e.NameScope.Find<TextBox>("PART_PluginSearchBox");
+        detailsPanel = e.NameScope.Find<Control>("PART_DetailsPanel");
         ObserveViewModel();
         Dispatcher.UIThread.Post(() =>
         {
@@ -98,7 +105,10 @@ public sealed class DesktopMainView : TemplatedControl
             nameof(DesktopAppViewModel.GridViewSmoothScrollEnabled) or
             nameof(DesktopAppViewModel.ListViewScrollSensitivity) or
             nameof(DesktopAppViewModel.ListViewScrollDuration) or
-            nameof(DesktopAppViewModel.ListViewSmoothScrollEnabled))
+            nameof(DesktopAppViewModel.ListViewSmoothScrollEnabled) or
+            nameof(DesktopAppViewModel.DetailsViewScrollSensitivity) or
+            nameof(DesktopAppViewModel.DetailsViewScrollDuration) or
+            nameof(DesktopAppViewModel.DetailsViewSmoothScrollEnabled))
         {
             ApplyScrollSettings();
         }
@@ -136,6 +146,11 @@ public sealed class DesktopMainView : TemplatedControl
             observedViewModel.ListViewScrollSensitivity,
             observedViewModel.ListViewSmoothScrollEnabled,
             observedViewModel.ListViewScrollDuration);
+        ConfigureScrollViewer(
+            DetailsScrollViewer,
+            observedViewModel.DetailsViewScrollSensitivity,
+            observedViewModel.DetailsViewSmoothScrollEnabled,
+            observedViewModel.DetailsViewScrollDuration);
     }
 
     private static void ConfigureScrollViewer(
@@ -145,6 +160,23 @@ public sealed class DesktopMainView : TemplatedControl
         TimeSpan duration)
     {
         var viewer = listBox?.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+        if (viewer == null)
+        {
+            return;
+        }
+
+        ScrollBehavior.SetWheelSensitivity(viewer, sensitivity);
+        ScrollBehavior.SetSmoothScrollingEnabled(viewer, smoothScrolling);
+        ScrollBehavior.SetSmoothScrollDuration(viewer, duration);
+        ScrollBehavior.SetIsEnabled(viewer, true);
+    }
+
+    private static void ConfigureScrollViewer(
+        ScrollViewer viewer,
+        double sensitivity,
+        bool smoothScrolling,
+        TimeSpan duration)
+    {
         if (viewer == null)
         {
             return;

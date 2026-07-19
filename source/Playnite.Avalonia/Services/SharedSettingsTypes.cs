@@ -189,4 +189,47 @@ public sealed class DetailsVisibilitySettings : SettingsValueObject
     public bool Features { get => features; set => SetField(ref features, value); }
     public bool Notes { get => notes; set => SetField(ref notes, value); }
     public bool Name { get => name; set => SetField(ref name, value); }
+
+    public DetailsVisibilitySettings Clone()
+    {
+        var clone = new DetailsVisibilitySettings();
+        clone.CopyFrom(this);
+        return clone;
+    }
+
+    public void CopyFrom(DetailsVisibilitySettings source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        Library = source.Library;
+        PlayTime = source.PlayTime;
+        InstallSize = source.InstallSize;
+        InstallDirectory = source.InstallDirectory;
+        LastPlayed = source.LastPlayed;
+        Added = source.Added;
+        RecentActivity = source.RecentActivity;
+        CompletionStatus = source.CompletionStatus;
+        Icon = source.Icon;
+        CoverImage = source.CoverImage;
+        BackgroundImage = source.BackgroundImage;
+        Platform = source.Platform;
+        Genres = source.Genres;
+        Developers = source.Developers;
+        Publishers = source.Publishers;
+        ReleaseDate = source.ReleaseDate;
+        Categories = source.Categories;
+        Tags = source.Tags;
+        Links = source.Links;
+        Description = source.Description;
+        AgeRating = source.AgeRating;
+        Series = source.Series;
+        Source = source.Source;
+        Region = source.Region;
+        Version = source.Version;
+        CommunityScore = source.CommunityScore;
+        CriticScore = source.CriticScore;
+        UserScore = source.UserScore;
+        Features = source.Features;
+        Notes = source.Notes;
+        Name = source.Name;
+    }
 }

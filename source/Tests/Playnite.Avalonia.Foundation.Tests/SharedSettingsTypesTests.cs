@@ -44,4 +44,30 @@ public sealed class SharedSettingsTypesTests
 
         Assert.That(hotKey.ToString(), Is.EqualTo("Ctrl + Shift + K"));
     }
+
+    [Test]
+    public void DetailsVisibilityCloneIsIndependentAndCopyable()
+    {
+        var source = new DetailsVisibilitySettings
+        {
+            Name = false,
+            CoverImage = false,
+            UserScore = true
+        };
+
+        var clone = source.Clone();
+        clone.Name = true;
+        var destination = new DetailsVisibilitySettings();
+        destination.CopyFrom(source);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(source.Name, Is.False);
+            Assert.That(clone.Name, Is.True);
+            Assert.That(clone.CoverImage, Is.False);
+            Assert.That(destination.Name, Is.False);
+            Assert.That(destination.CoverImage, Is.False);
+            Assert.That(destination.UserScore, Is.True);
+        });
+    }
 }
