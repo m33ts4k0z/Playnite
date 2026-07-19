@@ -341,6 +341,65 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
                 }
             }
 
+            if (!token.IsCancellationRequested && settings.ScanLibInstallSizeOnLibUpdate)
+            {
+                var installedGames = database.Games
+                    .Where(game => game.IsInstalled && !string.IsNullOrEmpty(game.InstallDirectory))
+                    .ToList();
+                if (installedGames.Count > 0)
+                {
+                    ProgressValue = 0;
+                    ProgressTotal = installedGames.Count;
+                    ProgressText = $"Scanning install sizes for {installedGames.Count:N0} game(s)";
+                    // Sizes are computed off the UI thread; the database is updated
+                    // back on the UI thread so game property changes stay single-threaded.
+                    var sizes = await Task.Run(() =>
+                    {
+                        var results = new List<KeyValuePair<Game, ulong>>();
+                        for (var index = 0; index < installedGames.Count; index++)
+                        {
+                            if (token.IsCancellationRequested)
+                            {
+                                break;
+                            }
+
+                            var game = installedGames[index];
+                            try
+                            {
+                                if (Directory.Exists(game.InstallDirectory))
+                                {
+                                    var size = (ulong)Playnite.Common.FileSystem.GetDirectorySize(
+                                        game.InstallDirectory, false);
+                                    results.Add(new KeyValuePair<Game, ulong>(game, size));
+                                }
+                            }
+                            catch (Exception exception)
+                            {
+                                logger.Error(exception, $"Failed to scan install size for {game.Name}.");
+                            }
+
+                            var scanned = index + 1;
+                            Dispatcher.UIThread.Post(() =>
+                            {
+                                ProgressValue = scanned;
+                                ProgressText = $"Scanning install sizes [{scanned}/{installedGames.Count}]";
+                            });
+                        }
+
+                        return results;
+                    }, token);
+
+                    foreach (var pair in sizes)
+                    {
+                        if (pair.Key.InstallSize != pair.Value)
+                        {
+                            pair.Key.InstallSize = pair.Value;
+                            database.Games.Update(pair.Key);
+                        }
+                    }
+                }
+            }
+
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 synchronizeLibrary();

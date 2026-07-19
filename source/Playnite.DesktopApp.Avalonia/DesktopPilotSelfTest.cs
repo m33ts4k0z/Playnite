@@ -1644,17 +1644,21 @@ internal static class DesktopPilotSelfTest
 
         viewModel.OpenSettingsCommand.Execute(null);
         viewModel.Settings.FuzzyMatchingInNameFilter = false;
+        viewModel.Settings.ScanLibInstallSizeOnLibUpdate = true;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         viewModel.OpenSettingsCommand.Execute(null);
         var fuzzyPersisted = !viewModel.Settings.FuzzyMatchingInNameFilter;
+        var scanSizePersisted = viewModel.Settings.ScanLibInstallSizeOnLibUpdate;
         viewModel.Settings.FuzzyMatchingInNameFilter = true;
+        viewModel.Settings.ScanLibInstallSizeOnLibUpdate = false;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
-        Record(results, "Fuzzy name-matching preference round-trips through the settings", () =>
-            fuzzyPersisted
-                ? "the fuzzy name-filter toggle saved and reloaded"
-                : throw new InvalidOperationException("FuzzyMatchingInNameFilter did not persist."));
+        Record(results, "Library preferences (fuzzy match, install-size scan) round-trip", () =>
+            fuzzyPersisted && scanSizePersisted
+                ? "fuzzy name-filter and scan-install-size toggles saved and reloaded"
+                : throw new InvalidOperationException(
+                    $"fuzzyPersisted={fuzzyPersisted}, scanSizePersisted={scanSizePersisted}"));
 
         var trayDefault = window.ResolveTrayIconPath(Playnite.Avalonia.App.Services.TrayIconOption.Default);
         var trayBright = window.ResolveTrayIconPath(Playnite.Avalonia.App.Services.TrayIconOption.Bright);
