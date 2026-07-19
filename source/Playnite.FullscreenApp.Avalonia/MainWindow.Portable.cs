@@ -342,7 +342,7 @@ public sealed class MainWindow : Window
 
         var report = BuildReport(results);
         Console.WriteLine(report);
-        File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "linux-fullscreen-self-test.txt"), report);
+        File.WriteAllText(Path.Combine(Program.RuntimeOutputDirectory, "linux-fullscreen-self-test.txt"), report);
         var exitCode = results.All(result => result.Passed) ? 0 : 1;
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

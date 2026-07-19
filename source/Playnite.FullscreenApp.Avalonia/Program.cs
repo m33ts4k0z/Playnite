@@ -8,14 +8,17 @@ internal static class Program
 {
     internal static StartupOptions Options { get; private set; }
     internal static SingleInstanceCoordinator InstanceCoordinator { get; private set; }
+    internal static string RuntimeOutputDirectory { get; private set; }
 
     [STAThread]
     public static int Main(string[] args)
     {
         Options = StartupOptions.Parse(args);
-        var logDirectory = Options.SelfTest ? AppContext.BaseDirectory : Options.UserDataDirectory;
-        Directory.CreateDirectory(logDirectory);
-        LogManager.Init(new NLogLogProvider(Path.Combine(logDirectory, "avaloniaFullscreen.log")));
+        RuntimeOutputDirectory = Options.SelfTest
+            ? Path.Combine(Path.GetTempPath(), "Playnite", "SelfTests")
+            : Options.UserDataDirectory;
+        Directory.CreateDirectory(RuntimeOutputDirectory);
+        LogManager.Init(new NLogLogProvider(Path.Combine(RuntimeOutputDirectory, "avaloniaFullscreen.log")));
         try
         {
             if (!Options.SelfTest)

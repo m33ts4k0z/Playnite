@@ -262,7 +262,7 @@ public sealed class MainWindow : Window
 
         var report = BuildReport(results);
         Console.WriteLine(report);
-        var outputPath = Path.Combine(AppContext.BaseDirectory, "linux-desktop-self-test.txt");
+        var outputPath = Path.Combine(Program.RuntimeOutputDirectory, "linux-desktop-self-test.txt");
         File.WriteAllText(outputPath, report);
         var exitCode = results.All(result => result.Passed) ? 0 : 1;
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
