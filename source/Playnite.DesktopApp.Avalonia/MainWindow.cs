@@ -92,6 +92,7 @@ public sealed class MainWindow : Window
         };
         Content = chrome;
         systemHotKeyService = new SystemHotKeyService(this);
+        viewModel.Updates.ConfigureProgramInstaller(LaunchProgramUpdater);
         trayService = new DesktopTrayService(
             viewModel,
             iconPath,
@@ -317,6 +318,7 @@ public sealed class MainWindow : Window
         }
 
         viewModel.PluginSearch.Dispose();
+        viewModel.Updates.Dispose();
         systemHotKeyService.Dispose();
         trayService.Dispose();
         SaveSettings();
@@ -511,6 +513,17 @@ public sealed class MainWindow : Window
         ApplySystemHotKey();
         if (!options.PluginCompatibilityTest && !options.SelfTest)
         {
+            try
+            {
+                await viewModel.Updates.StartAsync();
+            }
+            catch (OperationCanceledException) when (hasClosed)
+            {
+            }
+            catch (Exception exception)
+            {
+                viewModel.SetStatusMessage($"Automatic update checks failed: {exception.Message}");
+            }
             return;
         }
 
@@ -528,6 +541,23 @@ public sealed class MainWindow : Window
         {
             await DesktopPilotSelfTest.Run(this, viewModel, library);
         }
+    }
+
+    private void LaunchProgramUpdater(string updaterPath)
+    {
+        var portable = global::Playnite.PlaynitePaths.IsPortable ? "/PORTABLE" : string.Empty;
+        var programPath = global::Playnite.PlaynitePaths.ProgramPath;
+        var arguments = $"/SILENT /NOCANCEL /DIR=\"{programPath}\" /UPDATE {portable}";
+        var startInfo = new ProcessStartInfo(updaterPath, arguments)
+        {
+            UseShellExecute = true
+        };
+        if (!global::Playnite.Common.FileSystem.CanWriteToFolder(programPath))
+        {
+            startInfo.Verb = "runas";
+        }
+        Process.Start(startInfo);
+        RequestExit();
     }
 
     private async Task<string> PickImportFolderAsync()

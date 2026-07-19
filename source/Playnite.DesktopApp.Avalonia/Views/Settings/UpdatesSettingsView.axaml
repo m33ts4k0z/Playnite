@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+             xmlns:services="using:Playnite.DesktopApp.Avalonia.Services"
+             x:Class="Playnite.DesktopApp.Avalonia.Views.Settings.UpdatesSettingsView"
+             x:DataType="vm:UpdatesSettingsSection">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel Margin="24" Spacing="14">
+      <TextBlock Text="Automatic checks" FontSize="18" FontWeight="SemiBold" />
+      <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+        <TextBlock Grid.Row="0" Text="Library integrations" VerticalAlignment="Center" />
+        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding LibraryFrequencies}"
+                  SelectedItem="{Binding CheckForLibraryUpdates, Mode=TwoWay}" />
+        <TextBlock Grid.Row="1" Text="Emulated-game folders" VerticalAlignment="Center" />
+        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding LibraryFrequencies}"
+                  SelectedItem="{Binding CheckForEmulatedLibraryUpdates, Mode=TwoWay}" />
+        <TextBlock Grid.Row="2" Text="Add-ons and themes" VerticalAlignment="Center" />
+        <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding UpdateFrequencies}"
+                  SelectedItem="{Binding CheckForAddonUpdates, Mode=TwoWay}" />
+        <TextBlock Grid.Row="3" Text="Playnite program" VerticalAlignment="Center" />
+        <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding UpdateFrequencies}"
+                  SelectedItem="{Binding CheckForProgramUpdates, Mode=TwoWay}" />
+      </Grid>
+      <CheckBox Content="Notify only about patches in the current major Playnite release"
+                IsChecked="{Binding UpdateNotificationOnPatchesOnly, Mode=TwoWay}" />
+
+      <Separator Margin="0,4" />
+      <TextBlock Text="Run now" FontSize="18" FontWeight="SemiBold" />
+      <WrapPanel Orientation="Horizontal">
+        <Button Content="Update libraries" Command="{Binding CheckLibrariesCommand}" Margin="0,0,8,8" />
+        <Button Content="Check add-ons" Command="{Binding CheckAddonsCommand}" Margin="0,0,8,8" />
+        <Button Content="Check Playnite" Command="{Binding CheckProgramCommand}" Margin="0,0,8,8"
+                IsVisible="{Binding Coordinator.ProgramUpdatesSupported}" />
+      </WrapPanel>
+      <TextBlock Text="{Binding Coordinator.ProgramUpdateSupportText}" Opacity="0.75" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding Coordinator.StatusText}" TextWrapping="Wrap" />
+
+      <ItemsControl ItemsSource="{Binding Coordinator.AvailableAddonUpdates}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="services:DesktopAddonUpdate">
+            <Border BorderBrush="#446A6A6A" BorderThickness="1" Padding="10" Margin="0,0,0,8">
+              <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10">
+                <CheckBox Grid.RowSpan="3" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Top" />
+                <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" />
+                <TextBlock Grid.Column="2" Text="{Binding VersionChange}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding Changelog}"
+                           TextWrapping="Wrap" Opacity="0.75" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding Status}" />
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <Button Content="Download selected add-on updates"
+              Command="{Binding QueueAddonUpdatesCommand}"
+              HorizontalAlignment="Left" />
+
+      <Border IsVisible="{Binding Coordinator.HasProgramUpdate}"
+              BorderBrush="#446A6A6A" BorderThickness="1" Padding="12">
+        <StackPanel Spacing="8">
+          <TextBlock Text="A Playnite update is ready" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding Coordinator.AvailableProgramUpdate.AvailableVersion, StringFormat='Version {0}'}" />
+          <ProgressBar Minimum="0" Maximum="100" Value="{Binding Coordinator.ProgramDownloadProgress}" />
+          <Button Content="Download, verify, and install"
+                  Command="{Binding InstallProgramUpdateCommand}"
+                  HorizontalAlignment="Left" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

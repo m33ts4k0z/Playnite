@@ -2126,6 +2126,89 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException(
                     $"provider={providerSearchWorked}, action={providerActionWorked}, count={pilotSearchPlugin.InvocationCount}"));
 
+        if (!viewModel.Settings.Open())
+        {
+            throw new InvalidOperationException("Update settings could not be opened for the Track W self-test.");
+        }
+        viewModel.Settings.Updates.CheckForLibraryUpdates = LibraryUpdateCheckFrequency.OnceADay;
+        viewModel.Settings.Updates.CheckForEmulatedLibraryUpdates = LibraryUpdateCheckFrequency.OnceAWeek;
+        viewModel.Settings.Updates.CheckForAddonUpdates = UpdateCheckFrequency.Manually;
+        viewModel.Settings.Updates.CheckForProgramUpdates = UpdateCheckFrequency.OnceADay;
+        viewModel.Settings.Updates.UpdateNotificationOnPatchesOnly = true;
+        viewModel.Settings.SaveCommand.Execute(null);
+        viewModel.Settings.Open();
+        var updateSettingsReopened =
+            viewModel.Settings.Updates.CheckForLibraryUpdates == LibraryUpdateCheckFrequency.OnceADay &&
+            viewModel.Settings.Updates.CheckForEmulatedLibraryUpdates == LibraryUpdateCheckFrequency.OnceAWeek &&
+            viewModel.Settings.Updates.CheckForAddonUpdates == UpdateCheckFrequency.Manually &&
+            viewModel.Settings.Updates.CheckForProgramUpdates == UpdateCheckFrequency.OnceADay &&
+            viewModel.Settings.Updates.UpdateNotificationOnPatchesOnly;
+        viewModel.Settings.CancelCommand.Execute(null);
+        Record(results, "Update frequency settings use an isolated persisted working copy", () =>
+            updateSettingsReopened
+                ? "all four schedules and the patch-only policy reopened from Desktop settings"
+                : throw new InvalidOperationException("Update frequency settings did not round-trip."));
+
+        viewModel.LibrarySync.DownloadMetadataOnImport = false;
+        viewModel.LibrarySync.ConfigureProvidersForTesting(
+            new LibraryPlugin[] { libraryPlugin },
+            () => libraryUpdatedCount++);
+        var libraryCallsBeforeScheduledUpdate = libraryPlugin.GetGamesCallCount;
+        var libraryNotificationsBeforeScheduledUpdate = libraryUpdatedCount;
+        var scheduledLibraryUpdate = await viewModel.LibrarySync.StartScheduledSyncAsync(true, true);
+        Record(results, "Scheduled updates run real integration and global scanner pipelines", () =>
+            scheduledLibraryUpdate &&
+            libraryPlugin.GetGamesCallCount == libraryCallsBeforeScheduledUpdate + 1 &&
+            libraryUpdatedCount == libraryNotificationsBeforeScheduledUpdate + 1 &&
+            viewModel.Settings.Updates.Coordinator == viewModel.Updates &&
+            viewModel.Settings.Updates.Coordinator.ProgramUpdatesSupported &&
+            viewModel.Settings.Updates.Coordinator.ProgramUpdateSupportText.Contains(
+                "checksum",
+                StringComparison.OrdinalIgnoreCase)
+                ? "the scheduler reused Core integration/scanner imports and exposes the verified Windows updater"
+                : throw new InvalidOperationException(
+                    $"scheduled={scheduledLibraryUpdate}, calls={libraryPlugin.GetGamesCallCount}/" +
+                    $"{libraryCallsBeforeScheduledUpdate + 1}, notifications={libraryUpdatedCount}/" +
+                    $"{libraryNotificationsBeforeScheduledUpdate + 1}, coordinator=" +
+                    $"{viewModel.Settings.Updates.Coordinator == viewModel.Updates}, " +
+                    $"supported={viewModel.Updates.ProgramUpdatesSupported}, " +
+                    $"support={viewModel.Updates.ProgramUpdateSupportText}"));
+
+        var fakeAddonUpdates = new PilotAddonUpdateService();
+        var fakeProgramUpdates = new PilotProgramUpdateService();
+        var updateNotifications = new List<NotificationMessage>();
+        var updateSettingsChanges = 0;
+        using (var coordinator = new DesktopUpdateCoordinator(
+            new DesktopSettings(),
+            viewModel.LibrarySync,
+            () => updateSettingsChanges++,
+            updateNotifications.Add,
+            (_, _) => { },
+            (_, _) => true,
+            () => { },
+            fakeAddonUpdates,
+            fakeProgramUpdates))
+        {
+            await coordinator.CheckAddonsAsync();
+            await coordinator.QueueSelectedAddonsAsync();
+            await coordinator.CheckProgramAsync();
+            Record(results, "Add-on and program update services execute real check/queue contracts", () =>
+                fakeAddonUpdates.CheckCount == 1 &&
+                fakeAddonUpdates.QueueCount == 1 &&
+                fakeProgramUpdates.CheckCount == 1 &&
+                coordinator.AvailableAddonUpdates.Single().Status == "Queued for restart" &&
+                coordinator.RestartRequired &&
+                coordinator.AvailableProgramUpdate?.AvailableVersion == new Version(11, 0, 1) &&
+                updateSettingsChanges == 2 &&
+                updateNotifications.Select(notification => notification.Id).SequenceEqual(new[]
+                {
+                    "AvaloniaAddonUpdatesAvailable",
+                    "AvaloniaProgramUpdateAvailable"
+                })
+                    ? "add-on compatibility results queued for restart and the Windows update manifest became actionable"
+                    : throw new InvalidOperationException("Update check, queue, persistence, or notification contracts diverged."));
+        }
+
         var settingsSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every desktop settings module supplies a passing self-check", () =>
             settingsSectionChecks.Count == viewModel.Settings.Sections.Count &&
@@ -2327,6 +2410,15 @@ internal static class DesktopPilotSelfTest
                 },
                 GlobalSearchIncludeUninstalled = false,
                 GlobalSearchIncludeHidden = true,
+                CheckForProgramUpdates = UpdateCheckFrequency.OnceAWeek,
+                CheckForAddonUpdates = UpdateCheckFrequency.Manually,
+                CheckForLibraryUpdates = LibraryUpdateCheckFrequency.OnceADay,
+                CheckForEmulatedLibraryUpdates = LibraryUpdateCheckFrequency.OnceAWeek,
+                UpdateNotificationOnPatchesOnly = true,
+                LastProgramUpdateCheck = new DateTime(2026, 7, 18, 12, 0, 0),
+                LastAddonUpdateCheck = new DateTime(2026, 7, 17, 12, 0, 0),
+                LastLibraryUpdateCheck = new DateTime(2026, 7, 16, 12, 0, 0),
+                LastEmulatedLibraryUpdateCheck = new DateTime(2026, 7, 15, 12, 0, 0),
                 LibraryPluginIds = new List<Guid> { libraryPlugin.Id },
                 LibraryPluginSelectionConfigured = true,
                 GameScannerIds = new List<Guid> { scannerConfig.Id },
@@ -2453,6 +2545,15 @@ internal static class DesktopPilotSelfTest
                 !loaded.SearchWindowVisibility.ReleaseDate ||
                 loaded.GlobalSearchIncludeUninstalled ||
                 !loaded.GlobalSearchIncludeHidden ||
+                loaded.CheckForProgramUpdates != UpdateCheckFrequency.OnceAWeek ||
+                loaded.CheckForAddonUpdates != UpdateCheckFrequency.Manually ||
+                loaded.CheckForLibraryUpdates != LibraryUpdateCheckFrequency.OnceADay ||
+                loaded.CheckForEmulatedLibraryUpdates != LibraryUpdateCheckFrequency.OnceAWeek ||
+                !loaded.UpdateNotificationOnPatchesOnly ||
+                loaded.LastProgramUpdateCheck != new DateTime(2026, 7, 18, 12, 0, 0) ||
+                loaded.LastAddonUpdateCheck != new DateTime(2026, 7, 17, 12, 0, 0) ||
+                loaded.LastLibraryUpdateCheck != new DateTime(2026, 7, 16, 12, 0, 0) ||
+                loaded.LastEmulatedLibraryUpdateCheck != new DateTime(2026, 7, 15, 12, 0, 0) ||
                 !loaded.LibraryPluginIds.SequenceEqual(new[] { libraryPlugin.Id }) ||
                 !loaded.LibraryPluginSelectionConfigured ||
                 !loaded.GameScannerIds.SequenceEqual(new[] { scannerConfig.Id }) ||
@@ -2708,6 +2809,88 @@ internal static class DesktopPilotSelfTest
         public override void OnGameUninstalled(Playnite.SDK.Events.OnGameUninstalledEventArgs args) { }
         public override void OnGameSelected(Playnite.SDK.Events.OnGameSelectedEventArgs args) { }
         public override void OnGameStartupCancelled(Playnite.SDK.Events.OnGameStartupCancelledEventArgs args) { }
+    }
+
+    private sealed class PilotAddonUpdateService : IDesktopAddonUpdateService
+    {
+        private readonly DesktopAddonUpdate update;
+
+        public int CheckCount { get; private set; }
+        public int QueueCount { get; private set; }
+
+        public PilotAddonUpdateService()
+        {
+            var package = new AddonInstallerPackage
+            {
+                Version = new Version(2, 0),
+                RequiredApiVersion = SdkVersions.SDKVersion,
+                PackageUrl = "pilot-update.pext",
+                Changelog = new List<string> { "Track W update" }
+            };
+            var installer = new AddonInstallerManifest
+            {
+                AddonId = "pilot-addon",
+                AddonType = AddonType.Generic,
+                Packages = new List<AddonInstallerPackage> { package }
+            };
+            update = new DesktopAddonUpdate(
+                new AddonManifest
+                {
+                    AddonId = "pilot-addon",
+                    Name = "Pilot add-on",
+                    Type = AddonType.Generic
+                },
+                package,
+                installer,
+                new Version(1, 0));
+        }
+
+        public Task<DesktopAddonUpdateCheckResult> CheckAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CheckCount++;
+            return Task.FromResult(new DesktopAddonUpdateCheckResult(
+                new[] { update },
+                Array.Empty<string>()));
+        }
+
+        public Task QueueAsync(
+            DesktopAddonUpdate addonUpdate,
+            Func<string, string, Task<bool>> acceptLicense,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            QueueCount++;
+            addonUpdate.Status = "Queued for restart";
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class PilotProgramUpdateService : IDesktopProgramUpdateService
+    {
+        public bool IsSupported => true;
+        public int CheckCount { get; private set; }
+
+        public Task<DesktopProgramUpdate> CheckAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CheckCount++;
+            return Task.FromResult(new DesktopProgramUpdate(
+                new Version(11, 0),
+                new Version(11, 0, 1),
+                "pilot-checksum",
+                new[] { "https://example.invalid/update.exe" }));
+        }
+
+        public Task<string> DownloadAsync(
+            DesktopProgramUpdate update,
+            IProgress<int> progress,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            progress?.Report(100);
+            return Task.FromResult("pilot-update.exe");
+        }
     }
 
     private sealed class PilotSearchPlugin : GenericPlugin

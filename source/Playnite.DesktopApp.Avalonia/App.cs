@@ -45,6 +45,18 @@ public sealed class App : Application
 
             var settingsStore = new DesktopSettingsStore(library.ActiveUserDataDirectory);
             var settings = LoadOrImportSettings(settingsStore, library.ActiveUserDataDirectory, options);
+            string extensionUpdateError = null;
+            if (!options.SelfTest && !options.PluginCompatibilityTest)
+            {
+                try
+                {
+                    global::Playnite.Plugins.ExtensionInstaller.InstallExtensionQueue();
+                }
+                catch (Exception exception)
+                {
+                    extensionUpdateError = $"Queued add-on updates could not be installed: {exception.Message}";
+                }
+            }
 
             // Start-in-fullscreen hands off to the Fullscreen shell before any
             // desktop window is shown. The shells use separate single-instance
@@ -63,6 +75,7 @@ public sealed class App : Application
             if (library.IsOpen)
             {
                 var dialogs = new DesktopDialogService(viewModel, () => window);
+                viewModel.AttachDialogs(dialogs);
                 var gameEditor = new DesktopGameEditorService(viewModel);
                 runtimeHost = new AvaloniaRuntimeHost(library.Database, new AvaloniaHostCallbacks
                 {
@@ -102,6 +115,11 @@ public sealed class App : Application
                     RefreshGame = viewModel.RefreshGame
                 });
                 viewModel.AttachRuntime(runtimeHost);
+            }
+
+            if (extensionUpdateError != null)
+            {
+                viewModel.SetStatusMessage(extensionUpdateError);
             }
 
             window = new MainWindow(

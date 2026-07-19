@@ -61,6 +61,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     private string statusText;
     private string pluginSummary = "Plugins have not been initialized";
     private AvaloniaRuntimeHost runtimeHost;
+    private DesktopDialogService dialogService;
     private bool isNotificationsVisible;
     private bool isActionPickerVisible;
     private GameOperationKind pendingOperation;
@@ -421,6 +422,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public DesktopGameEditorViewModel Editor { get; }
     public DesktopMetadataDownloadViewModel MetadataDownload { get; }
     public DesktopLibrarySyncViewModel LibrarySync { get; }
+    public DesktopUpdateCoordinator Updates { get; }
     public DesktopInstalledGameImportViewModel InstalledGameImport { get; }
     public DesktopPluginSettingsViewModel PluginSettings { get; }
     public DesktopSettingsViewModel Settings { get; }
@@ -557,6 +559,35 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             });
         LibrarySync.SettingsChanged += (_, _) => SettingsChanged?.Invoke(this, EventArgs.Empty);
         LibrarySync.PropertyChanged += LibrarySync_PropertyChanged;
+        Updates = new DesktopUpdateCoordinator(
+            this.settings,
+            LibrarySync,
+            () => SettingsChanged?.Invoke(this, EventArgs.Empty),
+            notification => runtimeHost?.Notifications.Add(notification),
+            (message, error) =>
+            {
+                if (runtimeHost != null)
+                {
+                    runtimeHost.ShowMessage(message, error);
+                }
+                else
+                {
+                    StatusText = message;
+                }
+            },
+            (caption, message) => dialogService?.ShowMessage(
+                message,
+                caption,
+                new[] { "Accept", "Decline" },
+                1,
+                1) == "Accept",
+            () =>
+            {
+                if (Settings.Open())
+                {
+                    Settings.SelectedSection = Settings.Updates;
+                }
+            });
         InstalledGameImport = new DesktopInstalledGameImportViewModel(
             database,
             this.settings,
@@ -593,6 +624,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             () => runtimeHost?.MetadataPlugins.ToList() ?? new List<MetadataPlugin>(),
             () => runtimeHost?.Extensions.Plugins.Values.ToList() ?? new List<LoadedPlugin>(),
             () => runtimeHost?.V7Plugins ?? Array.Empty<V7LoadedPlugin>(),
+            Updates,
             SynchronizeLibrary,
             () =>
             {
@@ -731,6 +763,9 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         RefreshPluginSurfaces();
         RaiseGameCommandStates();
     }
+
+    public void AttachDialogs(DesktopDialogService dialogs) =>
+        dialogService = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
 
     public void RefreshPluginSurfaces()
     {

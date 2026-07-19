@@ -39,6 +39,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public SortingSettingsSection Sorting { get; }
     public ImportExclusionsSettingsSection ImportExclusions { get; }
     public SearchSettingsSection Search { get; }
+    public UpdatesSettingsSection Updates { get; }
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
 
@@ -48,6 +49,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         Func<IReadOnlyList<MetadataPlugin>> metadataPlugins,
         Func<IReadOnlyList<LoadedPlugin>> plugins,
         Func<IReadOnlyList<V7LoadedPlugin>> v7Plugins,
+        DesktopUpdateCoordinator updates,
         Action libraryUpdated,
         Action onSaved,
         Action<string, bool> showMessage)
@@ -69,6 +71,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         Sorting = new SortingSettingsSection(settings, database, libraryUpdated, this.showMessage);
         ImportExclusions = new ImportExclusionsSettingsSection(database);
         Search = new SearchSettingsSection(settings, plugins, v7Plugins);
+        Updates = new UpdatesSettingsSection(settings, updates);
         Sections = new ObservableCollection<ISettingsSection>
         {
             General,
@@ -83,7 +86,8 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
             Metadata,
             Sorting,
             ImportExclusions,
-            Search
+            Search,
+            Updates
         };
         selectedSection = Sections[0];
         SaveCommand = new AppRelayCommand(Save, () => IsVisible);

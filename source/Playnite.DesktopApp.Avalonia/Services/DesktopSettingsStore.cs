@@ -74,6 +74,24 @@ public sealed class DesktopSettingsStore
                 {
                     settings.SecondaryGameSearchItemAction = Playnite.Avalonia.App.Services.GameSearchItemAction.Play;
                 }
+                if (!Enum.IsDefined(settings.CheckForProgramUpdates))
+                {
+                    settings.CheckForProgramUpdates = Playnite.Avalonia.App.Services.UpdateCheckFrequency.OnEveryStartup;
+                }
+                if (!Enum.IsDefined(settings.CheckForAddonUpdates))
+                {
+                    settings.CheckForAddonUpdates = Playnite.Avalonia.App.Services.UpdateCheckFrequency.OnEveryStartup;
+                }
+                if (!Enum.IsDefined(settings.CheckForLibraryUpdates))
+                {
+                    settings.CheckForLibraryUpdates =
+                        Playnite.Avalonia.App.Services.LibraryUpdateCheckFrequency.OnEveryStartup;
+                }
+                if (!Enum.IsDefined(settings.CheckForEmulatedLibraryUpdates))
+                {
+                    settings.CheckForEmulatedLibraryUpdates =
+                        Playnite.Avalonia.App.Services.LibraryUpdateCheckFrequency.OnEveryStartup;
+                }
                 settings.WebImageSearchIconTerm ??= "{Name} icon";
                 settings.WebImageSearchCoverTerm ??= "{Name} cover";
                 settings.WebImageSearchBackgroundTerm ??= "{Name} background";

@@ -176,11 +176,6 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
 
     public async Task<bool> StartSyncAsync()
     {
-        if (IsRunning)
-        {
-            return false;
-        }
-
         var selectedIds = Libraries.Where(option => option.IsSelected).Select(option => option.Id).ToHashSet();
         var selectedPlugins = (libraryPlugins() ?? new List<LibraryPlugin>())
             .Where(plugin => plugin != null && selectedIds.Contains(plugin.Id))
@@ -196,11 +191,68 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
             .GroupBy(scanner => scanner.Id)
             .Select(group => group.First())
             .ToList();
+        return await RunSyncAsync(
+            selectedPlugins,
+            selectedScanners,
+            selectedPlugins.Count > 0,
+            selectedScanners.Count > 0,
+            CancellationToken.None);
+    }
+
+    public async Task<bool> StartScheduledSyncAsync(
+        bool updateLibraries,
+        bool updateEmulated,
+        CancellationToken cancellationToken = default)
+    {
+        var selectedPlugins = updateLibraries
+            ? (libraryPlugins() ?? new List<LibraryPlugin>())
+                .Where(plugin => plugin != null)
+                .GroupBy(plugin => plugin.Id)
+                .Select(group => group.First())
+                .ToList()
+            : new List<LibraryPlugin>();
+        var selectedScanners = updateEmulated
+            ? database.GameScanners
+                .Where(scanner => scanner.InGlobalUpdate)
+                .GroupBy(scanner => scanner.Id)
+                .Select(group => group.First())
+                .ToList()
+            : new List<GameScannerConfig>();
+        return await RunSyncAsync(
+            selectedPlugins,
+            selectedScanners,
+            updateLibraries,
+            updateEmulated,
+            cancellationToken);
+    }
+
+    private async Task<bool> RunSyncAsync(
+        List<LibraryPlugin> selectedPlugins,
+        List<GameScannerConfig> selectedScanners,
+        bool updateLibraries,
+        bool updateEmulated,
+        CancellationToken externalCancellationToken)
+    {
+        if (IsRunning)
+        {
+            return false;
+        }
+
         var sourceCount = selectedPlugins.Count + selectedScanners.Count;
         if (sourceCount == 0)
         {
-            ErrorText = "Select at least one loaded library plugin or saved emulated-game scanner.";
-            return false;
+            if (updateLibraries)
+            {
+                settings.LastLibraryUpdateCheck = DateTime.Now;
+            }
+            if (updateEmulated)
+            {
+                settings.LastEmulatedLibraryUpdateCheck = DateTime.Now;
+            }
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
+            ErrorText = "No loaded library plugins or enabled global emulated-game scanners are available.";
+            ProgressText = ErrorText;
+            return true;
         }
 
         ErrorText = null;
@@ -208,7 +260,7 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
         ProgressTotal = sourceCount;
         ProgressText = $"Updating libraries [0/{ProgressTotal}]";
         IsRunning = true;
-        cancellationSource = new CancellationTokenSource();
+        cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
         var token = cancellationSource.Token;
         var addedGames = new List<Game>();
         var failures = new List<string>();
@@ -412,6 +464,16 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
                 synchronizeLibrary();
                 notifyLibraryUpdated();
             });
+
+            if (updateLibraries)
+            {
+                settings.LastLibraryUpdateCheck = DateTime.Now;
+            }
+            if (updateEmulated)
+            {
+                settings.LastEmulatedLibraryUpdateCheck = DateTime.Now;
+            }
+            SettingsChanged?.Invoke(this, EventArgs.Empty);
 
             if (token.IsCancellationRequested)
             {
