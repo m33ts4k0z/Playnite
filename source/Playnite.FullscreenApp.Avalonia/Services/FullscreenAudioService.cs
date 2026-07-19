@@ -9,6 +9,7 @@ public sealed class FullscreenAudioService : IDisposable
     private IntPtr navigationSound;
     private IntPtr activationSound;
     private IntPtr backgroundMusic;
+    private bool isWindowActive = true;
 
     public bool IsAvailable => engine?.AudioInitialized == true;
     public int LoadedAssetCount { get; private set; }
@@ -22,7 +23,7 @@ public sealed class FullscreenAudioService : IDisposable
 
     public void PlayNavigation()
     {
-        if (settings.AudioEnabled)
+        if (settings.AudioEnabled && (!settings.MuteInBackground || isWindowActive))
         {
             engine?.PlaySound(navigationSound);
         }
@@ -30,7 +31,7 @@ public sealed class FullscreenAudioService : IDisposable
 
     public void PlayActivation()
     {
-        if (settings.AudioEnabled)
+        if (settings.AudioEnabled && (!settings.MuteInBackground || isWindowActive))
         {
             engine?.PlaySound(activationSound);
         }
@@ -54,13 +55,23 @@ public sealed class FullscreenAudioService : IDisposable
         }
 
         engine.SetMusicVolume(Math.Clamp(settings.BackgroundVolume, 0, 100) / 100f);
-        if (!settings.AudioEnabled)
+        if (!settings.AudioEnabled || (settings.MuteInBackground && !isWindowActive))
         {
-            engine.StopMusic();
+            engine.PauseMusic();
         }
         else if (backgroundMusic != IntPtr.Zero && !engine.GetIsMusicPlaying())
         {
             engine.PlayMusic(backgroundMusic);
+        }
+    }
+
+    public void SetWindowActive(bool active)
+    {
+        isWindowActive = active;
+        ApplySettings();
+        if (active && settings.AudioEnabled && backgroundMusic != IntPtr.Zero)
+        {
+            engine?.ResumeMusic();
         }
     }
 

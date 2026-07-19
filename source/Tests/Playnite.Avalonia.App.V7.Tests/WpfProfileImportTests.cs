@@ -47,6 +47,9 @@ public class WpfProfileImportTests
         Assert.That(defaults.AsyncImageLoading, Is.Null);
         Assert.That(defaults.ShowImagePerformanceWarning, Is.Null);
         Assert.That(defaults.FullscreenMonitor, Is.Null);
+        Assert.That(defaults.FullscreenInterfaceVolume, Is.Null);
+        Assert.That(defaults.FullscreenBackgroundVolume, Is.Null);
+        Assert.That(defaults.FullscreenMuteInBackground, Is.Null);
         Assert.That(defaults.MainWindow, Is.Null);
     }
 
@@ -98,6 +101,34 @@ public class WpfProfileImportTests
         WriteFile("fullscreenConfig.json", """{ "Monitor": -1 }""");
 
         Assert.That(WpfProfileImport.Read(profileDir).FullscreenMonitor, Is.Null);
+    }
+
+    [Test]
+    public void Read_FullscreenAudioAndGeneralDefaults_WithVolumeScaleBridge()
+    {
+        WriteFile("fullscreenConfig.json", """
+        {
+          "InterfaceVolume": 0.42,
+          "BackgroundVolume": 25,
+          "MuteInBackground": false,
+          "UsePrimaryDisplay": true,
+          "ShowClock": false,
+          "ShowBattery": true,
+          "ShowBatteryPercentage": true,
+          "MinimizeAfterGameStartup": false
+        }
+        """);
+
+        var defaults = WpfProfileImport.Read(profileDir);
+
+        Assert.That(defaults.FullscreenInterfaceVolume, Is.EqualTo(42));
+        Assert.That(defaults.FullscreenBackgroundVolume, Is.EqualTo(25));
+        Assert.That(defaults.FullscreenMuteInBackground, Is.False);
+        Assert.That(defaults.FullscreenUsePrimaryDisplay, Is.True);
+        Assert.That(defaults.FullscreenShowClock, Is.False);
+        Assert.That(defaults.FullscreenShowBattery, Is.True);
+        Assert.That(defaults.FullscreenShowBatteryPercentage, Is.True);
+        Assert.That(defaults.FullscreenMinimizeAfterGameStartup, Is.False);
     }
 
     [Test]

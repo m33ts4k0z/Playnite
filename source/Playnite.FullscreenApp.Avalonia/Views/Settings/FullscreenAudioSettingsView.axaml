@@ -8,5 +8,15 @@
                    Foreground="{DynamicResource FullscreenTextBrush}" />
         <CheckBox Content="{DynamicResource LOCFullscreenAudio}"
                   IsChecked="{Binding AudioEnabled, Mode=TwoWay}" />
+        <TextBlock Text="{DynamicResource LOCFullscreenInterfaceVolume}"
+                   Foreground="{DynamicResource FullscreenTextBrush}" />
+        <Slider Minimum="0" Maximum="100" TickFrequency="5"
+                Value="{Binding InterfaceVolume, Mode=TwoWay}" />
+        <TextBlock Text="{DynamicResource LOCFullscreenBackgroundVolume}"
+                   Foreground="{DynamicResource FullscreenTextBrush}" />
+        <Slider Minimum="0" Maximum="100" TickFrequency="5"
+                Value="{Binding BackgroundVolume, Mode=TwoWay}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenMuteInBackground}"
+                  IsChecked="{Binding MuteInBackground, Mode=TwoWay}" />
     </StackPanel>
 </UserControl>

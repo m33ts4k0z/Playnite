@@ -31,6 +31,14 @@ public static class WpfProfileImport
         public bool? AsyncImageLoading { get; init; }
         public bool? ShowImagePerformanceWarning { get; init; }
         public int? FullscreenMonitor { get; init; }
+        public int? FullscreenInterfaceVolume { get; init; }
+        public int? FullscreenBackgroundVolume { get; init; }
+        public bool? FullscreenMuteInBackground { get; init; }
+        public bool? FullscreenUsePrimaryDisplay { get; init; }
+        public bool? FullscreenShowClock { get; init; }
+        public bool? FullscreenShowBattery { get; init; }
+        public bool? FullscreenShowBatteryPercentage { get; init; }
+        public bool? FullscreenMinimizeAfterGameStartup { get; init; }
         public WindowPlacement MainWindow { get; init; }
     }
 
@@ -42,7 +50,15 @@ public static class WpfProfileImport
             DisableHwAcceleration = ReadDesktopBoolean(userDataDirectory, "DisableHwAcceleration"),
             AsyncImageLoading = ReadDesktopBoolean(userDataDirectory, "AsyncImageLoading"),
             ShowImagePerformanceWarning = ReadDesktopBoolean(userDataDirectory, "ShowImagePerformanceWarning"),
-            FullscreenMonitor = ReadFullscreenMonitor(userDataDirectory),
+            FullscreenMonitor = ReadFullscreenInt(userDataDirectory, "Monitor", nonNegative: true),
+            FullscreenInterfaceVolume = ReadFullscreenVolume(userDataDirectory, "InterfaceVolume"),
+            FullscreenBackgroundVolume = ReadFullscreenVolume(userDataDirectory, "BackgroundVolume"),
+            FullscreenMuteInBackground = ReadFullscreenBoolean(userDataDirectory, "MuteInBackground"),
+            FullscreenUsePrimaryDisplay = ReadFullscreenBoolean(userDataDirectory, "UsePrimaryDisplay"),
+            FullscreenShowClock = ReadFullscreenBoolean(userDataDirectory, "ShowClock"),
+            FullscreenShowBattery = ReadFullscreenBoolean(userDataDirectory, "ShowBattery"),
+            FullscreenShowBatteryPercentage = ReadFullscreenBoolean(userDataDirectory, "ShowBatteryPercentage"),
+            FullscreenMinimizeAfterGameStartup = ReadFullscreenBoolean(userDataDirectory, "MinimizeAfterGameStartup"),
             MainWindow = ReadMainWindowPlacement(userDataDirectory)
         };
     }
@@ -61,13 +77,39 @@ public static class WpfProfileImport
             return token?.Type == JTokenType.Boolean ? token.Value<bool>() : null;
         });
 
-    private static int? ReadFullscreenMonitor(string userDataDirectory) =>
+    private static int? ReadFullscreenInt(string userDataDirectory, string propertyName, bool nonNegative = false) =>
         ReadJson<int?>(Path.Combine(userDataDirectory, "fullscreenConfig.json"), root =>
         {
-            var token = root["Monitor"];
-            return token != null && token.Type == JTokenType.Integer && token.Value<int>() >= 0
-                ? token.Value<int>()
-                : null;
+            var token = root[propertyName];
+            if (token == null || token.Type != JTokenType.Integer)
+            {
+                return null;
+            }
+
+            var value = token.Value<int>();
+            return nonNegative && value < 0 ? null : value;
+        });
+
+    private static bool? ReadFullscreenBoolean(string userDataDirectory, string propertyName) =>
+        ReadJson<bool?>(Path.Combine(userDataDirectory, "fullscreenConfig.json"), root =>
+        {
+            var token = root[propertyName];
+            return token?.Type == JTokenType.Boolean ? token.Value<bool>() : null;
+        });
+
+    private static int? ReadFullscreenVolume(string userDataDirectory, string propertyName) =>
+        ReadJson<int?>(Path.Combine(userDataDirectory, "fullscreenConfig.json"), root =>
+        {
+            var token = root[propertyName];
+            if (token == null || (token.Type != JTokenType.Integer && token.Type != JTokenType.Float))
+            {
+                return null;
+            }
+
+            var value = token.Value<double>();
+            // WPF persists these values as 0..1 floats. Also accept an integer
+            // percentage so profiles written by preview builds remain usable.
+            return Math.Clamp((int)Math.Round(value <= 1 ? value * 100 : value), 0, 100);
         });
 
     private static WindowPlacement ReadMainWindowPlacement(string userDataDirectory) =>

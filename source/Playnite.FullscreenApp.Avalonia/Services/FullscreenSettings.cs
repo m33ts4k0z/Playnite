@@ -16,11 +16,17 @@ public sealed class FullscreenSettings : IAvaloniaHostSettings
     public bool AudioEnabled { get; set; } = true;
     public int InterfaceVolume { get; set; } = 70;
     public int BackgroundVolume { get; set; } = 20;
+    public bool MuteInBackground { get; set; } = true;
     public string ThemePath { get; set; }
     public string Language { get; set; } = "english";
     // Target display index carried over from the WPF fullscreen profile; -1 keeps
     // the platform's primary screen. Applied by MainWindow via MonitorSelection.
     public int Monitor { get; set; } = -1;
+    public bool UsePrimaryDisplay { get; set; }
+    public bool ShowClock { get; set; } = true;
+    public bool ShowBattery { get; set; }
+    public bool ShowBatteryPercentage { get; set; }
+    public bool MinimizeAfterGameStartup { get; set; } = true;
     public List<string> DisabledPlugins { get; set; } = new();
     public string GlobalPreScript { get; set; }
     public string GlobalGameStartedScript { get; set; }

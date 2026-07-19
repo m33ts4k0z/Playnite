@@ -30,6 +30,7 @@ public sealed class MainWindow : Window
     private readonly System.Windows.Input.ICommand focusedGameActivationCommand;
     private static readonly Cursor hiddenCursor = new(StandardCursorType.None);
     private int guideFocusRequestCount;
+    private readonly DispatcherTimer statusTimer;
 
     internal GamepadInputBridge GamepadBridge => gamepadBridge;
     internal SdlGamepadInputSource SdlInput => sdlInput;
@@ -95,11 +96,17 @@ public sealed class MainWindow : Window
         viewModel.SettingsChanged += (_, _) => SaveSettings();
         viewModel.SettingsChanged += (_, _) => UpdateInputSettings();
         viewModel.SettingsChanged += (_, _) => audioService?.ApplySettings();
+        viewModel.SettingsChanged += (_, _) => ApplyGeneralSettings();
+        viewModel.GameLaunchSucceeded += (_, _) => MinimizeAfterGameLaunch();
         viewModel.NavigationRequested += (_, _) => audioService?.PlayNavigation();
         viewModel.ActivationRequested += (_, _) => audioService?.PlayActivation();
+        statusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+        statusTimer.Tick += (_, _) => UpdateStatusWidgets();
         KeyDown += OnKeyDown;
         Opened += OnOpened;
         Closed += OnClosed;
+        Activated += (_, _) => audioService?.SetWindowActive(true);
+        Deactivated += (_, _) => audioService?.SetWindowActive(false);
     }
 
     private void ApplyRuntimeTheme()
@@ -140,10 +147,13 @@ public sealed class MainWindow : Window
 
     private async void OnOpened(object sender, EventArgs e)
     {
+        ConfigureMonitorOptions();
         ApplyMonitorPlacement();
         mainView.FocusSelectedGame();
         sdlInput.Start();
         audioService = new FullscreenAudioService(settings, GetThemeRoot());
+        UpdateStatusWidgets();
+        statusTimer.Start();
         viewModel.SetStatusMessage(audioService.Status);
         if (options.SelfTest)
         {
@@ -153,7 +163,7 @@ public sealed class MainWindow : Window
 
     private void ApplyMonitorPlacement()
     {
-        if (options.Windowed || options.SelfTest)
+        if (options.Windowed || options.SelfTest || settings.UsePrimaryDisplay)
         {
             return;
         }
@@ -180,11 +190,39 @@ public sealed class MainWindow : Window
 
     private void OnClosed(object sender, EventArgs e)
     {
+        statusTimer.Stop();
         SaveSettings();
         viewModel.PluginSearch.Dispose();
         sdlInput.Dispose();
         gamepadBridge.Dispose();
         audioService?.Dispose();
+    }
+
+    private void ConfigureMonitorOptions()
+    {
+        var screens = Screens?.All;
+        var names = screens == null
+            ? Array.Empty<string>()
+            : screens.Select((screen, index) =>
+                $"Display {index + 1} — {screen.Bounds.Width}×{screen.Bounds.Height}").ToArray();
+        viewModel.Settings.General.SetMonitors(names);
+    }
+
+    private void ApplyGeneralSettings()
+    {
+        UpdateStatusWidgets();
+        ApplyMonitorPlacement();
+    }
+
+    private void UpdateStatusWidgets() =>
+        viewModel.UpdateStatusWidgets(DateTime.Now, BatteryStatusService.Read());
+
+    private void MinimizeAfterGameLaunch()
+    {
+        if (settings.MinimizeAfterGameStartup && !options.SelfTest)
+        {
+            WindowState = WindowState.Minimized;
+        }
     }
 
     private void SaveSettings()

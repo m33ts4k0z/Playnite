@@ -98,6 +98,24 @@ internal static class FullscreenPilotSelfTest
                 ? "the Audio edit was discarded without changing the live setting"
                 : throw new InvalidOperationException("Cancel applied a fullscreen section working copy."));
 
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.Audio.InterfaceVolume = 37;
+        viewModel.Settings.Audio.BackgroundVolume = 19;
+        viewModel.Settings.Audio.MuteInBackground = false;
+        viewModel.Settings.General.ShowClock = false;
+        viewModel.Settings.General.ShowBattery = true;
+        viewModel.Settings.General.ShowBatteryPercentage = true;
+        viewModel.Settings.General.MinimizeAfterGameStartup = false;
+        viewModel.Settings.SaveCommand.Execute(null);
+        viewModel.UpdateStatusWidgets(
+            new DateTime(2026, 7, 19, 14, 35, 0),
+            new BatteryStatus(true, 64, false));
+        Record(results, "Fullscreen Audio and General settings apply to live services and status widgets", () =>
+            viewModel.Settings.Audio.InterfaceVolume == 37 &&
+            !viewModel.ShowClock && viewModel.ShowBattery && viewModel.BatteryText == "Battery 64%"
+                ? "volume, background mute, clock, battery, and launch-minimize policies applied without restart"
+                : throw new InvalidOperationException("Audio or General settings did not reach the live shell."));
+
         var fullscreenSectionChecks = viewModel.Settings.RunSelfChecks();
         Record(results, "Every fullscreen settings module supplies a passing self-check", () =>
             fullscreenSectionChecks.Count == viewModel.Settings.Sections.Count &&
@@ -190,6 +208,13 @@ internal static class FullscreenPilotSelfTest
                 ActiveFilter = "Favorites",
                 AudioEnabled = false,
                 InterfaceVolume = 42,
+                BackgroundVolume = 23,
+                MuteInBackground = false,
+                UsePrimaryDisplay = true,
+                ShowClock = false,
+                ShowBattery = true,
+                ShowBatteryPercentage = true,
+                MinimizeAfterGameStartup = false,
                 GlobalPreScript = "global-pre",
                 GlobalGameStartedScript = "global-started",
                 GlobalPostScript = "global-post",
@@ -207,6 +232,13 @@ internal static class FullscreenPilotSelfTest
             if (loaded.ActiveFilter != "Favorites" ||
                 loaded.AudioEnabled ||
                 loaded.InterfaceVolume != 42 ||
+                loaded.BackgroundVolume != 23 ||
+                loaded.MuteInBackground ||
+                !loaded.UsePrimaryDisplay ||
+                loaded.ShowClock ||
+                !loaded.ShowBattery ||
+                !loaded.ShowBatteryPercentage ||
+                loaded.MinimizeAfterGameStartup ||
                 loaded.GlobalPreScript != "global-pre" ||
                 loaded.GlobalGameStartedScript != "global-started" ||
                 loaded.GlobalPostScript != "global-post" ||

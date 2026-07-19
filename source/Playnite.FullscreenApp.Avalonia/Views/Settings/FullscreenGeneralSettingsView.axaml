@@ -8,5 +8,19 @@
                    Foreground="{DynamicResource FullscreenTextBrush}" />
         <CheckBox Content="{DynamicResource LOCFullscreenShowHidden}"
                   IsChecked="{Binding ShowHiddenGames, Mode=TwoWay}" />
+        <TextBlock Text="{DynamicResource LOCFullscreenMonitor}"
+                   Foreground="{DynamicResource FullscreenTextBrush}" />
+        <ComboBox ItemsSource="{Binding Monitors}"
+                  SelectedItem="{Binding SelectedMonitor, Mode=TwoWay}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenUsePrimaryDisplay}"
+                  IsChecked="{Binding UsePrimaryDisplay, Mode=TwoWay}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenShowClock}"
+                  IsChecked="{Binding ShowClock, Mode=TwoWay}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenShowBattery}"
+                  IsChecked="{Binding ShowBattery, Mode=TwoWay}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenShowBatteryPercentage}"
+                  IsChecked="{Binding ShowBatteryPercentage, Mode=TwoWay}" />
+        <CheckBox Content="{DynamicResource LOCFullscreenMinimizeAfterGameStartup}"
+                  IsChecked="{Binding MinimizeAfterGameStartup, Mode=TwoWay}" />
     </StackPanel>
 </UserControl>

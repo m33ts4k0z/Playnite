@@ -40,6 +40,8 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     private string pluginSummary = "Plugins have not been initialized";
     private GameOperationKind pendingOperation;
     private int activateCount;
+    private string clockText;
+    private string batteryText;
 
     public event PropertyChangedEventHandler PropertyChanged;
     public event EventHandler ExitRequested;
@@ -48,6 +50,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     public event EventHandler SettingsChanged;
     public event EventHandler NavigationRequested;
     public event EventHandler ActivationRequested;
+    public event EventHandler GameLaunchSucceeded;
 
     public IReadOnlyList<GameItemViewModel> Games
     {
@@ -71,6 +74,20 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     public AvaloniaSearchSession PluginSearch { get; }
     public FullscreenSettingsViewModel Settings { get; }
     public bool IsPluginSearchVisible => PluginSearch.IsVisible;
+    public bool ShowClock => settings.ShowClock;
+    public bool ShowBattery => settings.ShowBattery && !string.IsNullOrWhiteSpace(BatteryText);
+    public string ClockText { get => clockText; private set => SetField(ref clockText, value); }
+    public string BatteryText
+    {
+        get => batteryText;
+        private set
+        {
+            if (SetField(ref batteryText, value))
+            {
+                OnPropertyChanged(nameof(ShowBattery));
+            }
+        }
+    }
 
     public GameItemViewModel SelectedGame
     {
@@ -416,6 +433,10 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         else
         {
             StatusText = result.Message;
+            if (kind == GameOperationKind.Play && result.Success)
+            {
+                GameLaunchSucceeded?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 
@@ -592,8 +613,18 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ShowHiddenGames));
         OnPropertyChanged(nameof(SwapConfirmCancelButtons));
         OnPropertyChanged(nameof(AudioEnabled));
+        OnPropertyChanged(nameof(ShowClock));
+        OnPropertyChanged(nameof(ShowBattery));
         ApplyFilters();
         SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    internal void UpdateStatusWidgets(DateTime now, BatteryStatus battery)
+    {
+        ClockText = now.ToString("t");
+        BatteryText = battery.IsPresent
+            ? battery.Format(settings.ShowBatteryPercentage)
+            : null;
     }
 
     private void SelectOffset(int offset)

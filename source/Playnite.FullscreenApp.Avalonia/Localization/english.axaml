@@ -20,6 +20,15 @@
     <x:String x:Key="LOCFullscreenHideMouseCursor">Hide the mouse cursor</x:String>
     <x:String x:Key="LOCFullscreenControllerSupport">Enable game-controller input</x:String>
     <x:String x:Key="LOCFullscreenAudio">Enable interface audio</x:String>
+    <x:String x:Key="LOCFullscreenInterfaceVolume">Interface volume</x:String>
+    <x:String x:Key="LOCFullscreenBackgroundVolume">Background music volume</x:String>
+    <x:String x:Key="LOCFullscreenMuteInBackground">Mute audio while Fullscreen is in the background</x:String>
+    <x:String x:Key="LOCFullscreenMonitor">Display</x:String>
+    <x:String x:Key="LOCFullscreenUsePrimaryDisplay">Always use the primary display</x:String>
+    <x:String x:Key="LOCFullscreenShowClock">Show clock</x:String>
+    <x:String x:Key="LOCFullscreenShowBattery">Show battery status</x:String>
+    <x:String x:Key="LOCFullscreenShowBatteryPercentage">Show battery percentage</x:String>
+    <x:String x:Key="LOCFullscreenMinimizeAfterGameStartup">Minimize after a game starts</x:String>
     <x:String x:Key="LOCFullscreenChooseAction">Choose action</x:String>
     <x:String x:Key="LOCFullscreenInstall">Install</x:String>
     <x:String x:Key="LOCFullscreenUninstall">Uninstall</x:String>

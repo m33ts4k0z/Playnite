@@ -155,6 +155,16 @@ public sealed class App : Application
             settings.Monitor = monitor;
         }
 
+        settings.InterfaceVolume = defaults.FullscreenInterfaceVolume ?? settings.InterfaceVolume;
+        settings.BackgroundVolume = defaults.FullscreenBackgroundVolume ?? settings.BackgroundVolume;
+        settings.MuteInBackground = defaults.FullscreenMuteInBackground ?? settings.MuteInBackground;
+        settings.UsePrimaryDisplay = defaults.FullscreenUsePrimaryDisplay ?? settings.UsePrimaryDisplay;
+        settings.ShowClock = defaults.FullscreenShowClock ?? settings.ShowClock;
+        settings.ShowBattery = defaults.FullscreenShowBattery ?? settings.ShowBattery;
+        settings.ShowBatteryPercentage = defaults.FullscreenShowBatteryPercentage ?? settings.ShowBatteryPercentage;
+        settings.MinimizeAfterGameStartup =
+            defaults.FullscreenMinimizeAfterGameStartup ?? settings.MinimizeAfterGameStartup;
+
         settingsStore.Save(settings);
         return settings;
     }

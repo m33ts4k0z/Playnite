@@ -37,13 +37,24 @@
                                            Foreground="{DynamicResource FullscreenTextBrush}"
                                            VerticalAlignment="Center" />
                             </StackPanel>
-                            <StackPanel Grid.Column="2" HorizontalAlignment="Right">
-                                <TextBlock Text="{DynamicResource LOCFullscreenLibrary}"
-                                           Foreground="{DynamicResource FullscreenMutedTextBrush}"
-                                           HorizontalAlignment="Right" />
-                                <TextBlock Text="{Binding LibrarySummary}" FontSize="20"
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="24"
+                                        HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding BatteryText}" FontSize="18"
+                                           IsVisible="{Binding ShowBattery}"
                                            Foreground="{DynamicResource FullscreenTextBrush}"
-                                           HorizontalAlignment="Right" />
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding ClockText}" FontSize="20"
+                                           IsVisible="{Binding ShowClock}"
+                                           Foreground="{DynamicResource FullscreenTextBrush}"
+                                           VerticalAlignment="Center" />
+                                <StackPanel>
+                                    <TextBlock Text="{DynamicResource LOCFullscreenLibrary}"
+                                               Foreground="{DynamicResource FullscreenMutedTextBrush}"
+                                               HorizontalAlignment="Right" />
+                                    <TextBlock Text="{Binding LibrarySummary}" FontSize="20"
+                                               Foreground="{DynamicResource FullscreenTextBrush}"
+                                               HorizontalAlignment="Right" />
+                                </StackPanel>
                             </StackPanel>
                         </Grid>
                     </Border>
