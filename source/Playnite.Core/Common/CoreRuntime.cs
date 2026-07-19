@@ -11,8 +11,11 @@ namespace Playnite
     /// </summary>
     public static class CoreRuntime
     {
+        // The engine assembly carries the product version, so hosts that do not
+        // override this report the real Playnite version to plugins instead of
+        // whatever their executable happens to be versioned.
         public static Func<Version> ApplicationVersion { get; set; } = () =>
-            Assembly.GetEntryAssembly()?.GetName().Version ?? new Version(0, 0);
+            typeof(CoreRuntime).Assembly.GetName().Version ?? new Version(0, 0);
 
         public static Func<string> ApplicationExecutablePath { get; set; } = () =>
             Environment.ProcessPath ?? Assembly.GetEntryAssembly()?.Location;

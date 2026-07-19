@@ -368,7 +368,6 @@ namespace Playnite.ViewModels
         private string currentContextLabel;
         #endregion backing fields
 
-        private static readonly char[] textMatchSplitter = new char[] { ' ' };
         private static readonly ILogger logger = LogManager.GetLogger();
         private readonly IWindowFactory window;
         private readonly IGameDatabaseMain database;
@@ -664,51 +663,7 @@ namespace Playnite.ViewModels
 
         public static bool MatchTextFilter(string filter, string toMatch, bool matchTargetAcronymStart, double minimumJaronWinklerSimilarity = defaultMinimumJaronWinklerSimilarity)
         {
-            if (filter.IsNullOrWhiteSpace())
-            {
-                return true;
-            }
-
-            if (!filter.IsNullOrWhiteSpace() && toMatch.IsNullOrWhiteSpace())
-            {
-                return false;
-            }
-
-            if (filter.IsNullOrWhiteSpace() && toMatch.IsNullOrWhiteSpace())
-            {
-                return true;
-            }
-
-            if (filter.GetJaroWinklerSimilarityIgnoreCase(toMatch) >= minimumJaronWinklerSimilarity)
-            {
-                return true;
-            }
-
-            if (filter.Length > toMatch.Length)
-            {
-                return false;
-            }
-
-            if (matchTargetAcronymStart && filter.IsStartOfStringAcronym(toMatch))
-            {
-                return true;
-            }
-
-            var filterSplit = filter.Split(textMatchSplitter, StringSplitOptions.RemoveEmptyEntries);
-            var toMatchSplit = toMatch.Split(textMatchSplitter, StringSplitOptions.RemoveEmptyEntries);
-            var allMatch = true;
-            // This is pretty crude, but it works for most cases and provides relatively good results.
-            // TODO definitely could use some improvements for better fuzzy results.
-            foreach (var word in filterSplit)
-            {
-                if (!toMatchSplit.Any(a => a.ContainsInvariantCulture(word, CompareOptions.IgnoreCase | CompareOptions.IgnoreSymbols | CompareOptions.IgnoreNonSpace)))
-                {
-                    allMatch = false;
-                    break;
-                }
-            }
-
-            return allMatch;
+            return Playnite.Common.TextMatching.MatchTextFilter(filter, toMatch, matchTargetAcronymStart, minimumJaronWinklerSimilarity);
         }
 
         public async Task PerformSearch()

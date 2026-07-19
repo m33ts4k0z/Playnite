@@ -447,20 +447,18 @@ namespace Playnite.Database
         public static SynchronizationContext MainThreadContext { get; set; }
 
         /// <summary>
-        /// Host-supplied Game.ExpandVariables implementation. Variable expansion
-        /// currently lives in the UI assembly (GameExtensions); the host wires
-        /// this at startup. Defaults to pass-through for headless/test use.
+        /// Game variable expansion used by database operations. Defaults to the
+        /// core implementation; hosts may override.
         /// </summary>
         public static Func<Game, string, bool, string, string> ExpandGameVariables { get; set; } =
-            (game, input, fixSeparators, emulatorDir) => input;
+            (game, input, fixSeparators, emulatorDir) => game.ExpandVariables(input, fixSeparators, emulatorDir);
 
         /// <summary>
-        /// Host-supplied text filter matcher (SearchViewModel.MatchTextFilter);
-        /// fallback is a plain case-insensitive contains match.
+        /// Text filter matcher used by name filtering. Defaults to the core
+        /// fuzzy matcher so every host filters identically; hosts may override.
         /// </summary>
         public static Func<string, string, bool, bool> MatchTextFilter { get; set; } =
-            (filter, text, matchAny) => string.IsNullOrEmpty(filter) ||
-                (text != null && text.IndexOf(filter, StringComparison.InvariantCultureIgnoreCase) >= 0);
+            (filter, text, matchAny) => TextMatching.MatchTextFilter(filter, text, matchAny);
 
         internal void CheckDbState()
         {
