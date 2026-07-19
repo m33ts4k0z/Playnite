@@ -48,6 +48,7 @@ public sealed class DesktopSettings : IAvaloniaHostSettings
     public bool StartOnBoot { get; set; }
     public bool StartOnBootClosedToTray { get; set; }
     public bool StartMinimized { get; set; }
+    public bool StartInFullscreen { get; set; }
     public AfterLaunchOption AfterLaunch { get; set; } = AfterLaunchOption.Minimize;
     public AfterGameCloseOption AfterGameClose { get; set; } = AfterGameCloseOption.Restore;
     public bool FuzzyMatchingInNameFilter { get; set; } = true;

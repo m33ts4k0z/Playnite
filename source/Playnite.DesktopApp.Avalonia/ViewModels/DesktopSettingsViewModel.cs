@@ -35,6 +35,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     private bool startOnBoot;
     private bool startOnBootClosedToTray;
     private bool startMinimized;
+    private bool startInFullscreen;
     private bool originalStartOnBoot;
     private bool originalStartOnBootClosedToTray;
     private AfterLaunchOption afterLaunch;
@@ -153,6 +154,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
     public bool StartOnBootOptionsEnabled => StartOnBoot;
     public bool StartOnBootClosedToTray { get => startOnBootClosedToTray; set => SetField(ref startOnBootClosedToTray, value); }
     public bool StartMinimized { get => startMinimized; set => SetField(ref startMinimized, value); }
+    public bool StartInFullscreen { get => startInFullscreen; set => SetField(ref startInFullscreen, value); }
     public AfterLaunchOption AfterLaunch { get => afterLaunch; set => SetField(ref afterLaunch, value); }
     public AfterGameCloseOption AfterGameClose { get => afterGameClose; set => SetField(ref afterGameClose, value); }
     public bool FuzzyMatchingInNameFilter { get => fuzzyMatchingInNameFilter; set => SetField(ref fuzzyMatchingInNameFilter, value); }
@@ -181,6 +183,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         startOnBoot = settings.StartOnBoot;
         startOnBootClosedToTray = settings.StartOnBootClosedToTray;
         startMinimized = settings.StartMinimized;
+        startInFullscreen = settings.StartInFullscreen;
         originalStartOnBoot = settings.StartOnBoot;
         originalStartOnBootClosedToTray = settings.StartOnBootClosedToTray;
         afterLaunch = settings.AfterLaunch;
@@ -209,6 +212,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         settings.StartOnBoot = StartOnBoot;
         settings.StartOnBootClosedToTray = StartOnBootClosedToTray;
         settings.StartMinimized = StartMinimized;
+        settings.StartInFullscreen = StartInFullscreen;
         settings.AfterLaunch = AfterLaunch;
         settings.AfterGameClose = AfterGameClose;
         settings.FuzzyMatchingInNameFilter = FuzzyMatchingInNameFilter;
@@ -287,6 +291,7 @@ public sealed class DesktopSettingsViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(StartOnBootOptionsEnabled));
         OnPropertyChanged(nameof(StartOnBootClosedToTray));
         OnPropertyChanged(nameof(StartMinimized));
+        OnPropertyChanged(nameof(StartInFullscreen));
         OnPropertyChanged(nameof(AfterLaunch));
         OnPropertyChanged(nameof(AfterGameClose));
         OnPropertyChanged(nameof(FuzzyMatchingInNameFilter));

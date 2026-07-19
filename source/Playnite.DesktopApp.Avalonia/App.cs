@@ -45,6 +45,19 @@ public sealed class App : Application
 
             var settingsStore = new DesktopSettingsStore(library.ActiveUserDataDirectory);
             var settings = LoadOrImportSettings(settingsStore, library.ActiveUserDataDirectory, options);
+
+            // Start-in-fullscreen hands off to the Fullscreen shell before any
+            // desktop window is shown. The shells use separate single-instance
+            // endpoints, so launching Fullscreen and shutting the desktop down is
+            // safe; if the Fullscreen executable is not co-located (e.g. a dev
+            // build) the handoff is skipped and the desktop opens normally.
+            if (!options.SelfTest && !options.PluginCompatibilityTest &&
+                settings.StartInFullscreen && TryStartFullscreen(options))
+            {
+                desktop.Shutdown();
+                return;
+            }
+
             var viewModel = new DesktopAppViewModel(library.Games, library.Database, settings, startupError);
             MainWindow window = null;
             if (library.IsOpen)
@@ -158,6 +171,36 @@ public sealed class App : Application
         catch (Exception exception)
         {
             viewModel.SetStatusMessage($"Invalid Playnite URI: {exception.Message}");
+            return false;
+        }
+    }
+
+    private static bool TryStartFullscreen(StartupOptions options)
+    {
+        var fullscreenExe = global::Playnite.PlaynitePaths.FullscreenExecutablePath;
+        if (string.IsNullOrEmpty(fullscreenExe) || !File.Exists(fullscreenExe))
+        {
+            return false;
+        }
+
+        var arguments = new List<string>();
+        if (!string.IsNullOrWhiteSpace(options.UserDataDirectory))
+        {
+            arguments.Add($"--userdatadir \"{options.UserDataDirectory}\"");
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.LibraryPath))
+        {
+            arguments.Add($"--library-path \"{options.LibraryPath}\"");
+        }
+
+        try
+        {
+            Playnite.Common.ProcessStarter.StartProcess(fullscreenExe, string.Join(" ", arguments));
+            return true;
+        }
+        catch (Exception)
+        {
             return false;
         }
     }

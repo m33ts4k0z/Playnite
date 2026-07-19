@@ -1606,15 +1606,20 @@ internal static class DesktopPilotSelfTest
         // Startup shortcut via SystemIntegration.)
         viewModel.OpenSettingsCommand.Execute(null);
         viewModel.Settings.StartMinimized = true;
+        viewModel.Settings.StartInFullscreen = true;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         viewModel.OpenSettingsCommand.Execute(null);
         var startMinimizedPersisted = viewModel.Settings.StartMinimized;
-        viewModel.Settings.CancelCommand.Execute(null);
+        var startInFullscreenPersisted = viewModel.Settings.StartInFullscreen;
+        viewModel.Settings.StartInFullscreen = false;
+        viewModel.Settings.SaveCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         Record(results, "Settings overlay persists startup options through the shared settings", () =>
-            startMinimizedPersisted
-                ? "start-minimized survived save and reopen"
-                : throw new InvalidOperationException("StartMinimized did not persist through save/reopen."));
+            startMinimizedPersisted && startInFullscreenPersisted
+                ? "start-minimized and start-in-fullscreen survived save and reopen"
+                : throw new InvalidOperationException(
+                    $"startMinimized={startMinimizedPersisted}, startInFullscreen={startInFullscreenPersisted}"));
 
         // After-launch/after-game-close window behavior. Only the safe options are
         // exercised (Close/Exit would shut the application down).

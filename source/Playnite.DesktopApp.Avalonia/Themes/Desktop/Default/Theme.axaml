@@ -694,6 +694,8 @@
                                                       IsChecked="{Binding Settings.StartOnBootClosedToTray, Mode=TwoWay}" />
                                             <CheckBox Content="{DynamicResource LOCSettingsStartMinimized}"
                                                       IsChecked="{Binding Settings.StartMinimized, Mode=TwoWay}" />
+                                            <CheckBox Content="{DynamicResource LOCSettingsStartInFullscreen}"
+                                                      IsChecked="{Binding Settings.StartInFullscreen, Mode=TwoWay}" />
 
                                             <StackPanel IsVisible="{Binding Settings.CanSwitchShells}" Spacing="6">
                                                 <Border Height="1" Background="#303A49" Margin="0,4" />
