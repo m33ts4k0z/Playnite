@@ -57,7 +57,16 @@ namespace Playnite
             Task.Run(async () =>
             {
                 await Task.Delay(100);
-                syncContext.Post(_ => CommandExecuted?.Invoke(this, new CommandExecutedEventArgs(command, args)), null);
+                if (syncContext != null)
+                {
+                    syncContext.Post(_ => CommandExecuted?.Invoke(this, new CommandExecutedEventArgs(command, args)), null);
+                }
+                else
+                {
+                    // Hosts without a synchronization context (tests, console
+                    // tools) still get the command instead of a silent crash.
+                    CommandExecuted?.Invoke(this, new CommandExecutedEventArgs(command, args));
+                }
             });
         }
     }
