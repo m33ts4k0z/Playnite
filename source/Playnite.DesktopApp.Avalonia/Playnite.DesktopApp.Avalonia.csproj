@@ -14,7 +14,7 @@
     <RuntimeIdentifier Condition="'$(TargetFramework)' != 'net10.0'">win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <ApplicationManifest Condition="'$(TargetFramework)' != 'net10.0'">app.manifest</ApplicationManifest>
+    <ApplicationManifest Condition="'$(TargetFramework)' != 'net10.0' Or '$(OS)' == 'Windows_NT'">app.manifest</ApplicationManifest>
     <EnableDefaultAvaloniaItems>false</EnableDefaultAvaloniaItems>
     <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
   </PropertyGroup>
@@ -27,6 +27,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Playnite.Avalonia.App\Playnite.Avalonia.App.csproj"
                       Condition="'$(TargetFramework)' != 'net10.0'" />
+    <ProjectReference Include="..\Playnite.Avalonia.WebView\Playnite.Avalonia.WebView.csproj"
+                      Condition="'$(TargetFramework)' == 'net10.0'" />
     <ProjectReference Include="..\Playnite.Avalonia\Playnite.Avalonia.csproj" />
     <ProjectReference Include="..\Playnite.Core\Playnite.Core.csproj" />
     <ProjectReference Include="..\Playnite.WpfPluginSupport\Playnite.WpfPluginSupport.csproj"
@@ -39,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">
-    <Compile Remove="App.Portable.cs;MainWindow.Portable.cs;DesktopLibrary.Portable.cs" />
+    <Compile Remove="App.Portable.cs;MainWindow.Portable.cs;DesktopLibrary.Portable.cs;PortableWebViewSelfTest.cs" />
   </ItemGroup>
 
   <ItemGroup>

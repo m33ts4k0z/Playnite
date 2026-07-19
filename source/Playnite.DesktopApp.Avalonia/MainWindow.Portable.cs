@@ -141,6 +141,10 @@ public sealed class MainWindow : Window
                 return programs != null ? $"{programs.Count:N0} desktop/package applications discovered" :
                     throw new InvalidOperationException("Application discovery was cancelled unexpectedly.");
             });
+            foreach (var webViewResult in await PortableWebViewSelfTest.RunAsync())
+            {
+                results.Add((webViewResult.Name, true, webViewResult.Detail));
+            }
         }
         catch (Exception exception)
         {
