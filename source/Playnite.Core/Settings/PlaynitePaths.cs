@@ -34,8 +34,8 @@ namespace Playnite
         public static string LocalizationsPath { get; }
         public static string DataCachePath { get; private set; }
 
-        public static string DesktopExecutablePath { get; }
-        public static string FullscreenExecutablePath { get; }
+        public static string DesktopExecutablePath { get; private set; }
+        public static string FullscreenExecutablePath { get; private set; }
         public static string PlayniteAssemblyPath { get; }
         public static string PlayniteSDKAssemblyPath { get; }
         public static string ExtensionsUserDataPath { get; private set; }
@@ -78,10 +78,7 @@ namespace Playnite
             IsPortable = OperatingSystem.IsWindows() && !File.Exists(UninstallerPath);
 
             LocalizationsPath = Path.Combine(ProgramPath, LocalizationsDirName);
-            DesktopExecutablePath = Path.Combine(ProgramPath,
-                OperatingSystem.IsWindows() ? "Playnite.DesktopApp.exe" : "Playnite.DesktopApp.Avalonia");
-            FullscreenExecutablePath = Path.Combine(ProgramPath,
-                OperatingSystem.IsWindows() ? "Playnite.FullscreenApp.exe" : "Playnite.FullscreenApp.Avalonia");
+            RefreshShellExecutables();
             PlayniteAssemblyPath = Path.Combine(ProgramPath, "Playnite.dll");
             PlayniteSDKAssemblyPath = Path.Combine(ProgramPath, "Playnite.SDK.dll");
             ExtensionsProgramPath = Path.Combine(ProgramPath, ExtensionsDirName);
@@ -92,6 +89,38 @@ namespace Playnite
 
             // We need to always initialize some default set for environments like Blend or Rider
             UpdateUserDataDir(IsPortable ? ProgramPath : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Playnite"));
+        }
+
+        /// <summary>
+        /// Selects which shell executables the launch, restart, mode-switch, and
+        /// system-integration paths point at. Windows defaults to the WPF
+        /// applications until cutover; the Avalonia shells are used when opted in
+        /// with the avalonia.flag marker next to the executables (or
+        /// PLAYNITE_AVALONIA=1), and always when the WPF executables are absent.
+        /// </summary>
+        public static void RefreshShellExecutables()
+        {
+            DesktopExecutablePath = SelectShellExecutable("Playnite.DesktopApp");
+            FullscreenExecutablePath = SelectShellExecutable("Playnite.FullscreenApp");
+        }
+
+        private static string SelectShellExecutable(string baseName)
+        {
+            if (!OperatingSystem.IsWindows())
+            {
+                return Path.Combine(ProgramPath, baseName + ".Avalonia");
+            }
+
+            var wpfPath = Path.Combine(ProgramPath, baseName + ".exe");
+            var avaloniaPath = Path.Combine(ProgramPath, baseName + ".Avalonia.exe");
+            var optedIn = File.Exists(Path.Combine(ProgramPath, "avalonia.flag")) ||
+                Environment.GetEnvironmentVariable("PLAYNITE_AVALONIA") == "1";
+            if (File.Exists(avaloniaPath) && (optedIn || !File.Exists(wpfPath)))
+            {
+                return avaloniaPath;
+            }
+
+            return wpfPath;
         }
 
         public static void UpdateUserDataDir(string dir)
