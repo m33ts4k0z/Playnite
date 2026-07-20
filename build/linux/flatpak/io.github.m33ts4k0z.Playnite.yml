@@ -13,6 +13,7 @@ finish-args:
   - --filesystem=host
   - --talk-name=org.freedesktop.Flatpak
   - --talk-name=org.kde.StatusNotifierWatcher
+  - --own-name=org.kde.StatusNotifierItem-*
 
 modules:
   - name: playnite
@@ -20,5 +21,11 @@ modules:
     sources:
       - type: dir
         path: payload
+      - type: file
+        path: systemctl-host
+      - type: file
+        path: loginctl-host
     build-commands:
       - cp -a bin lib share /app/
+      - install -Dm0755 systemctl-host /app/bin/systemctl
+      - install -Dm0755 loginctl-host /app/bin/loginctl

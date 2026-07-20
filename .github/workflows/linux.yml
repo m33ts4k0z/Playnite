@@ -72,51 +72,81 @@ jobs:
           dotnet run --project source/Playnite.Avalonia.ControlsGallery/Playnite.Avalonia.ControlsGallery.csproj
           -c Release -- --auto
 
-      - name: Build native shells
+      - name: Build full native shells
         run: |
           dotnet build source/Playnite.DesktopApp.Avalonia/Playnite.DesktopApp.Avalonia.csproj \
             -c Release -p:Platform=x64 -p:TargetFramework=net10.0 -p:EnableWindowsTargeting=true
           dotnet build source/Playnite.FullscreenApp.Avalonia/Playnite.FullscreenApp.Avalonia.csproj \
             -c Release -p:Platform=x64 -p:TargetFramework=net10.0 -p:EnableWindowsTargeting=true
 
-      - name: Run native shell contracts
+      - name: Run full native shell self-tests
         run: |
-          xvfb-run --auto-servernum \
+          bash build/linux/verify-full-selftest.sh Desktop 100 \
+            dbus-run-session -- xvfb-run --auto-servernum \
             dotnet source/Playnite.DesktopApp.Avalonia/bin/x64/Release/net10.0/Playnite.DesktopApp.Avalonia.dll \
             --self-test
-          xvfb-run --auto-servernum \
+          bash build/linux/verify-full-selftest.sh Fullscreen 40 \
+            dbus-run-session -- xvfb-run --auto-servernum \
             dotnet source/Playnite.FullscreenApp.Avalonia/bin/x64/Release/net10.0/Playnite.FullscreenApp.Avalonia.dll \
             --self-test --windowed
 
       - name: Test desktop single-instance forwarding
         run: >-
-          bash build/linux/test-single-instance.sh
+          dbus-run-session -- bash build/linux/test-single-instance.sh
           source/Playnite.DesktopApp.Avalonia/bin/x64/Release/net10.0/Playnite.DesktopApp.Avalonia
 
-      - name: Download verified AppImage tool
+      - name: Download verified AppImage tooling
         run: |
           curl --fail --location --silent --show-error \
             https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
             --output "$RUNNER_TEMP/appimagetool-x86_64.AppImage"
+          curl --fail --location --silent --show-error \
+            https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64 \
+            --output "$RUNNER_TEMP/runtime-x86_64"
           echo 'a6d71e2b6cd66f8e8d16c37ad164658985e0cf5fcaa950c90a482890cb9d13e0  appimagetool-x86_64.AppImage' \
             > "$RUNNER_TEMP/appimagetool.sha256"
+          echo '1cc49bcf1e2ccd593c379adb17c9f85a36d619088296504de95b1d06215aebbf  runtime-x86_64' \
+            >> "$RUNNER_TEMP/appimagetool.sha256"
           (cd "$RUNNER_TEMP" && sha256sum --check appimagetool.sha256)
           chmod 0755 "$RUNNER_TEMP/appimagetool-x86_64.AppImage"
 
+      - name: Verify Flatpak permission contract
+        run: >-
+          bash build/linux/verify-flatpak-manifest.sh
+          build/linux/flatpak/io.github.m33ts4k0z.Playnite.yml
+
+      - name: Pin reproducible package epoch
+        run: echo "SOURCE_DATE_EPOCH=$(git show -s --format=%ct HEAD)" >> "$GITHUB_ENV"
+
       - name: Build tar and AppImage packages
         env:
+          APPIMAGE_RUNTIME_FILE: ${{ runner.temp }}/runtime-x86_64
           APPIMAGE_TOOL: ${{ runner.temp }}/appimagetool-x86_64.AppImage
           PLAYNITE_VERSION: ${{ github.sha }}
-          SOURCE_DATE_EPOCH: '0'
         run: bash build/linux/package-linux.sh
+
+      - name: Rebuild and verify reproducible packages
+        env:
+          APPIMAGE_RUNTIME_FILE: ${{ runner.temp }}/runtime-x86_64
+          APPIMAGE_TOOL: ${{ runner.temp }}/appimagetool-x86_64.AppImage
+          OUTPUT_DIR: ${{ runner.temp }}/playnite-linux-repro
+          PLAYNITE_VERSION: ${{ github.sha }}
+        run: |
+          bash build/linux/package-linux.sh
+          bash build/linux/verify-reproducible-packages.sh \
+            artifacts/linux "$OUTPUT_DIR"
 
       - name: Test packaged AppImage
         run: |
           appimage=$(find artifacts/linux -maxdepth 1 -type f -name '*.AppImage' -print -quit)
           test -n "$appimage"
-          APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run --auto-servernum "$appimage" --self-test
-          APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run --auto-servernum \
-            "$appimage" --fullscreen --self-test --windowed
+          APPIMAGE_EXTRACT_AND_RUN=1 \
+            bash build/linux/verify-full-selftest.sh Desktop 100 \
+              dbus-run-session -- xvfb-run --auto-servernum "$appimage" --self-test
+          APPIMAGE_EXTRACT_AND_RUN=1 \
+            bash build/linux/verify-full-selftest.sh Fullscreen 40 \
+              dbus-run-session -- xvfb-run --auto-servernum \
+                "$appimage" --fullscreen --self-test --windowed
 
       - name: Prepare Flatpak source
         run: |
@@ -142,13 +172,21 @@ jobs:
         run: |
           flatpak install --user --noninteractive --assumeyes \
             artifacts/linux/Playnite-${{ github.sha }}-x86_64.flatpak
+          dbus-run-session -- flatpak run --command=systemctl \
+            io.github.m33ts4k0z.Playnite --version
+          dbus-run-session -- flatpak run --command=loginctl \
+            io.github.m33ts4k0z.Playnite --version
           dbus-run-session -- flatpak run \
             io.github.m33ts4k0z.Playnite --host-launch-self-test
-          dbus-run-session -- xvfb-run --auto-servernum \
-            flatpak run io.github.m33ts4k0z.Playnite --self-test
-          dbus-run-session -- xvfb-run --auto-servernum \
-            flatpak run --command=playnite-fullscreen io.github.m33ts4k0z.Playnite \
-            --self-test --windowed
+          dbus-run-session -- \
+            bash build/linux/verify-full-selftest.sh Desktop 100 \
+              xvfb-run --auto-servernum \
+                flatpak run io.github.m33ts4k0z.Playnite --self-test
+          dbus-run-session -- \
+            bash build/linux/verify-full-selftest.sh Fullscreen 40 \
+              xvfb-run --auto-servernum \
+                flatpak run --command=playnite-fullscreen io.github.m33ts4k0z.Playnite \
+                  --self-test --windowed
 
       - name: Upload Linux packages
         uses: actions/upload-artifact@v4

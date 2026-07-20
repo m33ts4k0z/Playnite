@@ -16,6 +16,16 @@ if [[ -n "${APPIMAGE_TOOL:-}" ]]; then
         exit 2
     fi
 fi
+if [[ -n "${APPIMAGE_RUNTIME_FILE:-}" ]]; then
+    if [[ -z "${APPIMAGE_TOOL:-}" ]]; then
+        echo "APPIMAGE_RUNTIME_FILE requires APPIMAGE_TOOL." >&2
+        exit 2
+    fi
+    if [[ ! -f "$APPIMAGE_RUNTIME_FILE" || ! -r "$APPIMAGE_RUNTIME_FILE" ]]; then
+        echo "APPIMAGE_RUNTIME_FILE must point to a readable type-2 runtime: $APPIMAGE_RUNTIME_FILE" >&2
+        exit 2
+    fi
+fi
 
 work_root=$(mktemp -d)
 cleanup() {
@@ -39,16 +49,21 @@ common_publish_args=(
     -p:Platform=x64
     -p:EnableWindowsTargeting=true
     -p:ContinuousIntegrationBuild=true
+    -p:Deterministic=true
     -p:DebugType=None
     -p:DebugSymbols=false
 )
 
 "$dotnet_command" publish \
     "$repo_root/source/Playnite.DesktopApp.Avalonia/Playnite.DesktopApp.Avalonia.csproj" \
-    "${common_publish_args[@]}" -o "$desktop_publish"
+    "${common_publish_args[@]}" --disable-build-servers \
+    --artifacts-path "$work_root/dotnet-artifacts/desktop" -o "$desktop_publish"
 "$dotnet_command" publish \
     "$repo_root/source/Playnite.FullscreenApp.Avalonia/Playnite.FullscreenApp.Avalonia.csproj" \
-    "${common_publish_args[@]}" -o "$fullscreen_publish"
+    "${common_publish_args[@]}" --disable-build-servers \
+    --artifacts-path "$work_root/dotnet-artifacts/fullscreen" -o "$fullscreen_publish"
+
+find "$desktop_publish" "$fullscreen_publish" -type f -name '*.pdb' -delete
 
 bash "$script_dir/merge-publish.sh" "$desktop_publish" "$fullscreen_publish" "$payload_dir"
 
@@ -96,8 +111,23 @@ checksum_files=("$(basename "$archive_path")" "$(basename "$appdir_archive_path"
 if [[ -n "${APPIMAGE_TOOL:-}" ]]; then
     appimage_tool=$(realpath "$APPIMAGE_TOOL")
     appimage_path="$output_dir/Playnite-$version-x86_64.AppImage"
+    appimage_sort_file="$work_root/appimage.sort"
+    (
+        cd "$app_dir"
+        find . -type f -printf '%P\n' | LC_ALL=C sort |
+            sed 's/\\/\\\\/g; s/ /\\ /g' |
+            awk '{ printf "%s %d\n", $0, 32768 - NR }'
+    ) > "$appimage_sort_file"
+    appimage_options=(
+        --mksquashfs-opt=-sort
+        "--mksquashfs-opt=$appimage_sort_file"
+    )
+    if [[ -n "${APPIMAGE_RUNTIME_FILE:-}" ]]; then
+        appimage_options+=(--runtime-file "$(realpath "$APPIMAGE_RUNTIME_FILE")")
+    fi
     rm -f -- "$appimage_path"
-    ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 "$appimage_tool" "$app_dir" "$appimage_path"
+    SOURCE_DATE_EPOCH="$source_date_epoch" ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 \
+        "$appimage_tool" "${appimage_options[@]}" "$app_dir" "$appimage_path"
     chmod 0755 "$appimage_path"
     checksum_files+=("$(basename "$appimage_path")")
 fi
