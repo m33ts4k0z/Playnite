@@ -76,21 +76,40 @@ namespace Playnite
         private TaskCompletionSource<DDGImageSearchResult> ddgResult = null;
 
         public GoogleImageDownloader()
+            : this(true)
+        {
+        }
+
+        public GoogleImageDownloader(WebImageSearchSource source)
+            : this(source == WebImageSearchSource.DuckDuckGo)
+        {
+        }
+
+        private GoogleImageDownloader(bool captureDdgResponses)
         {
 #if WINDOWS
-            webView = CreateOffscreenView(new WebViewSettings
+            var settings = new WebViewSettings();
+            if (captureDdgResponses)
             {
-                PassResourceContentStreamToCallback = true,
-                ShouldPassResourceContentFunc = (a) => UrlMatchesDdgImageSearch(a.Request.Url),
-                ResourceLoadedCallback = ResourceLoadedCallback
-            });
+                settings.PassResourceContentStreamToCallback = true;
+                settings.ShouldPassResourceContentFunc = (a) => UrlMatchesDdgImageSearch(a.Request.Url);
+                settings.ResourceLoadedCallback = ResourceLoadedCallback;
+            }
+
+            webView = CreateOffscreenView(settings);
 #else
-            webView = CreateOffscreenView(new WebViewSettings
+            var settings = new WebViewSettings();
+            if (captureDdgResponses)
             {
-                CaptureResponseContent = true,
-                ShouldCaptureResponseContent = (request, response) => UrlMatchesDdgImageSearch(request.Url)
-            });
-            webView.ResourceLoaded += ResourceLoaded;
+                settings.CaptureResponseContent = true;
+                settings.ShouldCaptureResponseContent = (request, response) => UrlMatchesDdgImageSearch(request.Url);
+            }
+
+            webView = CreateOffscreenView(settings);
+            if (captureDdgResponses)
+            {
+                webView.ResourceLoaded += ResourceLoaded;
+            }
 #endif
         }
 

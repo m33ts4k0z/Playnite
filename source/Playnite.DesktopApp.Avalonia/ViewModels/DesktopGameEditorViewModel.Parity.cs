@@ -376,9 +376,9 @@ public sealed partial class DesktopGameEditorViewModel
         SelectedWebImage = null;
         try
         {
-            using var downloader = new GoogleImageDownloader();
             var term = WebImageSearchTerm.Trim();
             var source = SelectedWebImageSource;
+            using var downloader = new GoogleImageDownloader(source);
             var images = source == WebImageSearchSource.Google
                 ? await downloader.GetImages(term, SafeSearchSettings.Default)
                 : await Task.Run(() => downloader.GetDdgImages(term));
