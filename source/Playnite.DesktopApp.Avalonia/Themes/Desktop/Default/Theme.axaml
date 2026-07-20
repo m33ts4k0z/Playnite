@@ -191,6 +191,11 @@
                         <ContentControl Template="{DynamicResource DesktopEmulatedImportTemplate}" />
                     </Grid>
 
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding DatabaseFields.IsVisible}"
+                          Background="#E6000000">
+                        <ContentControl Template="{DynamicResource DesktopDatabaseFieldsTemplate}" />
+                    </Grid>
+
                     <Grid Grid.RowSpan="3" IsVisible="{Binding IsNotificationsVisible}"
                           Background="#D9000000">
                         <Border Width="760" MaxHeight="680" Padding="30" CornerRadius="14"
@@ -738,6 +743,9 @@
                                             <StackPanel Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopSource}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create source"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="Source"
+                                                            IsEnabled="{Binding Editor.CanEditSource}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplySource, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
@@ -749,6 +757,9 @@
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopCompletionStatus}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create completion status"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="CompletionStatus"
+                                                            IsEnabled="{Binding Editor.CanEditCompletionStatus}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyCompletionStatus, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
@@ -784,15 +795,20 @@
                                             <StackPanel Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopGenres}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create genre"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="Genres"
+                                                            IsEnabled="{Binding Editor.CanEditGenres}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyGenres, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
+                                                <TextBox Text="{Binding Editor.GenresSearch, Mode=TwoWay}"
+                                                         PlaceholderText="Search genres" />
                                                 <ListBox ItemsSource="{Binding Editor.Genres}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditGenres}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Content="{Binding Name}"
+                                                            <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -801,15 +817,20 @@
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopPlatforms}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create platform"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="Platforms"
+                                                            IsEnabled="{Binding Editor.CanEditPlatforms}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyPlatforms, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
+                                                <TextBox Text="{Binding Editor.PlatformsSearch, Mode=TwoWay}"
+                                                         PlaceholderText="Search platforms" />
                                                 <ListBox ItemsSource="{Binding Editor.Platforms}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditPlatforms}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Content="{Binding Name}"
+                                                            <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -820,15 +841,20 @@
                                             <StackPanel Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopCategories}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create category"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="Categories"
+                                                            IsEnabled="{Binding Editor.CanEditCategories}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyCategories, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
+                                                <TextBox Text="{Binding Editor.CategoriesSearch, Mode=TwoWay}"
+                                                         PlaceholderText="Search categories" />
                                                 <ListBox ItemsSource="{Binding Editor.Categories}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditCategories}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Content="{Binding Name}"
+                                                            <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -837,15 +863,20 @@
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopTags}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create tag"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="Tags"
+                                                            IsEnabled="{Binding Editor.CanEditTags}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyTags, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
+                                                <TextBox Text="{Binding Editor.TagsSearch, Mode=TwoWay}"
+                                                         PlaceholderText="Search tags" />
                                                 <ListBox ItemsSource="{Binding Editor.Tags}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditTags}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Content="{Binding Name}"
+                                                            <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -856,15 +887,20 @@
                                             <StackPanel Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopDevelopers}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create company"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="Developers"
+                                                            IsEnabled="{Binding Editor.CanEditDevelopers}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyDevelopers, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
+                                                <TextBox Text="{Binding Editor.DevelopersSearch, Mode=TwoWay}"
+                                                         PlaceholderText="Search developers" />
                                                 <ListBox ItemsSource="{Binding Editor.Developers}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditDevelopers}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Content="{Binding Name}"
+                                                            <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -873,15 +909,20 @@
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopPublishers}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create company"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="Publishers"
+                                                            IsEnabled="{Binding Editor.CanEditPublishers}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyPublishers, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
+                                                <TextBox Text="{Binding Editor.PublishersSearch, Mode=TwoWay}"
+                                                         PlaceholderText="Search publishers" />
                                                 <ListBox ItemsSource="{Binding Editor.Publishers}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditPublishers}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Content="{Binding Name}"
+                                                            <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -892,15 +933,20 @@
                                             <StackPanel Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopFeatures}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create feature"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="Features"
+                                                            IsEnabled="{Binding Editor.CanEditFeatures}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyFeatures, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
+                                                <TextBox Text="{Binding Editor.FeaturesSearch, Mode=TwoWay}"
+                                                         PlaceholderText="Search features" />
                                                 <ListBox ItemsSource="{Binding Editor.Features}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditFeatures}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Content="{Binding Name}"
+                                                            <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -909,15 +955,20 @@
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopSeries}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create series"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="Series"
+                                                            IsEnabled="{Binding Editor.CanEditSeries}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplySeries, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
+                                                <TextBox Text="{Binding Editor.SeriesSearch, Mode=TwoWay}"
+                                                         PlaceholderText="Search series" />
                                                 <ListBox ItemsSource="{Binding Editor.Series}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditSeries}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Content="{Binding Name}"
+                                                            <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -928,15 +979,20 @@
                                             <StackPanel Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopAgeRatings}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create age rating"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="AgeRatings"
+                                                            IsEnabled="{Binding Editor.CanEditAgeRatings}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyAgeRatings, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
+                                                <TextBox Text="{Binding Editor.AgeRatingsSearch, Mode=TwoWay}"
+                                                         PlaceholderText="Search age ratings" />
                                                 <ListBox ItemsSource="{Binding Editor.AgeRatings}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditAgeRatings}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Content="{Binding Name}"
+                                                            <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -945,15 +1001,20 @@
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                                     <TextBlock Text="{DynamicResource LOCDesktopRegions}" Classes="sectionLabel" />
+                                                    <Button Content="+" ToolTip.Tip="Create region"
+                                                            Command="{Binding Editor.AddTaxonomyCommand}" CommandParameter="Regions"
+                                                            IsEnabled="{Binding Editor.CanEditRegions}" />
                                                     <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                               IsChecked="{Binding Editor.ApplyRegions, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
+                                                <TextBox Text="{Binding Editor.RegionsSearch, Mode=TwoWay}"
+                                                         PlaceholderText="Search regions" />
                                                 <ListBox ItemsSource="{Binding Editor.Regions}" MaxHeight="110"
                                                          IsEnabled="{Binding Editor.CanEditRegions}">
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
-                                                            <CheckBox Content="{Binding Name}"
+                                                            <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>

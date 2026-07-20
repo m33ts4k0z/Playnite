@@ -63,6 +63,8 @@
                             Command="{Binding OpenEmulatorConfigCommand}" />
                     <Button Content="Import emulated games"
                             Command="{Binding OpenEmulatedImportCommand}" />
+                    <Button Content="Manage library fields"
+                            Command="{Binding OpenDatabaseFieldsCommand}" />
                     <Button Content="{DynamicResource LOCDesktopAddManualGame}"
                             Command="{Binding AddManualGameCommand}" />
                     <Button Content="Settings" Command="{Binding OpenSettingsCommand}" />

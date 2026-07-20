@@ -433,9 +433,12 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public AddonStoreViewModel AddonStore { get; }
     public EmulatorConfigViewModel EmulatorConfig { get; }
     public EmulatedImportViewModel EmulatedImport { get; }
+    public DatabaseFieldsViewModel DatabaseFields { get; }
     public DesktopScriptService Scripts { get; }
     public AvaloniaSearchSession PluginSearch { get; }
     public bool IsPluginSearchVisible => PluginSearch.IsVisible;
+    private bool IsLibraryManagerVisible => EmulatorConfig.IsVisible || EmulatedImport.IsVisible ||
+        DatabaseFields.IsVisible;
 
     public ICommand ActivateCommand { get; }
     public ICommand InstallCommand { get; }
@@ -450,6 +453,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand OpenAddonStoreCommand { get; }
     public ICommand OpenEmulatorConfigCommand { get; }
     public ICommand OpenEmulatedImportCommand { get; }
+    public ICommand OpenDatabaseFieldsCommand { get; }
     public ICommand OpenGlobalSearchCommand { get; }
     public ICommand OpenPluginMainMenuCommand { get; }
     public ICommand OpenPluginGameMenuCommand { get; }
@@ -550,7 +554,8 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
                 new[] { "OK", "Don't show again" },
                 0,
                 0) == "Don't show again",
-            () => SettingsChanged?.Invoke(this, EventArgs.Empty));
+            () => SettingsChanged?.Invoke(this, EventArgs.Empty),
+            () => dialogService);
         MetadataDownload = new DesktopMetadataDownloadViewModel(
             database,
             this.settings,
@@ -738,97 +743,136 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
                 RaiseGameCommandStates();
             }
         };
+        DatabaseFields = new DatabaseFieldsViewModel(
+            database,
+            () => dialogService,
+            SynchronizeLibrary,
+            (message, error) =>
+            {
+                if (runtimeHost != null)
+                {
+                    runtimeHost.ShowMessage(message, error);
+                }
+                else
+                {
+                    StatusText = message;
+                }
+            });
+        DatabaseFields.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(DatabaseFieldsViewModel.IsVisible))
+            {
+                RaiseGameCommandStates();
+            }
+        };
         Settings.Updates.ConfigureAddonStore(OpenAddonStore);
 
         ActivateCommand = new AppRelayCommand(
             () => RunOperation(SelectedGame?.IsInstalled == true ? GameOperationKind.Play : GameOperationKind.Install),
-            () => SelectedGame != null);
+            () => SelectedGame != null && !IsLibraryManagerVisible);
         InstallCommand = new AppRelayCommand(
             () => RunOperation(GameOperationKind.Install),
-            () => SelectedGame != null && !SelectedGame.IsInstalled);
+            () => SelectedGame != null && !SelectedGame.IsInstalled && !IsLibraryManagerVisible);
         UninstallCommand = new AppRelayCommand(
             () => RunOperation(GameOperationKind.Uninstall),
-            () => SelectedGame?.IsInstalled == true);
+            () => SelectedGame?.IsInstalled == true && !IsLibraryManagerVisible);
         EditCommand = new AppRelayCommand(
             () => OpenGameEditor(GetSelectedGameIds()),
             () => SelectedGame != null && database != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible &&
+                !IsLibraryManagerVisible);
         OpenMetadataDownloadCommand = new AppRelayCommand(OpenMetadataDownload,
             () => SelectedGame != null && database != null && runtimeHost != null &&
                 !Editor.IsVisible && !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible &&
+                !IsLibraryManagerVisible);
         OpenLibrarySyncCommand = new AppRelayCommand(OpenLibrarySync,
             () => database != null && runtimeHost != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible &&
+                !IsLibraryManagerVisible);
         OpenInstalledGameImportCommand = new AppRelayCommand(OpenInstalledGameImport,
             () => database != null && runtimeHost != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible &&
+                !IsLibraryManagerVisible);
         AddManualGameCommand = new AppRelayCommand(AddManualGame,
             () => database != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible &&
+                !IsLibraryManagerVisible);
         OpenPluginSettingsListCommand = new AppRelayCommand(OpenPluginSettingsList,
             () => database != null && runtimeHost != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible &&
+                !IsLibraryManagerVisible);
         OpenSettingsCommand = new AppRelayCommand(OpenSettings,
             () => !Editor.IsVisible &&
                 !MetadataDownload.IsRunning && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsRunning && !PluginSettings.IsRunning &&
-                !Settings.IsVisible);
+                !Settings.IsVisible && !IsLibraryManagerVisible);
         OpenAddonStoreCommand = new AppRelayCommand(
             OpenAddonStore,
             () => !Editor.IsVisible && !MetadataDownload.IsRunning && !LibrarySync.IsRunning &&
-                !InstalledGameImport.IsRunning && !PluginSettings.IsRunning && !Settings.IsVisible);
+                !InstalledGameImport.IsRunning && !PluginSettings.IsRunning && !Settings.IsVisible &&
+                !IsLibraryManagerVisible);
         OpenEmulatorConfigCommand = new AppRelayCommand(
             () => OpenEmulatorConfig(EmulatorConfigViewModel.EmulatorConfigPage.Emulators),
             () => database != null && !Editor.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsRunning && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsRunning && !Settings.IsVisible && !EmulatedImport.IsVisible);
+                !PluginSettings.IsRunning && !Settings.IsVisible && !EmulatedImport.IsVisible &&
+                !DatabaseFields.IsVisible && !EmulatorConfig.IsVisible);
         OpenEmulatedImportCommand = new AppRelayCommand(
             OpenEmulatedImport,
             () => database != null && !Editor.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsRunning && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsRunning && !Settings.IsVisible && !EmulatorConfig.IsVisible);
+                !PluginSettings.IsRunning && !Settings.IsVisible && !EmulatorConfig.IsVisible &&
+                !DatabaseFields.IsVisible && !EmulatedImport.IsVisible);
+        OpenDatabaseFieldsCommand = new AppRelayCommand(
+            () => OpenDatabaseFields(null),
+            () => database != null && !Editor.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsRunning && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsRunning && !Settings.IsVisible && !EmulatorConfig.IsVisible &&
+                !EmulatedImport.IsVisible && !DatabaseFields.IsVisible);
         OpenGlobalSearchCommand = new AppRelayCommand(
             () => OpenGlobalSearch(string.Empty),
             () => database != null && !Editor.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsRunning && !InstalledGameImport.IsRunning && !PluginSettings.IsRunning &&
-                !Settings.IsVisible);
+                !Settings.IsVisible && !IsLibraryManagerVisible);
         OpenPluginMainMenuCommand = new AppRelayCommand(
             () => OpenPluginMenu(false),
             () => runtimeHost != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible &&
+                !IsLibraryManagerVisible);
         OpenPluginGameMenuCommand = new AppRelayCommand(
             () => OpenPluginMenu(true),
             () => runtimeHost != null && SelectedGame != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsVisible && !InstalledGameImport.IsRunning &&
-                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible);
+                !PluginSettings.IsVisible && !PluginSettings.IsRunning && !IsPluginMenuVisible &&
+                !IsLibraryManagerVisible);
         OpenInstallDirectoryCommand = new AppRelayCommand(
             OpenInstallDirectory,
             () => SelectedGame != null &&
                 !string.IsNullOrWhiteSpace(SelectedGame.Game.InstallDirectory) &&
-                Directory.Exists(SelectedGame.Game.InstallDirectory));
+                Directory.Exists(SelectedGame.Game.InstallDirectory) && !IsLibraryManagerVisible);
         InvokePluginMenuItemCommand = new AppRelayCommand(
             InvokeSelectedPluginMenuItem,
             () => IsPluginMenuVisible && SelectedPluginMenuItem != null);
@@ -1160,6 +1204,16 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         RaiseGameCommandStates();
     }
 
+    private void OpenDatabaseFields(string kind)
+    {
+        CloseOverlays();
+        if (!DatabaseFields.Open(kind))
+        {
+            StatusText = "The library fields manager is unavailable.";
+        }
+        RaiseGameCommandStates();
+    }
+
     public void OpenGlobalSearch(string initialTerm)
     {
         if (globalSearch == null)
@@ -1180,6 +1234,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         new("Configure emulators", "Manage emulator profiles and ROM scanners", () =>
             OpenEmulatorConfig(EmulatorConfigViewModel.EmulatorConfigPage.Emulators)),
         new("Import emulated games", "Scan ROM folders and review detected games", OpenEmulatedImport),
+        new("Manage library fields", "Create and organize taxonomy values", () => OpenDatabaseFields(null)),
         new("Update libraries", "Import changes from library plugins and scanners", OpenLibrarySync),
         new("Import installed games", "Discover installed desktop applications", OpenInstalledGameImport),
         new("Add game manually", "Create a new library game", AddManualGame),
@@ -1393,6 +1448,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         AddonStore.Close();
         EmulatorConfig.Close();
         EmulatedImport.Close();
+        DatabaseFields.Close();
         SelectedPluginMenuItem = null;
         ClosePluginSidebar();
         Settings.Close();
@@ -1538,6 +1594,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)OpenAddonStoreCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenEmulatorConfigCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenEmulatedImportCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenDatabaseFieldsCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenGlobalSearchCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginMainMenuCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginGameMenuCommand).RaiseCanExecuteChanged();

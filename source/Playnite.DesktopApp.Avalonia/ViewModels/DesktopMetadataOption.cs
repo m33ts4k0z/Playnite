@@ -5,6 +5,7 @@ namespace Playnite.DesktopApp.Avalonia.ViewModels;
 public sealed class DesktopMetadataOption : INotifyPropertyChanged
 {
     private bool isSelected;
+    private bool isVisible = true;
 
     public event PropertyChangedEventHandler PropertyChanged;
     public Guid Id { get; }
@@ -21,6 +22,20 @@ public sealed class DesktopMetadataOption : INotifyPropertyChanged
 
             isSelected = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
+        }
+    }
+    public bool IsVisible
+    {
+        get => isVisible;
+        set
+        {
+            if (isVisible == value)
+            {
+                return;
+            }
+
+            isVisible = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible)));
         }
     }
 

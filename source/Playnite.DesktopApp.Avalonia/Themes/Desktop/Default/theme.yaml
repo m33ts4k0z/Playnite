@@ -17,5 +17,6 @@ Resources:
   - Views/AddonStore.axaml
   - Views/EmulatorConfig.axaml
   - Views/EmulatedImport.axaml
+  - Views/DatabaseFields.axaml
 Styles:
   - Styles.axaml

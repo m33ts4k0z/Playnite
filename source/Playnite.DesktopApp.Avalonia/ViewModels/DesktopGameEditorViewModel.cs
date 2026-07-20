@@ -7,6 +7,7 @@ using Playnite.Avalonia.App.ViewModels;
 using Playnite.Database;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK.Models;
+using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
@@ -18,6 +19,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     private readonly DesktopSettings settings;
     private readonly Func<string, string, bool> showImagePerformanceWarning;
     private readonly Action settingsChanged;
+    private readonly Func<DesktopDialogService> dialogs;
+    private readonly Dictionary<Guid, (DatabaseFieldKind Kind, DatabaseObject Model)> pendingTaxonomy = new();
+    private readonly Dictionary<string, string> taxonomySearch = new(StringComparer.Ordinal);
     private IReadOnlyList<Guid> editingGameIds = Array.Empty<Guid>();
     private Action<bool?> completed;
     private bool isVisible;
@@ -528,18 +532,28 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     }
 
     public bool HasValidationError => !string.IsNullOrWhiteSpace(ValidationMessage);
-    public IReadOnlyList<DesktopMetadataOption> Sources { get; }
-    public IReadOnlyList<DesktopMetadataOption> CompletionStatuses { get; }
-    public IReadOnlyList<DesktopMetadataOption> Genres { get; }
-    public IReadOnlyList<DesktopMetadataOption> Platforms { get; }
-    public IReadOnlyList<DesktopMetadataOption> Categories { get; }
-    public IReadOnlyList<DesktopMetadataOption> Tags { get; }
-    public IReadOnlyList<DesktopMetadataOption> Developers { get; }
-    public IReadOnlyList<DesktopMetadataOption> Publishers { get; }
-    public IReadOnlyList<DesktopMetadataOption> Features { get; }
-    public IReadOnlyList<DesktopMetadataOption> Series { get; }
-    public IReadOnlyList<DesktopMetadataOption> AgeRatings { get; }
-    public IReadOnlyList<DesktopMetadataOption> Regions { get; }
+    public ObservableCollection<DesktopMetadataOption> Sources { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> CompletionStatuses { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> Genres { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> Platforms { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> Categories { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> Tags { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> Developers { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> Publishers { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> Features { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> Series { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> AgeRatings { get; } = new();
+    public ObservableCollection<DesktopMetadataOption> Regions { get; } = new();
+    public string GenresSearch { get => GetTaxonomySearch(nameof(Genres)); set => SetTaxonomySearch(nameof(Genres), value, Genres); }
+    public string PlatformsSearch { get => GetTaxonomySearch(nameof(Platforms)); set => SetTaxonomySearch(nameof(Platforms), value, Platforms); }
+    public string CategoriesSearch { get => GetTaxonomySearch(nameof(Categories)); set => SetTaxonomySearch(nameof(Categories), value, Categories); }
+    public string TagsSearch { get => GetTaxonomySearch(nameof(Tags)); set => SetTaxonomySearch(nameof(Tags), value, Tags); }
+    public string DevelopersSearch { get => GetTaxonomySearch(nameof(Developers)); set => SetTaxonomySearch(nameof(Developers), value, Developers); }
+    public string PublishersSearch { get => GetTaxonomySearch(nameof(Publishers)); set => SetTaxonomySearch(nameof(Publishers), value, Publishers); }
+    public string FeaturesSearch { get => GetTaxonomySearch(nameof(Features)); set => SetTaxonomySearch(nameof(Features), value, Features); }
+    public string SeriesSearch { get => GetTaxonomySearch(nameof(Series)); set => SetTaxonomySearch(nameof(Series), value, Series); }
+    public string AgeRatingsSearch { get => GetTaxonomySearch(nameof(AgeRatings)); set => SetTaxonomySearch(nameof(AgeRatings), value, AgeRatings); }
+    public string RegionsSearch { get => GetTaxonomySearch(nameof(Regions)); set => SetTaxonomySearch(nameof(Regions), value, Regions); }
     public IReadOnlyList<DesktopEmulatorOption> Emulators { get; }
     public ObservableCollection<DesktopLinkEditorItem> Links { get; } = new();
     public ObservableCollection<DesktopGameActionEditorItem> GameActions { get; } = new();
@@ -549,6 +563,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
     public ICommand AddLinkCommand { get; }
     public ICommand AddGameActionCommand { get; }
     public ICommand AddRomCommand { get; }
+    public ICommand AddTaxonomyCommand { get; }
 
     public DesktopGameEditorViewModel(
         GameDatabase database,
@@ -556,7 +571,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         Action<string> setStatus,
         DesktopSettings settings,
         Func<string, string, bool> showImagePerformanceWarning,
-        Action settingsChanged)
+        Action settingsChanged,
+        Func<DesktopDialogService> dialogs)
     {
         this.database = database;
         this.refreshGames = refreshGames ?? (_ => { });
@@ -564,22 +580,8 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
         this.showImagePerformanceWarning = showImagePerformanceWarning ?? ((_, _) => false);
         this.settingsChanged = settingsChanged ?? (() => { });
-        Sources = BuildOptions(
-            database?.Sources?.Select(source => new DesktopMetadataOption(source.Id, source.Name)),
-            "No source");
-        CompletionStatuses = BuildOptions(
-            database?.CompletionStatuses?.Select(status => new DesktopMetadataOption(status.Id, status.Name)),
-            "No status");
-        Genres = BuildMultiOptions(database?.Genres?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
-        Platforms = BuildMultiOptions(database?.Platforms?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
-        Categories = BuildMultiOptions(database?.Categories?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
-        Tags = BuildMultiOptions(database?.Tags?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
-        Developers = BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
-        Publishers = BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
-        Features = BuildMultiOptions(database?.Features?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
-        Series = BuildMultiOptions(database?.Series?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
-        AgeRatings = BuildMultiOptions(database?.AgeRatings?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
-        Regions = BuildMultiOptions(database?.Regions?.Select(item => new DesktopMetadataOption(item.Id, item.Name)));
+        this.dialogs = dialogs ?? (() => null);
+        ReloadTaxonomyOptions();
         Emulators = BuildEmulatorOptions(database?.Emulators);
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(Cancel);
@@ -592,6 +594,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         AddRomCommand = new RelayCommand(
             () => AddRomItem(null),
             () => CanEditRoms);
+        AddTaxonomyCommand = new AppRelayCommand(parameter => AddTaxonomy(parameter as string));
     }
 
     public bool Open(Guid gameId, Action<bool?> onCompleted = null) =>
@@ -613,6 +616,9 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
 
         editingGameIds = distinctIds;
         completed = onCompleted;
+        pendingTaxonomy.Clear();
+        ResetTaxonomySearch();
+        ReloadTaxonomyOptions();
         ResetApplyFlags();
         LoadCommonValues(games);
         ValidationMessage = string.Empty;
@@ -762,6 +768,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         var changeDate = DateTime.Now;
         try
         {
+            PersistPendingTaxonomy();
             database.Games.BeginBufferUpdate();
             try
             {
@@ -1315,6 +1322,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         }
 
         IsVisible = false;
+        pendingTaxonomy.Clear();
         var callback = completed;
         completed = null;
         callback?.Invoke(result);
@@ -1346,6 +1354,275 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         if (currentIndex >= 0 && targetIndex >= 0 && targetIndex < items.Count)
         {
             items.Move(currentIndex, targetIndex);
+        }
+    }
+
+    internal bool AddTaxonomyForTest(string field, string name) => AddTaxonomy(field, name, false);
+
+    private void AddTaxonomy(string field)
+    {
+        var result = dialogs()?.ShowInput(
+            "Enter a name for the new library field value.",
+            "Add library field",
+            string.Empty);
+        if (result?.Result == true)
+        {
+            AddTaxonomy(field, result.SelectedString, true);
+        }
+    }
+
+    private bool AddTaxonomy(string field, string name, bool reportDuplicate)
+    {
+        name = name?.Trim();
+        if (!IsVisible || string.IsNullOrWhiteSpace(field) || string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+        var target = GetTaxonomyOptions(field);
+        if (target == null)
+        {
+            return false;
+        }
+        var existing = target.FirstOrDefault(option => option.Id != Guid.Empty &&
+            string.Equals(option.Name, name, StringComparison.CurrentCultureIgnoreCase));
+        if (existing != null)
+        {
+            SelectTaxonomyOption(field, existing);
+            if (reportDuplicate)
+            {
+                setStatus($"'{name}' already exists and was selected.");
+            }
+            return true;
+        }
+
+        var kind = GetTaxonomyKind(field);
+        var model = CreateTaxonomyModel(kind, name);
+        pendingTaxonomy[model.Id] = (kind, model);
+        var option = new DesktopMetadataOption(model.Id, model.Name) { IsSelected = true };
+        InsertTaxonomyOption(target, option, field is "Source" or "CompletionStatus");
+        if (kind == DatabaseFieldKind.Companies)
+        {
+            var other = field == "Developers" ? Publishers : Developers;
+            InsertTaxonomyOption(other, new DesktopMetadataOption(model.Id, model.Name), false);
+        }
+        SelectTaxonomyOption(field, option);
+        setStatus($"Created '{name}'. It will be saved with the game metadata.");
+        return true;
+    }
+
+    private ObservableCollection<DesktopMetadataOption> GetTaxonomyOptions(string field) => field switch
+    {
+        "Source" => Sources,
+        "CompletionStatus" => CompletionStatuses,
+        "Genres" => Genres,
+        "Platforms" => Platforms,
+        "Categories" => Categories,
+        "Tags" => Tags,
+        "Developers" => Developers,
+        "Publishers" => Publishers,
+        "Features" => Features,
+        "Series" => Series,
+        "AgeRatings" => AgeRatings,
+        "Regions" => Regions,
+        _ => null
+    };
+
+    private static DatabaseFieldKind GetTaxonomyKind(string field) => field switch
+    {
+        "Source" => DatabaseFieldKind.Sources,
+        "CompletionStatus" => DatabaseFieldKind.CompletionStatuses,
+        "Genres" => DatabaseFieldKind.Genres,
+        "Platforms" => DatabaseFieldKind.Platforms,
+        "Categories" => DatabaseFieldKind.Categories,
+        "Tags" => DatabaseFieldKind.Tags,
+        "Developers" or "Publishers" => DatabaseFieldKind.Companies,
+        "Features" => DatabaseFieldKind.Features,
+        "Series" => DatabaseFieldKind.Series,
+        "AgeRatings" => DatabaseFieldKind.AgeRatings,
+        "Regions" => DatabaseFieldKind.Regions,
+        _ => throw new NotSupportedException($"Taxonomy creation is not supported for {field}.")
+    };
+
+    private static DatabaseObject CreateTaxonomyModel(DatabaseFieldKind kind, string name) => kind switch
+    {
+        DatabaseFieldKind.Sources => new GameSource(name),
+        DatabaseFieldKind.CompletionStatuses => new CompletionStatus(name),
+        DatabaseFieldKind.Genres => new Genre(name),
+        DatabaseFieldKind.Platforms => new Platform(name),
+        DatabaseFieldKind.Categories => new Category(name),
+        DatabaseFieldKind.Tags => new Tag(name),
+        DatabaseFieldKind.Companies => new Company(name),
+        DatabaseFieldKind.Features => new GameFeature(name),
+        DatabaseFieldKind.Series => new Series(name),
+        DatabaseFieldKind.AgeRatings => new AgeRating(name),
+        DatabaseFieldKind.Regions => new Region(name),
+        _ => throw new NotSupportedException($"Taxonomy creation is not supported for {kind}.")
+    };
+
+    private static void InsertTaxonomyOption(
+        ObservableCollection<DesktopMetadataOption> collection,
+        DesktopMetadataOption option,
+        bool hasEmptyOption)
+    {
+        var start = hasEmptyOption && collection.FirstOrDefault()?.Id == Guid.Empty ? 1 : 0;
+        var index = start;
+        while (index < collection.Count && StringComparer.CurrentCultureIgnoreCase.Compare(
+            collection[index].Name, option.Name) < 0)
+        {
+            index++;
+        }
+        collection.Insert(index, option);
+    }
+
+    private void SelectTaxonomyOption(string field, DesktopMetadataOption option)
+    {
+        if (field == "Source")
+        {
+            SelectedSource = option;
+            if (IsBulkEdit) ApplySource = true;
+            return;
+        }
+        if (field == "CompletionStatus")
+        {
+            SelectedCompletionStatus = option;
+            if (IsBulkEdit) ApplyCompletionStatus = true;
+            return;
+        }
+        option.IsSelected = true;
+        if (!IsBulkEdit)
+        {
+            return;
+        }
+        switch (field)
+        {
+            case "Genres": ApplyGenres = true; break;
+            case "Platforms": ApplyPlatforms = true; break;
+            case "Categories": ApplyCategories = true; break;
+            case "Tags": ApplyTags = true; break;
+            case "Developers": ApplyDevelopers = true; break;
+            case "Publishers": ApplyPublishers = true; break;
+            case "Features": ApplyFeatures = true; break;
+            case "Series": ApplySeries = true; break;
+            case "AgeRatings": ApplyAgeRatings = true; break;
+            case "Regions": ApplyRegions = true; break;
+        }
+    }
+
+    private void PersistPendingTaxonomy()
+    {
+        foreach (var pending in pendingTaxonomy.Values)
+        {
+            switch (pending.Kind)
+            {
+                case DatabaseFieldKind.Sources:
+                    AddPending(database.Sources, (GameSource)pending.Model);
+                    break;
+                case DatabaseFieldKind.CompletionStatuses:
+                    AddPending(database.CompletionStatuses, (CompletionStatus)pending.Model);
+                    break;
+                case DatabaseFieldKind.Genres:
+                    AddPending(database.Genres, (Genre)pending.Model);
+                    break;
+                case DatabaseFieldKind.Platforms:
+                    AddPending(database.Platforms, (Platform)pending.Model);
+                    break;
+                case DatabaseFieldKind.Categories:
+                    AddPending(database.Categories, (Category)pending.Model);
+                    break;
+                case DatabaseFieldKind.Tags:
+                    AddPending(database.Tags, (Tag)pending.Model);
+                    break;
+                case DatabaseFieldKind.Companies:
+                    AddPending(database.Companies, (Company)pending.Model);
+                    break;
+                case DatabaseFieldKind.Features:
+                    AddPending(database.Features, (GameFeature)pending.Model);
+                    break;
+                case DatabaseFieldKind.Series:
+                    AddPending(database.Series, (Series)pending.Model);
+                    break;
+                case DatabaseFieldKind.AgeRatings:
+                    AddPending(database.AgeRatings, (AgeRating)pending.Model);
+                    break;
+                case DatabaseFieldKind.Regions:
+                    AddPending(database.Regions, (Region)pending.Model);
+                    break;
+            }
+        }
+    }
+
+    private static void AddPending<T>(Playnite.SDK.IItemCollection<T> collection, T item) where T : DatabaseObject
+    {
+        if (collection[item.Id] == null)
+        {
+            collection.Add(item);
+        }
+    }
+
+    private void ReloadTaxonomyOptions()
+    {
+        ReplaceOptions(Sources, BuildOptions(
+            database?.Sources?.Select(source => new DesktopMetadataOption(source.Id, source.Name)), "No source"));
+        ReplaceOptions(CompletionStatuses, BuildOptions(
+            database?.CompletionStatuses?.Select(status => new DesktopMetadataOption(status.Id, status.Name)), "No status"));
+        ReplaceOptions(Genres, BuildMultiOptions(database?.Genres?.Select(item => new DesktopMetadataOption(item.Id, item.Name))));
+        ReplaceOptions(Platforms, BuildMultiOptions(database?.Platforms?.Select(item => new DesktopMetadataOption(item.Id, item.Name))));
+        ReplaceOptions(Categories, BuildMultiOptions(database?.Categories?.Select(item => new DesktopMetadataOption(item.Id, item.Name))));
+        ReplaceOptions(Tags, BuildMultiOptions(database?.Tags?.Select(item => new DesktopMetadataOption(item.Id, item.Name))));
+        ReplaceOptions(Developers, BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name))));
+        ReplaceOptions(Publishers, BuildMultiOptions(database?.Companies?.Select(item => new DesktopMetadataOption(item.Id, item.Name))));
+        ReplaceOptions(Features, BuildMultiOptions(database?.Features?.Select(item => new DesktopMetadataOption(item.Id, item.Name))));
+        ReplaceOptions(Series, BuildMultiOptions(database?.Series?.Select(item => new DesktopMetadataOption(item.Id, item.Name))));
+        ReplaceOptions(AgeRatings, BuildMultiOptions(database?.AgeRatings?.Select(item => new DesktopMetadataOption(item.Id, item.Name))));
+        ReplaceOptions(Regions, BuildMultiOptions(database?.Regions?.Select(item => new DesktopMetadataOption(item.Id, item.Name))));
+    }
+
+    private static void ReplaceOptions(
+        ObservableCollection<DesktopMetadataOption> destination,
+        IEnumerable<DesktopMetadataOption> source)
+    {
+        destination.Clear();
+        foreach (var item in source ?? Array.Empty<DesktopMetadataOption>())
+        {
+            destination.Add(item);
+        }
+    }
+
+    private string GetTaxonomySearch(string field) => taxonomySearch.TryGetValue(field, out var value)
+        ? value
+        : string.Empty;
+
+    private void SetTaxonomySearch(
+        string field,
+        string value,
+        IEnumerable<DesktopMetadataOption> options,
+        [CallerMemberName] string propertyName = null)
+    {
+        value ??= string.Empty;
+        if (string.Equals(GetTaxonomySearch(field), value, StringComparison.Ordinal))
+        {
+            return;
+        }
+        taxonomySearch[field] = value;
+        foreach (var option in options)
+        {
+            option.IsVisible = string.IsNullOrWhiteSpace(value) ||
+                option.Name.Contains(value.Trim(), StringComparison.CurrentCultureIgnoreCase);
+        }
+        OnPropertyChanged(propertyName);
+    }
+
+    private void ResetTaxonomySearch()
+    {
+        taxonomySearch.Clear();
+        foreach (var property in new[]
+        {
+            nameof(GenresSearch), nameof(PlatformsSearch), nameof(CategoriesSearch), nameof(TagsSearch),
+            nameof(DevelopersSearch), nameof(PublishersSearch), nameof(FeaturesSearch), nameof(SeriesSearch),
+            nameof(AgeRatingsSearch), nameof(RegionsSearch)
+        })
+        {
+            OnPropertyChanged(property);
         }
     }
 

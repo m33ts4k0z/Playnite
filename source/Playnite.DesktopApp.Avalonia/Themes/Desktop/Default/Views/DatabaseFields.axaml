@@ -1,0 +1,146 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:foundation="using:Playnite.Avalonia.Controls">
+    <ControlTemplate x:Key="DesktopDatabaseFieldsTemplate">
+        <Border Width="1120" MaxHeight="800" Padding="26" CornerRadius="14"
+                Background="{DynamicResource DesktopPanelStrongBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <StackPanel>
+                        <TextBlock Text="Library fields" FontSize="30" FontWeight="Bold"
+                                   Foreground="{DynamicResource DesktopTextBrush}" />
+                        <TextBlock Text="Create, rename, remove, and organize the values used by game metadata."
+                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Close" Command="{Binding DatabaseFields.CloseCommand}" />
+                </Grid>
+
+                <Grid Grid.Row="1" ColumnDefinitions="210,300,*" ColumnSpacing="14" MinHeight="560">
+                    <ListBox ItemsSource="{Binding DatabaseFields.Sections}"
+                             SelectedItem="{Binding DatabaseFields.SelectedSection, Mode=TwoWay}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Title}" Margin="5" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                        <TextBox Text="{Binding DatabaseFields.SearchText, Mode=TwoWay}"
+                                 PlaceholderText="Search this field" />
+                        <ListBox Grid.Row="1" ItemsSource="{Binding DatabaseFields.SelectedSection.Items}"
+                                 SelectedItem="{Binding DatabaseFields.SelectedItem, Mode=TwoWay}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" IsVisible="{Binding IsVisible}" Margin="4" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <WrapPanel Grid.Row="2">
+                            <Button Content="Add" Command="{Binding DatabaseFields.AddCommand}" />
+                            <Button Content="Rename" Command="{Binding DatabaseFields.RenameCommand}" />
+                            <Button Content="Remove" Command="{Binding DatabaseFields.RemoveCommand}" />
+                            <Button Content="Remove unused" Command="{Binding DatabaseFields.RemoveUnusedCommand}" />
+                        </WrapPanel>
+                    </Grid>
+
+                    <Border Grid.Column="2" Padding="16" CornerRadius="8" Background="#151B24">
+                        <ScrollViewer>
+                            <StackPanel Spacing="14">
+                                <StackPanel IsVisible="{Binding DatabaseFields.IsPlatformSection}" Spacing="12">
+                                    <TextBlock Text="Platform details" FontSize="20" FontWeight="SemiBold" />
+                                    <TextBlock Text="Specification" Classes="sectionLabel" />
+                                    <ComboBox ItemsSource="{Binding DatabaseFields.PlatformSpecifications}"
+                                              SelectedItem="{Binding DatabaseFields.SelectedPlatformSpecification, Mode=TwoWay}" />
+                                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="Icon" Classes="sectionLabel" />
+                                            <Border Height="120" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                <foundation:GameCoverImage SourcePath="{Binding DatabaseFields.SelectedPlatformIconPreview}"
+                                                                           Stretch="Uniform" />
+                                            </Border>
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <Button Content="Select" Command="{Binding DatabaseFields.SelectPlatformMediaCommand}"
+                                                        CommandParameter="Icon" />
+                                                <Button Content="Remove" Command="{Binding DatabaseFields.RemovePlatformMediaCommand}"
+                                                        CommandParameter="Icon" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="6">
+                                            <TextBlock Text="Cover" Classes="sectionLabel" />
+                                            <Border Height="120" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                <foundation:GameCoverImage SourcePath="{Binding DatabaseFields.SelectedPlatformCoverPreview}"
+                                                                           Stretch="UniformToFill" />
+                                            </Border>
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <Button Content="Select" Command="{Binding DatabaseFields.SelectPlatformMediaCommand}"
+                                                        CommandParameter="Cover" />
+                                                <Button Content="Remove" Command="{Binding DatabaseFields.RemovePlatformMediaCommand}"
+                                                        CommandParameter="Cover" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Spacing="6">
+                                            <TextBlock Text="Background" Classes="sectionLabel" />
+                                            <Border Height="120" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                <foundation:GameCoverImage SourcePath="{Binding DatabaseFields.SelectedPlatformBackgroundPreview}"
+                                                                           Stretch="UniformToFill" />
+                                            </Border>
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <Button Content="Select" Command="{Binding DatabaseFields.SelectPlatformMediaCommand}"
+                                                        CommandParameter="Background" />
+                                                <Button Content="Remove" Command="{Binding DatabaseFields.RemovePlatformMediaCommand}"
+                                                        CommandParameter="Background" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding DatabaseFields.IsRegionSection}" Spacing="8">
+                                    <TextBlock Text="Region details" FontSize="20" FontWeight="SemiBold" />
+                                    <TextBlock Text="Specification" Classes="sectionLabel" />
+                                    <ComboBox ItemsSource="{Binding DatabaseFields.RegionSpecifications}"
+                                              SelectedItem="{Binding DatabaseFields.SelectedRegionSpecification, Mode=TwoWay}" />
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding DatabaseFields.IsCompletionStatusSection}" Spacing="8">
+                                    <TextBlock Text="Completion defaults" FontSize="20" FontWeight="SemiBold" />
+                                    <TextBlock Text="Default status assigned to newly added games" TextWrapping="Wrap" />
+                                    <ComboBox ItemsSource="{Binding DatabaseFields.CompletionStatusChoices}"
+                                              SelectedItem="{Binding DatabaseFields.SelectedDefaultStatus, Mode=TwoWay}" />
+                                    <TextBlock Text="Status assigned when a game is played for the first time" TextWrapping="Wrap" />
+                                    <ComboBox ItemsSource="{Binding DatabaseFields.CompletionStatusChoices}"
+                                              SelectedItem="{Binding DatabaseFields.SelectedPlayedStatus, Mode=TwoWay}" />
+                                </StackPanel>
+
+                                <StackPanel IsVisible="{Binding DatabaseFields.IsFilterPresetSection}" Spacing="8">
+                                    <TextBlock Text="Filter preset order" FontSize="20" FontWeight="SemiBold" />
+                                    <TextBlock Text="The order here is used by preset selectors in Desktop and Fullscreen."
+                                               TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <CheckBox Content="Show in Fullscreen quick selection"
+                                              IsChecked="{Binding DatabaseFields.SelectedFilterPreset.ShowInFullscreeQuickSelection, Mode=TwoWay}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                        <Button Content="Move up" Command="{Binding DatabaseFields.MoveUpCommand}" />
+                                        <Button Content="Move down" Command="{Binding DatabaseFields.MoveDownCommand}" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <TextBlock Text="Select a field value to edit its details."
+                                           IsVisible="{Binding DatabaseFields.IsGenericSection}"
+                                           Foreground="{DynamicResource DesktopMutedBrush}" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                    <TextBlock Text="{Binding DatabaseFields.StatusText}" VerticalAlignment="Center"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <Button Grid.Column="1" Content="Cancel" Command="{Binding DatabaseFields.CloseCommand}" />
+                    <Button Grid.Column="2" Classes="primary" Content="Save"
+                            Command="{Binding DatabaseFields.SaveCommand}" />
+                </Grid>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+</ResourceDictionary>

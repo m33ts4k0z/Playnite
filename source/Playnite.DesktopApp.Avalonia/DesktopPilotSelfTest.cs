@@ -53,10 +53,10 @@ internal static class DesktopPilotSelfTest
         Record(results, "Avalonia theme API 3 package contract validates", () =>
             window.ActiveThemePackage.Mode == AvaloniaThemeMode.Desktop &&
             window.ActiveThemePackage.Manifest?.ThemeApiVersion == AvaloniaThemePackage.CurrentApiVersion.ToString() &&
-            window.ActiveThemePackage.ResourceDictionaries.Count == 11 &&
+            window.ActiveThemePackage.ResourceDictionaries.Count == 12 &&
             window.ActiveThemePackage.SelectorStyles.Count == 1
                 ? $"{window.ActiveThemePackage.Name} targets theme API {AvaloniaThemePackage.CurrentApiVersion} " +
-                  "with ten modular main-view dictionaries"
+                  "with eleven modular main-view dictionaries"
                 : throw new InvalidOperationException("The default Desktop theme package is incomplete."));
 
         Record(results, "Avalonia 12 native window chrome contract applies", () =>
@@ -3174,6 +3174,66 @@ internal static class DesktopPilotSelfTest
                     $"review={emulationResult.ReviewExclusionPersisted}, settings={emulationResult.SettingsPathPersisted}.");
         });
 
+        // Track P-E: validate manager persistence, media/specification details,
+        // completion defaults, preset ordering, and editor-local taxonomy creation.
+        DatabaseFieldsSelfTestResult databaseFieldsResult = null;
+        Exception databaseFieldsFailure = null;
+        try
+        {
+            databaseFieldsResult = RunDatabaseFieldsSelfTests(viewModel, library);
+        }
+        catch (Exception exception)
+        {
+            databaseFieldsFailure = exception;
+        }
+
+        Record(results, "Database fields manager persists every taxonomy collection", () =>
+        {
+            if (databaseFieldsFailure != null)
+            {
+                throw new InvalidOperationException(databaseFieldsFailure.Message, databaseFieldsFailure);
+            }
+            return databaseFieldsResult.AllTaxonomyKindsPersisted && databaseFieldsResult.UnusedRemovalWorked
+                ? "all eleven taxonomy kinds round-tripped and remove-unused preserved referenced values"
+                : throw new InvalidOperationException(
+                    $"taxonomy={databaseFieldsResult.AllTaxonomyKindsPersisted}, unused={databaseFieldsResult.UnusedRemovalWorked}.");
+        });
+        Record(results, "Platform and region specifications plus platform media persist", () =>
+        {
+            if (databaseFieldsFailure != null)
+            {
+                throw new InvalidOperationException(databaseFieldsFailure.Message, databaseFieldsFailure);
+            }
+            return databaseFieldsResult.SpecificationsPersisted && databaseFieldsResult.PlatformMediaPersisted
+                ? "portable Core media ownership and bundled emulation specification IDs round-tripped"
+                : throw new InvalidOperationException(
+                    $"specifications={databaseFieldsResult.SpecificationsPersisted}, media={databaseFieldsResult.PlatformMediaPersisted}.");
+        });
+        Record(results, "Completion defaults and filter preset order persist", () =>
+        {
+            if (databaseFieldsFailure != null)
+            {
+                throw new InvalidOperationException(databaseFieldsFailure.Message, databaseFieldsFailure);
+            }
+            return databaseFieldsResult.CompletionDefaultsPersisted && databaseFieldsResult.FilterPresetOrderPersisted
+                ? "new-game/first-play statuses and Fullscreen-aware preset ordering were saved through Core"
+                : throw new InvalidOperationException(
+                    $"completion={databaseFieldsResult.CompletionDefaultsPersisted}, presets={databaseFieldsResult.FilterPresetOrderPersisted}.");
+        });
+        Record(results, "Editor creates searchable taxonomy values transactionally", () =>
+        {
+            if (databaseFieldsFailure != null)
+            {
+                throw new InvalidOperationException(databaseFieldsFailure.Message, databaseFieldsFailure);
+            }
+            return databaseFieldsResult.EditorCreationPersisted && databaseFieldsResult.EditorSearchWorked &&
+                databaseFieldsResult.EditorCancelDiscarded
+                    ? "inline creation selected the new genre, search filtered the picker, and cancel left no tag residue"
+                    : throw new InvalidOperationException(
+                        $"creation={databaseFieldsResult.EditorCreationPersisted}, search={databaseFieldsResult.EditorSearchWorked}, " +
+                        $"cancel={databaseFieldsResult.EditorCancelDiscarded}.");
+        });
+
         // Track P-C: all catalog behavior is deterministic. The fake catalog
         // proves client-side SDK/platform decisions, cached installer lookup,
         // per-entry failure isolation, package validation/queueing, and the
@@ -3282,6 +3342,145 @@ internal static class DesktopPilotSelfTest
         Console.WriteLine(report);
         (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown(
             results.Count(result => !result.Pass));
+    }
+
+    private static DatabaseFieldsSelfTestResult RunDatabaseFieldsSelfTests(
+        DesktopAppViewModel viewModel,
+        DesktopLibrary library)
+    {
+        var database = library.Database;
+        var firstPreset = new FilterPreset
+        {
+            Name = "P-E Preset One",
+            Settings = new FilterPresetSettings()
+        };
+        var secondPreset = new FilterPreset
+        {
+            Name = "P-E Preset Two",
+            Settings = new FilterPresetSettings()
+        };
+        database.FilterPresets.Add(new[] { firstPreset, secondPreset });
+        var presetSettings = database.GetFilterPresetsSettings();
+        presetSettings.SortingOrder = new List<Guid> { firstPreset.Id, secondPreset.Id };
+        database.SetFilterPresetsSettings(presetSettings);
+
+        var manager = viewModel.DatabaseFields;
+        if (!manager.Open())
+        {
+            throw new InvalidOperationException("The database fields overlay did not open.");
+        }
+        var platform = (Playnite.SDK.Models.Platform)manager.AddItemForTest(
+            DatabaseFieldKind.Platforms, "P-E Platform");
+        manager.AddItemForTest(DatabaseFieldKind.Categories, "P-E Category");
+        manager.AddItemForTest(DatabaseFieldKind.Genres, "P-E Genre");
+        manager.AddItemForTest(DatabaseFieldKind.Companies, "P-E Company");
+        manager.AddItemForTest(DatabaseFieldKind.Features, "P-E Feature");
+        var tag = (Tag)manager.AddItemForTest(DatabaseFieldKind.Tags, "P-E Referenced Tag");
+        manager.AddItemForTest(DatabaseFieldKind.Tags, "P-E Unused Tag");
+        manager.AddItemForTest(DatabaseFieldKind.Series, "P-E Series");
+        manager.AddItemForTest(DatabaseFieldKind.AgeRatings, "P-E Age Rating");
+        var region = (Region)manager.AddItemForTest(DatabaseFieldKind.Regions, "P-E Region");
+        manager.AddItemForTest(DatabaseFieldKind.Sources, "P-E Source");
+        var defaultStatus = (CompletionStatus)manager.AddItemForTest(
+            DatabaseFieldKind.CompletionStatuses, "P-E Default Status");
+        var playedStatus = (CompletionStatus)manager.AddItemForTest(
+            DatabaseFieldKind.CompletionStatuses, "P-E Played Status");
+
+        var usedGame = database.Games.First();
+        usedGame.TagIds ??= new List<Guid>();
+        if (!usedGame.TagIds.Contains(tag.Id))
+        {
+            usedGame.TagIds.Add(tag.Id);
+        }
+        database.Games.Update(usedGame);
+        var removedUnused = manager.RemoveUnusedForTest(DatabaseFieldKind.Tags);
+        var unusedRemovalWorked = removedUnused > 0 &&
+            manager.Sections.First(section => section.Kind == DatabaseFieldKind.Tags).Items.Any(item => item.Model.Id == tag.Id) &&
+            manager.Sections.First(section => section.Kind == DatabaseFieldKind.Tags).Items.All(item => item.Name != "P-E Unused Tag");
+
+        var mediaPath = Path.Combine(library.ActiveUserDataDirectory, "p-e-platform-media.png");
+        File.WriteAllBytes(mediaPath, Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="));
+        platform.Icon = mediaPath;
+        platform.Cover = mediaPath;
+        platform.Background = mediaPath;
+        platform.SpecificationId = manager.PlatformSpecifications.First(option => option.Id != null).Id;
+        region.SpecificationId = manager.RegionSpecifications.First(option => option.Id != null).Id;
+        manager.SelectedDefaultStatus = manager.CompletionStatusChoices.First(choice => choice.Id == defaultStatus.Id);
+        manager.SelectedPlayedStatus = manager.CompletionStatusChoices.First(choice => choice.Id == playedStatus.Id);
+
+        var filterSection = manager.Sections.First(section => section.Kind == DatabaseFieldKind.FilterPresets);
+        manager.SelectedSection = filterSection;
+        manager.SelectedItem = filterSection.Items.First(item => item.Model.Id == secondPreset.Id);
+        manager.SelectedFilterPreset.ShowInFullscreeQuickSelection = false;
+        manager.MoveUpCommand.Execute(null);
+        if (!manager.Save())
+        {
+            throw new InvalidOperationException(manager.StatusText);
+        }
+
+        var savedPlatform = database.Platforms[platform.Id];
+        var savedRegion = database.Regions[region.Id];
+        var allKindsPersisted = savedPlatform != null &&
+            database.Categories.Any(item => item.Name == "P-E Category") &&
+            database.Genres.Any(item => item.Name == "P-E Genre") &&
+            database.Companies.Any(item => item.Name == "P-E Company") &&
+            database.Features.Any(item => item.Name == "P-E Feature") &&
+            database.Tags[tag.Id] != null &&
+            database.Series.Any(item => item.Name == "P-E Series") &&
+            database.AgeRatings.Any(item => item.Name == "P-E Age Rating") &&
+            savedRegion != null &&
+            database.Sources.Any(item => item.Name == "P-E Source") &&
+            database.CompletionStatuses[defaultStatus.Id] != null &&
+            database.CompletionStatuses[playedStatus.Id] != null;
+        var mediaPersisted = savedPlatform != null &&
+            File.Exists(database.GetFullFilePath(savedPlatform.Icon)) &&
+            File.Exists(database.GetFullFilePath(savedPlatform.Cover)) &&
+            File.Exists(database.GetFullFilePath(savedPlatform.Background));
+        var specificationsPersisted = savedPlatform?.SpecificationId == platform.SpecificationId &&
+            savedRegion?.SpecificationId == region.SpecificationId;
+        var completionSettings = database.GetCompletionStatusSettings();
+        var completionPersisted = completionSettings.DefaultStatus == defaultStatus.Id &&
+            completionSettings.PlayedStatus == playedStatus.Id;
+        var savedPresetOrder = database.GetFilterPresetsSettings().SortingOrder;
+        var filterOrderPersisted = savedPresetOrder.IndexOf(secondPreset.Id) < savedPresetOrder.IndexOf(firstPreset.Id) &&
+            database.FilterPresets[secondPreset.Id]?.ShowInFullscreeQuickSelection == false;
+
+        if (!viewModel.Editor.Open(usedGame.Id))
+        {
+            throw new InvalidOperationException("The editor did not open for the P-E taxonomy test.");
+        }
+        if (!viewModel.Editor.AddTaxonomyForTest("Genres", "P-E Editor Genre"))
+        {
+            throw new InvalidOperationException("The editor did not create a genre.");
+        }
+        viewModel.Editor.GenresSearch = "Editor Genre";
+        var editorGenreOption = viewModel.Editor.Genres.First(item => item.Name == "P-E Editor Genre");
+        var searchWorked = editorGenreOption.IsVisible && viewModel.Editor.Genres
+            .Where(item => item.Id != editorGenreOption.Id).All(item => !item.IsVisible);
+        viewModel.Editor.SaveCommand.Execute(null);
+        var editorGenre = database.Genres.FirstOrDefault(item => item.Name == "P-E Editor Genre");
+        var editorCreationPersisted = editorGenre != null &&
+            database.Games[usedGame.Id]?.GenreIds?.Contains(editorGenre.Id) == true;
+
+        if (!viewModel.Editor.Open(usedGame.Id))
+        {
+            throw new InvalidOperationException("The editor did not reopen for the cancellation test.");
+        }
+        viewModel.Editor.AddTaxonomyForTest("Tags", "P-E Cancelled Tag");
+        viewModel.Editor.CancelCommand.Execute(null);
+        var cancelDiscarded = database.Tags.All(item => item.Name != "P-E Cancelled Tag");
+
+        return new DatabaseFieldsSelfTestResult(
+            allKindsPersisted,
+            unusedRemovalWorked,
+            specificationsPersisted,
+            mediaPersisted,
+            completionPersisted,
+            filterOrderPersisted,
+            editorCreationPersisted,
+            searchWorked,
+            cancelDiscarded);
     }
 
     private static EmulationSuiteSelfTestResult RunEmulationSuiteSelfTests(
@@ -4270,6 +4469,17 @@ internal static class DesktopPilotSelfTest
             }
         }
     }
+
+    private sealed record DatabaseFieldsSelfTestResult(
+        bool AllTaxonomyKindsPersisted,
+        bool UnusedRemovalWorked,
+        bool SpecificationsPersisted,
+        bool PlatformMediaPersisted,
+        bool CompletionDefaultsPersisted,
+        bool FilterPresetOrderPersisted,
+        bool EditorCreationPersisted,
+        bool EditorSearchWorked,
+        bool EditorCancelDiscarded);
 
     private sealed record EmulationSuiteSelfTestResult(
         bool ConfigurationPersisted,
