@@ -71,7 +71,7 @@ required_payload=(
     desktop/Assets/tray-dark.png
     desktop/Localization/english.axaml
     desktop/Localization/Languages/LocSource.axaml
-    fullscreen/Localization/english.axaml
+    fullscreen/Localization/english.fullscreen.axaml
     fullscreen/Localization/Languages/LocSource.axaml
     desktop/Themes/Desktop/Default/Theme.axaml
     desktop/Themes/Desktop/Default/Styles.axaml
