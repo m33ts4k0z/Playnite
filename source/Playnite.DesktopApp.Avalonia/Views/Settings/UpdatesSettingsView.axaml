@@ -29,6 +29,8 @@
       <WrapPanel Orientation="Horizontal">
         <Button Content="Update libraries" Command="{Binding CheckLibrariesCommand}" Margin="0,0,8,8" />
         <Button Content="Check add-ons" Command="{Binding CheckAddonsCommand}" Margin="0,0,8,8" />
+        <Button Content="{DynamicResource LOCSettingsGetExtensions}"
+                Command="{Binding OpenAddonStoreCommand}" Margin="0,0,8,8" />
         <Button Content="Check Playnite" Command="{Binding CheckProgramCommand}" Margin="0,0,8,8"
                 IsVisible="{Binding Coordinator.ProgramUpdatesSupported}" />
       </WrapPanel>

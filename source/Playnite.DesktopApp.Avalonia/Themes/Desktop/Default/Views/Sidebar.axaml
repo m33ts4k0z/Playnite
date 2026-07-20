@@ -62,6 +62,7 @@
                     <Button Content="{DynamicResource LOCDesktopAddManualGame}"
                             Command="{Binding AddManualGameCommand}" />
                     <Button Content="Settings" Command="{Binding OpenSettingsCommand}" />
+                    <Button Content="{DynamicResource LOCMenuAddons}" Command="{Binding OpenAddonStoreCommand}" />
                     <Button Content="{DynamicResource LOCDesktopPluginSettings}"
                             Command="{Binding OpenPluginSettingsListCommand}" />
                     <Button Content="{DynamicResource LOCDesktopPluginCommands}"

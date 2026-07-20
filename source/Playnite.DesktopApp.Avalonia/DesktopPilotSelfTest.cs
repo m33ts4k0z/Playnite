@@ -2,6 +2,7 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.Globalization;
+using System.IO.Compression;
 using System.Management.Automation;
 using Avalonia;
 using Avalonia.Controls;
@@ -52,10 +53,10 @@ internal static class DesktopPilotSelfTest
         Record(results, "Avalonia theme API 3 package contract validates", () =>
             window.ActiveThemePackage.Mode == AvaloniaThemeMode.Desktop &&
             window.ActiveThemePackage.Manifest?.ThemeApiVersion == AvaloniaThemePackage.CurrentApiVersion.ToString() &&
-            window.ActiveThemePackage.ResourceDictionaries.Count == 8 &&
+            window.ActiveThemePackage.ResourceDictionaries.Count == 9 &&
             window.ActiveThemePackage.SelectorStyles.Count == 1
                 ? $"{window.ActiveThemePackage.Name} targets theme API {AvaloniaThemePackage.CurrentApiVersion} " +
-                  "with seven modular main-view dictionaries"
+                  "with eight modular main-view dictionaries"
                 : throw new InvalidOperationException("The default Desktop theme package is incomplete."));
 
         Record(results, "Avalonia 12 native window chrome contract applies", () =>
@@ -3115,6 +3116,86 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException("The deleted filter preset remained active or persisted."));
         viewModel.CloseFilterPanelCommand.Execute(null);
 
+        // Track P-C: all catalog behavior is deterministic. The fake catalog
+        // proves client-side SDK/platform decisions, cached installer lookup,
+        // per-entry failure isolation, package validation/queueing, and the
+        // persisted enable/disable state without relying on playnite.link.
+        AddonStoreSelfTestResult addonStoreResult = null;
+        Exception addonStoreFailure = null;
+        try
+        {
+            addonStoreResult = await RunAddonStoreSelfTests();
+        }
+        catch (Exception exception)
+        {
+            addonStoreFailure = exception;
+        }
+
+        Record(results, "Add-on catalog isolates failures and caches installer manifests", () =>
+        {
+            if (addonStoreFailure != null)
+            {
+                throw new InvalidOperationException(addonStoreFailure.Message, addonStoreFailure);
+            }
+
+            return addonStoreResult.WindowsCount == 2 && addonStoreResult.FailureCount == 2 &&
+                addonStoreResult.InstallerFetchCount == 4
+                    ? "two usable entries loaded, malformed and failed entries were counted, successful lookups were cached, and the failure remained retryable"
+                    : throw new InvalidOperationException(
+                        $"windows={addonStoreResult.WindowsCount}, failures={addonStoreResult.FailureCount}, " +
+                        $"fetches={addonStoreResult.InstallerFetchCount}.");
+        });
+        Record(results, "Add-on compatibility keeps SDK v6 on Windows and greys it on Linux", () =>
+        {
+            if (addonStoreFailure != null)
+            {
+                throw new InvalidOperationException(addonStoreFailure.Message, addonStoreFailure);
+            }
+
+            return addonStoreResult.WindowsV6Compatible && !addonStoreResult.LinuxV6Compatible &&
+                addonStoreResult.LinuxV6Reason.Contains("Linux requires SDK v7", StringComparison.Ordinal)
+                    ? "Windows exposes native v7 plus legacy v6; Linux keeps v6 visible with an SDK v7 reason"
+                    : throw new InvalidOperationException(
+                        $"windows-v6={addonStoreResult.WindowsV6Compatible}, " +
+                        $"linux-v6={addonStoreResult.LinuxV6Compatible}, reason={addonStoreResult.LinuxV6Reason}.");
+        });
+        Record(results, "Add-on install validates identity and uses the restart-safe queue", () =>
+        {
+            if (addonStoreFailure != null)
+            {
+                throw new InvalidOperationException(addonStoreFailure.Message, addonStoreFailure);
+            }
+
+            return addonStoreResult.PackageQueued
+                ? "synthetic SDK v7 and Avalonia-theme packages passed validation and were queued for restart"
+                : throw new InvalidOperationException("A validated package was not present in the install queue.");
+        });
+        Record(results, "Add-on store rejects legacy WPF themes before installation", () =>
+        {
+            if (addonStoreFailure != null)
+            {
+                throw new InvalidOperationException(addonStoreFailure.Message, addonStoreFailure);
+            }
+
+            return addonStoreResult.AvaloniaThemeCompatible && !addonStoreResult.LegacyThemeCompatible &&
+                addonStoreResult.LegacyThemeReason.Contains("WPF theme", StringComparison.Ordinal)
+                    ? "theme API 3 remains installable while the legacy package stays visible with a migration reason"
+                    : throw new InvalidOperationException(
+                        $"avalonia={addonStoreResult.AvaloniaThemeCompatible}, " +
+                        $"legacy={addonStoreResult.LegacyThemeCompatible}, reason={addonStoreResult.LegacyThemeReason}.");
+        });
+        Record(results, "Installed add-on enable state persists and requests restart", () =>
+        {
+            if (addonStoreFailure != null)
+            {
+                throw new InvalidOperationException(addonStoreFailure.Message, addonStoreFailure);
+            }
+
+            return addonStoreResult.DisablePersisted
+                ? "the installed-plugin model persisted DisabledPlugins and raised the restart callback"
+                : throw new InvalidOperationException("The installed add-on state did not persist.");
+        });
+
         // Track P-A: construct every shared dialog surface, verify SDK v6
         // routing/round-trip models, and construct (but never show) crash UX.
         Record(results, "Shared SDK dialog primitives construct and round-trip", () =>
@@ -3143,6 +3224,135 @@ internal static class DesktopPilotSelfTest
         Console.WriteLine(report);
         (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown(
             results.Count(result => !result.Pass));
+    }
+
+    private static async Task<AddonStoreSelfTestResult> RunAddonStoreSelfTests()
+    {
+        var packagePath = Path.Combine(Path.GetTempPath(), $"playnite-addon-store-{Guid.NewGuid():N}.pext");
+        var themePath = Path.Combine(Path.GetTempPath(), $"playnite-addon-store-{Guid.NewGuid():N}.pthm");
+        using (var archive = ZipFile.Open(packagePath, ZipArchiveMode.Create))
+        {
+            var manifestEntry = archive.CreateEntry(PlaynitePaths.ExtensionManifestFileName);
+            using var writer = new StreamWriter(manifestEntry.Open());
+            writer.Write(
+                "Id: p-c-v7\n" +
+                "Name: P-C v7 test\n" +
+                "Author: Playnite\n" +
+                "Version: 1.0.0\n" +
+                "Type: GenericPlugin\n");
+        }
+        using (var archive = ZipFile.Open(themePath, ZipArchiveMode.Create))
+        {
+            var manifestEntry = archive.CreateEntry(PlaynitePaths.ThemeManifestFileName);
+            using (var writer = new StreamWriter(manifestEntry.Open()))
+            {
+                writer.Write(
+                    "Id: p-c-theme\n" +
+                    "Name: P-C Avalonia theme\n" +
+                    "Author: Playnite\n" +
+                    "Version: 1.0.0\n" +
+                    "Mode: Desktop\n" +
+                    "ThemeApiVersion: 3.0.0\n" +
+                    "Framework: Avalonia\n" +
+                    "EntryPoint: Theme.axaml\n" +
+                    "Resources: []\n" +
+                    "Styles: []\n");
+            }
+
+            var dictionaryEntry = archive.CreateEntry("Theme.axaml");
+            using var dictionaryWriter = new StreamWriter(dictionaryEntry.Open());
+            dictionaryWriter.Write(
+                "<ResourceDictionary xmlns=\"https://github.com/avaloniaui\" " +
+                "xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" />");
+        }
+
+        try
+        {
+            var catalog = new AddonStoreFakeCatalog(packagePath, themePath);
+            var service = new DesktopAddonStoreService(catalog, new HttpClient());
+            var windows = await service.BrowseAsync(
+                DesktopAddonStoreCategory.Extensions,
+                string.Empty,
+                true,
+                CancellationToken.None);
+            var linux = await service.BrowseAsync(
+                DesktopAddonStoreCategory.Extensions,
+                string.Empty,
+                false,
+                CancellationToken.None);
+            var windowsV6 = windows.Items.Single(item => item.Id == "p-c-v6");
+            var linuxV6 = linux.Items.Single(item => item.Id == "p-c-v6");
+            var v7 = windows.Items.Single(item => item.Id == "p-c-v7");
+            var installerFetchCount = catalog.InstallerFetchCount;
+            await service.QueueInstallAsync(
+                v7,
+                v7.Packages.Single(package => package.IsCompatible),
+                (_, _) => Task.FromResult(true),
+                CancellationToken.None);
+            var expectedTarget = v7.Manifest.GetTargetDownloadPath();
+            var queued = ExtensionInstaller.GetQueuedItems().Any(item =>
+                item.InstallType == ExtInstallType.Install &&
+                string.Equals(item.Path, expectedTarget, StringComparison.OrdinalIgnoreCase));
+            var themes = await service.BrowseAsync(
+                DesktopAddonStoreCategory.DesktopThemes,
+                string.Empty,
+                true,
+                CancellationToken.None);
+            var avaloniaTheme = themes.Items.Single(item => item.Id == "p-c-theme");
+            var legacyTheme = themes.Items.Single(item => item.Id == "p-c-wpf-theme");
+            await service.QueueInstallAsync(
+                avaloniaTheme,
+                avaloniaTheme.Packages.Single(package => package.IsCompatible),
+                (_, _) => Task.FromResult(true),
+                CancellationToken.None);
+            var themeTarget = avaloniaTheme.Manifest.GetTargetDownloadPath();
+            var themeQueued = ExtensionInstaller.GetQueuedItems().Any(item =>
+                item.InstallType == ExtInstallType.Install &&
+                string.Equals(item.Path, themeTarget, StringComparison.OrdinalIgnoreCase));
+
+            var stateSettings = new DesktopSettings();
+            var stateChanged = 0;
+            var installed = new InstalledAddonItemViewModel(
+                new DesktopInstalledAddon(
+                    "p-c-toggle",
+                    "Toggle test",
+                    "1.0.0",
+                    "Extension",
+                    Path.Combine(PlaynitePaths.ExtensionsUserDataPath, "p-c-toggle"),
+                    true,
+                    false,
+                    true,
+                    string.Empty),
+                stateSettings,
+                () => stateChanged++,
+                _ => { },
+                _ => { });
+            installed.IsEnabled = false;
+
+            return new AddonStoreSelfTestResult(
+                windows.Items.Count,
+                windows.Failures.Count,
+                installerFetchCount,
+                windowsV6.IsCompatible,
+                linuxV6.IsCompatible,
+                linuxV6.CompatibilityReason,
+                queued && themeQueued,
+                avaloniaTheme.IsCompatible,
+                legacyTheme.IsCompatible,
+                legacyTheme.CompatibilityReason,
+                stateChanged == 1 && stateSettings.DisabledPlugins.Contains("p-c-toggle"));
+        }
+        finally
+        {
+            if (File.Exists(packagePath))
+            {
+                File.Delete(packagePath);
+            }
+            if (File.Exists(themePath))
+            {
+                File.Delete(themePath);
+            }
+        }
     }
 
     private static void Record(
@@ -3868,6 +4078,100 @@ internal static class DesktopPilotSelfTest
                 cancellation.Dispose();
             }
         }
+    }
+
+    private sealed record AddonStoreSelfTestResult(
+        int WindowsCount,
+        int FailureCount,
+        int InstallerFetchCount,
+        bool WindowsV6Compatible,
+        bool LinuxV6Compatible,
+        string LinuxV6Reason,
+        bool PackageQueued,
+        bool AvaloniaThemeCompatible,
+        bool LegacyThemeCompatible,
+        string LegacyThemeReason,
+        bool DisablePersisted);
+
+    private sealed class AddonStoreFakeCatalog : IDesktopAddonCatalogClient
+    {
+        private readonly string packagePath;
+        private readonly string themePath;
+        private int installerFetchCount;
+
+        public int InstallerFetchCount => installerFetchCount;
+
+        public AddonStoreFakeCatalog(string packagePath, string themePath)
+        {
+            this.packagePath = packagePath;
+            this.themePath = themePath;
+        }
+
+        public IReadOnlyList<AddonManifest> GetAllAddons(AddonType type, string searchTerm)
+        {
+            if (type != AddonType.Generic)
+            {
+                return type == AddonType.ThemeDesktop
+                    ?
+                    [
+                        CreateManifest("p-c-theme", "P-C Avalonia theme", AddonType.ThemeDesktop),
+                        CreateManifest("p-c-wpf-theme", "P-C legacy WPF theme", AddonType.ThemeDesktop)
+                    ]
+                    : [];
+            }
+
+            return
+            [
+                CreateManifest("p-c-v7", "P-C native v7"),
+                CreateManifest("p-c-v6", "P-C legacy v6"),
+                CreateManifest("p-c-broken", "P-C broken manifest"),
+                CreateManifest(string.Empty, "P-C missing identity")
+            ];
+        }
+
+        public AddonInstallerManifest GetAddonInstaller(string addonId)
+        {
+            Interlocked.Increment(ref installerFetchCount);
+            if (addonId == "p-c-broken")
+            {
+                throw new HttpRequestException("synthetic per-entry failure");
+            }
+
+            var isTheme = addonId is "p-c-theme" or "p-c-wpf-theme";
+            return new AddonInstallerManifest
+            {
+                AddonId = addonId,
+                Packages =
+                [
+                    new AddonInstallerPackage
+                    {
+                        Version = new Version(1, 0),
+                        RequiredApiVersion = addonId switch
+                        {
+                            "p-c-v7" => new Version(7, 0),
+                            "p-c-theme" => AvaloniaThemePackage.CurrentApiVersion,
+                            "p-c-wpf-theme" => new Version(2, 0),
+                            _ => SdkVersions.SDKVersion
+                        },
+                        PackageUrl = isTheme ? themePath : packagePath,
+                        ReleaseDate = DateTime.UtcNow
+                    }
+                ]
+            };
+        }
+
+        private static AddonManifest CreateManifest(
+            string id,
+            string name,
+            AddonType type = AddonType.Generic) =>
+            new()
+            {
+                AddonId = id,
+                Name = name,
+                Author = "Playnite",
+                Type = type,
+                ShortDescription = "Synthetic add-on catalog entry"
+            };
     }
 
     private static string BuildReport(IEnumerable<(string Name, bool Pass, string Detail)> results)

@@ -1,0 +1,207 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:foundation="using:Playnite.Avalonia.Controls">
+    <ControlTemplate x:Key="DesktopAddonStoreTemplate">
+        <Border Width="1180" MaxHeight="820" Padding="28" CornerRadius="14"
+                Background="{DynamicResource DesktopPanelStrongBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                    <StackPanel>
+                        <TextBlock Text="{DynamicResource LOCMenuAddons}" FontSize="30" FontWeight="Bold"
+                                   Foreground="{DynamicResource DesktopTextBrush}" />
+                        <TextBlock Text="Discover, install, and manage extensions and Avalonia themes."
+                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Command="{Binding AddonStore.CloseCommand}"
+                            Content="{DynamicResource LOCCloseLabel}" />
+                </Grid>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10">
+                    <Button Classes="nav" Command="{Binding AddonStore.ShowBrowseCommand}"
+                            Content="{DynamicResource LOCExtensionsBrowse}" />
+                    <Button Classes="nav" Command="{Binding AddonStore.ShowInstalledCommand}"
+                            Content="{DynamicResource LOCExtensionsInstalled}" />
+                    <Border IsVisible="{Binding AddonStore.RestartRequired}"
+                            Background="#403AAE63" BorderBrush="#69D18D"
+                            BorderThickness="1" CornerRadius="6" Padding="10,5">
+                        <TextBlock Text="{DynamicResource LOCAddonChangesRestart}"
+                                   Foreground="#9CF4B8" />
+                    </Border>
+                </StackPanel>
+
+                <Grid Grid.Row="2" IsVisible="{Binding AddonStore.IsBrowseSection}"
+                      ColumnDefinitions="370,*" ColumnSpacing="18">
+                    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
+                        <ComboBox ItemsSource="{Binding AddonStore.Categories}"
+                                  SelectedItem="{Binding AddonStore.SelectedCategory, Mode=TwoWay}" />
+                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBox Text="{Binding AddonStore.SearchText, Mode=TwoWay}"
+                                     Watermark="Search add-ons" />
+                            <Button Grid.Column="1" Command="{Binding AddonStore.SearchCommand}"
+                                    Content="{DynamicResource LOCSearchLabel}" />
+                        </Grid>
+                        <ListBox Grid.Row="2" ItemsSource="{Binding AddonStore.OnlineAddons}"
+                                 SelectedItem="{Binding AddonStore.SelectedOnlineAddon, Mode=TwoWay}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="2" Padding="10" CornerRadius="7" Background="#263140"
+                                            Opacity="{Binding Opacity}">
+                                        <Grid ColumnDefinitions="46,*" ColumnSpacing="10">
+                                            <foundation:GameCoverImage SourcePath="{Binding IconUrl}"
+                                                                       Width="42" Height="42"
+                                                                       Stretch="Uniform" />
+                                            <StackPanel Grid.Column="1" Spacing="2">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource DesktopTextBrush}" />
+                                                <TextBlock Text="{Binding ShortDescription}" FontSize="11"
+                                                           MaxLines="2" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                <TextBlock Text="{Binding CompatibilityText}" FontSize="10"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource DesktopAccentBrush}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+
+                    <Border Grid.Column="1" BorderBrush="#394657" BorderThickness="1"
+                            CornerRadius="9" Padding="18">
+                        <ScrollViewer>
+                            <StackPanel Spacing="13" DataContext="{Binding AddonStore.SelectedOnlineAddon}">
+                                <Grid ColumnDefinitions="80,*" ColumnSpacing="14">
+                                    <foundation:GameCoverImage SourcePath="{Binding IconUrl}"
+                                                               Width="72" Height="72" Stretch="Uniform" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Name}" FontSize="25" FontWeight="Bold"
+                                                   Foreground="{DynamicResource DesktopTextBrush}" />
+                                        <TextBlock Text="{Binding Author}" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <TextBlock Text="{Binding Type}" FontSize="11"
+                                                   Foreground="{DynamicResource DesktopAccentBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                                <Border Background="#202A37" CornerRadius="6" Padding="10">
+                                    <TextBlock Text="{Binding CompatibilityText}" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopTextBrush}" />
+                                </Border>
+                                <TextBlock Text="{Binding Description}" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource DesktopTextBrush}" />
+                                <Border IsVisible="{Binding HasCommunityNote}"
+                                        Background="#403F8AC9" CornerRadius="6" Padding="10">
+                                    <TextBlock Text="{Binding CommunityNote}" TextWrapping="Wrap"
+                                               Foreground="#C7E8FF" />
+                                </Border>
+                                <StackPanel IsVisible="{Binding HasScreenshots}" Spacing="6">
+                                    <TextBlock Text="Screenshots" Classes="sectionLabel" />
+                                    <ItemsControl ItemsSource="{Binding Screenshots}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Command="{Binding OpenCommand}" Margin="0,0,8,8"
+                                                        ToolTip.Tip="{Binding Name}">
+                                                    <foundation:GameCoverImage SourcePath="{Binding Thumbnail}"
+                                                                               Width="170" Height="96"
+                                                                               Stretch="UniformToFill" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                                <StackPanel IsVisible="{Binding HasLinks}" Spacing="6">
+                                    <TextBlock Text="{DynamicResource LOCLinksLabel}" Classes="sectionLabel" />
+                                    <ItemsControl ItemsSource="{Binding Links}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Content="{Binding Name}" Command="{Binding OpenCommand}"
+                                                        Margin="0,0,8,8" ToolTip.Tip="{Binding Url}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <ComboBox ItemsSource="{Binding Packages}"
+                                              SelectedItem="{Binding SelectedPackage, Mode=TwoWay}" />
+                                    <Button Grid.Column="1" Classes="primary"
+                                            Command="{Binding InstallCommand}"
+                                            IsEnabled="{Binding CanInstall}"
+                                            Content="{DynamicResource LOCAddonInstall}" />
+                                </Grid>
+                                <TextBlock Text="{Binding Status}" Foreground="#9CF4B8" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Row="2" IsVisible="{Binding AddonStore.IsInstalledSection}"
+                      ColumnDefinitions="430,*" ColumnSpacing="18">
+                    <ListBox ItemsSource="{Binding AddonStore.InstalledAddons}"
+                             SelectedItem="{Binding AddonStore.SelectedInstalledAddon, Mode=TwoWay}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="2" Padding="11" CornerRadius="7" Background="#263140">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource DesktopTextBrush}" />
+                                            <TextBlock Text="{Binding Type}" FontSize="11"
+                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        </StackPanel>
+                                        <CheckBox Grid.Column="1" IsVisible="{Binding CanToggle}"
+                                                  IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                                  Content="{DynamicResource LOCEnabledTitle}" VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Border Grid.Column="1" BorderBrush="#394657" BorderThickness="1"
+                            CornerRadius="9" Padding="22">
+                        <StackPanel Spacing="12" DataContext="{Binding AddonStore.SelectedInstalledAddon}">
+                            <TextBlock Text="{Binding Name}" FontSize="25" FontWeight="Bold"
+                                       Foreground="{DynamicResource DesktopTextBrush}" />
+                            <TextBlock Text="{Binding Type}" Foreground="{DynamicResource DesktopAccentBrush}" />
+                            <TextBlock Text="{Binding Version, StringFormat='Version {0}'}"
+                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                            <CheckBox IsVisible="{Binding CanToggle}"
+                                      IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                      Content="Enable this plugin after restart" />
+                            <TextBlock Text="{Binding UninstallReason}" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Button Command="{Binding OpenDataDirectoryCommand}"
+                                        IsVisible="{Binding IsPlugin}"
+                                        Content="{DynamicResource LOCExtensionDataDir}" />
+                                <Button Command="{Binding UninstallCommand}" IsEnabled="{Binding CanUninstall}"
+                                        Content="{DynamicResource LOCAddonUninstall}" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding Status}" Foreground="#9CF4B8" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <StackPanel Grid.Row="3" Spacing="5">
+                    <TextBlock Text="{Binding AddonStore.StatusText}"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <Expander Header="Catalog warnings" IsVisible="{Binding AddonStore.HasFailures}">
+                        <ScrollViewer MaxHeight="110">
+                            <TextBlock Text="{Binding AddonStore.FailureText}" TextWrapping="Wrap"
+                                       Foreground="#FFC27A" />
+                        </ScrollViewer>
+                    </Expander>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+</ResourceDictionary>

@@ -176,6 +176,11 @@
                         </Border>
                     </Grid>
 
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding AddonStore.IsVisible}"
+                          Background="#E6000000">
+                        <ContentControl Template="{DynamicResource DesktopAddonStoreTemplate}" />
+                    </Grid>
+
                     <Grid Grid.RowSpan="3" IsVisible="{Binding IsNotificationsVisible}"
                           Background="#D9000000">
                         <Border Width="760" MaxHeight="680" Padding="30" CornerRadius="14"

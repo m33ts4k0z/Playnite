@@ -430,6 +430,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public DesktopInstalledGameImportViewModel InstalledGameImport { get; }
     public DesktopPluginSettingsViewModel PluginSettings { get; }
     public DesktopSettingsViewModel Settings { get; }
+    public AddonStoreViewModel AddonStore { get; }
     public DesktopScriptService Scripts { get; }
     public AvaloniaSearchSession PluginSearch { get; }
     public bool IsPluginSearchVisible => PluginSearch.IsVisible;
@@ -444,6 +445,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand AddManualGameCommand { get; }
     public ICommand OpenPluginSettingsListCommand { get; }
     public ICommand OpenSettingsCommand { get; }
+    public ICommand OpenAddonStoreCommand { get; }
     public ICommand OpenGlobalSearchCommand { get; }
     public ICommand OpenPluginMainMenuCommand { get; }
     public ICommand OpenPluginGameMenuCommand { get; }
@@ -672,6 +674,23 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
                 }
             });
         Settings.PropertyChanged += Settings_PropertyChanged;
+        AddonStore = new AddonStoreViewModel(
+            this.settings,
+            new DesktopAddonStoreService(),
+            () => dialogService,
+            () => SettingsChanged?.Invoke(this, EventArgs.Empty),
+            (message, error) =>
+            {
+                if (runtimeHost != null)
+                {
+                    runtimeHost.ShowMessage(message, error);
+                }
+                else
+                {
+                    StatusText = message;
+                }
+            });
+        Settings.Updates.ConfigureAddonStore(OpenAddonStore);
 
         ActivateCommand = new AppRelayCommand(
             () => RunOperation(SelectedGame?.IsInstalled == true ? GameOperationKind.Play : GameOperationKind.Install),
@@ -724,6 +743,10 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
                 !MetadataDownload.IsRunning && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsRunning && !PluginSettings.IsRunning &&
                 !Settings.IsVisible);
+        OpenAddonStoreCommand = new AppRelayCommand(
+            OpenAddonStore,
+            () => !Editor.IsVisible && !MetadataDownload.IsRunning && !LibrarySync.IsRunning &&
+                !InstalledGameImport.IsRunning && !PluginSettings.IsRunning && !Settings.IsVisible);
         OpenGlobalSearchCommand = new AppRelayCommand(
             () => OpenGlobalSearch(string.Empty),
             () => database != null && !Editor.IsVisible && !MetadataDownload.IsRunning &&
@@ -1052,6 +1075,13 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         RaiseGameCommandStates();
     }
 
+    private void OpenAddonStore()
+    {
+        CloseOverlays();
+        AddonStore.Open();
+        RaiseGameCommandStates();
+    }
+
     public void OpenGlobalSearch(string initialTerm)
     {
         if (globalSearch == null)
@@ -1068,6 +1098,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     private IReadOnlyList<DesktopSearchCommand> GetGlobalSearchCommands() =>
     [
         new("Open settings", "Configure Playnite", OpenSettings),
+        new("Open add-on store", "Browse and manage extensions and themes", OpenAddonStore),
         new("Update libraries", "Import changes from library plugins and scanners", OpenLibrarySync),
         new("Import installed games", "Discover installed desktop applications", OpenInstalledGameImport),
         new("Add game manually", "Create a new library game", AddManualGame),
@@ -1278,6 +1309,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         IsDialogVisible = false;
         IsPluginMenuVisible = false;
         IsFilterPanelVisible = false;
+        AddonStore.Close();
         SelectedPluginMenuItem = null;
         ClosePluginSidebar();
         Settings.Close();
@@ -1420,6 +1452,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)AddManualGameCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginSettingsListCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenSettingsCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenAddonStoreCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenGlobalSearchCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginMainMenuCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginGameMenuCommand).RaiseCanExecuteChanged();

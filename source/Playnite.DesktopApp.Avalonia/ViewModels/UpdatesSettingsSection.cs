@@ -16,6 +16,7 @@ public sealed class UpdatesSettingsSection : SettingsSectionBase
     private LibraryUpdateCheckFrequency checkForLibraryUpdates;
     private LibraryUpdateCheckFrequency checkForEmulatedLibraryUpdates;
     private bool updateNotificationOnPatchesOnly;
+    private Action openAddonStore = () => { };
 
     public override string Key => "Updates";
     public override string Title => "Library — Updates";
@@ -30,6 +31,7 @@ public sealed class UpdatesSettingsSection : SettingsSectionBase
     public ICommand QueueAddonUpdatesCommand { get; }
     public ICommand CheckProgramCommand { get; }
     public ICommand InstallProgramUpdateCommand { get; }
+    public ICommand OpenAddonStoreCommand { get; }
 
     public UpdateCheckFrequency CheckForProgramUpdates
     {
@@ -67,7 +69,11 @@ public sealed class UpdatesSettingsSection : SettingsSectionBase
         QueueAddonUpdatesCommand = new AppRelayCommand(async () => await Coordinator.QueueSelectedAddonsAsync());
         CheckProgramCommand = new AppRelayCommand(async () => await Coordinator.CheckProgramAsync());
         InstallProgramUpdateCommand = new AppRelayCommand(async () => await Coordinator.InstallProgramUpdateAsync());
+        OpenAddonStoreCommand = new AppRelayCommand(() => openAddonStore());
     }
+
+    internal void ConfigureAddonStore(Action openStore) =>
+        openAddonStore = openStore ?? throw new ArgumentNullException(nameof(openStore));
 
     public override void Open()
     {
