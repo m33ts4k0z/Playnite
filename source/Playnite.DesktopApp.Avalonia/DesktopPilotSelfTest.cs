@@ -1812,7 +1812,8 @@ internal static class DesktopPilotSelfTest
                 Opacity: 0,
                 Owner: null,
                 ShowActivated: false,
-                ShowInTaskbar: false
+                ShowInTaskbar: false,
+                WindowState: WindowState.Minimized
             } &&
 #if WINDOWS
             string.Equals(offscreenWebView.GetCurrentAddress(), webServer.PageUrl, StringComparison.OrdinalIgnoreCase) &&

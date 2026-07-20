@@ -459,6 +459,7 @@ internal sealed class AvaloniaSdkWebView : IWebView
             Opacity = offscreen ? 0 : 1,
             ShowInTaskbar = false,
             ShowActivated = false,
+            WindowState = offscreen ? WindowState.Minimized : WindowState.Normal,
             WindowStartupLocation = WindowStartupLocation.Manual,
             Position = new PixelPoint(-32000, -32000)
         };
