@@ -24,6 +24,10 @@ public sealed class GeneralAdvancedSettingsSection : SettingsSectionBase
     public ICommand SelectDatabaseFolderCommand { get; }
     public ICommand ClearWebCacheCommand { get; }
     public ICommand SetDefaultsCommand { get; }
+    public bool DiscordPresenceSupported => OperatingSystem.IsWindows();
+    public string DiscordPresenceSupportText => DiscordPresenceSupported
+        ? "Discord Rich Presence is available."
+        : "Discord Rich Presence is disabled on this platform.";
 
     public bool DiscordPresenceEnabled
     {
@@ -109,7 +113,7 @@ public sealed class GeneralAdvancedSettingsSection : SettingsSectionBase
 
     public override SettingsSectionSaveResult Save()
     {
-        settings.DiscordPresenceEnabled = DiscordPresenceEnabled;
+        settings.DiscordPresenceEnabled = DiscordPresenceSupported && DiscordPresenceEnabled;
         settings.ShowElevatedRightsWarning = ShowElevatedRightsWarning;
         settings.InstallSizeScanUseSizeOnDisk = InstallSizeScanUseSizeOnDisk;
         settings.DirectoryOpenCommand = string.IsNullOrWhiteSpace(DirectoryOpenCommand)

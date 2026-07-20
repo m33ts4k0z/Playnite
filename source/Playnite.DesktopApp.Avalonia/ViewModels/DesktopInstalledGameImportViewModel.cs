@@ -5,7 +5,9 @@ using System.Text.RegularExpressions;
 using System.Windows.Input;
 using Avalonia.Threading;
 using Playnite.Common;
+#if WINDOWS
 using Playnite.Common.Media.Icons;
+#endif
 using Playnite.Database;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK;
@@ -18,7 +20,9 @@ namespace Playnite.DesktopApp.Avalonia.ViewModels;
 public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
 {
     private static readonly ILogger logger = LogManager.GetLogger();
-    private static readonly string[] supportedExecutableExtensions = { ".exe", ".bat", ".lnk" };
+    private static readonly string[] supportedExecutableExtensions = OperatingSystem.IsWindows()
+        ? [".exe", ".bat", ".lnk"]
+        : [".AppImage", ".appimage", ".sh", ".desktop", ".exe", ".bat"];
     private readonly GameDatabase database;
     private readonly DesktopSettings settings;
     private readonly DesktopMetadataDownloadViewModel metadataDownload;
@@ -297,7 +301,9 @@ public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
         var fullPath = Path.GetFullPath(path);
         if (!supportedExecutableExtensions.Contains(Path.GetExtension(fullPath), StringComparer.OrdinalIgnoreCase))
         {
-            ErrorText = "Only .exe, .bat, and .lnk files can be imported.";
+            ErrorText = OperatingSystem.IsWindows()
+                ? "Only .exe, .bat, and .lnk files can be imported."
+                : "Choose an AppImage, shell script, desktop entry, or executable file.";
             return false;
         }
 
@@ -662,7 +668,10 @@ public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
                 ? new MetadataNameProperty("Microsoft Store")
                 : null,
             IsInstalled = true,
-            Platforms = new HashSet<MetadataProperty> { new MetadataSpecProperty("pc_windows") }
+            Platforms = new HashSet<MetadataProperty>
+            {
+                new MetadataSpecProperty(OperatingSystem.IsWindows() ? "pc_windows" : "pc_linux")
+            }
         };
 
         var actionPath = program.Path;
@@ -716,10 +725,14 @@ public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
             return new MetadataFile(iconPath);
         }
 
+#if WINDOWS
         using var iconData = new MemoryStream();
         return IconExtractor.ExtractMainIconFromFile(iconPath, iconData)
             ? new MetadataFile($"{Guid.NewGuid():N}.ico", iconData.ToArray())
             : null;
+#else
+        return null;
+#endif
     }
 
     private static string ResolveIconPath(InstalledProgram program)

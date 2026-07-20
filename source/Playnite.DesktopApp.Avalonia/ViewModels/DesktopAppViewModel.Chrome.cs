@@ -249,7 +249,10 @@ public sealed partial class DesktopAppViewModel
         }
 
         var extension = Path.GetExtension(path);
-        if (extension is not null && !new[] { ".exe", ".lnk", ".url", ".bat" }
+        if (extension is not null && !new[]
+            {
+                ".exe", ".lnk", ".url", ".bat", ".AppImage", ".appimage", ".sh", ".desktop"
+            }
             .Contains(extension, StringComparer.OrdinalIgnoreCase))
         {
             return false;

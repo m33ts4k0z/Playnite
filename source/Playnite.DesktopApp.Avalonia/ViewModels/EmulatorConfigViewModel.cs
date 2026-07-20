@@ -482,11 +482,11 @@ public sealed class EmulatorConfigViewModel : INotifyPropertyChanged
         copy.Name = $"{copy.Name} Copy";
         foreach (var profile in copy.CustomProfiles)
         {
-            profile.Id = $"{CustomEmulatorProfile.ProfilePrefix}{Guid.NewGuid()}";
+            profile.Id = $"#custom_{Guid.NewGuid()}";
         }
         foreach (var profile in copy.BuiltinProfiles)
         {
-            profile.Id = $"{BuiltInEmulatorProfile.ProfilePrefix}{Guid.NewGuid()}";
+            profile.Id = $"#builtin_{Guid.NewGuid()}";
         }
         EditingEmulators.Add(copy);
         SelectedEmulator = copy;
@@ -579,7 +579,7 @@ public sealed class EmulatorConfigViewModel : INotifyPropertyChanged
             return;
         }
         var copy = SelectedCustomProfile.GetClone();
-        copy.Id = $"{CustomEmulatorProfile.ProfilePrefix}{Guid.NewGuid()}";
+        copy.Id = $"#custom_{Guid.NewGuid()}";
         copy.Name = $"{copy.Name} Copy";
         SelectedEmulator.CustomProfiles.Add(copy);
         SelectedProfile = copy;

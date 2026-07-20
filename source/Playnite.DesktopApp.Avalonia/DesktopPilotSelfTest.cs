@@ -25,7 +25,9 @@ using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using Playnite.Scripting;
 using Playnite.Scripting.PowerShell;
+#if WINDOWS
 using Playnite.WpfPluginSupport;
+#endif
 using InstalledProgram = Playnite.Common.Program;
 
 namespace Playnite.DesktopApp.Avalonia;
@@ -39,6 +41,11 @@ internal static class DesktopPilotSelfTest
     {
         var results = new List<(string Name, bool Pass, string Detail)>();
         await Task.Delay(500);
+#if !WINDOWS
+        Console.WriteLine(
+            "[SKIP] 13 SDK v6/WPF resource, element-host, converter, menu, and settings checks are Windows-only; " +
+            "Linux exercises the SDK v7 Avalonia contracts instead.");
+#endif
 
         Record(results, "Playnite.Core library opens", () =>
             library.IsOpen && library.Database.GetType().Assembly.GetName().Name == "Playnite.Core"
@@ -226,12 +233,14 @@ internal static class DesktopPilotSelfTest
                 : throw new FileNotFoundException($"The SDK v7 host bundle is incomplete at {bundlePath}.");
         });
 
+#if WINDOWS
         Record(results, "Legacy plugin resources bridge into Avalonia", () =>
             Playnite.SDK.ResourceProvider.GetString("LOCDesktopPlay") == "Play" &&
             Playnite.SDK.ResourceProvider.GetResource("FontIcoFont") is System.Windows.Media.FontFamily &&
             System.Windows.Application.Current?.TryFindResource("BaseTextBlockStyle") is System.Windows.Style
                 ? "localized strings and WPF-compatible theme primitives are available during plugin construction"
                 : throw new InvalidOperationException("The static legacy resource bridge is incomplete."));
+#endif
 
         viewModel.SelectedGame = viewModel.Games.First(game => game.IsInstalled);
         viewModel.ActivateCommand.Execute(null);
@@ -568,7 +577,11 @@ internal static class DesktopPilotSelfTest
             viewModel.Editor.UserScore = "91";
             viewModel.Editor.SaveCommand.Execute(null);
         }, DispatcherPriority.Background);
+#if WINDOWS
         var pluginEditResult = window.RuntimeHost.PluginApi.MainView.OpenEditDialog(pluginEditGame.Game.Id);
+#else
+        var pluginEditResult = await window.RuntimeHost.PluginApi.MainView.OpenEditDialogAsync(pluginEditGame.Game.Id);
+#endif
         Record(results, "Plugin OpenEditDialog uses the Avalonia editor", () =>
             pluginEditResult == true &&
             library.Database.Games[pluginEditGame.Game.Id].Name == pluginEditedName &&
@@ -692,7 +705,11 @@ internal static class DesktopPilotSelfTest
             viewModel.Editor.UseGlobalPreScript = false;
             viewModel.Editor.SaveCommand.Execute(null);
         }, DispatcherPriority.Background);
+#if WINDOWS
         var bulkEditResult = window.RuntimeHost.PluginApi.MainView.OpenEditDialog(bulkGameIds);
+#else
+        var bulkEditResult = await window.RuntimeHost.PluginApi.MainView.OpenEditDialogAsync(bulkGameIds);
+#endif
         Record(results, "Plugin bulk editing applies selected fields only", () =>
             bulkEditResult == true && bulkGameIds.All(id =>
             {
@@ -1152,17 +1169,18 @@ internal static class DesktopPilotSelfTest
 
         var installedFixtureDirectory = Path.Combine(library.ActiveUserDataDirectory, "installed-import-fixtures");
         Directory.CreateDirectory(installedFixtureDirectory);
-        var systemExecutable = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.System),
-            "cmd.exe");
+        var systemExecutable = OperatingSystem.IsWindows()
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe")
+            : "/bin/true";
         if (!File.Exists(systemExecutable))
         {
             throw new FileNotFoundException("The installed-game fixture executable is unavailable.", systemExecutable);
         }
 
-        var detectedExecutablePath = Path.Combine(installedFixtureDirectory, "Pilot Detected.exe");
-        var scannedExecutablePath = Path.Combine(installedFixtureDirectory, "Pilot Scanned.exe");
-        var directExecutablePath = Path.Combine(installedFixtureDirectory, "Pilot Direct.exe");
+        var executableExtension = OperatingSystem.IsWindows() ? ".exe" : ".sh";
+        var detectedExecutablePath = Path.Combine(installedFixtureDirectory, "Pilot Detected" + executableExtension);
+        var scannedExecutablePath = Path.Combine(installedFixtureDirectory, "Pilot Scanned" + executableExtension);
+        var directExecutablePath = Path.Combine(installedFixtureDirectory, "Pilot Direct" + executableExtension);
         File.Copy(systemExecutable, detectedExecutablePath, true);
         File.Copy(systemExecutable, scannedExecutablePath, true);
         File.Copy(systemExecutable, directExecutablePath, true);
@@ -1172,24 +1190,26 @@ internal static class DesktopPilotSelfTest
             Path = detectedExecutablePath,
             Arguments = "--detected",
             WorkDir = installedFixtureDirectory,
-            Icon = detectedExecutablePath,
+            Icon = OperatingSystem.IsWindows() ? detectedExecutablePath : library.SelfTestMediaPath,
             AppId = "pilot-installed-win32"
         };
         var storeProgram = new InstalledProgram
         {
             Name = "Pilot Store Game",
-            Path = "explorer.exe",
-            Arguments = "shell:AppsFolder\\Pilot.Store_123!App",
+            Path = OperatingSystem.IsWindows() ? "explorer.exe" : systemExecutable,
+            Arguments = OperatingSystem.IsWindows() ? "shell:AppsFolder\\Pilot.Store_123!App" : "--secondary",
             WorkDir = installedFixtureDirectory,
             Icon = library.SelfTestMediaPath,
-            AppId = "Pilot.Store_123"
+            AppId = OperatingSystem.IsWindows() ? "Pilot.Store_123" : "pilot-installed-linux-secondary"
         };
         var scannedProgram = new InstalledProgram
         {
             Name = "Pilot Scanned Game",
             Path = scannedExecutablePath,
             WorkDir = installedFixtureDirectory,
-            Icon = $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "shell32.dll")},0",
+            Icon = OperatingSystem.IsWindows()
+                ? $"{Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "shell32.dll")},0"
+                : library.SelfTestMediaPath,
             AppId = "pilot-installed-scanned"
         };
         var directProgram = new InstalledProgram
@@ -1198,7 +1218,7 @@ internal static class DesktopPilotSelfTest
             Path = directExecutablePath,
             Arguments = "--direct",
             WorkDir = installedFixtureDirectory,
-            Icon = directExecutablePath,
+            Icon = OperatingSystem.IsWindows() ? directExecutablePath : library.SelfTestMediaPath,
             AppId = "pilot-installed-direct"
         };
         var installedLibraryUpdates = 0;
@@ -1210,7 +1230,11 @@ internal static class DesktopPilotSelfTest
                 return Task.FromResult<IReadOnlyList<DesktopDetectedProgram>>(new[]
                 {
                     new DesktopDetectedProgram(detectedProgram, DesktopInstalledProgramType.Win32),
-                    new DesktopDetectedProgram(storeProgram, DesktopInstalledProgramType.MicrosoftStore)
+                    new DesktopDetectedProgram(
+                        storeProgram,
+                        OperatingSystem.IsWindows()
+                            ? DesktopInstalledProgramType.MicrosoftStore
+                            : DesktopInstalledProgramType.Win32)
                 });
             },
             (path, token) =>
@@ -1226,7 +1250,7 @@ internal static class DesktopPilotSelfTest
 
         viewModel.OpenInstalledGameImportCommand.Execute(null);
         var detectedInstalledPrograms = await viewModel.InstalledGameImport.DetectInstalledAsync();
-        Record(results, "Installed-game import exposes desktop and Store discovery", () =>
+        Record(results, "Installed-game import exposes native platform discovery", () =>
             detectedInstalledPrograms &&
             viewModel.InstalledGameImport.IsVisible &&
             viewModel.InstalledGameImport.Programs.Count == 2 &&
@@ -1236,10 +1260,14 @@ internal static class DesktopPilotSelfTest
                 !program.IsImported) &&
             viewModel.InstalledGameImport.Programs.Any(program =>
                 program.Program.AppId == storeProgram.AppId &&
-                program.Type == DesktopInstalledProgramType.MicrosoftStore &&
+                program.Type == (OperatingSystem.IsWindows()
+                    ? DesktopInstalledProgramType.MicrosoftStore
+                    : DesktopInstalledProgramType.Win32) &&
                 !program.IsImported) &&
             !viewModel.OpenLibrarySyncCommand.CanExecute(null)
-                ? "Win32 and Microsoft Store candidates share the native cancellable import surface"
+                ? OperatingSystem.IsWindows()
+                    ? "Win32 and Microsoft Store candidates share the native cancellable import surface"
+                    : "Linux executable and desktop-entry candidates share the native cancellable import surface"
                 : throw new InvalidOperationException("Installed-program discovery did not expose both source types."));
 
         viewModel.InstalledGameImport.SelectAll = true;
@@ -1252,10 +1280,11 @@ internal static class DesktopPilotSelfTest
         var detectedAction = detectedGame?.GameActions?.SingleOrDefault();
         var storeAction = storeGame?.GameActions?.SingleOrDefault();
         var storeSource = storeGame == null ? null : library.Database.Sources[storeGame.SourceId];
-        var windowsSpecificationApplied = new[] { detectedGame, storeGame }
+        var platformSpecification = OperatingSystem.IsWindows() ? "pc_windows" : "pc_linux";
+        var platformSpecificationApplied = new[] { detectedGame, storeGame }
             .Where(game => game != null)
             .All(game => game.PlatformIds?.Any(id =>
-                library.Database.Platforms[id]?.SpecificationId == "pc_windows") == true);
+                library.Database.Platforms[id]?.SpecificationId == platformSpecification) == true);
 
         Record(results, "Installed discovery imports Core games, metadata, actions, and live wrappers", () =>
         {
@@ -1274,11 +1303,15 @@ internal static class DesktopPilotSelfTest
                 detectedAction.Arguments == detectedProgram.Arguments &&
                 detectedAction.WorkingDir == ExpandableVariables.InstallationDirectory &&
                 detectedAction.IsPlayAction &&
-                storeSource?.Name == "Microsoft Store" &&
+                (OperatingSystem.IsWindows()
+                    ? storeSource?.Name == "Microsoft Store"
+                    : storeGame.SourceId == Guid.Empty) &&
                 storeAction?.Path == storeProgram.Path &&
                 storeAction.Arguments == storeProgram.Arguments &&
-                storeAction.WorkingDir == string.Empty &&
-                windowsSpecificationApplied &&
+                storeAction.WorkingDir == (OperatingSystem.IsWindows()
+                    ? string.Empty
+                    : ExpandableVariables.InstallationDirectory) &&
+                platformSpecificationApplied &&
                 detectedGame.Description == PilotMetadataPlugin.DownloadedDescription &&
                 storeGame.Description == PilotMetadataPlugin.DownloadedDescription &&
                 File.Exists(library.Database.GetFullFilePath(detectedGame.CoverImage)) &&
@@ -1289,13 +1322,15 @@ internal static class DesktopPilotSelfTest
                 metadataServer.RequestCount >= requestsBeforeInstalledImport + 4 &&
                 installedLibraryUpdates == 1)
             {
-                return "legacy import metadata became owned Core records for both Win32 and Store candidates";
+                return OperatingSystem.IsWindows()
+                    ? "legacy import metadata became owned Core records for both Win32 and Store candidates"
+                    : "Linux program metadata became owned Core records with native launch actions";
             }
 
             throw new InvalidOperationException(
                 $"import={importedDetectedPrograms}, games={library.Database.Games.Count}/{gamesBeforeInstalledImport + 2}, " +
                 $"detected={detectedGame?.Name}/{detectedAction?.Path}, store={storeSource?.Name}/{storeAction?.Path}, " +
-                $"platforms={windowsSpecificationApplied}, providers={metadataPlugin.ProviderCreationCount}/{providersBeforeInstalledImport + 2}, " +
+                $"platforms={platformSpecificationApplied}/{platformSpecification}, providers={metadataPlugin.ProviderCreationCount}/{providersBeforeInstalledImport + 2}, " +
                 $"requests={metadataServer.RequestCount}/{requestsBeforeInstalledImport + 4}, updates={installedLibraryUpdates}.");
         });
 
@@ -1333,14 +1368,18 @@ internal static class DesktopPilotSelfTest
             directGame != null &&
             File.Exists(library.Database.GetFullFilePath(installedScannedGame.Icon)) &&
             File.Exists(library.Database.GetFullFilePath(directGame.Icon)) &&
-            Path.GetExtension(installedScannedGame.Icon).Equals(".ico", StringComparison.OrdinalIgnoreCase) &&
+            Path.GetExtension(installedScannedGame.Icon).Equals(
+                OperatingSystem.IsWindows() ? ".ico" : ".png",
+                StringComparison.OrdinalIgnoreCase) &&
             installedScannedGame.CoverImage == null &&
             directGame.CoverImage == null &&
             metadataPlugin.ProviderCreationCount == providersBeforeExecutableImport &&
             installedLibraryUpdates == 2 &&
             viewModel.Games.Any(game => game.Game.Id == installedScannedGame.Id) &&
             viewModel.Games.Any(game => game.Game.Id == directGame.Id)
-                ? "recursive-scan and single-file candidates imported with executable/resource icons converted into owned ICO files"
+                ? OperatingSystem.IsWindows()
+                    ? "recursive-scan and single-file candidates imported with executable/resource icons converted into owned ICO files"
+                    : "recursive-scan and single-file candidates imported with owned Linux image icons"
                 : throw new InvalidOperationException("Folder/direct executable imports lost icon, database, or update state."));
         viewModel.InstalledGameImport.DownloadMetadataOnImport = true;
 
@@ -1400,6 +1439,7 @@ internal static class DesktopPilotSelfTest
                 ? "cancel left no database or live-wrapper residue"
                 : throw new InvalidOperationException("A cancelled manual game remained in the library."));
 
+#if WINDOWS
         var initialElementGame = viewModel.SelectedGame?.Game ?? viewModel.Games.First().Game;
         var pluginElementHost = new Playnite.Avalonia.Controls.PluginElementHost
         {
@@ -1608,7 +1648,9 @@ internal static class DesktopPilotSelfTest
         window.RuntimeHost.Extensions.ConvertersSupportList.RemoveAll(item =>
             ReferenceEquals(item.Source, legacyUiPlugin));
         legacyUiPlugin.Dispose();
+#endif
 
+#if WINDOWS
         Record(results, "Web-view adapter rejects unmappable SDK policies", () =>
         {
             var javaScriptError = CaptureNotSupported(() =>
@@ -1627,6 +1669,26 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException(
                     $"Unexpected compatibility messages: JavaScript='{javaScriptError}', response='{responseError}'.");
         });
+#else
+        Record(results, "SDK v7 web-view rejects unsupported response capture policy", () =>
+        {
+            var javaScriptError = CaptureNotSupported(() =>
+                window.RuntimeHost.PluginApi.WebViews.CreateOffscreenView(new WebViewSettings
+                {
+                    JavaScriptEnabled = false
+                }));
+            var responseError = CaptureNotSupported(() =>
+                window.RuntimeHost.PluginApi.WebViews.CreateOffscreenView(new WebViewSettings
+                {
+                    CaptureResponseContent = true
+                }));
+            return javaScriptError.Contains("JavaScript", StringComparison.Ordinal) &&
+                   responseError.Contains("response", StringComparison.OrdinalIgnoreCase)
+                ? "JavaScript policy and response capture fail explicitly instead of changing semantics"
+                : throw new InvalidOperationException(
+                    $"Unexpected SDK v7 policy messages: JavaScript='{javaScriptError}', response='{responseError}'.");
+        });
+#endif
 
         await using var webServer = new LoopbackWebServer();
         using var offscreenWebView = window.RuntimeHost.PluginApi.WebViews.CreateOffscreenView(new WebViewSettings
@@ -1635,13 +1697,22 @@ internal static class DesktopPilotSelfTest
         });
         var loadingStates = new List<bool>();
         offscreenWebView.LoadingChanged += (_, args) => loadingStates.Add(args.IsLoading);
+#if WINDOWS
         offscreenWebView.NavigateAndWait(webServer.PageUrl);
         var initialPageText = offscreenWebView.GetPageText();
+#else
+        await offscreenWebView.NavigateAsync(new Uri(webServer.PageUrl));
+        var initialPageText = await offscreenWebView.GetPageTextAsync();
+#endif
         var initialPageSource = await offscreenWebView.GetPageSourceAsync();
         Record(results, "Offscreen plugin web views navigate through Avalonia NativeWebView", () =>
             offscreenWebView.CanExecuteJavascriptInMainFrame &&
             offscreenWebView.WindowHost == null &&
+#if WINDOWS
             string.Equals(offscreenWebView.GetCurrentAddress(), webServer.PageUrl, StringComparison.OrdinalIgnoreCase) &&
+#else
+            string.Equals(offscreenWebView.Address?.AbsoluteUri, webServer.PageUrl, StringComparison.OrdinalIgnoreCase) &&
+#endif
             initialPageText.Contains(LoopbackWebServer.InitialText, StringComparison.Ordinal) &&
             initialPageSource.Contains("pilot-message", StringComparison.Ordinal) &&
             loadingStates.Contains(true) &&
@@ -1649,7 +1720,11 @@ internal static class DesktopPilotSelfTest
             string.Equals(webServer.LastUserAgent, LoopbackWebServer.ExpectedUserAgent, StringComparison.Ordinal)
                 ? $"loaded {webServer.PageUrl} with SDK loading events and the configured user agent"
                 : throw new InvalidOperationException(
+#if WINDOWS
                     $"address={offscreenWebView.GetCurrentAddress()}, states={string.Join(',', loadingStates)}, " +
+#else
+                    $"address={offscreenWebView.Address}, states={string.Join(',', loadingStates)}, " +
+#endif
                     $"userAgent={webServer.LastUserAgent}"));
 
         var scriptResult = await offscreenWebView.EvaluateScriptAsync(
@@ -1667,6 +1742,7 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException(
                     $"success={scriptResult.Success}, value={scriptResult.Result}, failedMessage={failedScriptResult.Message}"));
 
+#if WINDOWS
         offscreenWebView.SetCookies(
             webServer.PageUrl,
             "127.0.0.1",
@@ -1678,6 +1754,22 @@ internal static class DesktopPilotSelfTest
             cookie.Name == "pilot-cookie" && cookie.Domain.TrimStart('.') == "127.0.0.1");
         offscreenWebView.DeleteCookies(webServer.PageUrl, "pilot-cookie");
         var cookieDeleted = offscreenWebView.GetCookies().All(cookie => cookie.Name != "pilot-cookie");
+#else
+        await offscreenWebView.SetCookieAsync(
+            new Uri(webServer.PageUrl),
+            new HttpCookie
+            {
+                Domain = "127.0.0.1",
+                Name = "pilot-cookie",
+                Value = "pilot-value",
+                Path = "/",
+                Expires = DateTime.UtcNow.AddHours(1)
+            });
+        var writtenCookie = (await offscreenWebView.GetCookiesAsync()).SingleOrDefault(cookie =>
+            cookie.Name == "pilot-cookie" && cookie.Domain.TrimStart('.') == "127.0.0.1");
+        await offscreenWebView.DeleteCookiesAsync(new Uri(webServer.PageUrl), "pilot-cookie");
+        var cookieDeleted = (await offscreenWebView.GetCookiesAsync()).All(cookie => cookie.Name != "pilot-cookie");
+#endif
         Record(results, "Plugin web-view cookies round-trip through the native engine", () =>
             writtenCookie?.Value == "pilot-value" &&
             writtenCookie.Path == "/" &&
@@ -1690,8 +1782,13 @@ internal static class DesktopPilotSelfTest
         {
             WindowWidth = 520,
             WindowHeight = 320,
+#if WINDOWS
             WindowBackground = System.Windows.Media.Colors.Black
+#else
+            WindowBackground = global::Avalonia.Media.Colors.Black
+#endif
         });
+#if WINDOWS
         visibleWebView.NavigateAndWait(webServer.PageUrl);
         var windowHostError = CaptureNotSupported(() => _ = visibleWebView.WindowHost);
         Dispatcher.UIThread.Post(visibleWebView.Close, DispatcherPriority.Background);
@@ -1702,6 +1799,18 @@ internal static class DesktopPilotSelfTest
                 ? "the native browser opened and closed modally while the WPF-only WindowHost mismatch stayed explicit"
                 : throw new InvalidOperationException(
                     $"dialogResult={visibleDialogResult}, WindowHost='{windowHostError}'"));
+#else
+        await visibleWebView.NavigateAsync(new Uri(webServer.PageUrl));
+        var visibleWindowHost = visibleWebView.WindowHost;
+        var visibleDialogTask = visibleWebView.OpenAsync(true);
+        await Task.Delay(100);
+        visibleWebView.Close();
+        await visibleDialogTask;
+        Record(results, "Visible plugin web views use an asynchronous Avalonia dialog", () =>
+            visibleWindowHost != null
+                ? "the SDK v7 browser opened and closed through its native Avalonia window host"
+                : throw new InvalidOperationException("The portable web view did not expose its Avalonia window host."));
+#endif
 
         viewModel.MetadataDownload.ConfigureProviders(
             () => window.RuntimeHost.Extensions.MetadataPlugins,
@@ -2230,7 +2339,12 @@ internal static class DesktopPilotSelfTest
             Key.F12,
             KeyModifiers.Control | KeyModifiers.Shift);
         viewModel.Settings.SaveCommand.Execute(null);
-        var searchHotkeyRegistered = window.RegisteredSystemHotKey == searchSettingsSection.SystemSearchHotkey;
+        var searchHotkeyRegistered = OperatingSystem.IsWindows()
+            ? window.RegisteredSystemHotKey == searchSettingsSection.SystemSearchHotkey
+            : window.RegisteredSystemHotKey == null &&
+              searchSettingsSection.SystemHotkeySupportText.Contains(
+                  "unavailable",
+                  StringComparison.OrdinalIgnoreCase);
 
         var globalSearchGame = viewModel.LibraryGames.First(game =>
             !game.Game.Hidden && !string.IsNullOrWhiteSpace(game.Name));
@@ -2287,7 +2401,9 @@ internal static class DesktopPilotSelfTest
         Record(results, "Global search honors actions, commands, result fields, filters, and the system hotkey", () =>
             searchHotkeyRegistered && gameSearchWorked && commandSearchWorked && searchFiltersPersisted &&
             searchSettingsReopened && window.RegisteredSystemHotKey == null
-                ? "game/command search, result visibility, persistent filters, Ctrl+F policy, and the Windows hotkey adapter are active"
+                ? OperatingSystem.IsWindows()
+                    ? "game/command search, result visibility, persistent filters, Ctrl+F policy, and the Windows hotkey adapter are active"
+                    : "game/command search, result visibility, persistent filters, Ctrl+F policy, and the unsupported hotkey policy are active"
                 : throw new InvalidOperationException(
                     $"hotkey={searchHotkeyRegistered}/{window.RegisteredSystemHotKey}, game={gameSearchWorked}, " +
                     $"command={commandSearchWorked}, filters={searchFiltersPersisted}, reopened={searchSettingsReopened}"));
@@ -2332,11 +2448,18 @@ internal static class DesktopPilotSelfTest
             libraryPlugin.GetGamesCallCount == libraryCallsBeforeScheduledUpdate + 1 &&
             libraryUpdatedCount == libraryNotificationsBeforeScheduledUpdate + 1 &&
             viewModel.Settings.Updates.Coordinator == viewModel.Updates &&
-            viewModel.Settings.Updates.Coordinator.ProgramUpdatesSupported &&
-            viewModel.Settings.Updates.Coordinator.ProgramUpdateSupportText.Contains(
-                "checksum",
-                StringComparison.OrdinalIgnoreCase)
-                ? "the scheduler reused Core integration/scanner imports and exposes the verified Windows updater"
+            (OperatingSystem.IsWindows()
+                ? viewModel.Settings.Updates.Coordinator.ProgramUpdatesSupported &&
+                  viewModel.Settings.Updates.Coordinator.ProgramUpdateSupportText.Contains(
+                      "checksum",
+                      StringComparison.OrdinalIgnoreCase)
+                : !viewModel.Settings.Updates.Coordinator.ProgramUpdatesSupported &&
+                  viewModel.Settings.Updates.Coordinator.ProgramUpdateSupportText.Contains(
+                      "package manager",
+                      StringComparison.OrdinalIgnoreCase))
+                ? OperatingSystem.IsWindows()
+                    ? "the scheduler reused Core integration/scanner imports and exposes the verified Windows updater"
+                    : "the scheduler reused Core imports and leaves program updates to the Linux package manager"
                 : throw new InvalidOperationException(
                     $"scheduled={scheduledLibraryUpdate}, calls={libraryPlugin.GetGamesCallCount}/" +
                     $"{libraryCallsBeforeScheduledUpdate + 1}, notifications={libraryUpdatedCount}/" +
@@ -4039,13 +4162,17 @@ internal static class DesktopPilotSelfTest
         string name,
         Func<string> check)
     {
+        Console.WriteLine($"[RUN ] {name}");
         try
         {
-            results.Add((name, true, check()));
+            var detail = check();
+            results.Add((name, true, detail));
+            Console.WriteLine($"[PASS] {name}");
         }
         catch (Exception exception)
         {
             results.Add((name, false, exception.Message));
+            Console.WriteLine($"[FAIL] {name}: {exception.Message}");
         }
     }
 

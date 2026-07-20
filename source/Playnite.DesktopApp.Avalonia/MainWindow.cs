@@ -123,7 +123,8 @@ public sealed class MainWindow : Window
             (enabled, disabled) => sdlInput.ApplySettings(enabled, disabled));
         sdlInput.DevicesChanged += (_, _) => viewModel.Settings.Input.RefreshControllers();
         systemHotKeyService = new SystemHotKeyService(this);
-        discord = new global::Playnite.DiscordManager(settings.DiscordPresenceEnabled);
+        discord = new global::Playnite.DiscordManager(
+            OperatingSystem.IsWindows() && settings.DiscordPresenceEnabled);
         viewModel.Updates.ConfigureProgramInstaller(LaunchProgramUpdater);
         trayService = new DesktopTrayService(
             viewModel,
@@ -339,11 +340,12 @@ public sealed class MainWindow : Window
     private void ViewModel_SettingsChanged(object sender, EventArgs e)
     {
         global::Playnite.Common.NLogLogger.IsTraceEnabled = settings.TraceLogEnabled;
-        if (discord.IsPresenceEnabled && !settings.DiscordPresenceEnabled)
+        var discordEnabled = OperatingSystem.IsWindows() && settings.DiscordPresenceEnabled;
+        if (discord.IsPresenceEnabled && !discordEnabled)
         {
             discord.ClearPresence();
         }
-        discord.IsPresenceEnabled = settings.DiscordPresenceEnabled;
+        discord.IsPresenceEnabled = discordEnabled;
         ApplyTypographyResources();
         themeManager.ApplyLanguage(
             Playnite.Avalonia.App.Services.LanguageCatalog.ResolveLanguagePaths(
@@ -619,7 +621,9 @@ public sealed class MainWindow : Window
             {
                 UseShellExecute = true
             };
-            if (Path.GetFileNameWithoutExtension(executable).EndsWith(".Avalonia", StringComparison.Ordinal))
+            if (Path.GetFileName(executable).StartsWith(
+                    "Playnite.FullscreenApp.Avalonia",
+                    StringComparison.Ordinal))
             {
                 startInfo.ArgumentList.Add("--userdatadir");
                 startInfo.ArgumentList.Add(options.UserDataDirectory);
@@ -641,10 +645,13 @@ public sealed class MainWindow : Window
     {
         var candidates = new[]
         {
+            global::Playnite.PlaynitePaths.FullscreenExecutablePath,
+            ContentPath("Playnite.FullscreenApp.Avalonia"),
             ContentPath("Playnite.FullscreenApp.Avalonia.exe"),
+            ContentPath("Playnite.FullscreenApp"),
             ContentPath("Playnite.FullscreenApp.exe")
         };
-        return candidates.FirstOrDefault(File.Exists);
+        return candidates.FirstOrDefault(candidate => !string.IsNullOrWhiteSpace(candidate) && File.Exists(candidate));
     }
 
     private async void OnOpened(object sender, EventArgs e)
@@ -652,6 +659,11 @@ public sealed class MainWindow : Window
         mainView.FocusSelectedGame();
         sdlInput.Start();
         ApplySystemHotKey();
+        if (options.StartClosedToTray && !options.SelfTest && !options.PluginCompatibilityTest &&
+            trayService.IsEnabled)
+        {
+            HideToTray();
+        }
         if (!options.PluginCompatibilityTest && !options.SelfTest)
         {
             viewModel.ShowFirstTimeWizard();
@@ -687,6 +699,13 @@ public sealed class MainWindow : Window
 
     private void LaunchProgramUpdater(string updaterPath)
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            viewModel.SetStatusMessage(
+                "Program updates are managed by your operating-system package manager on this platform.");
+            return;
+        }
+
         var portable = global::Playnite.PlaynitePaths.IsPortable ? "/PORTABLE" : string.Empty;
         var programPath = global::Playnite.PlaynitePaths.ProgramPath;
         var arguments = $"/SILENT /NOCANCEL /DIR=\"{programPath}\" /UPDATE {portable}";
@@ -722,7 +741,9 @@ public sealed class MainWindow : Window
             {
                 new FilePickerFileType("Executable files")
                 {
-                    Patterns = new[] { "*.exe", "*.bat", "*.lnk" }
+                    Patterns = OperatingSystem.IsWindows()
+                        ? new[] { "*.exe", "*.bat", "*.lnk" }
+                        : new[] { "*.AppImage", "*.appimage", "*.sh", "*.desktop", "*" }
                 }
             }
         });

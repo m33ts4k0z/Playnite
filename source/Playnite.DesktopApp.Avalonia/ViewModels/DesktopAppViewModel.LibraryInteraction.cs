@@ -623,7 +623,9 @@ public sealed partial class DesktopAppViewModel
                     throw new DirectoryNotFoundException("The desktop directory is unavailable.");
                 }
                 Directory.CreateDirectory(desktop);
-                var shortcutPath = Path.Combine(desktop, Paths.GetSafePathName(game.Name) + ".url");
+                var shortcutPath = Path.Combine(
+                    desktop,
+                    Paths.GetSafePathName(game.Name) + (OperatingSystem.IsWindows() ? ".url" : ".desktop"));
                 var icon = string.IsNullOrWhiteSpace(game.Icon) ? null : database.GetFullFilePath(game.Icon);
                 if (string.IsNullOrWhiteSpace(icon) || !File.Exists(icon))
                 {

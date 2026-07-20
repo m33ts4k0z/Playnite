@@ -76,9 +76,8 @@ internal static class Program
                 }
             }
 
-            var disableHwAcceleration = Options.SelfTest || Options.PluginCompatibilityTest
-                ? false
-                : ReadDisableHwAcceleration(Options.UserDataDirectory);
+            var disableHwAcceleration = Options.SelfTest || Options.PluginCompatibilityTest ||
+                ReadDisableHwAcceleration(Options.UserDataDirectory);
             return ConfigureAppBuilder(disableHwAcceleration)
                 .StartWithClassicDesktopLifetime(args);
         }

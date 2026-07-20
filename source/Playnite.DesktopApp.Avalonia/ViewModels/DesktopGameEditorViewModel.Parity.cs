@@ -791,7 +791,12 @@ public sealed partial class DesktopGameEditorViewModel
         }
 
         var fields = metadataProvider.AvailableFields ?? new List<MetadataField>();
+#if WINDOWS
         var args = new GetMetadataFieldArgs { CancelToken = cancelToken };
+#else
+        cancelToken.ThrowIfCancellationRequested();
+        var args = new GetMetadataFieldArgs();
+#endif
         bool Has(MetadataField field) => fields.Contains(field);
         return new GameMetadata
         {

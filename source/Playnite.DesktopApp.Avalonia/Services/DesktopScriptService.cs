@@ -62,19 +62,30 @@ public sealed class DesktopScriptService
         try
         {
             game ??= new Game("Test game");
+#if WINDOWS
             var startingArgs = new OnGameStartingEventArgs
             {
                 Game = game,
                 SelectedRomFile = game.Roms?.FirstOrDefault()?.Path,
                 SourceAction = game.GameActions?.FirstOrDefault()
             };
+#else
+            var startingArgs = new OnGameStartingEventArgs();
+            var selectedRomFile = game.Roms?.FirstOrDefault()?.Path;
+            var sourceAction = game.GameActions?.FirstOrDefault();
+#endif
             var variables = new Dictionary<string, object>
             {
                 { "PlayniteApi", api() },
                 { "Game", game.GetCopy() },
                 { "StartingArgs", startingArgs },
+#if WINDOWS
                 { "SourceAction", startingArgs.SourceAction },
                 { "SelectedRomFile", startingArgs.SelectedRomFile }
+#else
+                { "SourceAction", sourceAction },
+                { "SelectedRomFile", selectedRomFile }
+#endif
             };
             var workingDirectory = game.ExpandVariables(game.InstallDirectory, true);
             using var runtime = createRuntime("Avalonia test script runtime");

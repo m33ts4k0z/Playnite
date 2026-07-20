@@ -301,6 +301,37 @@ public sealed class App : Application
     {
         try
         {
+            var parsed = global::Playnite.PlayniteUriHandler.ParseUri(uri);
+            if (string.Equals(parsed.source, "playnite", StringComparison.OrdinalIgnoreCase) &&
+                parsed.arguments.Length > 0)
+            {
+                var command = parsed.arguments[0];
+                if ((string.Equals(command, global::Playnite.UriCommands.StartGame, StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(command, global::Playnite.UriCommands.ShowGame, StringComparison.OrdinalIgnoreCase)) &&
+                    parsed.arguments.Length >= 2 &&
+                    Guid.TryParse(parsed.arguments[1], out var gameId) &&
+                    viewModel.LibraryGames.Any(game => game.Game.Id == gameId))
+                {
+                    if (string.Equals(command, global::Playnite.UriCommands.StartGame, StringComparison.OrdinalIgnoreCase))
+                    {
+                        viewModel.ActivateGame(gameId);
+                    }
+                    else
+                    {
+                        viewModel.SelectGame(gameId);
+                    }
+
+                    return true;
+                }
+
+                if (string.Equals(command, global::Playnite.UriCommands.Search, StringComparison.OrdinalIgnoreCase) &&
+                    parsed.arguments.Length >= 2)
+                {
+                    viewModel.SearchText = parsed.arguments[1];
+                    return true;
+                }
+            }
+
             return host?.ProcessUri(uri) == true;
         }
         catch (Exception exception)

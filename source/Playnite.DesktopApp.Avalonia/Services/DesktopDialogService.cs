@@ -3,7 +3,9 @@ using Avalonia.Threading;
 using Playnite.Avalonia.App.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
 using Playnite.SDK;
+#if WINDOWS
 using LegacyWindow = System.Windows.Window;
+#endif
 
 namespace Playnite.DesktopApp.Avalonia.Services;
 
@@ -12,7 +14,9 @@ public sealed class DesktopDialogService : IAvaloniaDialogService
     private readonly DesktopAppViewModel viewModel;
     private readonly Func<Window> currentWindow;
     private readonly AvaloniaDialogHost dialogHost;
+#if WINDOWS
     private readonly LegacyWpfWindowBridge legacyWindows;
+#endif
 
     public DesktopDialogService(DesktopAppViewModel viewModel, Func<Window> currentWindow)
     {
@@ -22,7 +26,9 @@ public sealed class DesktopDialogService : IAvaloniaDialogService
             currentWindow,
             dialogWindow => (currentWindow() as global::Playnite.DesktopApp.Avalonia.MainWindow)?
                 .GamepadBridge.RedirectTo(dialogWindow));
+#if WINDOWS
         legacyWindows = new LegacyWpfWindowBridge(currentWindow);
+#endif
     }
 
     public string ShowMessage(
@@ -121,10 +127,26 @@ public sealed class DesktopDialogService : IAvaloniaDialogService
         IReadOnlyList<AvaloniaSelectionItem<T>> items) =>
         dialogHost.SelectMultiple(caption, message, items);
 
+#if WINDOWS
     public LegacyWindow CreateLegacyWindow(WindowCreationOptions options) =>
         legacyWindows.CreateWindow(options);
 
     public LegacyWindow GetCurrentLegacyWindow() => legacyWindows.GetCurrentWindow();
+#else
+    public Window CreateWindow(WindowCreationOptions options)
+    {
+        options ??= new WindowCreationOptions();
+        return new Window
+        {
+            Title = options.Title,
+            Width = options.Width,
+            Height = options.Height,
+            ShowInTaskbar = options.ShowInTaskbar,
+            CanResize = options.CanResize,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+    }
+#endif
 
     public Window GetCurrentWindow() => currentWindow() ?? throw new NotSupportedException(
         "The Avalonia Desktop window is not available for a storage dialog.");

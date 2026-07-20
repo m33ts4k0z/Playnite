@@ -5,14 +5,18 @@ using System.Windows.Input;
 using Avalonia.Controls;
 using Playnite.Avalonia.App.Services;
 using Playnite.Plugins;
+#if WINDOWS
 using Playnite.WpfPluginSupport;
+#endif
 using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
 public sealed class DesktopPluginSettingsViewModel : INotifyPropertyChanged
 {
+#if WINDOWS
     private readonly WpfPluginSettingsHost settingsHost;
+#endif
     private readonly Action<string, bool> showMessage;
     private ExtensionFactory extensions;
     private IReadOnlyList<V7LoadedPlugin> v7Plugins = [];
@@ -81,7 +85,9 @@ public sealed class DesktopPluginSettingsViewModel : INotifyPropertyChanged
     public DesktopPluginSettingsViewModel(Action<string, bool> showMessage)
     {
         this.showMessage = showMessage ?? ((_, _) => { });
+#if WINDOWS
         settingsHost = new WpfPluginSettingsHost();
+#endif
         OpenSelectedCommand = new AppRelayCommand(
             () => OpenSettings(SelectedPlugin.Id),
             () => IsVisible && !IsRunning && SelectedPlugin != null);
@@ -105,8 +111,10 @@ public sealed class DesktopPluginSettingsViewModel : INotifyPropertyChanged
     public void ConfigureOwnerHandle(Func<IntPtr> handleProvider) =>
         ownerHandle = handleProvider ?? (() => IntPtr.Zero);
 
+#if WINDOWS
     internal void ConfigureAutomationForTesting(PluginSettingsAutomation automation) =>
         settingsHost.Automation = automation;
+#endif
 
     public bool Open()
     {
@@ -174,6 +182,13 @@ public sealed class DesktopPluginSettingsViewModel : INotifyPropertyChanged
             ? loaded.Plugin.GetType().Name
             : loaded.Description.Name;
         StatusText = $"Opening settings for {displayName}…";
+#if !WINDOWS
+        ErrorText = "SDK v6/WPF plugin settings are supported on Windows only; use an SDK v7 Avalonia settings view on this platform.";
+        StatusText = ErrorText;
+        showMessage(ErrorText, false);
+        IsRunning = false;
+        return false;
+#else
         try
         {
             var result = settingsHost.Show(loaded.Plugin, displayName, ownerHandle());
@@ -205,6 +220,7 @@ public sealed class DesktopPluginSettingsViewModel : INotifyPropertyChanged
         {
             IsRunning = false;
         }
+#endif
     }
 
     private bool OpenAvaloniaSettings(V7LoadedPlugin plugin)

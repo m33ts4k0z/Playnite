@@ -25,24 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Playnite.Avalonia.App\Playnite.Avalonia.App.csproj"
-                      Condition="'$(TargetFramework)' != 'net10.0'" />
-    <ProjectReference Include="..\Playnite.Avalonia.WebView\Playnite.Avalonia.WebView.csproj"
-                      Condition="'$(TargetFramework)' == 'net10.0'" />
+    <ProjectReference Include="..\Playnite.Avalonia.App\Playnite.Avalonia.App.csproj" />
     <ProjectReference Include="..\Playnite.Avalonia\Playnite.Avalonia.csproj" />
     <ProjectReference Include="..\Playnite.Core\Playnite.Core.csproj" />
     <ProjectReference Include="..\Playnite.WpfPluginSupport\Playnite.WpfPluginSupport.csproj"
                       Condition="'$(TargetFramework)' != 'net10.0'" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <Compile Remove="App.cs;MainWindow.cs;DesktopPilotSelfTest.cs;InstalledPluginCompatibilityTest.cs" />
-    <Compile Remove="Controls\**\*.cs;Services\**\*.cs;ViewModels\**\*.cs;Views\**\*.cs" />
-    <AvaloniaXaml Remove="Views\**\*.axaml" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">
-    <Compile Remove="App.Portable.cs;MainWindow.Portable.cs;DesktopLibrary.Portable.cs;PortableTrayService.cs;PortableWebViewSelfTest.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -58,11 +45,9 @@
              Link="Assets\custom_cover_background.png"
              CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\Playnite.DesktopApp\Themes\Desktop\Default\Images\applogo.ico"
-             Condition="'$(TargetFramework)' != 'net10.0'"
              Link="Assets\applogo.ico"
              CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\tray-default.png;Assets\tray-bright.png;Assets\tray-dark.png"
-             Condition="'$(TargetFramework)' != 'net10.0'"
              CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\Playnite\gamecontrollerdb.txt" Link="gamecontrollerdb.txt" CopyToOutputDirectory="PreserveNewest" />
     <ContentWithTargetPath Include="..\..\references\x64\SDL2.dll"

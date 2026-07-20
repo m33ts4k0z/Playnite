@@ -7,7 +7,9 @@
     <StackPanel Margin="24" Spacing="14">
       <TextBlock Text="Advanced system behavior" FontSize="18" FontWeight="SemiBold" />
       <CheckBox Content="Publish the running game through Discord Rich Presence"
+                IsEnabled="{Binding DiscordPresenceSupported}"
                 IsChecked="{Binding DiscordPresenceEnabled, Mode=TwoWay}" />
+      <TextBlock Text="{Binding DiscordPresenceSupportText}" TextWrapping="Wrap" Opacity="0.75" />
       <CheckBox Content="Warn when Playnite runs with elevated rights"
                 IsChecked="{Binding ShowElevatedRightsWarning, Mode=TwoWay}" />
       <CheckBox Content="Use allocated size on disk when scanning install sizes"

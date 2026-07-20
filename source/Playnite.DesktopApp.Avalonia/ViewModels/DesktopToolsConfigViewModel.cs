@@ -3,7 +3,9 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Playnite.Common;
+#if WINDOWS
 using Playnite.Common.Media.Icons;
+#endif
 using Playnite.Database;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK.Models;
@@ -100,7 +102,10 @@ public sealed class DesktopToolsConfigViewModel : INotifyPropertyChanged
 
     private void AddFromFile()
     {
-        var path = dialogs()?.SelectFiles("Executable or shortcut|*.exe;*.lnk;*.bat", false).FirstOrDefault();
+        var filter = OperatingSystem.IsWindows()
+            ? "Executable or shortcut|*.exe;*.lnk;*.bat"
+            : "Executable or desktop entry|*.AppImage;*.appimage;*.sh;*.desktop;*";
+        var path = dialogs()?.SelectFiles(filter, false).FirstOrDefault();
         if (string.IsNullOrWhiteSpace(path))
         {
             return;
@@ -135,7 +140,10 @@ public sealed class DesktopToolsConfigViewModel : INotifyPropertyChanged
 
     private void SelectIcon()
     {
-        var path = dialogs()?.SelectFiles("Icon or executable|*.ico;*.png;*.jpg;*.jpeg;*.webp;*.exe", false)
+        var filter = OperatingSystem.IsWindows()
+            ? "Icon or executable|*.ico;*.png;*.jpg;*.jpeg;*.webp;*.exe"
+            : "Image|*.png;*.jpg;*.jpeg;*.webp;*.svg;*.ico";
+        var path = dialogs()?.SelectFiles(filter, false)
             .FirstOrDefault();
         if (!string.IsNullOrWhiteSpace(path))
         {
@@ -152,7 +160,11 @@ public sealed class DesktopToolsConfigViewModel : INotifyPropertyChanged
         }
 
         var converted = Path.Combine(global::Playnite.PlaynitePaths.TempPath, $"{Guid.NewGuid():N}.ico");
+#if WINDOWS
         return IconExtractor.ExtractMainIconFromFile(path, converted) ? converted : null;
+#else
+        return null;
+#endif
     }
 
     private void Save()
