@@ -1,0 +1,108 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:foundation="using:Playnite.Avalonia.Controls">
+    <ControlTemplate x:Key="DesktopWebImageSearchTemplate">
+        <Grid IsVisible="{Binding Editor.IsWebImageSearchVisible}" Background="#F0000000">
+            <Border Width="1040" MaxHeight="800" Padding="26" CornerRadius="14"
+                    Background="{DynamicResource DesktopPanelStrongBrush}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Web image search" FontSize="28" FontWeight="Bold" />
+                        <Grid ColumnDefinitions="*,180,Auto" ColumnSpacing="8">
+                            <TextBox Text="{Binding Editor.WebImageSearchTerm, Mode=TwoWay}"
+                                     Watermark="Search for an image" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding Editor.WebImageSources}"
+                                      SelectedItem="{Binding Editor.SelectedWebImageSource, Mode=TwoWay}" />
+                            <Button Grid.Column="2" Classes="primary" Content="Search"
+                                    Command="{Binding Editor.SearchWebImagesCommand}" />
+                        </Grid>
+                        <TextBlock Text="{Binding Editor.WebImageSearchMessage}"
+                                   Foreground="{DynamicResource DesktopMutedBrush}" TextWrapping="Wrap" />
+                        <ProgressBar IsIndeterminate="True" Height="5"
+                                     IsVisible="{Binding Editor.IsWebImageSearchRunning}" />
+                    </StackPanel>
+
+                    <ListBox Grid.Row="1" MaxHeight="610"
+                             ItemsSource="{Binding Editor.WebImageResults}"
+                             SelectedItem="{Binding Editor.SelectedWebImage, Mode=TwoWay}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="180" Height="150" Padding="5" Margin="3"
+                                        Background="#151B24" CornerRadius="6">
+                                    <Grid RowDefinitions="*,Auto">
+                                        <foundation:GameCoverImage SourcePath="{Binding PreviewPath}"
+                                                                   Stretch="Uniform" />
+                                        <TextBlock Grid.Row="1" Text="{Binding Size}" HorizontalAlignment="Center"
+                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
+                        <Button Classes="primary" Content="Use selected image"
+                                Command="{Binding Editor.UseSelectedWebImageCommand}" />
+                        <Button Content="Cancel" Command="{Binding Editor.CloseWebImageSearchCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="DesktopMetadataComparisonTemplate">
+        <Grid IsVisible="{Binding Editor.IsMetadataComparisonVisible}" Background="#F0000000">
+            <Border Width="1080" MaxHeight="810" Padding="26" CornerRadius="14"
+                    Background="{DynamicResource DesktopPanelStrongBrush}"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{Binding Editor.MetadataComparisonTitle}"
+                                   FontSize="28" FontWeight="Bold" />
+                        <TextBlock Text="Choose which downloaded fields to apply. Nothing changes in the library until you save the editor."
+                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                    </StackPanel>
+                    <ListBox Grid.Row="1" MaxHeight="640" ItemsSource="{Binding Editor.MetadataComparisonItems}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="#394657" BorderThickness="1" CornerRadius="7"
+                                        Padding="10" Margin="0,3">
+                                    <Grid ColumnDefinitions="Auto,150,*,*" ColumnSpacing="12">
+                                        <CheckBox IsChecked="{Binding UseDownloadedValue, Mode=TwoWay}"
+                                                  VerticalAlignment="Top" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Field}" FontWeight="SemiBold"
+                                                   TextWrapping="Wrap" />
+                                        <StackPanel Grid.Column="2" Spacing="5">
+                                            <TextBlock Text="Current" Classes="sectionLabel" />
+                                            <foundation:GameCoverImage Height="110" SourcePath="{Binding CurrentImagePath}"
+                                                                       IsVisible="{Binding IsImage}" Stretch="Uniform" />
+                                            <TextBlock Text="{Binding CurrentValue}" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="3" Spacing="5">
+                                            <TextBlock Text="Downloaded" Classes="sectionLabel" />
+                                            <foundation:GameCoverImage Height="110" SourcePath="{Binding DownloadedImagePath}"
+                                                                       IsVisible="{Binding IsImage}" Stretch="Uniform" />
+                                            <TextBlock Text="{Binding DownloadedValue}" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
+                        <Button Classes="primary" Content="Apply selected fields"
+                                Command="{Binding Editor.ApplyMetadataComparisonCommand}" />
+                        <Button Content="Cancel" Command="{Binding Editor.CloseMetadataComparisonCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </ControlTemplate>
+</ResourceDictionary>

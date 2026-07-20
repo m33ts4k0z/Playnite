@@ -48,7 +48,7 @@ public sealed class DesktopLibrary : IDisposable
         File.WriteAllBytes(
             SelfTestMediaPath,
             Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nQAAAABJRU5ErkJggg=="));
+                "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAGdYAABnWARjRyu0AAAARSURBVBhXY5Cb8P8/CDPAGABaHgqxUL6/hwAAAABJRU5ErkJggg=="));
         var actionGenre = new Genre("Action");
         var strategyGenre = new Genre("Strategy");
         var windowsPlatform = new Platform("Windows");

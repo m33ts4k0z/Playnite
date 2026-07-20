@@ -50,7 +50,9 @@ public sealed class DesktopScriptService
         }
     }
 
-    public DesktopScriptExecutionResult TestGameScript(string script)
+    public DesktopScriptExecutionResult TestGameScript(string script) => TestGameScript(script, selectedGame());
+
+    public DesktopScriptExecutionResult TestGameScript(string script, Game game)
     {
         if (string.IsNullOrWhiteSpace(script))
         {
@@ -59,7 +61,7 @@ public sealed class DesktopScriptService
 
         try
         {
-            var game = selectedGame() ?? new Game("Test game");
+            game ??= new Game("Test game");
             var startingArgs = new OnGameStartingEventArgs
             {
                 Game = game,

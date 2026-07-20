@@ -53,10 +53,10 @@ internal static class DesktopPilotSelfTest
         Record(results, "Avalonia theme API 3 package contract validates", () =>
             window.ActiveThemePackage.Mode == AvaloniaThemeMode.Desktop &&
             window.ActiveThemePackage.Manifest?.ThemeApiVersion == AvaloniaThemePackage.CurrentApiVersion.ToString() &&
-            window.ActiveThemePackage.ResourceDictionaries.Count == 12 &&
+            window.ActiveThemePackage.ResourceDictionaries.Count == 13 &&
             window.ActiveThemePackage.SelectorStyles.Count == 1
                 ? $"{window.ActiveThemePackage.Name} targets theme API {AvaloniaThemePackage.CurrentApiVersion} " +
-                  "with eleven modular main-view dictionaries"
+                  "with twelve modular main-view dictionaries"
                 : throw new InvalidOperationException("The default Desktop theme package is incomplete."));
 
         Record(results, "Avalonia 12 native window chrome contract applies", () =>
@@ -267,7 +267,7 @@ internal static class DesktopPilotSelfTest
             viewModel.Editor.AgeRatings.Count == 2 &&
             viewModel.Editor.Regions.Any(option => option.Name == "Worldwide") &&
             viewModel.Editor.Regions.Any(option => option.Name == "Europe") &&
-            viewModel.Editor.Platforms.Count(option => option.IsSelected) == 1
+            viewModel.Editor.Platforms.Count(option => option.IsSelected == true) == 1
                 ? "all ten multi-value metadata collections loaded from Core"
                 : throw new InvalidOperationException(
                     $"Counts were G{viewModel.Editor.Genres.Count}/P{viewModel.Editor.Platforms.Count}/" +
@@ -275,7 +275,7 @@ internal static class DesktopPilotSelfTest
                     $"D{viewModel.Editor.Developers.Count}/P{viewModel.Editor.Publishers.Count}/" +
                     $"F{viewModel.Editor.Features.Count}/S{viewModel.Editor.Series.Count}/" +
                     $"A{viewModel.Editor.AgeRatings.Count}/R{viewModel.Editor.Regions.Count}; " +
-                    $"selected platforms {viewModel.Editor.Platforms.Count(option => option.IsSelected)}."));
+                    $"selected platforms {viewModel.Editor.Platforms.Count(option => option.IsSelected == true)}."));
 
         viewModel.Editor.Name = string.Empty;
         viewModel.Editor.SaveCommand.Execute(null);
@@ -555,7 +555,21 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException("The plugin edit-dialog bridge did not persist its result."));
 
         var bulkGameIds = new List<Guid> { editorGame.Game.Id, pluginEditGame.Game.Id };
+        var actionGenreId = library.Database.Genres.First(genre => genre.Name == "Action").Id;
+        var strategyGenreId = library.Database.Genres.First(genre => genre.Name == "Strategy").Id;
+        var actionBulkGame = library.Database.Games[bulkGameIds[0]].GetCopy();
+        actionBulkGame.GenreIds = new List<Guid> { actionGenreId };
+        library.Database.Games.Update(actionBulkGame);
+        var strategyBulkGame = library.Database.Games[bulkGameIds[1]].GetCopy();
+        strategyBulkGame.GenreIds = new List<Guid> { strategyGenreId };
+        library.Database.Games.Update(strategyBulkGame);
         viewModel.OpenGameEditor(bulkGameIds);
+        Record(results, "Bulk editor represents mixed taxonomy values explicitly", () =>
+            viewModel.Editor.Genres.Single(option => option.Id == actionGenreId).IsSelected == null &&
+            viewModel.Editor.Genres.Single(option => option.Id == strategyGenreId).IsSelected == null &&
+            viewModel.Editor.Genres.All(option => option.AllowIndeterminate)
+                ? "values present on only part of the selection are indeterminate rather than silently cleared"
+                : throw new InvalidOperationException("Mixed bulk taxonomy values were not represented as indeterminate."));
         viewModel.Editor.SaveCommand.Execute(null);
         Record(results, "Bulk editor requires explicit field selection", () =>
             viewModel.Editor.IsVisible &&
@@ -565,6 +579,18 @@ internal static class DesktopPilotSelfTest
                 ? viewModel.Editor.ValidationMessage
                 : throw new InvalidOperationException("A bulk save without selected fields was accepted."));
         viewModel.Editor.CancelCommand.Execute(null);
+
+        var distinctBulkGenres = bulkGameIds.ToDictionary(
+            id => id,
+            id => library.Database.Games[id].GenreIds.ToList());
+        viewModel.OpenGameEditor(bulkGameIds);
+        viewModel.Editor.ApplyGenres = true;
+        viewModel.Editor.SaveCommand.Execute(null);
+        Record(results, "Bulk editor preserves untouched indeterminate taxonomy values", () =>
+            !viewModel.Editor.IsVisible &&
+            bulkGameIds.All(id => library.Database.Games[id].GenreIds.SequenceEqual(distinctBulkGenres[id]))
+                ? "saving an applied list leaves each game's mixed values intact until the user changes them"
+                : throw new InvalidOperationException("Untouched indeterminate taxonomy values were overwritten."));
 
         var originalBulkNames = bulkGameIds.ToDictionary(id => id, id => library.Database.Games[id].Name);
         var originalBulkIcons = bulkGameIds.ToDictionary(id => id, id => library.Database.Games[id].Icon);
@@ -838,6 +864,100 @@ internal static class DesktopPilotSelfTest
             metadataPlugin.ProviderDisposeCount == 1
                 ? "the populated field was preserved without constructing another provider"
                 : throw new InvalidOperationException("Skip-existing metadata policy called or applied the provider unexpectedly."));
+
+        metadataPlugin.Description = "Editor-selected metadata description";
+        var editorSourceGame = library.Database.Games[metadataGame.Id].GetCopy();
+        editorSourceGame.CoverImage = null;
+        editorSourceGame.Icon = null;
+        library.Database.Games.Update(editorSourceGame);
+        viewModel.Editor.ConfigureMetadataProviders(
+            () => new List<MetadataPlugin> { metadataPlugin },
+            () => new List<LibraryPlugin>());
+        viewModel.OpenGameEditor(new[] { metadataGame.Id });
+        var editorInstallDirectory = Path.Combine(library.ActiveUserDataDirectory, "p-g-install-size");
+        Directory.CreateDirectory(editorInstallDirectory);
+        File.WriteAllBytes(Path.Combine(editorInstallDirectory, "payload.bin"), new byte[4096]);
+        viewModel.Editor.IsInstalled = true;
+        viewModel.Editor.InstallDirectory = editorInstallDirectory;
+        viewModel.Editor.Roms.Clear();
+        var calculatedEditorInstallSize = await viewModel.Editor.CalculateInstallSizeForTestAsync();
+        Record(results, "Editor calculates install size asynchronously", () =>
+            calculatedEditorInstallSize == "4096" && !viewModel.Editor.IsCalculatingInstallSize
+                ? "the Core calculator measured the edited installation directory without blocking the editor"
+                : throw new InvalidOperationException($"The editor calculated '{calculatedEditorInstallSize}' bytes instead of 4096."));
+        viewModel.Editor.CoverImage = library.SelfTestMediaPath;
+        var editorMediaInfoWorks = viewModel.Editor.CoverMediaInfo.Contains('×') &&
+            viewModel.Editor.CoverMediaInfo.Contains(" · ", StringComparison.Ordinal);
+        viewModel.Editor.CoverImage = string.Empty;
+        viewModel.Editor.AddLinkCommand.Execute(null);
+        var firstEditorLink = viewModel.Editor.Links.Last();
+        firstEditorLink.Name = "First";
+        firstEditorLink.Url = "https://example.com/first";
+        viewModel.Editor.AddLinkCommand.Execute(null);
+        var secondEditorLink = viewModel.Editor.Links.Last();
+        secondEditorLink.Name = "Second";
+        secondEditorLink.Url = "https://example.com/second";
+        secondEditorLink.MoveUpCommand.Execute(null);
+        var editorLinkOrderingWorks = ReferenceEquals(viewModel.Editor.Links[0], secondEditorLink);
+        viewModel.Editor.SelectedEditorMetadataSource = viewModel.Editor.EditorMetadataSources
+            .Single(source => source.Id == metadataPlugin.Id && !source.IsLibrarySource);
+        var editorMetadataPreviewed = await viewModel.Editor.DownloadEditorMetadataForTestAsync();
+        var editorMediaWasLocalized = viewModel.Editor.MetadataComparisonItems
+            .Where(item => item.IsImage)
+            .All(item => File.Exists(item.DownloadedImagePath));
+
+        Record(results, "Editor media, provenance, ordering, and per-source comparison are live", () =>
+            viewModel.Editor.IsVisible &&
+            viewModel.Editor.EditorDatabaseId == metadataGame.Id.ToString() &&
+            viewModel.Editor.EditorGameId == metadataGame.GameId &&
+            editorMediaInfoWorks &&
+            editorLinkOrderingWorks &&
+            editorMetadataPreviewed &&
+            viewModel.Editor.MetadataComparisonItems.Any(item => item.Field == "Name") &&
+            viewModel.Editor.MetadataComparisonItems.Any(item => item.Field == "Description") &&
+            viewModel.Editor.MetadataComparisonItems.Any(item => item.Field == "Cover image") &&
+            viewModel.Editor.MetadataComparisonItems.Any(item => item.Field == "Icon") &&
+            editorMediaWasLocalized &&
+            metadataPlugin.ProviderCreationCount == 2 &&
+            metadataPlugin.ProviderDisposeCount == 2 &&
+            !metadataPlugin.LastRequestWasBackground
+                ? "ordered links, read-only identifiers, image dimensions, downloaded previews, and field-level choices are exposed"
+                : throw new InvalidOperationException(
+                    $"visible={viewModel.Editor.IsVisible}, db={viewModel.Editor.EditorDatabaseId}/{metadataGame.Id}, " +
+                    $"game={viewModel.Editor.EditorGameId}/{metadataGame.GameId}, info={viewModel.Editor.CoverMediaInfo}, " +
+                    $"links={editorLinkOrderingWorks}, preview={editorMetadataPreviewed}, " +
+                    $"fields={string.Join(',', viewModel.Editor.MetadataComparisonItems.Select(item => item.Field))}, " +
+                    $"localized={editorMediaWasLocalized}, providers={metadataPlugin.ProviderCreationCount}/{metadataPlugin.ProviderDisposeCount}, " +
+                    $"background={metadataPlugin.LastRequestWasBackground}, validation={viewModel.Editor.ValidationMessage}"));
+
+        foreach (var comparison in viewModel.Editor.MetadataComparisonItems)
+        {
+            comparison.UseDownloadedValue = comparison.Field is "Description" or "Cover image" or "Icon";
+        }
+
+        viewModel.Editor.ApplyMetadataComparisonCommand.Execute(null);
+        var editorAppliedBeforeSave =
+            viewModel.Editor.Description == "Editor-selected metadata description" &&
+            library.Database.Games[metadataGame.Id].Description == PilotMetadataPlugin.DownloadedDescription;
+        viewModel.Editor.SaveCommand.Execute(null);
+        var editorMetadataGame = library.Database.Games[metadataGame.Id];
+        var editorCoverPath = library.Database.GetFullFilePath(editorMetadataGame.CoverImage);
+        var editorIconPath = library.Database.GetFullFilePath(editorMetadataGame.Icon);
+        Record(results, "Editor imports selected remote metadata only after Save", () =>
+            editorAppliedBeforeSave &&
+            !viewModel.Editor.IsVisible &&
+            editorMetadataGame.Name == originalMetadataName &&
+            editorMetadataGame.Description == "Editor-selected metadata description" &&
+            !string.IsNullOrWhiteSpace(editorMetadataGame.CoverImage) &&
+            !string.IsNullOrWhiteSpace(editorMetadataGame.Icon) &&
+            File.Exists(editorCoverPath) &&
+            File.Exists(editorIconPath)
+                ? "comparison stayed transactional and Core now owns the selected cover and icon"
+                : throw new InvalidOperationException(
+                    $"before={editorAppliedBeforeSave}, visible={viewModel.Editor.IsVisible}, " +
+                    $"name={editorMetadataGame.Name}/{originalMetadataName}, description={editorMetadataGame.Description}, " +
+                    $"cover={editorMetadataGame.CoverImage}/{File.Exists(editorCoverPath)}, " +
+                    $"icon={editorMetadataGame.Icon}/{File.Exists(editorIconPath)}, validation={viewModel.Editor.ValidationMessage}"));
 
         metadataPlugin.Description = PilotMetadataPlugin.DownloadedDescription;
         viewModel.MetadataDownload.ConfigureProvidersForTesting(

@@ -654,6 +654,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         Scripts = new DesktopScriptService(
             () => runtimeHost?.PluginApi,
             () => SelectedGame?.Game);
+        Editor.ConfigureScriptTester(Scripts.TestGameScript);
         Settings = new DesktopSettingsViewModel(
             this.settings,
             database,
@@ -909,6 +910,9 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(Notifications));
         OnPropertyChanged(nameof(NotificationCount));
         MetadataDownload.ConfigureProviders(
+            () => host.MetadataPlugins.ToList(),
+            () => host.LibraryPlugins.ToList());
+        Editor.ConfigureMetadataProviders(
             () => host.MetadataPlugins.ToList(),
             () => host.LibraryPlugins.ToList());
         LibrarySync.ConfigureProviders(

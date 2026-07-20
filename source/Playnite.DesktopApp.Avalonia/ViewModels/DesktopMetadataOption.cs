@@ -4,13 +4,14 @@ namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
 public sealed class DesktopMetadataOption : INotifyPropertyChanged
 {
-    private bool isSelected;
+    private bool? isSelected;
     private bool isVisible = true;
+    private bool allowIndeterminate;
 
     public event PropertyChangedEventHandler PropertyChanged;
     public Guid Id { get; }
     public string Name { get; }
-    public bool IsSelected
+    public bool? IsSelected
     {
         get => isSelected;
         set
@@ -36,6 +37,20 @@ public sealed class DesktopMetadataOption : INotifyPropertyChanged
 
             isVisible = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible)));
+        }
+    }
+    public bool AllowIndeterminate
+    {
+        get => allowIndeterminate;
+        set
+        {
+            if (allowIndeterminate == value)
+            {
+                return;
+            }
+
+            allowIndeterminate = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AllowIndeterminate)));
         }
     }
 

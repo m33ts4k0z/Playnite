@@ -11,7 +11,7 @@ using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
-public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
+public sealed partial class DesktopGameEditorViewModel : INotifyPropertyChanged
 {
     private readonly GameDatabase database;
     private readonly Action<IReadOnlyList<Guid>> refreshGames;
@@ -153,6 +153,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             if (SetField(ref coverImage, value))
             {
                 OnPropertyChanged(nameof(CoverPreviewPath));
+                RefreshMediaInfo(EditorMediaKind.Cover);
             }
         }
     }
@@ -165,6 +166,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             if (SetField(ref backgroundImage, value))
             {
                 OnPropertyChanged(nameof(BackgroundPreviewPath));
+                RefreshMediaInfo(EditorMediaKind.Background);
             }
         }
     }
@@ -177,6 +179,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             if (SetField(ref icon, value))
             {
                 OnPropertyChanged(nameof(IconPreviewPath));
+                RefreshMediaInfo(EditorMediaKind.Icon);
             }
         }
     }
@@ -586,7 +589,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         SaveCommand = new RelayCommand(Save);
         CancelCommand = new RelayCommand(Cancel);
         AddLinkCommand = new RelayCommand(
-            () => Links.Add(new DesktopLinkEditorItem(null, item => Links.Remove(item))),
+            () => AddLinkItem(null),
             () => CanEditLinks);
         AddGameActionCommand = new RelayCommand(
             () => AddGameActionItem(null),
@@ -595,6 +598,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             () => AddRomItem(null),
             () => CanEditRoms);
         AddTaxonomyCommand = new AppRelayCommand(parameter => AddTaxonomy(parameter as string));
+        InitializeParityCommands();
     }
 
     public bool Open(Guid gameId, Action<bool?> onCompleted = null) =>
@@ -621,6 +625,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         ReloadTaxonomyOptions();
         ResetApplyFlags();
         LoadCommonValues(games);
+        RefreshEditorParityState(games);
         ValidationMessage = string.Empty;
         OnPropertyChanged(nameof(IsSingleEdit));
         OnPropertyChanged(nameof(IsBulkEdit));
@@ -665,16 +670,16 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         SelectedSource = Sources.FirstOrDefault(option => option.Id == sourceId) ?? Sources[0];
         SelectedCompletionStatus = CompletionStatuses
             .FirstOrDefault(option => option.Id == completionStatusId) ?? CompletionStatuses[0];
-        SetSelected(Genres, CommonIds(games, game => game.GenreIds));
-        SetSelected(Platforms, CommonIds(games, game => game.PlatformIds));
-        SetSelected(Categories, CommonIds(games, game => game.CategoryIds));
-        SetSelected(Tags, CommonIds(games, game => game.TagIds));
-        SetSelected(Developers, CommonIds(games, game => game.DeveloperIds));
-        SetSelected(Publishers, CommonIds(games, game => game.PublisherIds));
-        SetSelected(Features, CommonIds(games, game => game.FeatureIds));
-        SetSelected(Series, CommonIds(games, game => game.SeriesIds));
-        SetSelected(AgeRatings, CommonIds(games, game => game.AgeRatingIds));
-        SetSelected(Regions, CommonIds(games, game => game.RegionIds));
+        SetSelectionState(Genres, games, game => game.GenreIds);
+        SetSelectionState(Platforms, games, game => game.PlatformIds);
+        SetSelectionState(Categories, games, game => game.CategoryIds);
+        SetSelectionState(Tags, games, game => game.TagIds);
+        SetSelectionState(Developers, games, game => game.DeveloperIds);
+        SetSelectionState(Publishers, games, game => game.PublisherIds);
+        SetSelectionState(Features, games, game => game.FeatureIds);
+        SetSelectionState(Series, games, game => game.SeriesIds);
+        SetSelectionState(AgeRatings, games, game => game.AgeRatingIds);
+        SetSelectionState(Regions, games, game => game.RegionIds);
         CoverImage = CommonValue(games, game => game.CoverImage ?? string.Empty);
         BackgroundImage = CommonValue(games, game => game.BackgroundImage ?? string.Empty);
         Icon = CommonValue(games, game => game.Icon ?? string.Empty);
@@ -684,7 +689,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         Links.Clear();
         foreach (var link in CommonLinks(games))
         {
-            Links.Add(new DesktopLinkEditorItem(link, item => Links.Remove(item)));
+            AddLinkItem(link);
         }
 
         IncludeLibraryPluginAction = CommonValue(games, game => game.IncludeLibraryPluginAction);
@@ -816,6 +821,7 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         setStatus(IsSingleEdit
             ? $"Saved metadata for {games[0].Name}."
             : $"Saved metadata for {games.Count:N0} games.");
+        CleanupEditorTemporaryFiles();
         Complete(true);
     }
 
@@ -924,16 +930,16 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         if (ApplyHidden) game.Hidden = Hidden;
         if (ApplySource) game.SourceId = SelectedSource?.Id ?? Guid.Empty;
         if (ApplyCompletionStatus) game.CompletionStatusId = SelectedCompletionStatus?.Id ?? Guid.Empty;
-        if (ApplyGenres) game.GenreIds = SelectedIds(Genres);
-        if (ApplyPlatforms) game.PlatformIds = SelectedIds(Platforms);
-        if (ApplyCategories) game.CategoryIds = SelectedIds(Categories);
-        if (ApplyTags) game.TagIds = SelectedIds(Tags);
-        if (ApplyDevelopers) game.DeveloperIds = SelectedIds(Developers);
-        if (ApplyPublishers) game.PublisherIds = SelectedIds(Publishers);
-        if (ApplyFeatures) game.FeatureIds = SelectedIds(Features);
-        if (ApplySeries) game.SeriesIds = SelectedIds(Series);
-        if (ApplyAgeRatings) game.AgeRatingIds = SelectedIds(AgeRatings);
-        if (ApplyRegions) game.RegionIds = SelectedIds(Regions);
+        if (ApplyGenres) game.GenreIds = MergeSelectedIds(game.GenreIds, Genres);
+        if (ApplyPlatforms) game.PlatformIds = MergeSelectedIds(game.PlatformIds, Platforms);
+        if (ApplyCategories) game.CategoryIds = MergeSelectedIds(game.CategoryIds, Categories);
+        if (ApplyTags) game.TagIds = MergeSelectedIds(game.TagIds, Tags);
+        if (ApplyDevelopers) game.DeveloperIds = MergeSelectedIds(game.DeveloperIds, Developers);
+        if (ApplyPublishers) game.PublisherIds = MergeSelectedIds(game.PublisherIds, Publishers);
+        if (ApplyFeatures) game.FeatureIds = MergeSelectedIds(game.FeatureIds, Features);
+        if (ApplySeries) game.SeriesIds = MergeSelectedIds(game.SeriesIds, Series);
+        if (ApplyAgeRatings) game.AgeRatingIds = MergeSelectedIds(game.AgeRatingIds, AgeRatings);
+        if (ApplyRegions) game.RegionIds = MergeSelectedIds(game.RegionIds, Regions);
         if (ApplyLinks) game.Links = new ObservableCollection<Link>(preparedLinks.Select(link => link.GetCopy()));
         if (ApplyIncludeLibraryPluginAction) game.IncludeLibraryPluginAction = IncludeLibraryPluginAction;
         if (ApplyGameActions)
@@ -1312,7 +1318,11 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         ApplyUseGlobalGameStartedScript = false;
     }
 
-    private void Cancel() => Complete(false);
+    private void Cancel()
+    {
+        CleanupEditorTemporaryFiles();
+        Complete(false);
+    }
 
     private void Complete(bool? result)
     {
@@ -1335,7 +1345,11 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             Emulators,
             item => MoveItem(GameActions, item, -1),
             item => MoveItem(GameActions, item, 1),
-            item => GameActions.Remove(item)));
+            item => GameActions.Remove(item),
+            SelectActionPath,
+            SelectActionWorkingDirectory,
+            SelectActionTrackingPath,
+            TestActionScript));
     }
 
     private void AddRomItem(GameRom rom)
@@ -1344,7 +1358,17 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
             rom,
             item => MoveItem(Roms, item, -1),
             item => MoveItem(Roms, item, 1),
-            item => Roms.Remove(item)));
+            item => Roms.Remove(item),
+            SelectRomPath));
+    }
+
+    private void AddLinkItem(Link link)
+    {
+        Links.Add(new DesktopLinkEditorItem(
+            link,
+            item => MoveItem(Links, item, -1),
+            item => MoveItem(Links, item, 1),
+            item => Links.Remove(item)));
     }
 
     private static void MoveItem<T>(ObservableCollection<T> items, T item, int offset)
@@ -1398,12 +1422,19 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
         var kind = GetTaxonomyKind(field);
         var model = CreateTaxonomyModel(kind, name);
         pendingTaxonomy[model.Id] = (kind, model);
-        var option = new DesktopMetadataOption(model.Id, model.Name) { IsSelected = true };
+        var option = new DesktopMetadataOption(model.Id, model.Name)
+        {
+            IsSelected = true,
+            AllowIndeterminate = IsBulkEdit
+        };
         InsertTaxonomyOption(target, option, field is "Source" or "CompletionStatus");
         if (kind == DatabaseFieldKind.Companies)
         {
             var other = field == "Developers" ? Publishers : Developers;
-            InsertTaxonomyOption(other, new DesktopMetadataOption(model.Id, model.Name), false);
+            InsertTaxonomyOption(other, new DesktopMetadataOption(model.Id, model.Name)
+            {
+                AllowIndeterminate = IsBulkEdit
+            }, false);
         }
         SelectTaxonomyOption(field, option);
         setStatus($"Created '{name}'. It will be saved with the game metadata.");
@@ -1654,14 +1685,24 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
                     new DesktopEmulatorProfileOption(profile.Id, profile.Name))))
             .ToList() ?? new List<DesktopEmulatorOption>();
 
-    private static IReadOnlyCollection<Guid> CommonIds(
+    private static void SetSelectionState(
+        IEnumerable<DesktopMetadataOption> options,
         IReadOnlyList<Game> games,
         Func<Game, IReadOnlyCollection<Guid>> selector)
     {
-        var first = new HashSet<Guid>(selector(games[0]) ?? Array.Empty<Guid>());
-        return games.Skip(1).All(game => first.SetEquals(selector(game) ?? Array.Empty<Guid>()))
-            ? first
-            : Array.Empty<Guid>();
+        var selections = games
+            .Select(game => new HashSet<Guid>(selector(game) ?? Array.Empty<Guid>()))
+            .ToList();
+        foreach (var option in options)
+        {
+            option.AllowIndeterminate = games.Count > 1;
+            var selectedCount = selections.Count(selection => selection.Contains(option.Id));
+            option.IsSelected = selectedCount == 0
+                ? false
+                : selectedCount == selections.Count
+                    ? true
+                    : null;
+        }
     }
 
     private static IReadOnlyList<Link> CommonLinks(IReadOnlyList<Game> games)
@@ -1702,19 +1743,29 @@ public sealed class DesktopGameEditorViewModel : INotifyPropertyChanged
                     : Array.Empty<GameRom>();
     }
 
-    private static void SetSelected(
-        IEnumerable<DesktopMetadataOption> options,
-        IReadOnlyCollection<Guid> selectedIds)
+    private static List<Guid> SelectedIds(IEnumerable<DesktopMetadataOption> options) =>
+        options.Where(option => option.IsSelected == true).Select(option => option.Id).ToList();
+
+    private static List<Guid> MergeSelectedIds(
+        IReadOnlyCollection<Guid> currentIds,
+        IEnumerable<DesktopMetadataOption> options)
     {
-        var selected = selectedIds is HashSet<Guid> set ? set : new HashSet<Guid>(selectedIds);
+        var result = new List<Guid>(currentIds ?? Array.Empty<Guid>());
+        var selected = new HashSet<Guid>(result);
         foreach (var option in options)
         {
-            option.IsSelected = selected.Contains(option.Id);
+            if (option.IsSelected == true && selected.Add(option.Id))
+            {
+                result.Add(option.Id);
+            }
+            else if (option.IsSelected == false && selected.Remove(option.Id))
+            {
+                result.Remove(option.Id);
+            }
         }
-    }
 
-    private static List<Guid> SelectedIds(IEnumerable<DesktopMetadataOption> options) =>
-        options.Where(option => option.IsSelected).Select(option => option.Id).ToList();
+        return result;
+    }
 
     private string ResolvePreviewPath(string value)
     {

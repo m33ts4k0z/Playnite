@@ -18,5 +18,6 @@ Resources:
   - Views/EmulatorConfig.axaml
   - Views/EmulatedImport.axaml
   - Views/DatabaseFields.axaml
+  - Views/WebImageSearch.axaml
 Styles:
   - Styles.axaml

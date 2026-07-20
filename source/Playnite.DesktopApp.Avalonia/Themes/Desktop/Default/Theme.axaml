@@ -715,6 +715,27 @@
                                                 <TextBox Text="{Binding Editor.SortingName, Mode=TwoWay}" />
                                             </StackPanel>
                                         </Grid>
+                                        <Border IsVisible="{Binding Editor.IsSingleEdit}" Padding="10" CornerRadius="7"
+                                                BorderBrush="#394657" BorderThickness="1">
+                                            <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="14">
+                                                <StackPanel Spacing="2">
+                                                    <TextBlock Text="Library provenance" Classes="sectionLabel" />
+                                                    <TextBlock Text="{Binding Editor.EditorPluginName}" />
+                                                    <TextBlock Text="{Binding Editor.EditorModified, StringFormat='Modified: {0}'}"
+                                                               FontSize="10" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Spacing="2">
+                                                    <TextBlock Text="{Binding Editor.EditorGameId, StringFormat='Game ID: {0}'}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Editor.EditorDatabaseId, StringFormat='Database ID: {0}'}"
+                                                               TextWrapping="Wrap" FontSize="10"
+                                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                </StackPanel>
+                                                <Button Grid.Column="2" Content="Open metadata folder"
+                                                        Command="{Binding Editor.OpenMetadataFolderCommand}"
+                                                        VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Border>
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
                                             <StackPanel Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -809,6 +830,7 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
+                                                                      IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -831,6 +853,7 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
+                                                                      IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -855,6 +878,7 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
+                                                                      IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -877,6 +901,7 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
+                                                                      IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -901,6 +926,7 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
+                                                                      IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -923,6 +949,7 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
+                                                                      IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -947,6 +974,7 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
+                                                                      IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -969,6 +997,7 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
+                                                                      IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -993,6 +1022,7 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
+                                                                      IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -1015,6 +1045,7 @@
                                                     <ListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
+                                                                      IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
                                                     </ListBox.ItemTemplate>
@@ -1029,13 +1060,28 @@
                                                               IsChecked="{Binding Editor.ApplyCoverImage, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
-                                                <Border Height="100" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                <local:DesktopMediaDropZone Height="100" Target="Cover"
+                                                                            DropCommand="{Binding Editor.MediaDropCommand}">
+                                                    <Border Background="#222B37" CornerRadius="5" ClipToBounds="True">
                                                     <foundation:GameCoverImage SourcePath="{Binding Editor.CoverPreviewPath}"
                                                                                 Stretch="UniformToFill" />
-                                                </Border>
+                                                    </Border>
+                                                </local:DesktopMediaDropZone>
+                                                <TextBlock Text="{Binding Editor.CoverMediaInfo}" FontSize="10"
+                                                           Foreground="{DynamicResource DesktopMutedBrush}" />
                                                 <TextBox Text="{Binding Editor.CoverImage, Mode=TwoWay}"
                                                          IsEnabled="{Binding Editor.CanEditCoverImage}"
                                                          Watermark="{DynamicResource LOCDesktopLocalImagePath}" />
+                                                <WrapPanel>
+                                                    <Button Content="Select" Command="{Binding Editor.SelectMediaFileCommand}"
+                                                            CommandParameter="Cover" />
+                                                    <Button Content="URL" Command="{Binding Editor.SetMediaUrlCommand}"
+                                                            CommandParameter="Cover" />
+                                                    <Button Content="Web" Command="{Binding Editor.OpenWebImageSearchCommand}"
+                                                            CommandParameter="Cover" />
+                                                    <Button Content="Remove" Command="{Binding Editor.RemoveMediaCommand}"
+                                                            CommandParameter="Cover" />
+                                                </WrapPanel>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -1044,13 +1090,28 @@
                                                               IsChecked="{Binding Editor.ApplyBackgroundImage, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
-                                                <Border Height="100" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                <local:DesktopMediaDropZone Height="100" Target="Background"
+                                                                            DropCommand="{Binding Editor.MediaDropCommand}">
+                                                    <Border Background="#222B37" CornerRadius="5" ClipToBounds="True">
                                                     <foundation:GameCoverImage SourcePath="{Binding Editor.BackgroundPreviewPath}"
                                                                                 Stretch="UniformToFill" />
-                                                </Border>
+                                                    </Border>
+                                                </local:DesktopMediaDropZone>
+                                                <TextBlock Text="{Binding Editor.BackgroundMediaInfo}" FontSize="10"
+                                                           Foreground="{DynamicResource DesktopMutedBrush}" />
                                                 <TextBox Text="{Binding Editor.BackgroundImage, Mode=TwoWay}"
                                                          IsEnabled="{Binding Editor.CanEditBackgroundImage}"
                                                          Watermark="{DynamicResource LOCDesktopLocalOrHttpsImagePath}" />
+                                                <WrapPanel>
+                                                    <Button Content="Select" Command="{Binding Editor.SelectMediaFileCommand}"
+                                                            CommandParameter="Background" />
+                                                    <Button Content="URL" Command="{Binding Editor.SetMediaUrlCommand}"
+                                                            CommandParameter="Background" />
+                                                    <Button Content="Web" Command="{Binding Editor.OpenWebImageSearchCommand}"
+                                                            CommandParameter="Background" />
+                                                    <Button Content="Remove" Command="{Binding Editor.RemoveMediaCommand}"
+                                                            CommandParameter="Background" />
+                                                </WrapPanel>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -1059,15 +1120,43 @@
                                                               IsChecked="{Binding Editor.ApplyIcon, Mode=TwoWay}"
                                                               Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                 </StackPanel>
-                                                <Border Height="100" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                <local:DesktopMediaDropZone Height="100" Target="Icon"
+                                                                            DropCommand="{Binding Editor.MediaDropCommand}">
+                                                    <Border Background="#222B37" CornerRadius="5" ClipToBounds="True">
                                                     <foundation:GameCoverImage SourcePath="{Binding Editor.IconPreviewPath}"
                                                                                 Stretch="Uniform" />
-                                                </Border>
+                                                    </Border>
+                                                </local:DesktopMediaDropZone>
+                                                <TextBlock Text="{Binding Editor.IconMediaInfo}" FontSize="10"
+                                                           Foreground="{DynamicResource DesktopMutedBrush}" />
                                                 <TextBox Text="{Binding Editor.Icon, Mode=TwoWay}"
                                                          IsEnabled="{Binding Editor.CanEditIcon}"
                                                          Watermark="{DynamicResource LOCDesktopLocalImagePath}" />
+                                                <WrapPanel>
+                                                    <Button Content="Select" Command="{Binding Editor.SelectMediaFileCommand}"
+                                                            CommandParameter="Icon" />
+                                                    <Button Content="URL" Command="{Binding Editor.SetMediaUrlCommand}"
+                                                            CommandParameter="Icon" />
+                                                    <Button Content="Web" Command="{Binding Editor.OpenWebImageSearchCommand}"
+                                                            CommandParameter="Icon" />
+                                                    <Button Content="Remove" Command="{Binding Editor.RemoveMediaCommand}"
+                                                            CommandParameter="Icon" />
+                                                </WrapPanel>
                                             </StackPanel>
                                         </Grid>
+                                        <Border IsVisible="{Binding Editor.IsSingleEdit}" Padding="10" CornerRadius="7"
+                                                BorderBrush="#394657" BorderThickness="1">
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                                <StackPanel Spacing="3">
+                                                    <TextBlock Text="Metadata source" Classes="sectionLabel" />
+                                                    <ComboBox ItemsSource="{Binding Editor.EditorMetadataSources}"
+                                                              SelectedItem="{Binding Editor.SelectedEditorMetadataSource, Mode=TwoWay}" />
+                                                </StackPanel>
+                                                <Button Grid.Column="1" Classes="primary" VerticalAlignment="Bottom"
+                                                        Content="Download and compare"
+                                                        Command="{Binding Editor.DownloadEditorMetadataCommand}" />
+                                            </Grid>
+                                        </Border>
                                         <StackPanel Spacing="5">
                                             <StackPanel Orientation="Horizontal" Spacing="10">
                                                 <TextBlock Text="{DynamicResource LOCDesktopLinks}" Classes="sectionLabel" />
@@ -1079,12 +1168,14 @@
                                                      IsEnabled="{Binding Editor.CanEditLinks}">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Grid ColumnDefinitions="*,2*,Auto" ColumnSpacing="8" Margin="0,2">
+                                                        <Grid ColumnDefinitions="*,2*,Auto,Auto,Auto" ColumnSpacing="8" Margin="0,2">
                                                             <TextBox Text="{Binding Name, Mode=TwoWay}"
                                                                      Watermark="{DynamicResource LOCDesktopLinkName}" />
                                                             <TextBox Grid.Column="1" Text="{Binding Url, Mode=TwoWay}"
                                                                      Watermark="{DynamicResource LOCDesktopLinkUrl}" />
-                                                            <Button Grid.Column="2" Command="{Binding RemoveCommand}" Content="×" />
+                                                            <Button Grid.Column="2" Command="{Binding MoveUpCommand}" Content="↑" />
+                                                            <Button Grid.Column="3" Command="{Binding MoveDownCommand}" Content="↓" />
+                                                            <Button Grid.Column="4" Command="{Binding RemoveCommand}" Content="×" />
                                                         </Grid>
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
@@ -1104,14 +1195,16 @@
                                                      IsEnabled="{Binding Editor.CanEditRoms}">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Grid ColumnDefinitions="*,2*,Auto,Auto,Auto" ColumnSpacing="7" Margin="0,2">
+                                                        <Grid ColumnDefinitions="*,2*,Auto,Auto,Auto,Auto" ColumnSpacing="7" Margin="0,2">
                                                             <TextBox Text="{Binding Name, Mode=TwoWay}"
                                                                      Watermark="{DynamicResource LOCDesktopRomName}" />
                                                             <TextBox Grid.Column="1" Text="{Binding Path, Mode=TwoWay}"
                                                                      Watermark="{DynamicResource LOCDesktopRomPath}" />
-                                                            <Button Grid.Column="2" Command="{Binding MoveUpCommand}" Content="↑" />
-                                                            <Button Grid.Column="3" Command="{Binding MoveDownCommand}" Content="↓" />
-                                                            <Button Grid.Column="4" Command="{Binding RemoveCommand}" Content="×" />
+                                                            <Button Grid.Column="2" Command="{Binding SelectPathCommand}" Content="…"
+                                                                    ToolTip.Tip="Select ROM file" />
+                                                            <Button Grid.Column="3" Command="{Binding MoveUpCommand}" Content="↑" />
+                                                            <Button Grid.Column="4" Command="{Binding MoveDownCommand}" Content="↓" />
+                                                            <Button Grid.Column="5" Command="{Binding RemoveCommand}" Content="×" />
                                                         </Grid>
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
@@ -1158,7 +1251,12 @@
                                                                 <StackPanel IsVisible="{Binding ShowPath}" Spacing="3">
                                                                     <TextBlock Text="{DynamicResource LOCDesktopPath}" FontSize="11"
                                                                                Foreground="{DynamicResource DesktopMutedBrush}" />
-                                                                    <TextBox Text="{Binding Path, Mode=TwoWay}" />
+                                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                                                        <TextBox Text="{Binding Path, Mode=TwoWay}" />
+                                                                        <Button Grid.Column="1" IsVisible="{Binding IsFileAction}"
+                                                                                Command="{Binding SelectPathCommand}" Content="…"
+                                                                                ToolTip.Tip="Select action file" />
+                                                                    </Grid>
                                                                 </StackPanel>
                                                                 <Grid IsVisible="{Binding IsFileAction}"
                                                                       ColumnDefinitions="*,*" ColumnSpacing="10">
@@ -1170,7 +1268,11 @@
                                                                     <StackPanel Grid.Column="1" Spacing="3">
                                                                         <TextBlock Text="{DynamicResource LOCDesktopWorkingDirectory}" FontSize="11"
                                                                                    Foreground="{DynamicResource DesktopMutedBrush}" />
-                                                                        <TextBox Text="{Binding WorkingDir, Mode=TwoWay}" />
+                                                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                                                            <TextBox Text="{Binding WorkingDir, Mode=TwoWay}" />
+                                                                            <Button Grid.Column="1" Command="{Binding SelectWorkingDirectoryCommand}"
+                                                                                    Content="…" ToolTip.Tip="Select working directory" />
+                                                                        </Grid>
                                                                     </StackPanel>
                                                                 </Grid>
                                                                 <StackPanel IsVisible="{Binding IsEmulatorAction}" Spacing="7">
@@ -1208,6 +1310,8 @@
                                                                                Foreground="{DynamicResource DesktopMutedBrush}" />
                                                                     <TextBox Text="{Binding Script, Mode=TwoWay}" AcceptsReturn="True"
                                                                              FontFamily="{DynamicResource DesktopMonospaceFontFamily}" MinHeight="90" />
+                                                                    <Button Content="Test script" HorizontalAlignment="Left"
+                                                                            Command="{Binding TestScriptCommand}" />
                                                                 </StackPanel>
                                                                 <StackPanel IsVisible="{Binding ShowTracking}" Spacing="7">
                                                                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
@@ -1233,7 +1337,11 @@
                                                                     <StackPanel IsVisible="{Binding ShowTrackingPath}" Spacing="3">
                                                                         <TextBlock Text="{DynamicResource LOCDesktopTrackingPath}" FontSize="11"
                                                                                    Foreground="{DynamicResource DesktopMutedBrush}" />
-                                                                        <TextBox Text="{Binding TrackingPath, Mode=TwoWay}" />
+                                                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                                                            <TextBox Text="{Binding TrackingPath, Mode=TwoWay}" />
+                                                                            <Button Grid.Column="1" Command="{Binding SelectTrackingPathCommand}"
+                                                                                    Content="…" ToolTip.Tip="Select tracking directory" />
+                                                                        </Grid>
                                                                     </StackPanel>
                                                                 </StackPanel>
                                                             </StackPanel>
@@ -1255,8 +1363,13 @@
                                                                   IsChecked="{Binding Editor.ApplyInstallDirectory, Mode=TwoWay}"
                                                                   Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                     </StackPanel>
-                                                    <TextBox Text="{Binding Editor.InstallDirectory, Mode=TwoWay}"
-                                                             IsEnabled="{Binding Editor.CanEditInstallDirectory}" />
+                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                                        <TextBox Text="{Binding Editor.InstallDirectory, Mode=TwoWay}"
+                                                                 IsEnabled="{Binding Editor.CanEditInstallDirectory}" />
+                                                        <Button Grid.Column="1" Content="…"
+                                                                IsEnabled="{Binding Editor.CanEditInstallDirectory}"
+                                                                Command="{Binding Editor.SelectInstallDirectoryCommand}" />
+                                                    </Grid>
                                                 </StackPanel>
                                                 <StackPanel Grid.Column="1" Spacing="5">
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
@@ -1277,8 +1390,12 @@
                                                                   IsChecked="{Binding Editor.ApplyManual, Mode=TwoWay}"
                                                                   Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                                     </StackPanel>
-                                                    <TextBox Text="{Binding Editor.Manual, Mode=TwoWay}"
-                                                             IsEnabled="{Binding Editor.CanEditManual}" />
+                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                                        <TextBox Text="{Binding Editor.Manual, Mode=TwoWay}"
+                                                                 IsEnabled="{Binding Editor.CanEditManual}" />
+                                                        <Button Grid.Column="1" Content="…" IsEnabled="{Binding Editor.CanEditManual}"
+                                                                Command="{Binding Editor.SelectManualCommand}" />
+                                                    </Grid>
                                                 </StackPanel>
                                                 <StackPanel Grid.Column="1" Spacing="5">
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
@@ -1289,6 +1406,9 @@
                                                     </StackPanel>
                                                     <TextBox Text="{Binding Editor.InstallSize, Mode=TwoWay}"
                                                              IsEnabled="{Binding Editor.CanEditInstallSize}" />
+                                                    <Button Content="Calculate" HorizontalAlignment="Left"
+                                                            IsVisible="{Binding Editor.IsSingleEdit}"
+                                                            Command="{Binding Editor.CalculateInstallSizeCommand}" />
                                                 </StackPanel>
                                             </Grid>
                                             <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
@@ -1375,6 +1495,9 @@
                                                     <TextBox Text="{Binding Editor.PreScript, Mode=TwoWay}"
                                                              IsEnabled="{Binding Editor.CanEditPreScript}"
                                                              AcceptsReturn="True" FontFamily="{DynamicResource DesktopMonospaceFontFamily}" MinHeight="80" />
+                                                    <Button Content="Test script" HorizontalAlignment="Left"
+                                                            IsEnabled="{Binding Editor.CanEditPreScript}"
+                                                            Command="{Binding Editor.TestEditorScriptCommand}" CommandParameter="Pre" />
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                                         <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                                   IsChecked="{Binding Editor.ApplyUseGlobalPreScript, Mode=TwoWay}"
@@ -1396,6 +1519,9 @@
                                                     <TextBox Text="{Binding Editor.GameStartedScript, Mode=TwoWay}"
                                                              IsEnabled="{Binding Editor.CanEditGameStartedScript}"
                                                              AcceptsReturn="True" FontFamily="{DynamicResource DesktopMonospaceFontFamily}" MinHeight="80" />
+                                                    <Button Content="Test script" HorizontalAlignment="Left"
+                                                            IsEnabled="{Binding Editor.CanEditGameStartedScript}"
+                                                            Command="{Binding Editor.TestEditorScriptCommand}" CommandParameter="Started" />
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                                         <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                                   IsChecked="{Binding Editor.ApplyUseGlobalGameStartedScript, Mode=TwoWay}"
@@ -1417,6 +1543,9 @@
                                                     <TextBox Text="{Binding Editor.PostScript, Mode=TwoWay}"
                                                              IsEnabled="{Binding Editor.CanEditPostScript}"
                                                              AcceptsReturn="True" FontFamily="{DynamicResource DesktopMonospaceFontFamily}" MinHeight="80" />
+                                                    <Button Content="Test script" HorizontalAlignment="Left"
+                                                            IsEnabled="{Binding Editor.CanEditPostScript}"
+                                                            Command="{Binding Editor.TestEditorScriptCommand}" CommandParameter="Post" />
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                                         <CheckBox IsVisible="{Binding Editor.IsBulkEdit}"
                                                                   IsChecked="{Binding Editor.ApplyUseGlobalPostScript, Mode=TwoWay}"
@@ -1484,6 +1613,8 @@
                                 </StackPanel>
                             </Grid>
                         </Border>
+                        <ContentControl Template="{DynamicResource DesktopWebImageSearchTemplate}" />
+                        <ContentControl Template="{DynamicResource DesktopMetadataComparisonTemplate}" />
                     </Grid>
                 </Grid>
             </ControlTemplate>

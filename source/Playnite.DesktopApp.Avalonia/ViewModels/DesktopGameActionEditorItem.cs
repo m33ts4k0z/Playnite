@@ -159,6 +159,10 @@ public sealed class DesktopGameActionEditorItem : INotifyPropertyChanged
 
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
+    public ICommand SelectPathCommand { get; }
+    public ICommand SelectWorkingDirectoryCommand { get; }
+    public ICommand SelectTrackingPathCommand { get; }
+    public ICommand TestScriptCommand { get; }
     public ICommand RemoveCommand { get; }
 
     public DesktopGameActionEditorItem(
@@ -166,7 +170,11 @@ public sealed class DesktopGameActionEditorItem : INotifyPropertyChanged
         IEnumerable<DesktopEmulatorOption> emulatorOptions,
         Action<DesktopGameActionEditorItem> moveUp,
         Action<DesktopGameActionEditorItem> moveDown,
-        Action<DesktopGameActionEditorItem> remove)
+        Action<DesktopGameActionEditorItem> remove,
+        Action<DesktopGameActionEditorItem> selectPath,
+        Action<DesktopGameActionEditorItem> selectWorkingDirectory,
+        Action<DesktopGameActionEditorItem> selectTrackingPath,
+        Action<DesktopGameActionEditorItem> testScript)
     {
         var source = action?.GetCopy() ?? new GameAction
         {
@@ -200,6 +208,10 @@ public sealed class DesktopGameActionEditorItem : INotifyPropertyChanged
         RefreshEmulatorProfiles(emulatorProfileId);
         MoveUpCommand = new RelayCommand(() => moveUp?.Invoke(this));
         MoveDownCommand = new RelayCommand(() => moveDown?.Invoke(this));
+        SelectPathCommand = new RelayCommand(() => selectPath?.Invoke(this));
+        SelectWorkingDirectoryCommand = new RelayCommand(() => selectWorkingDirectory?.Invoke(this));
+        SelectTrackingPathCommand = new RelayCommand(() => selectTrackingPath?.Invoke(this));
+        TestScriptCommand = new RelayCommand(() => testScript?.Invoke(this));
         RemoveCommand = new RelayCommand(() => remove?.Invoke(this));
     }
 

@@ -16,18 +16,21 @@ public sealed class DesktopRomEditorItem : INotifyPropertyChanged
     public string Path { get => path; set => SetField(ref path, value); }
     public ICommand MoveUpCommand { get; }
     public ICommand MoveDownCommand { get; }
+    public ICommand SelectPathCommand { get; }
     public ICommand RemoveCommand { get; }
 
     public DesktopRomEditorItem(
         GameRom rom,
         Action<DesktopRomEditorItem> moveUp,
         Action<DesktopRomEditorItem> moveDown,
-        Action<DesktopRomEditorItem> remove)
+        Action<DesktopRomEditorItem> remove,
+        Action<DesktopRomEditorItem> selectPath)
     {
         name = rom?.Name ?? string.Empty;
         path = rom?.Path ?? string.Empty;
         MoveUpCommand = new RelayCommand(() => moveUp?.Invoke(this));
         MoveDownCommand = new RelayCommand(() => moveDown?.Invoke(this));
+        SelectPathCommand = new RelayCommand(() => selectPath?.Invoke(this));
         RemoveCommand = new RelayCommand(() => remove?.Invoke(this));
     }
 

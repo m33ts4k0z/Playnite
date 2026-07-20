@@ -14,12 +14,20 @@ public sealed class DesktopLinkEditorItem : INotifyPropertyChanged
     public event PropertyChangedEventHandler PropertyChanged;
     public string Name { get => name; set => SetField(ref name, value); }
     public string Url { get => url; set => SetField(ref url, value); }
+    public ICommand MoveUpCommand { get; }
+    public ICommand MoveDownCommand { get; }
     public ICommand RemoveCommand { get; }
 
-    public DesktopLinkEditorItem(Link link, Action<DesktopLinkEditorItem> remove)
+    public DesktopLinkEditorItem(
+        Link link,
+        Action<DesktopLinkEditorItem> moveUp,
+        Action<DesktopLinkEditorItem> moveDown,
+        Action<DesktopLinkEditorItem> remove)
     {
         name = link?.Name ?? string.Empty;
         url = link?.Url ?? string.Empty;
+        MoveUpCommand = new RelayCommand(() => moveUp?.Invoke(this));
+        MoveDownCommand = new RelayCommand(() => moveDown?.Invoke(this));
         RemoveCommand = new RelayCommand(() => remove?.Invoke(this));
     }
 
