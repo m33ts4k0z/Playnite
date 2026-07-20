@@ -253,6 +253,27 @@ internal static class FullscreenPilotSelfTest
                 ? $"{viewModel.PluginSummary}; real Core action orchestration is attached"
                 : throw new InvalidOperationException("The Fullscreen runtime host is unavailable."));
 
+#if !WINDOWS
+        Record(results, "Linux full shell creates native SDK v7 dialog windows", () =>
+        {
+            var dialog = window.RuntimeHost.PluginApi.Dialogs.CreateWindow(new Playnite.SDK.WindowCreationOptions
+            {
+                Title = "L-2 native dialog",
+                Width = 640,
+                Height = 480,
+                ShowInTaskbar = false,
+                CanResize = false
+            });
+            var wpfLoaded = AppDomain.CurrentDomain.GetAssemblies().Any(assembly =>
+                string.Equals(assembly.GetName().Name, "PresentationFramework", StringComparison.Ordinal));
+            return dialog.Title == "L-2 native dialog" && dialog.Width == 640 && dialog.Height == 480 &&
+                !dialog.ShowInTaskbar && !dialog.CanResize && !wpfLoaded
+                    ? "SDK v7 returned an Avalonia Window without loading PresentationFramework"
+                    : throw new InvalidOperationException(
+                        $"dialog={dialog.GetType().FullName}, WPF loaded={wpfLoaded}.");
+        });
+#endif
+
         Record(results, "SDL controller events forward through both plugin hosts", () =>
         {
             window.RuntimeHost.NotifyControllerButtonStateChanged(GamepadButton.Confirm, true);

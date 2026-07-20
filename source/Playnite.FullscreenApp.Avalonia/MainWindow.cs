@@ -46,6 +46,8 @@ public sealed class MainWindow : Window
     internal int GuideFocusRequestCount => guideFocusRequestCount;
     internal SystemPowerService PowerService => powerService;
 
+    internal void RestoreAndActivate() => RefocusWindow();
+
     internal MainWindow(
         FullscreenAppViewModel viewModel,
         PlayniteLibrary library,

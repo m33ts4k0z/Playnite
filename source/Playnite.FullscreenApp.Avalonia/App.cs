@@ -161,8 +161,7 @@ public sealed class App : Application
         switch (command.Command)
         {
             case CmdlineCommand.Focus:
-                window.Show();
-                window.Activate();
+                window.RestoreAndActivate();
                 break;
             case CmdlineCommand.UriRequest:
                 if (!ProcessUri(command.Args, host, viewModel))

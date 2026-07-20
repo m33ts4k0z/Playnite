@@ -9,7 +9,9 @@ application host. It includes loose API 3 themes and localization, virtualized
 game tiles, controller-native search and filters, details/menu/settings/dialog
 overlays, installed plugin loading, real play/install/uninstall orchestration,
 notifications, SDL controller input and theme audio, legacy plugin converters,
-and Windows-hosted compatibility for registered WPF game-view controls.
+and Windows-hosted compatibility for registered WPF game-view controls. The
+same complete Fullscreen UI now builds for native `net10.0` Linux; SDK v7
+plugins run on both platforms while SDK v6/WPF compatibility remains Windows-only.
 
 Run against the normal Playnite library:
 
@@ -26,12 +28,21 @@ Automated pilot validation uses an isolated temporary Playnite.Core database:
 Playnite.FullscreenApp.Avalonia.exe --self-test
 ```
 
+On Linux, install WebKitGTK 4.1, SDL2, and SDL2_mixer, then run the complete
+native-shell validation with:
+
+```bash
+dotnet run \
+  --project source/Playnite.FullscreenApp.Avalonia/Playnite.FullscreenApp.Avalonia.csproj \
+  -c Release -p:TargetFrameworks=net10.0 -- --self-test
+```
+
 The shared runner now executes global and per-game pre/start/post scripts,
 restores system HDR after the final HDR-controlled game, notifies extensions,
 and applies cancellable library-client shutdown policy. These policy values are
 persisted in `avaloniaFullscreen.json`. Plugin web views are supplied by the
 shared Avalonia application host, with explicit SDK-v6 errors for its WPF-only
 window property and response-body interception contract. Remaining ecosystem
-work moves to SDK v7 and Toolbox v3. The current Playnite SDK/Core and WPF
-compatibility bridge are Windows-only; native Avalonia surfaces remain isolated
-from that bridge so it can be removed with the new SDK UI contract.
+work moves to SDK v7 and Toolbox v3. The portable host refuses SDK v6 plugins
+with an explicit compatibility reason and never loads WPF; the Windows target
+continues to provide that compatibility bridge during the SDK v7 transition.

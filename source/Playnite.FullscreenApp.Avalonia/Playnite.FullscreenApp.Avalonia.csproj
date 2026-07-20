@@ -25,19 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Playnite.Avalonia.App\Playnite.Avalonia.App.csproj" Condition="'$(TargetFramework)' != 'net10.0'" />
+    <ProjectReference Include="..\Playnite.Avalonia.App\Playnite.Avalonia.App.csproj" />
     <ProjectReference Include="..\Playnite.Avalonia\Playnite.Avalonia.csproj" />
     <ProjectReference Include="..\Playnite.Core\Playnite.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <Compile Remove="App.cs;MainWindow.cs;FullscreenPilotSelfTest.cs" />
-    <Compile Remove="Controls\**\*.cs;Services\**\*.cs;ViewModels\**\*.cs;Views\**\*.cs" />
-    <AvaloniaXaml Remove="Views\**\*.axaml" />
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' != 'net10.0'">
-    <Compile Remove="App.Portable.cs;MainWindow.Portable.cs;FullscreenLibrary.Portable.cs" />
   </ItemGroup>
 
   <ItemGroup>
