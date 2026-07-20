@@ -82,8 +82,20 @@ public sealed partial class DesktopAppViewModel
                     : Backups.IsRunning
                         ? Backups.StatusText
                         : Updates.StatusText;
-    public int GlobalProgressValue => InstalledGameImport.IsRunning ? InstalledGameImport.ProgressValue : 0;
-    public int GlobalProgressMaximum => InstalledGameImport.IsRunning ? InstalledGameImport.ProgressTotal : 0;
+    public int GlobalProgressValue => MetadataDownload.IsRunning
+        ? MetadataDownload.ProgressValue
+        : LibrarySync.IsRunning
+            ? LibrarySync.ProgressValue
+            : InstalledGameImport.IsRunning
+                ? InstalledGameImport.ProgressValue
+                : 0;
+    public int GlobalProgressMaximum => MetadataDownload.IsRunning
+        ? MetadataDownload.ProgressTotal
+        : LibrarySync.IsRunning
+            ? LibrarySync.ProgressTotal
+            : InstalledGameImport.IsRunning
+                ? InstalledGameImport.ProgressTotal
+                : 0;
     public bool IsGlobalProgressIndeterminate => GlobalProgressMaximum <= 0;
     public bool CanCancelGlobalProgress =>
         MetadataDownload.IsRunning || LibrarySync.IsRunning || InstalledGameImport.IsRunning;

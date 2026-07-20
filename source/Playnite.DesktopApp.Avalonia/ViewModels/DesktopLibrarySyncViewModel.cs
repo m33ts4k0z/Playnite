@@ -259,6 +259,7 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
         ProgressValue = 0;
         ProgressTotal = sourceCount;
         ProgressText = $"Updating libraries [0/{ProgressTotal}]";
+        IsVisible = false;
         IsRunning = true;
         cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
         var token = cancellationSource.Token;

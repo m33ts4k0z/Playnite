@@ -878,6 +878,17 @@ internal static class DesktopPilotSelfTest
             MetadataField.Icon);
         viewModel.MetadataDownload.SkipExistingValues = false;
         viewModel.MetadataDownload.DownloadBackgroundsImmediately = true;
+        var metadataRanInBackground = false;
+        viewModel.MetadataDownload.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(DesktopMetadataDownloadViewModel.IsRunning) &&
+                viewModel.MetadataDownload.IsRunning)
+            {
+                metadataRanInBackground = !viewModel.MetadataDownload.IsVisible &&
+                    viewModel.IsGlobalProgressVisible &&
+                    viewModel.GlobalProgressMaximum > 0;
+            }
+        };
         var metadataDownloaded = await viewModel.MetadataDownload.StartDownloadAsync();
         var downloadedGame = library.Database.Games[metadataGame.Id];
         var downloadedCoverPath = string.IsNullOrWhiteSpace(downloadedGame.CoverImage)
@@ -1035,6 +1046,11 @@ internal static class DesktopPilotSelfTest
                     $"cover={editorMetadataGame.CoverImage}/{File.Exists(editorCoverPath)}, " +
                     $"icon={editorMetadataGame.Icon}/{File.Exists(editorIconPath)}, validation={viewModel.Editor.ValidationMessage}"));
 
+        Record(results, "Metadata downloads run behind non-modal top-panel progress", () =>
+            metadataRanInBackground
+                ? "the configuration overlay closed while determinate top-panel progress remained visible"
+                : throw new InvalidOperationException("Metadata progress still blocked the library UI."));
+
         metadataPlugin.Description = PilotMetadataPlugin.DownloadedDescription;
         viewModel.MetadataDownload.ConfigureProvidersForTesting(
             new MetadataPlugin[] { metadataPlugin },
@@ -1072,6 +1088,17 @@ internal static class DesktopPilotSelfTest
         var gamesBeforeLibraryImport = library.Database.Games.Count;
         var metadataProvidersBeforeImport = metadataPlugin.ProviderCreationCount;
         var imageRequestsBeforeImport = metadataServer.RequestCount;
+        var librarySyncRanInBackground = false;
+        viewModel.LibrarySync.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(DesktopLibrarySyncViewModel.IsRunning) &&
+                viewModel.LibrarySync.IsRunning)
+            {
+                librarySyncRanInBackground = !viewModel.LibrarySync.IsVisible &&
+                    viewModel.IsGlobalProgressVisible &&
+                    viewModel.GlobalProgressMaximum > 0;
+            }
+        };
         var firstLibrarySync = await viewModel.LibrarySync.StartSyncAsync();
         var importedLibraryGame = library.Database.Games
             .FirstOrDefault(game => game.PluginId == libraryPlugin.Id && game.GameId == PilotLibraryPlugin.ImportedGameId);
@@ -1093,6 +1120,11 @@ internal static class DesktopPilotSelfTest
             libraryUpdatedCount == 1
                 ? $"{importedLibraryGame.Name} joined the live library with owned artwork and metadata"
                 : throw new InvalidOperationException("The library import did not reach Core, metadata, wrappers, and update callbacks."));
+
+        Record(results, "Library updates run behind non-modal top-panel progress", () =>
+            librarySyncRanInBackground
+                ? "the update overlay closed while determinate top-panel progress remained visible"
+                : throw new InvalidOperationException("Library-update progress still blocked the library UI."));
 
         libraryPlugin.Revision = 2;
         viewModel.OpenLibrarySyncCommand.Execute(null);
@@ -1311,6 +1343,17 @@ internal static class DesktopPilotSelfTest
         var gamesBeforeInstalledImport = library.Database.Games.Count;
         var providersBeforeInstalledImport = metadataPlugin.ProviderCreationCount;
         var requestsBeforeInstalledImport = metadataServer.RequestCount;
+        var installedImportRanInBackground = false;
+        viewModel.InstalledGameImport.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(DesktopInstalledGameImportViewModel.IsRunning) &&
+                viewModel.InstalledGameImport.IsRunning)
+            {
+                installedImportRanInBackground = !viewModel.InstalledGameImport.IsVisible &&
+                    viewModel.IsGlobalProgressVisible &&
+                    viewModel.GlobalProgressMaximum > 0;
+            }
+        };
         var importedDetectedPrograms = await viewModel.InstalledGameImport.ImportSelectedAsync();
         var detectedGame = library.Database.Games.FirstOrDefault(game => game.GameId == detectedProgram.AppId);
         var storeGame = library.Database.Games.FirstOrDefault(game => game.GameId == storeProgram.AppId);
@@ -1370,6 +1413,11 @@ internal static class DesktopPilotSelfTest
                 $"platforms={platformSpecificationApplied}/{platformSpecification}, providers={metadataPlugin.ProviderCreationCount}/{providersBeforeInstalledImport + 2}, " +
                 $"requests={metadataServer.RequestCount}/{requestsBeforeInstalledImport + 4}, updates={installedLibraryUpdates}.");
         });
+
+        Record(results, "Installed-game imports run behind non-modal top-panel progress", () =>
+            installedImportRanInBackground
+                ? "the import overlay closed while determinate top-panel progress remained visible"
+                : throw new InvalidOperationException("Installed-game import progress still blocked the library UI."));
 
         viewModel.OpenInstalledGameImportCommand.Execute(null);
         var detectedImportedPrograms = await viewModel.InstalledGameImport.DetectInstalledAsync();

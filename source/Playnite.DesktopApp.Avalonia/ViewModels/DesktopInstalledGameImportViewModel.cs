@@ -357,6 +357,7 @@ public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
         ProgressValue = 0;
         ProgressTotal = selected.Count;
         ProgressText = $"Importing installed games [0/{ProgressTotal}]";
+        IsVisible = false;
         IsRunning = true;
         cancellationSource = new CancellationTokenSource();
         var token = cancellationSource.Token;

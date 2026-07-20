@@ -236,6 +236,7 @@ public sealed class DesktopMetadataDownloadViewModel : INotifyPropertyChanged
         ProgressValue = 0;
         ProgressTotal = games.Count;
         ProgressText = $"Downloading metadata [0/{games.Count}]";
+        IsVisible = false;
         IsRunning = true;
         cancellationSource = new CancellationTokenSource();
         var token = cancellationSource.Token;
