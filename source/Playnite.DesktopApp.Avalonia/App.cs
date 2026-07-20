@@ -211,6 +211,11 @@ public sealed class App : Application
                 options.SelfTest || options.PluginCompatibilityTest ? null : settingsStore,
                 options);
             desktop.MainWindow = window;
+            // Query the backend once the window has rendered a frame; the GPU
+            // context is created lazily on first render, not at framework init.
+            window.Opened += (_, _) => Dispatcher.UIThread.Post(
+                () => LogRenderingBackend(settings),
+                DispatcherPriority.Background);
             ConfigureCrashHandler(
                 desktop,
                 window,
@@ -348,6 +353,40 @@ public sealed class App : Application
         {
             viewModel.SetStatusMessage($"Invalid Playnite URI: {exception.Message}");
             return false;
+        }
+    }
+
+    // Records the render backend Avalonia actually resolved. A registered
+    // IPlatformGraphics means a GPU context was created; its absence means the
+    // software rasterizer is in use — including a silent fallback when GPU
+    // initialization fails despite hardware acceleration being requested.
+    private static void LogRenderingBackend(DesktopSettings settings)
+    {
+        var requested = settings.DisableHwAcceleration
+            ? "software (hardware acceleration disabled in settings)"
+            : "hardware (auto-detect)";
+        try
+        {
+            // Avalonia 12 keeps its service locator internal, so reach the
+            // resolved IPlatformGraphics reflectively. A non-null instance means
+            // a GPU context was created; null means the software rasterizer runs.
+            const System.Reflection.BindingFlags staticFlags =
+                System.Reflection.BindingFlags.Static |
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.NonPublic;
+            var resolver = typeof(global::Avalonia.AvaloniaLocator)
+                .GetProperty("Current", staticFlags)?.GetValue(null);
+            var graphics = resolver?.GetType()
+                .GetMethod("GetService", new[] { typeof(Type) })?
+                .Invoke(resolver, new object[] { typeof(global::Avalonia.Platform.IPlatformGraphics) });
+            var resolved = graphics != null
+                ? $"hardware-accelerated ({graphics.GetType().Name})"
+                : "software rendering";
+            logger.Info($"Avalonia rendering backend: requested={requested}; resolved={resolved}.");
+        }
+        catch (Exception exception)
+        {
+            logger.Error(exception, $"Could not determine the Avalonia rendering backend (requested={requested}).");
         }
     }
 
