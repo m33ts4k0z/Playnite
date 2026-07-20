@@ -28,8 +28,11 @@ staging prepared by `flatpak/prepare-source.sh`. This is the repository CI and
 bundle manifest. A Flathub submission should replace the local `dir` source
 with a tagged release archive and its SHA-256 checksum.
 
-The Flatpak grants the Desktop StatusNotifier item permission explicitly. It
-does not request a global-hotkey portal because system-wide hotkeys are marked
+Avalonia requests legacy `org.kde.StatusNotifierItem-$PID-$ID` service names
+for Desktop tray icons. Flatpak cannot express a wildcard inside a D-Bus name,
+so the manifest uses the documented `--own-name=org.kde.*` compatibility grant
+alongside the narrower StatusNotifierWatcher talk permission. It does not
+request a global-hotkey portal because system-wide hotkeys are marked
 unsupported by the Linux shell. Host filesystem access is required for game
 libraries and launch targets; controller access uses `--device=all`.
 

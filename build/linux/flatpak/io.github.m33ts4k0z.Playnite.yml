@@ -13,7 +13,7 @@ finish-args:
   - --filesystem=host
   - --talk-name=org.freedesktop.Flatpak
   - --talk-name=org.kde.StatusNotifierWatcher
-  - --own-name=org.kde.StatusNotifierItem-*
+  - --own-name=org.kde.*
 
 modules:
   - name: playnite

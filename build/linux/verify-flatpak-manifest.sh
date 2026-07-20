@@ -18,7 +18,7 @@ required_finish_args=(
     --filesystem=host
     --talk-name=org.freedesktop.Flatpak
     --talk-name=org.kde.StatusNotifierWatcher
-    --own-name=org.kde.StatusNotifierItem-\*
+    --own-name=org.kde.\*
 )
 for argument in "${required_finish_args[@]}"; do
     grep -Fq -- "- $argument" "$manifest" || {
@@ -29,6 +29,11 @@ done
 
 if grep -Fq -- '- --socket=system-bus' "$manifest"; then
     echo "Flatpak must not expose the complete system bus." >&2
+    exit 1
+fi
+
+if grep -Fq -- '- --own-name=org.kde.StatusNotifierItem-*' "$manifest"; then
+    echo "Flatpak only accepts D-Bus wildcard ownership patterns ending in .*" >&2
     exit 1
 fi
 
