@@ -28,6 +28,34 @@
                 </ListBox.ItemTemplate>
             </ListBox>
             <Button Content="Remove selected exclusion" Command="{Binding RemoveCommand}" HorizontalAlignment="Left" />
+            <Border Height="1" Background="#394658" Margin="0,8" />
+            <TextBlock Text="Emulated-game scanner paths" Classes="sectionLabel" />
+            <TextBlock Text="Add relative ROM or folder paths that a saved scanner must ignore. Changes are applied when settings are saved."
+                       TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource DesktopMutedBrush}" />
+            <Grid ColumnDefinitions="220,*,Auto,Auto" ColumnSpacing="8">
+                <ComboBox ItemsSource="{Binding ScannerTargets}"
+                          SelectedItem="{Binding SelectedScannerTarget, Mode=TwoWay}" />
+                <TextBox Grid.Column="1" Text="{Binding NewScannerPath, Mode=TwoWay}"
+                         PlaceholderText="Relative path" />
+                <CheckBox Grid.Column="2" Content="Folder"
+                          IsChecked="{Binding NewScannerPathIsDirectory, Mode=TwoWay}"
+                          VerticalAlignment="Center" />
+                <Button Grid.Column="3" Content="Add path" Command="{Binding AddScannerPathCommand}" />
+            </Grid>
+            <ListBox MinHeight="160" ItemsSource="{Binding ScannerPaths}"
+                     SelectedItem="{Binding SelectedScannerPath, Mode=TwoWay}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ScannerPathExclusionRow">
+                        <Grid ColumnDefinitions="180,90,*" ColumnSpacing="9" Margin="8,5">
+                            <TextBlock Text="{Binding ScannerName}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="1" Text="{Binding Kind}" />
+                            <TextBlock Grid.Column="2" Text="{Binding Path}" TextTrimming="CharacterEllipsis" />
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <Button Content="Remove selected scanner path" Command="{Binding RemoveScannerPathCommand}"
+                    HorizontalAlignment="Left" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

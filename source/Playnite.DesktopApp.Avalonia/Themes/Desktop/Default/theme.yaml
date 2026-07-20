@@ -15,5 +15,7 @@ Resources:
   - Views/DetailsPanel.axaml
   - Views/FilterPanel.axaml
   - Views/AddonStore.axaml
+  - Views/EmulatorConfig.axaml
+  - Views/EmulatedImport.axaml
 Styles:
   - Styles.axaml

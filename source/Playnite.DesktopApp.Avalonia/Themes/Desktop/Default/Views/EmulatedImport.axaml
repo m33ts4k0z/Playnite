@@ -1,0 +1,183 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+                    xmlns:model="using:Playnite.SDK.Models"
+                    xmlns:emu="using:Playnite.Emulators">
+    <ControlTemplate x:Key="DesktopEmulatedImportTemplate">
+        <Border Width="1160" MaxHeight="820" Padding="26" CornerRadius="14"
+                Background="{DynamicResource DesktopPanelStrongBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="14">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <StackPanel>
+                        <TextBlock Text="Import emulated games" FontSize="30" FontWeight="Bold"
+                                   Foreground="{DynamicResource DesktopTextBrush}" />
+                        <TextBlock Text="Scan one or more ROM folders, review every result, then import selected games."
+                                   Foreground="{DynamicResource DesktopMutedBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Close" Command="{Binding EmulatedImport.CloseCommand}" />
+                </Grid>
+
+                <Grid Grid.Row="1" IsVisible="{Binding EmulatedImport.IsSetup}"
+                      ColumnDefinitions="280,*" ColumnSpacing="16">
+                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="8">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <ComboBox ItemsSource="{Binding EmulatedImport.SavedScanners}"
+                                      SelectedItem="{Binding EmulatedImport.SelectedSavedScanner, Mode=TwoWay}" />
+                            <Button Grid.Column="1" Content="Use saved"
+                                    Command="{Binding EmulatedImport.AddSavedScannerCommand}" />
+                        </Grid>
+                        <ListBox Grid.Row="1" ItemsSource="{Binding EmulatedImport.ScannerConfigs}"
+                                 SelectedItem="{Binding EmulatedImport.SelectedScanner, Mode=TwoWay}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:EmulatedImportScannerRow">
+                                    <StackPanel Margin="8,5">
+                                        <TextBlock Text="{Binding Config.Name}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Status}" FontSize="11"
+                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
+                            <Button Content="Add" Command="{Binding EmulatedImport.AddScannerCommand}" />
+                            <Button Content="Remove" Command="{Binding EmulatedImport.RemoveScannerCommand}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <ScrollViewer Grid.Column="1">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Scanner" Classes="sectionLabel" />
+                            <Grid ColumnDefinitions="170,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="9" RowSpacing="8">
+                                <TextBlock Text="Name" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Grid.ColumnSpan="2"
+                                         Text="{Binding EmulatedImport.SelectedScanner.Config.Name, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="1" Text="Emulator" VerticalAlignment="Center" />
+                                <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                          ItemsSource="{Binding EmulatedImport.SelectedScanner.Emulators}"
+                                          SelectedItem="{Binding EmulatedImport.SelectedScanner.SelectedEmulator, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="2" Text="Profile" VerticalAlignment="Center" />
+                                <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                          ItemsSource="{Binding EmulatedImport.SelectedScanner.Profiles}"
+                                          SelectedItem="{Binding EmulatedImport.SelectedScanner.SelectedProfile, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="3" Text="ROM folder" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="3" Grid.Column="1"
+                                         Text="{Binding EmulatedImport.SelectedScanner.Config.Directory, Mode=TwoWay}" />
+                                <Button Grid.Row="3" Grid.Column="2" Content="Browse"
+                                        Command="{Binding EmulatedImport.BrowseScannerDirectoryCommand}" />
+                            </Grid>
+                            <WrapPanel>
+                                <CheckBox Content="Save scanner" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatedImport.SelectedScanner.SaveConfig, Mode=TwoWay}" />
+                                <CheckBox Content="Include in global updates" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatedImport.SelectedScanner.Config.InGlobalUpdate, Mode=TwoWay}" />
+                                <CheckBox Content="Scan subfolders" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatedImport.SelectedScanner.Config.ScanSubfolders, Mode=TwoWay}" />
+                                <CheckBox Content="Scan archives" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatedImport.SelectedScanner.Config.ScanInsideArchives, Mode=TwoWay}" />
+                                <CheckBox Content="Merge related files" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatedImport.SelectedScanner.Config.MergeRelatedFiles, Mode=TwoWay}" />
+                                <CheckBox Content="Relative ROM paths" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatedImport.SelectedScanner.Config.ImportWithRelativePaths, Mode=TwoWay}" />
+                            </WrapPanel>
+                            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto" ColumnSpacing="9" RowSpacing="8">
+                                <TextBlock Text="Fallback platform" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" ItemsSource="{Binding EmulatedImport.SelectedScanner.Platforms}"
+                                          SelectedItem="{Binding EmulatedImport.SelectedScanner.SelectedOverridePlatform, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="1" Text="Play action" VerticalAlignment="Center" />
+                                <ComboBox Grid.Row="1" Grid.Column="1"
+                                          ItemsSource="{Binding EmulatedImport.SelectedScanner.PlayActionSettings}"
+                                          SelectedItem="{Binding EmulatedImport.SelectedScanner.Config.PlayActionSettings, Mode=TwoWay}" />
+                            </Grid>
+                            <TextBlock Text="CRC-skip extensions" Classes="sectionLabel" />
+                            <TextBox Text="{Binding EmulatedImport.SelectedScanner.CrcExcludeFileTypesText, Mode=TwoWay}" />
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                                <StackPanel Spacing="5">
+                                    <TextBlock Text="Excluded ROM paths" Classes="sectionLabel" />
+                                    <TextBox Text="{Binding EmulatedImport.SelectedScanner.ExcludedFilesText, Mode=TwoWay}"
+                                             AcceptsReturn="True" MinHeight="80" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="5">
+                                    <TextBlock Text="Excluded folders" Classes="sectionLabel" />
+                                    <TextBox Text="{Binding EmulatedImport.SelectedScanner.ExcludedDirectoriesText, Mode=TwoWay}"
+                                             AcceptsReturn="True" MinHeight="80" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
+                <Grid Grid.Row="1" IsVisible="{Binding EmulatedImport.IsReview}"
+                      RowDefinitions="Auto,*" RowSpacing="10">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Button Content="Select all" Command="{Binding EmulatedImport.SelectAllCommand}" />
+                            <Button Content="Deselect all" Command="{Binding EmulatedImport.DeselectAllCommand}" />
+                            <Button Content="Merge marked" Command="{Binding EmulatedImport.MergeMarkedCommand}" />
+                            <Button Content="Exclude marked files"
+                                    Command="{Binding EmulatedImport.ExcludeSelectedFilesCommand}" />
+                            <Button Content="Exclude marked folders"
+                                    Command="{Binding EmulatedImport.ExcludeSelectedFoldersCommand}" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="Back to scanner setup"
+                                Command="{Binding EmulatedImport.BackToSetupCommand}" />
+                    </Grid>
+                    <ListBox Grid.Row="1" ItemsSource="{Binding EmulatedImport.Games}"
+                             SelectedItem="{Binding EmulatedImport.SelectedGame, Mode=TwoWay}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:EmulatedImportGameRow">
+                                <Border Margin="3" Padding="11" CornerRadius="7" Background="#263140">
+                                    <Grid ColumnDefinitions="Auto,Auto,2*,170,150,Auto" ColumnSpacing="9">
+                                        <CheckBox IsChecked="{Binding Import, Mode=TwoWay}" ToolTip.Tip="Import game" />
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding IsMarked, Mode=TwoWay}"
+                                                  ToolTip.Tip="Mark for batch action" />
+                                        <StackPanel Grid.Column="2" Spacing="3">
+                                            <TextBox Text="{Binding Name, Mode=TwoWay}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding RomSummary}" FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                            <ItemsControl ItemsSource="{Binding Roms}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="emu:ScannedRom">
+                                                        <CheckBox Content="{Binding Path}" IsChecked="{Binding Import, Mode=TwoWay}"
+                                                                  FontSize="10" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        <ComboBox Grid.Column="3" ItemsSource="{Binding PlatformOptions}"
+                                                  SelectedItem="{Binding SelectedPlatform, Mode=TwoWay}" />
+                                        <ComboBox Grid.Column="4" ItemsSource="{Binding RegionOptions}"
+                                                  SelectedItem="{Binding SelectedRegion, Mode=TwoWay}" />
+                                        <StackPanel Grid.Column="5" Spacing="5">
+                                            <Button Content="Split ROMs" IsVisible="{Binding CanSplit}"
+                                                    Command="{Binding $parent[Window].DataContext.EmulatedImport.SplitGameCommand}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="Exclude files"
+                                                    Command="{Binding $parent[Window].DataContext.EmulatedImport.ExcludeGameFilesCommand}"
+                                                    CommandParameter="{Binding}" />
+                                            <Button Content="Exclude folders"
+                                                    Command="{Binding $parent[Window].DataContext.EmulatedImport.ExcludeGameFoldersCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <TextBlock Text="{Binding EmulatedImport.StatusText}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource DesktopMutedBrush}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button Content="Cancel" Command="{Binding EmulatedImport.CloseCommand}" />
+                        <Button Classes="primary" Content="Scan" IsVisible="{Binding EmulatedImport.IsSetup}"
+                                Command="{Binding EmulatedImport.ScanCommand}" />
+                        <Button Classes="primary" Content="Import selected" IsVisible="{Binding EmulatedImport.IsReview}"
+                                Command="{Binding EmulatedImport.ImportCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+</ResourceDictionary>

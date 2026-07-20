@@ -53,10 +53,10 @@ internal static class DesktopPilotSelfTest
         Record(results, "Avalonia theme API 3 package contract validates", () =>
             window.ActiveThemePackage.Mode == AvaloniaThemeMode.Desktop &&
             window.ActiveThemePackage.Manifest?.ThemeApiVersion == AvaloniaThemePackage.CurrentApiVersion.ToString() &&
-            window.ActiveThemePackage.ResourceDictionaries.Count == 9 &&
+            window.ActiveThemePackage.ResourceDictionaries.Count == 11 &&
             window.ActiveThemePackage.SelectorStyles.Count == 1
                 ? $"{window.ActiveThemePackage.Name} targets theme API {AvaloniaThemePackage.CurrentApiVersion} " +
-                  "with eight modular main-view dictionaries"
+                  "with ten modular main-view dictionaries"
                 : throw new InvalidOperationException("The default Desktop theme package is incomplete."));
 
         Record(results, "Avalonia 12 native window chrome contract applies", () =>
@@ -3116,6 +3116,64 @@ internal static class DesktopPilotSelfTest
                 : throw new InvalidOperationException("The deleted filter preset remained active or persisted."));
         viewModel.CloseFilterPanelCommand.Execute(null);
 
+        // Track P-D: exercise the complete fresh-install emulation path against
+        // the disposable Core database used by the Desktop pilot.
+        EmulationSuiteSelfTestResult emulationResult = null;
+        Exception emulationFailure = null;
+        try
+        {
+            emulationResult = RunEmulationSuiteSelfTests(viewModel, library);
+        }
+        catch (Exception exception)
+        {
+            emulationFailure = exception;
+        }
+
+        Record(results, "Emulator, profile, and scanner CRUD persists through Core", () =>
+        {
+            if (emulationFailure != null)
+            {
+                throw new InvalidOperationException(emulationFailure.Message, emulationFailure);
+            }
+            return emulationResult.ConfigurationPersisted && emulationResult.ProfileKindsPersisted
+                ? "custom and built-in profiles plus a full scanner configuration round-tripped through Core"
+                : throw new InvalidOperationException(
+                    $"configuration={emulationResult.ConfigurationPersisted}, profiles={emulationResult.ProfileKindsPersisted}.");
+        });
+        Record(results, "Emulator auto-detection and definition download catalog are live", () =>
+        {
+            if (emulationFailure != null)
+            {
+                throw new InvalidOperationException(emulationFailure.Message, emulationFailure);
+            }
+            return emulationResult.DetectedEmulatorCount == 1 && emulationResult.DownloadOptionCount > 0
+                ? $"the deterministic install was detected and {emulationResult.DownloadOptionCount:N0} definition links are available"
+                : throw new InvalidOperationException(
+                    $"detected={emulationResult.DetectedEmulatorCount}, downloads={emulationResult.DownloadOptionCount}.");
+        });
+        Record(results, "Emulated-game scan review imports selected ROMs", () =>
+        {
+            if (emulationFailure != null)
+            {
+                throw new InvalidOperationException(emulationFailure.Message, emulationFailure);
+            }
+            return emulationResult.ReviewGameCount == 2 && emulationResult.ImportedGameCount == 1
+                ? "two ROMs reached review, one was deselected through exclusion, and one Core game was imported"
+                : throw new InvalidOperationException(
+                    $"review={emulationResult.ReviewGameCount}, imported={emulationResult.ImportedGameCount}.");
+        });
+        Record(results, "Emulation review and settings persist scanner path exclusions", () =>
+        {
+            if (emulationFailure != null)
+            {
+                throw new InvalidOperationException(emulationFailure.Message, emulationFailure);
+            }
+            return emulationResult.ReviewExclusionPersisted && emulationResult.SettingsPathPersisted
+                ? "review-added ROM exclusions and manually added settings paths both persisted on the saved scanner"
+                : throw new InvalidOperationException(
+                    $"review={emulationResult.ReviewExclusionPersisted}, settings={emulationResult.SettingsPathPersisted}.");
+        });
+
         // Track P-C: all catalog behavior is deterministic. The fake catalog
         // proves client-side SDK/platform decisions, cached installer lookup,
         // per-entry failure isolation, package validation/queueing, and the
@@ -3224,6 +3282,139 @@ internal static class DesktopPilotSelfTest
         Console.WriteLine(report);
         (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown(
             results.Count(result => !result.Pass));
+    }
+
+    private static EmulationSuiteSelfTestResult RunEmulationSuiteSelfTests(
+        DesktopAppViewModel viewModel,
+        DesktopLibrary library)
+    {
+        var database = library.Database;
+        var fixtureRoot = Path.Combine(library.ActiveUserDataDirectory, "p-d-emulation");
+        var emulatorDirectory = Path.Combine(fixtureRoot, "emulator");
+        var romDirectory = Path.Combine(fixtureRoot, "roms");
+        Directory.CreateDirectory(emulatorDirectory);
+        Directory.CreateDirectory(romDirectory);
+        var executablePath = Path.Combine(emulatorDirectory, "pilot-emulator.bin");
+        File.WriteAllBytes(executablePath, new byte[] { 0x50, 0x44 });
+        File.WriteAllText(Path.Combine(romDirectory, "P-D Review A.rom"), "alpha");
+        File.WriteAllText(Path.Combine(romDirectory, "P-D Review B.rom"), "beta");
+
+        var configuration = viewModel.EmulatorConfig;
+        if (!configuration.Open())
+        {
+            throw new InvalidOperationException("The emulator configuration overlay did not open.");
+        }
+        configuration.AddEmulatorCommand.Execute(null);
+        var emulator = configuration.SelectedEmulator ??
+            throw new InvalidOperationException("Adding an emulator did not select it.");
+        emulator.Name = "P-D Pilot Emulator";
+        emulator.InstallDir = emulatorDirectory;
+
+        var definition = configuration.EmulatorDefinitions.FirstOrDefault(item => item.Profiles?.Count > 0) ??
+            throw new InvalidOperationException("No bundled emulator definition contains a profile.");
+        configuration.SelectedDefinition = definition;
+        configuration.SelectedBuiltInProfileName = definition.Profiles[0].Name;
+        configuration.AddBuiltInProfileCommand.Execute(null);
+        configuration.AddCustomProfileCommand.Execute(null);
+        var customProfile = configuration.SelectedCustomProfile ??
+            throw new InvalidOperationException("Adding a custom profile did not select it.");
+        customProfile.Name = "P-D ROM Profile";
+        customProfile.Executable = executablePath;
+        customProfile.WorkingDirectory = emulatorDirectory;
+        configuration.CustomProfileImageExtensionsText = "rom";
+        if (configuration.CustomProfilePlatforms.Count > 0)
+        {
+            configuration.CustomProfilePlatforms[0].IsSelected = true;
+        }
+
+        configuration.AddScannerCommand.Execute(null);
+        var scanner = configuration.SelectedScanner ??
+            throw new InvalidOperationException("Adding a game scanner did not select it.");
+        scanner.Name = "P-D Pilot Scanner";
+        scanner.Directory = romDirectory;
+        scanner.ScanInsideArchives = false;
+        scanner.ScanSubfolders = true;
+        scanner.InGlobalUpdate = true;
+        configuration.SelectedScannerEmulator = emulator;
+        configuration.SelectedScannerProfile = customProfile;
+        if (!configuration.Save())
+        {
+            throw new InvalidOperationException(configuration.StatusText);
+        }
+
+        var persistedEmulator = database.Emulators[emulator.Id];
+        var persistedScanner = database.GameScanners[scanner.Id];
+        var configurationPersisted = persistedEmulator != null && persistedScanner != null &&
+            persistedScanner.EmulatorId == persistedEmulator.Id &&
+            persistedScanner.EmulatorProfileId == customProfile.Id &&
+            persistedScanner.ScanSubfolders && !persistedScanner.ScanInsideArchives;
+        var profileKindsPersisted = persistedEmulator?.CustomProfiles?.Any(profile => profile.Id == customProfile.Id) == true &&
+            persistedEmulator.BuiltinProfiles?.Count == 1;
+
+        var detectionDefinition = new EmulatorDefinition
+        {
+            Id = "p-d-pilot",
+            Name = "P-D detected emulator",
+            Profiles = new List<EmulatorDefinitionProfile>
+            {
+                new()
+                {
+                    Name = "Detected profile",
+                    InstallationFile = "^pilot-emulator\\.bin$"
+                }
+            }
+        };
+        var detected = EmulatorConfigViewModel.DetectEmulators(
+            emulatorDirectory,
+            new List<EmulatorDefinition> { detectionDefinition },
+            CancellationToken.None);
+
+        var import = viewModel.EmulatedImport;
+        if (!import.Open())
+        {
+            throw new InvalidOperationException("The emulated-game import overlay did not open.");
+        }
+        import.ScannerConfigs.Clear();
+        var importRow = new EmulatedImportScannerRow(
+            persistedScanner.GetClone(),
+            import.Emulators,
+            import.Platforms,
+            true,
+            false);
+        import.ScannerConfigs.Add(importRow);
+        import.SelectedScanner = importRow;
+        var scanResult = import.ScanCore(CancellationToken.None);
+        import.ApplyScanResult(scanResult);
+        var reviewCount = import.Games.Count;
+        var excluded = import.Games.FirstOrDefault() ??
+            throw new InvalidOperationException("The emulated-game scan returned no review rows.");
+        excluded.IsMarked = true;
+        import.ExcludeSelectedFilesCommand.Execute(null);
+        var reviewExclusionPersisted = database.GameScanners[persistedScanner.Id]?.ExcludedFiles?.Count > 0;
+        var gamesBeforeImport = database.Games.Count;
+        import.ImportCommand.Execute(null);
+        var importedCount = database.Games.Count - gamesBeforeImport;
+
+        var exclusionSettings = viewModel.Settings.ImportExclusions;
+        exclusionSettings.Open();
+        exclusionSettings.SelectedScannerTarget = exclusionSettings.ScannerTargets.FirstOrDefault(target =>
+            target.Id == persistedScanner.Id);
+        exclusionSettings.NewScannerPath = Path.Combine("manual", "ignored.rom");
+        exclusionSettings.NewScannerPathIsDirectory = false;
+        exclusionSettings.AddScannerPathCommand.Execute(null);
+        exclusionSettings.Save();
+        var settingsPathPersisted = database.GameScanners[persistedScanner.Id]?.ExcludedFiles?.Any(path =>
+            string.Equals(path, Path.Combine("manual", "ignored.rom"), EmulationConfigUtilities.PathComparison)) == true;
+
+        return new EmulationSuiteSelfTestResult(
+            configurationPersisted,
+            profileKindsPersisted,
+            detected.Count,
+            configuration.DownloadOptions.Count,
+            reviewCount,
+            importedCount,
+            reviewExclusionPersisted,
+            settingsPathPersisted);
     }
 
     private static async Task<AddonStoreSelfTestResult> RunAddonStoreSelfTests()
@@ -4079,6 +4270,16 @@ internal static class DesktopPilotSelfTest
             }
         }
     }
+
+    private sealed record EmulationSuiteSelfTestResult(
+        bool ConfigurationPersisted,
+        bool ProfileKindsPersisted,
+        int DetectedEmulatorCount,
+        int DownloadOptionCount,
+        int ReviewGameCount,
+        int ImportedGameCount,
+        bool ReviewExclusionPersisted,
+        bool SettingsPathPersisted);
 
     private sealed record AddonStoreSelfTestResult(
         int WindowsCount,

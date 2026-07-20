@@ -1,0 +1,313 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="using:Playnite.DesktopApp.Avalonia.ViewModels"
+                    xmlns:model="using:Playnite.SDK.Models"
+                    xmlns:emu="using:Playnite.Emulators">
+    <ControlTemplate x:Key="DesktopEmulatorConfigTemplate">
+        <Border Width="1180" MaxHeight="820" Padding="26" CornerRadius="14"
+                Background="{DynamicResource DesktopPanelStrongBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <StackPanel>
+                        <TextBlock Text="Emulation configuration" FontSize="30" FontWeight="Bold"
+                                   Foreground="{DynamicResource DesktopTextBrush}" />
+                        <TextBlock Text="{Binding EmulatorConfig.PlatformNote}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Close" Command="{Binding EmulatorConfig.CloseCommand}" />
+                </Grid>
+
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Emulators" Command="{Binding EmulatorConfig.OpenPageCommand}"
+                            CommandParameter="Emulators" />
+                    <Button Content="Game scanners" Command="{Binding EmulatorConfig.OpenPageCommand}"
+                            CommandParameter="Scanners" />
+                    <Button Content="Auto-detect" Command="{Binding EmulatorConfig.OpenPageCommand}"
+                            CommandParameter="Auto-detect" />
+                    <Button Content="Download links" Command="{Binding EmulatorConfig.OpenPageCommand}"
+                            CommandParameter="Downloads" />
+                </StackPanel>
+
+                <Grid Grid.Row="2" IsVisible="{Binding EmulatorConfig.IsEmulatorsPage}"
+                      ColumnDefinitions="260,*" ColumnSpacing="16">
+                    <Grid RowDefinitions="*,Auto" RowSpacing="8">
+                        <ListBox ItemsSource="{Binding EmulatorConfig.EditingEmulators}"
+                                 SelectedItem="{Binding EmulatorConfig.SelectedEmulator, Mode=TwoWay}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="model:Emulator">
+                                    <TextBlock Text="{Binding Name}" Margin="8,6" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="7">
+                            <Button Content="Add" Command="{Binding EmulatorConfig.AddEmulatorCommand}" />
+                            <Button Content="Copy" Command="{Binding EmulatorConfig.CopyEmulatorCommand}" />
+                            <Button Content="Remove" Command="{Binding EmulatorConfig.RemoveEmulatorCommand}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <ScrollViewer Grid.Column="1">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="Emulator" Classes="sectionLabel" />
+                            <Grid ColumnDefinitions="150,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="8">
+                                <TextBlock Text="Name" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Grid.ColumnSpan="2"
+                                         Text="{Binding EmulatorConfig.SelectedEmulator.Name, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="1" Text="Install folder" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="1" Grid.Column="1"
+                                         Text="{Binding EmulatorConfig.SelectedEmulator.InstallDir, Mode=TwoWay}" />
+                                <Button Grid.Row="1" Grid.Column="2" Content="Browse"
+                                        Command="{Binding EmulatorConfig.BrowseEmulatorDirectoryCommand}" />
+                                <TextBlock Grid.Row="2" Text="Built-in definition" VerticalAlignment="Center" />
+                                <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                          ItemsSource="{Binding EmulatorConfig.EmulatorDefinitions}"
+                                          SelectedItem="{Binding EmulatorConfig.SelectedDefinition, Mode=TwoWay}" />
+                            </Grid>
+
+                            <Border Height="1" Background="#394658" Margin="0,5" />
+                            <Grid ColumnDefinitions="260,*" ColumnSpacing="14" MinHeight="380">
+                                <Grid RowDefinitions="*,Auto" RowSpacing="8">
+                                    <ListBox ItemsSource="{Binding EmulatorConfig.SelectedEmulator.AllProfiles}"
+                                             SelectedItem="{Binding EmulatorConfig.SelectedProfile, Mode=TwoWay}" />
+                                    <StackPanel Grid.Row="1" Spacing="7">
+                                        <StackPanel Orientation="Horizontal" Spacing="7">
+                                            <Button Content="Add custom"
+                                                    Command="{Binding EmulatorConfig.AddCustomProfileCommand}" />
+                                            <Button Content="Copy custom"
+                                                    Command="{Binding EmulatorConfig.CopyProfileCommand}" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="7">
+                                            <ComboBox Width="155"
+                                                      ItemsSource="{Binding EmulatorConfig.AvailableBuiltInProfileNames}"
+                                                      SelectedItem="{Binding EmulatorConfig.SelectedBuiltInProfileName, Mode=TwoWay}" />
+                                            <Button Content="Add built-in"
+                                                    Command="{Binding EmulatorConfig.AddBuiltInProfileCommand}" />
+                                        </StackPanel>
+                                        <Button Content="Remove profile" HorizontalAlignment="Left"
+                                                Command="{Binding EmulatorConfig.RemoveProfileCommand}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <StackPanel Grid.Column="1" Spacing="9"
+                                            IsVisible="{Binding EmulatorConfig.IsCustomProfileSelected}">
+                                    <TextBlock Text="Custom profile" Classes="sectionLabel" />
+                                    <TextBox Text="{Binding EmulatorConfig.SelectedCustomProfile.Name, Mode=TwoWay}"
+                                             PlaceholderText="Profile name" />
+                                    <Grid ColumnDefinitions="120,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="7">
+                                        <TextBlock Text="Executable" VerticalAlignment="Center" />
+                                        <TextBox Grid.Column="1" Text="{Binding EmulatorConfig.SelectedCustomProfile.Executable, Mode=TwoWay}" />
+                                        <Button Grid.Column="2" Content="Browse"
+                                                Command="{Binding EmulatorConfig.BrowseProfileExecutableCommand}" />
+                                        <TextBlock Grid.Row="1" Text="Arguments" VerticalAlignment="Center" />
+                                        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                                 Text="{Binding EmulatorConfig.SelectedCustomProfile.Arguments, Mode=TwoWay}" />
+                                        <TextBlock Grid.Row="2" Text="Working folder" VerticalAlignment="Center" />
+                                        <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                                 Text="{Binding EmulatorConfig.SelectedCustomProfile.WorkingDirectory, Mode=TwoWay}" />
+                                        <TextBlock Grid.Row="3" Text="ROM extensions" VerticalAlignment="Center" />
+                                        <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
+                                                 Text="{Binding EmulatorConfig.CustomProfileImageExtensionsText, Mode=TwoWay}" />
+                                        <TextBlock Grid.Row="4" Text="Tracking" VerticalAlignment="Center" />
+                                        <ComboBox Grid.Row="4" Grid.Column="1"
+                                                  ItemsSource="{Binding EmulatorConfig.TrackingModes}"
+                                                  SelectedItem="{Binding EmulatorConfig.SelectedCustomProfile.TrackingMode, Mode=TwoWay}" />
+                                        <TextBox Grid.Row="4" Grid.Column="2" Width="170"
+                                                 Text="{Binding EmulatorConfig.SelectedCustomProfile.TrackingPath, Mode=TwoWay}"
+                                                 PlaceholderText="Tracking path" />
+                                    </Grid>
+                                    <TextBlock Text="Supported platforms" Classes="sectionLabel" />
+                                    <ItemsControl ItemsSource="{Binding EmulatorConfig.CustomProfilePlatforms}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:EmulatorPlatformOption">
+                                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                          Margin="0,0,14,6" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Text="Scripts" Classes="sectionLabel" />
+                                    <Grid ColumnDefinitions="80,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="6">
+                                        <TextBlock Text="Startup" /><TextBox Grid.Column="1" AcceptsReturn="True" MinHeight="42"
+                                            Text="{Binding EmulatorConfig.SelectedCustomProfile.StartupScript, Mode=TwoWay}" />
+                                        <TextBlock Grid.Row="1" Text="Before" /><TextBox Grid.Row="1" Grid.Column="1" AcceptsReturn="True" MinHeight="42"
+                                            Text="{Binding EmulatorConfig.SelectedCustomProfile.PreScript, Mode=TwoWay}" />
+                                        <TextBlock Grid.Row="2" Text="After" /><TextBox Grid.Row="2" Grid.Column="1" AcceptsReturn="True" MinHeight="42"
+                                            Text="{Binding EmulatorConfig.SelectedCustomProfile.PostScript, Mode=TwoWay}" />
+                                        <TextBlock Grid.Row="3" Text="On exit" /><TextBox Grid.Row="3" Grid.Column="1" AcceptsReturn="True" MinHeight="42"
+                                            Text="{Binding EmulatorConfig.SelectedCustomProfile.ExitScript, Mode=TwoWay}" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Spacing="9"
+                                            IsVisible="{Binding EmulatorConfig.IsBuiltInProfileSelected}">
+                                    <TextBlock Text="Built-in profile" Classes="sectionLabel" />
+                                    <TextBox Text="{Binding EmulatorConfig.SelectedBuiltInProfile.Name, Mode=TwoWay}"
+                                             PlaceholderText="Display name" />
+                                    <TextBlock Text="{Binding EmulatorConfig.SelectedBuiltInProfilePlatforms, StringFormat='Platforms: {0}'}"
+                                               TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <CheckBox Content="Override default arguments"
+                                              IsChecked="{Binding EmulatorConfig.SelectedBuiltInProfile.OverrideDefaultArgs, Mode=TwoWay}" />
+                                    <TextBox Text="{Binding EmulatorConfig.SelectedBuiltInProfile.CustomArguments, Mode=TwoWay}"
+                                             PlaceholderText="Custom arguments" />
+                                    <TextBlock Text="Scripts" Classes="sectionLabel" />
+                                    <TextBox Text="{Binding EmulatorConfig.SelectedBuiltInProfile.PreScript, Mode=TwoWay}"
+                                             AcceptsReturn="True" MinHeight="60" PlaceholderText="Before launch" />
+                                    <TextBox Text="{Binding EmulatorConfig.SelectedBuiltInProfile.PostScript, Mode=TwoWay}"
+                                             AcceptsReturn="True" MinHeight="60" PlaceholderText="After launch" />
+                                    <TextBox Text="{Binding EmulatorConfig.SelectedBuiltInProfile.ExitScript, Mode=TwoWay}"
+                                             AcceptsReturn="True" MinHeight="60" PlaceholderText="On exit" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
+                <Grid Grid.Row="2" IsVisible="{Binding EmulatorConfig.IsScannersPage}"
+                      ColumnDefinitions="260,*" ColumnSpacing="16">
+                    <Grid RowDefinitions="*,Auto" RowSpacing="8">
+                        <ListBox ItemsSource="{Binding EmulatorConfig.EditingScanners}"
+                                 SelectedItem="{Binding EmulatorConfig.SelectedScanner, Mode=TwoWay}" />
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="7">
+                            <Button Content="Add" Command="{Binding EmulatorConfig.AddScannerCommand}" />
+                            <Button Content="Copy" Command="{Binding EmulatorConfig.CopyScannerCommand}" />
+                            <Button Content="Remove" Command="{Binding EmulatorConfig.RemoveScannerCommand}" />
+                        </StackPanel>
+                    </Grid>
+                    <ScrollViewer Grid.Column="1">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Scanner configuration" Classes="sectionLabel" />
+                            <Grid ColumnDefinitions="170,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="9" RowSpacing="8">
+                                <TextBlock Text="Name" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Grid.ColumnSpan="2"
+                                         Text="{Binding EmulatorConfig.SelectedScanner.Name, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="1" Text="Emulator" VerticalAlignment="Center" />
+                                <ComboBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                          ItemsSource="{Binding EmulatorConfig.EditingEmulators}"
+                                          SelectedItem="{Binding EmulatorConfig.SelectedScannerEmulator, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="2" Text="Profile" VerticalAlignment="Center" />
+                                <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                                          ItemsSource="{Binding EmulatorConfig.ScannerProfiles}"
+                                          SelectedItem="{Binding EmulatorConfig.SelectedScannerProfile, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="3" Text="ROM folder" VerticalAlignment="Center" />
+                                <TextBox Grid.Row="3" Grid.Column="1"
+                                         Text="{Binding EmulatorConfig.SelectedScanner.Directory, Mode=TwoWay}" />
+                                <Button Grid.Row="3" Grid.Column="2" Content="Browse"
+                                        Command="{Binding EmulatorConfig.BrowseScannerDirectoryCommand}" />
+                            </Grid>
+                            <WrapPanel>
+                                <CheckBox Content="Include in library updates" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatorConfig.SelectedScanner.InGlobalUpdate, Mode=TwoWay}" />
+                                <CheckBox Content="Scan subfolders" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatorConfig.SelectedScanner.ScanSubfolders, Mode=TwoWay}" />
+                                <CheckBox Content="Scan inside archives" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatorConfig.SelectedScanner.ScanInsideArchives, Mode=TwoWay}" />
+                                <CheckBox Content="Merge related files" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatorConfig.SelectedScanner.MergeRelatedFiles, Mode=TwoWay}" />
+                                <CheckBox Content="Use relative paths" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatorConfig.SelectedScanner.ImportWithRelativePaths, Mode=TwoWay}" />
+                                <CheckBox Content="Exclude online-only files" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatorConfig.SelectedScanner.ExcludeOnlineFiles, Mode=TwoWay}" />
+                                <CheckBox Content="Simplified online scan" Margin="0,0,16,8"
+                                          IsChecked="{Binding EmulatorConfig.SelectedScanner.UseSimplifiedOnlineFileScan, Mode=TwoWay}" />
+                            </WrapPanel>
+                            <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto" ColumnSpacing="9" RowSpacing="8">
+                                <TextBlock Text="Fallback platform" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" ItemsSource="{Binding EmulatorConfig.Platforms}"
+                                          SelectedItem="{Binding EmulatorConfig.SelectedScannerOverridePlatform, Mode=TwoWay}" />
+                                <TextBlock Grid.Row="1" Text="Play action" VerticalAlignment="Center" />
+                                <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding EmulatorConfig.PlayActionSettings}"
+                                          SelectedItem="{Binding EmulatorConfig.SelectedScanner.PlayActionSettings, Mode=TwoWay}" />
+                            </Grid>
+                            <TextBlock Text="CRC-skip extensions (this scanner)" Classes="sectionLabel" />
+                            <TextBox Text="{Binding EmulatorConfig.ScannerCrcExcludeFileTypesText, Mode=TwoWay}" />
+                            <TextBlock Text="Excluded ROM paths" Classes="sectionLabel" />
+                            <TextBox Text="{Binding EmulatorConfig.ScannerExcludedFilesText, Mode=TwoWay}"
+                                     AcceptsReturn="True" MinHeight="70" />
+                            <TextBlock Text="Excluded folders" Classes="sectionLabel" />
+                            <TextBox Text="{Binding EmulatorConfig.ScannerExcludedDirectoriesText, Mode=TwoWay}"
+                                     AcceptsReturn="True" MinHeight="70" />
+                            <TextBlock Text="Global CRC-skip extensions" Classes="sectionLabel" />
+                            <TextBox Text="{Binding EmulatorConfig.GlobalCrcExcludeFileTypesText, Mode=TwoWay}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
+                <Grid Grid.Row="2" IsVisible="{Binding EmulatorConfig.IsDetectPage}"
+                      RowDefinitions="Auto,Auto,*" RowSpacing="10">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="primary" Content="Choose folder and scan"
+                                Command="{Binding EmulatorConfig.ScanForEmulatorsCommand}" />
+                        <CheckBox Content="Hide already configured installations"
+                                  IsChecked="{Binding EmulatorConfig.HideAlreadyImported, Mode=TwoWay}" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+                        <Button Content="Select all" Command="{Binding EmulatorConfig.SelectAllDetectedCommand}" />
+                        <Button Content="Deselect all" Command="{Binding EmulatorConfig.DeselectAllDetectedCommand}" />
+                        <Button Content="Import selected" Command="{Binding EmulatorConfig.ImportDetectedCommand}" />
+                    </StackPanel>
+                    <ListBox Grid.Row="2" ItemsSource="{Binding EmulatorConfig.VisibleDetectedEmulators}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="emu:ScannedEmulator">
+                                <Border Margin="3" Padding="12" CornerRadius="7" Background="#263140">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                        <CheckBox IsChecked="{Binding Import, Mode=TwoWay}" />
+                                        <StackPanel Grid.Column="1" Spacing="5">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                                            <TextBlock Text="{Binding InstallDir}" FontSize="11"
+                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                            <ItemsControl ItemsSource="{Binding Profiles}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox Content="{Binding Name}"
+                                                                  IsChecked="{Binding Import, Mode=TwoWay}" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+
+                <Grid Grid.Row="2" IsVisible="{Binding EmulatorConfig.IsDownloadsPage}"
+                      RowDefinitions="Auto,*" RowSpacing="10">
+                    <TextBlock Text="Official and project websites from Playnite's bundled emulator definitions."
+                               TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <ListBox Grid.Row="1" ItemsSource="{Binding EmulatorConfig.DownloadOptions}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:EmulatorDownloadOption">
+                                <Border Margin="3" Padding="11" CornerRadius="7" Background="#263140">
+                                    <Grid ColumnDefinitions="180,*,Auto" ColumnSpacing="10">
+                                        <TextBlock Text="{Binding Platform}" FontWeight="SemiBold" />
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                                            <TextBlock Text="{Binding Website}" FontSize="11"
+                                                       Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="2" Content="Open website"
+                                                Command="{Binding $parent[Window].DataContext.EmulatorConfig.OpenDownloadCommand}"
+                                                CommandParameter="{Binding}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+
+                <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <TextBlock Text="{Binding EmulatorConfig.StatusText}" TextWrapping="Wrap"
+                               Foreground="{DynamicResource DesktopMutedBrush}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button Content="Cancel" Command="{Binding EmulatorConfig.CloseCommand}" />
+                        <Button Classes="primary" Content="Save" Command="{Binding EmulatorConfig.SaveCommand}" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+</ResourceDictionary>

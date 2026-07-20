@@ -2,6 +2,7 @@ using NUnit.Framework;
 using Playnite.Common;
 using Playnite.Database;
 using Playnite.Emulators;
+using Playnite.SDK;
 using Playnite.SDK.Data;
 using Playnite.SDK.Models;
 using System;
@@ -205,6 +206,54 @@ namespace Playnite.Core.Portable.Tests
             Assert.That(Paths.MathcesFilePattern("game.CUE", "*.iso;*.cue"), Is.True);
             Assert.That(Paths.MathcesFilePattern("game.zip", "*.iso;*.cue"), Is.False);
             Assert.That(Paths.MathcesFilePattern("disc1.bin", "disc?.bin"), Is.True);
+        }
+
+        [Test]
+        public void EmulatorScannerExclusionsFollowHostPathCaseRules()
+        {
+            var root = Path.Combine(temporaryDirectory, "roms");
+            var configured = Path.Combine("System", "Game.rom");
+            var differentlyCased = Path.Combine(root, "system", "game.rom");
+            var exclusions = GameScanner.ParseExclusions(root, new System.Collections.Generic.List<string>
+            {
+                configured
+            });
+
+            var matches = GameScanner.GetFileExclusionMatches(
+                new System.Collections.Generic.List<string> { differentlyCased },
+                exclusions);
+
+            Assert.That(matches.Count, Is.EqualTo(OperatingSystem.IsWindows() ? 1 : 0));
+        }
+
+        [Test]
+        public void ScannedGameImportPathOnlyUsesSelectedRoms()
+        {
+            var selectedDirectory = Path.Combine(temporaryDirectory, "selected");
+            var ignoredDirectory = Path.Combine(temporaryDirectory, "ignored");
+            var selectedPath = Path.Combine(selectedDirectory, "game.rom");
+            var ignoredPath = Path.Combine(ignoredDirectory, "bonus.rom");
+            var scanned = new ScannedGame
+            {
+                Name = "Selected ROM game",
+                SourceConfig = new GameScannerConfig
+                {
+                    EmulatorId = Guid.NewGuid(),
+                    EmulatorProfileId = "custom-profile",
+                    ImportWithRelativePaths = false
+                },
+                Roms = new System.Collections.ObjectModel.ObservableCollection<ScannedRom>
+                {
+                    new ScannedRom(selectedPath),
+                    new ScannedRom(ignoredPath) { Import = false }
+                }
+            };
+
+            var imported = scanned.ToGame();
+
+            Assert.That(imported.InstallDirectory, Is.EqualTo(selectedDirectory.EndWithDirSeparator()));
+            Assert.That(imported.Roms.Select(rom => rom.Path),
+                Is.EqualTo(new[] { ExpandableVariables.InstallationDirectory.EndWithDirSeparator() + "game.rom" }));
         }
 
         [Test]

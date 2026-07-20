@@ -59,6 +59,10 @@
                             Command="{Binding OpenLibrarySyncCommand}" />
                     <Button Content="{DynamicResource LOCDesktopImportInstalled}"
                             Command="{Binding OpenInstalledGameImportCommand}" />
+                    <Button Content="Configure emulators"
+                            Command="{Binding OpenEmulatorConfigCommand}" />
+                    <Button Content="Import emulated games"
+                            Command="{Binding OpenEmulatedImportCommand}" />
                     <Button Content="{DynamicResource LOCDesktopAddManualGame}"
                             Command="{Binding AddManualGameCommand}" />
                     <Button Content="Settings" Command="{Binding OpenSettingsCommand}" />

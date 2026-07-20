@@ -57,6 +57,9 @@ namespace Playnite.Emulators
     public class EmulatorScanner
     {
         private static readonly ILogger logger = LogManager.GetLogger();
+        private static readonly StringComparison pathComparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
 
         public static List<ScannedEmulator> SearchForEmulators(string path, IList<EmulatorDefinition> definitions, CancellationToken cancelToken)
         {
@@ -125,9 +128,9 @@ namespace Playnite.Emulators
                                     Profiles = new List<ScannedEmulator.ScannedEmulatorProfile>()
                                 };
 
-                                if (currentDir.StartsWith(PlaynitePaths.ProgramPath, StringComparison.OrdinalIgnoreCase))
+                                if (currentDir.StartsWith(PlaynitePaths.ProgramPath, pathComparison))
                                 {
-                                    currentEmulator.InstallDir = currentDir.Replace(PlaynitePaths.ProgramPath, ExpandableVariables.PlayniteDirectory, StringComparison.OrdinalIgnoreCase);
+                                    currentEmulator.InstallDir = currentDir.Replace(PlaynitePaths.ProgramPath, ExpandableVariables.PlayniteDirectory, pathComparison);
                                 }
 
                                 imported.Add(importId, currentEmulator);
@@ -157,6 +160,12 @@ namespace Playnite.Emulators
         }
 
         private static readonly ILogger logger = LogManager.GetLogger();
+        internal static readonly StringComparison pathComparison = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+        private static readonly RegexOptions pathRegexOptions = OperatingSystem.IsWindows()
+            ? RegexOptions.IgnoreCase
+            : RegexOptions.None;
         private static readonly string[] supportedArchiveExt = new string[] { "rar", "7z", "zip", "tar", "bzip2", "gzip", "lzip" };
         private readonly Dictionary<string, bool> isGoogleDriveCache = new Dictionary<string, bool>();
         private readonly GameScannerConfig scanner;
@@ -463,12 +472,12 @@ namespace Playnite.Emulators
                 {
                     // exclusion parser already appends root path if needed so same match can be done here
                     // for any level match and absolute path match
-                    var match = files.Where(a => Regex.IsMatch(a, excFile.Path, RegexOptions.IgnoreCase));
+                    var match = files.Where(a => Regex.IsMatch(a, excFile.Path, pathRegexOptions));
                     matches.AddMissing(match);
                 }
                 else if (excFile.Absolute)
                 {
-                    var match = files.FirstOrDefault(a => a.Equals(excFile.Path, StringComparison.OrdinalIgnoreCase));
+                    var match = files.FirstOrDefault(a => a.Equals(excFile.Path, pathComparison));
                     if (match != null)
                     {
                         matches.AddMissing(match);
@@ -477,7 +486,7 @@ namespace Playnite.Emulators
                 else if (!excFile.Absolute)
                 {
                     var comp = excFile.Path.PrefixWithDirSeparator();
-                    var match = files.Where(a => a.EndsWith(comp, StringComparison.OrdinalIgnoreCase));
+                    var match = files.Where(a => a.EndsWith(comp, pathComparison));
                     matches.AddMissing(match);
                 }
                 else
@@ -498,12 +507,12 @@ namespace Playnite.Emulators
                 {
                     // exclusion parser already appends root path if needed so same match can be done here
                     // for any level match and absolute path match
-                    var match = dirs.Where(a => Regex.IsMatch(a.TrimEnd(Paths.DirectorySeparators), excDir.Path, RegexOptions.IgnoreCase));
+                    var match = dirs.Where(a => Regex.IsMatch(a.TrimEnd(Paths.DirectorySeparators), excDir.Path, pathRegexOptions));
                     matches.AddMissing(match);
                 }
                 else if (excDir.Absolute && !excDir.MatchByRegex)
                 {
-                    var match = dirs.FirstOrDefault(a => a.TrimEnd(Paths.DirectorySeparators).Equals(excDir.Path.TrimEnd(Paths.DirectorySeparators), StringComparison.OrdinalIgnoreCase));
+                    var match = dirs.FirstOrDefault(a => a.TrimEnd(Paths.DirectorySeparators).Equals(excDir.Path.TrimEnd(Paths.DirectorySeparators), pathComparison));
                     if (match != null)
                     {
                         matches.AddMissing(match);
@@ -512,7 +521,7 @@ namespace Playnite.Emulators
                 else if (!excDir.Absolute && !excDir.MatchByRegex)
                 {
                     var comp = excDir.Path.PrefixWithDirSeparator().TrimEnd(Paths.DirectorySeparators);
-                    var match = dirs.Where(a => a.TrimEnd(Paths.DirectorySeparators).EndsWith(comp, StringComparison.OrdinalIgnoreCase));
+                    var match = dirs.Where(a => a.TrimEnd(Paths.DirectorySeparators).EndsWith(comp, pathComparison));
                     matches.AddMissing(match);
                 }
             }
@@ -766,14 +775,14 @@ namespace Playnite.Emulators
                     var childFiles = playListParser(filePath);
                     foreach (var child in childFiles ?? new List<string>())
                     {
-                        var existingFile = files.FirstOrDefault(a => a.Equals(child, StringComparison.OrdinalIgnoreCase));
+                        var existingFile = files.FirstOrDefault(a => a.Equals(child, pathComparison));
                         if (existingFile != null)
                         {
                             files.Remove(existingFile);
                         }
                     }
 
-                    if (importedFiles.ContainsString(Path.GetFullPath(filePath), StringComparison.OrdinalIgnoreCase))
+                    if (importedFiles.ContainsString(Path.GetFullPath(filePath), pathComparison))
                     {
                         return;
                     }
@@ -921,7 +930,7 @@ namespace Playnite.Emulators
                     continue;
                 }
 
-                if (importedFiles.ContainsString(Path.GetFullPath(file), StringComparison.OrdinalIgnoreCase))
+                if (importedFiles.ContainsString(Path.GetFullPath(file), pathComparison))
                 {
                     continue;
                 }
@@ -1374,7 +1383,8 @@ namespace Playnite.Emulators
             game.GameActions = new ObservableCollection<GameAction> { playAction };
             if (Roms.HasItems())
             {
-                var commonPath = Paths.GetCommonDirectory(Roms.Select(a => a.Path).ToArray());
+                var importedRoms = Roms.Where(a => a.Import).ToList();
+                var commonPath = Paths.GetCommonDirectory(importedRoms.Select(a => a.Path).ToArray());
                 game.Roms = new ObservableCollection<GameRom>();
 
                 var toReplace = string.Empty;
@@ -1382,12 +1392,12 @@ namespace Playnite.Emulators
                 if (sourceConfig.ImportWithRelativePaths)
                 {
                     var emuDir = Playnite.Database.GameDatabase.ExpandGameVariables(new Game(), SourceEmulator.InstallDir, true, null) ?? string.Empty;
-                    if (commonPath.StartsWith(emuDir, StringComparison.OrdinalIgnoreCase))
+                    if (commonPath.StartsWith(emuDir, GameScanner.pathComparison))
                     {
                         varToReplace = ExpandableVariables.EmulatorDirectory.EndWithDirSeparator();
                         toReplace = emuDir.EndWithDirSeparator();
                     }
-                    else if (commonPath.StartsWith(PlaynitePaths.ProgramPath, StringComparison.OrdinalIgnoreCase))
+                    else if (commonPath.StartsWith(PlaynitePaths.ProgramPath, GameScanner.pathComparison))
                     {
                         varToReplace = ExpandableVariables.PlayniteDirectory.EndWithDirSeparator();
                         toReplace = PlaynitePaths.ProgramPath.EndWithDirSeparator();
@@ -1396,14 +1406,14 @@ namespace Playnite.Emulators
 
                 if (sourceConfig.ImportWithRelativePaths && !toReplace.IsNullOrEmpty())
                 {
-                    game.InstallDirectory = commonPath.Replace(toReplace, varToReplace, StringComparison.OrdinalIgnoreCase);
+                    game.InstallDirectory = commonPath.Replace(toReplace, varToReplace, GameScanner.pathComparison);
                 }
                 else
                 {
                     game.InstallDirectory = commonPath;
                 }
 
-                foreach (var rom in Roms.Where(a => a.Import))
+                foreach (var rom in importedRoms)
                 {
                     var gameRom = new GameRom();
                     if (rom.Name.DiscName.IsNullOrEmpty())
@@ -1428,7 +1438,7 @@ namespace Playnite.Emulators
                     }
                     else
                     {
-                        gameRom.Path = rom.Path.Replace(commonPath, ExpandableVariables.InstallationDirectory.EndWithDirSeparator(), StringComparison.OrdinalIgnoreCase);
+                        gameRom.Path = rom.Path.Replace(commonPath, ExpandableVariables.InstallationDirectory.EndWithDirSeparator(), GameScanner.pathComparison);
                     }
 
                     game.Roms.Add(gameRom);

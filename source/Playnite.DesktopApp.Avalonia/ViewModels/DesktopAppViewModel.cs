@@ -431,6 +431,8 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public DesktopPluginSettingsViewModel PluginSettings { get; }
     public DesktopSettingsViewModel Settings { get; }
     public AddonStoreViewModel AddonStore { get; }
+    public EmulatorConfigViewModel EmulatorConfig { get; }
+    public EmulatedImportViewModel EmulatedImport { get; }
     public DesktopScriptService Scripts { get; }
     public AvaloniaSearchSession PluginSearch { get; }
     public bool IsPluginSearchVisible => PluginSearch.IsVisible;
@@ -446,6 +448,8 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand OpenPluginSettingsListCommand { get; }
     public ICommand OpenSettingsCommand { get; }
     public ICommand OpenAddonStoreCommand { get; }
+    public ICommand OpenEmulatorConfigCommand { get; }
+    public ICommand OpenEmulatedImportCommand { get; }
     public ICommand OpenGlobalSearchCommand { get; }
     public ICommand OpenPluginMainMenuCommand { get; }
     public ICommand OpenPluginGameMenuCommand { get; }
@@ -690,6 +694,50 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
                     StatusText = message;
                 }
             });
+        EmulatorConfig = new EmulatorConfigViewModel(
+            database,
+            () => dialogService,
+            (message, error) =>
+            {
+                if (runtimeHost != null)
+                {
+                    runtimeHost.ShowMessage(message, error);
+                }
+                else
+                {
+                    StatusText = message;
+                }
+            });
+        EmulatorConfig.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(EmulatorConfigViewModel.IsVisible))
+            {
+                RaiseGameCommandStates();
+            }
+        };
+        EmulatedImport = new EmulatedImportViewModel(
+            database,
+            () => dialogService,
+            SynchronizeLibrary,
+            () => runtimeHost?.NotifyLibraryUpdated(),
+            (message, error) =>
+            {
+                if (runtimeHost != null)
+                {
+                    runtimeHost.ShowMessage(message, error);
+                }
+                else
+                {
+                    StatusText = message;
+                }
+            });
+        EmulatedImport.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(EmulatedImportViewModel.IsVisible))
+            {
+                RaiseGameCommandStates();
+            }
+        };
         Settings.Updates.ConfigureAddonStore(OpenAddonStore);
 
         ActivateCommand = new AppRelayCommand(
@@ -747,6 +795,16 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
             OpenAddonStore,
             () => !Editor.IsVisible && !MetadataDownload.IsRunning && !LibrarySync.IsRunning &&
                 !InstalledGameImport.IsRunning && !PluginSettings.IsRunning && !Settings.IsVisible);
+        OpenEmulatorConfigCommand = new AppRelayCommand(
+            () => OpenEmulatorConfig(EmulatorConfigViewModel.EmulatorConfigPage.Emulators),
+            () => database != null && !Editor.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsRunning && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsRunning && !Settings.IsVisible && !EmulatedImport.IsVisible);
+        OpenEmulatedImportCommand = new AppRelayCommand(
+            OpenEmulatedImport,
+            () => database != null && !Editor.IsVisible && !MetadataDownload.IsRunning &&
+                !LibrarySync.IsRunning && !InstalledGameImport.IsRunning &&
+                !PluginSettings.IsRunning && !Settings.IsVisible && !EmulatorConfig.IsVisible);
         OpenGlobalSearchCommand = new AppRelayCommand(
             () => OpenGlobalSearch(string.Empty),
             () => database != null && !Editor.IsVisible && !MetadataDownload.IsRunning &&
@@ -1082,6 +1140,26 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         RaiseGameCommandStates();
     }
 
+    private void OpenEmulatorConfig(string page)
+    {
+        CloseOverlays();
+        if (!EmulatorConfig.Open(page))
+        {
+            StatusText = "The emulation configuration view is unavailable.";
+        }
+        RaiseGameCommandStates();
+    }
+
+    private void OpenEmulatedImport()
+    {
+        CloseOverlays();
+        if (!EmulatedImport.Open())
+        {
+            StatusText = "The emulated-game import view is unavailable.";
+        }
+        RaiseGameCommandStates();
+    }
+
     public void OpenGlobalSearch(string initialTerm)
     {
         if (globalSearch == null)
@@ -1099,6 +1177,9 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     [
         new("Open settings", "Configure Playnite", OpenSettings),
         new("Open add-on store", "Browse and manage extensions and themes", OpenAddonStore),
+        new("Configure emulators", "Manage emulator profiles and ROM scanners", () =>
+            OpenEmulatorConfig(EmulatorConfigViewModel.EmulatorConfigPage.Emulators)),
+        new("Import emulated games", "Scan ROM folders and review detected games", OpenEmulatedImport),
         new("Update libraries", "Import changes from library plugins and scanners", OpenLibrarySync),
         new("Import installed games", "Discover installed desktop applications", OpenInstalledGameImport),
         new("Add game manually", "Create a new library game", AddManualGame),
@@ -1310,6 +1391,8 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         IsPluginMenuVisible = false;
         IsFilterPanelVisible = false;
         AddonStore.Close();
+        EmulatorConfig.Close();
+        EmulatedImport.Close();
         SelectedPluginMenuItem = null;
         ClosePluginSidebar();
         Settings.Close();
@@ -1453,6 +1536,8 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)OpenPluginSettingsListCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenSettingsCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenAddonStoreCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenEmulatorConfigCommand).RaiseCanExecuteChanged();
+        ((AppRelayCommand)OpenEmulatedImportCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenGlobalSearchCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginMainMenuCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenPluginGameMenuCommand).RaiseCanExecuteChanged();
