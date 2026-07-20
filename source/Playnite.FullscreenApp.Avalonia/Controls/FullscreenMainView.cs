@@ -12,10 +12,15 @@ public sealed class FullscreenMainView : TemplatedControl
     private ListBox gameList;
     private TextBox searchBox;
     private TextBox pluginSearchBox;
-    private ListBox filterList;
+    private ComboBox filterList;
     private ListBox notificationsList;
     private ListBox actionList;
     private ListBox dialogOptions;
+    private ListBox commandMenuList;
+    private TextBox textInputBox;
+    private OnScreenKeyboard searchKeyboard;
+    private OnScreenKeyboard textInputKeyboard;
+    private Button gameStatusButton;
     private ContentControl settingsContent;
     private Button firstMenuButton;
     private Button detailsPrimaryButton;
@@ -24,10 +29,17 @@ public sealed class FullscreenMainView : TemplatedControl
 
     public int TemplateAppliedCount { get; private set; }
     public ListBox GameList => gameList;
-    public ListBox FilterList => filterList;
+    public ComboBox FilterList => filterList;
     public ListBox NotificationsList => notificationsList;
     public ListBox ActionList => actionList;
     public TextBox PluginSearchBox => pluginSearchBox;
+    public OnScreenKeyboard SearchKeyboard => searchKeyboard;
+    public OnScreenKeyboard TextInputKeyboard => textInputKeyboard;
+    public OnScreenKeyboard ActiveKeyboard => observedViewModel?.IsTextInputVisible == true
+        ? textInputKeyboard
+        : observedViewModel?.IsSearchVisible == true
+            ? searchKeyboard
+            : null;
     public UniformGridVirtualizingPanel TilePanel =>
         gameList?.GetVisualDescendants().OfType<UniformGridVirtualizingPanel>().FirstOrDefault();
     public ScrollViewer GameScrollViewer =>
@@ -41,10 +53,15 @@ public sealed class FullscreenMainView : TemplatedControl
         gameList = e.NameScope.Find<ListBox>("PART_GameList");
         searchBox = e.NameScope.Find<TextBox>("PART_SearchBox");
         pluginSearchBox = e.NameScope.Find<TextBox>("PART_PluginSearchBox");
-        filterList = e.NameScope.Find<ListBox>("PART_FilterList");
+        filterList = e.NameScope.Find<ComboBox>("PART_FilterList");
         notificationsList = e.NameScope.Find<ListBox>("PART_NotificationsList");
         actionList = e.NameScope.Find<ListBox>("PART_ActionList");
         dialogOptions = e.NameScope.Find<ListBox>("PART_DialogOptions");
+        commandMenuList = e.NameScope.Find<ListBox>("PART_CommandMenuList");
+        textInputBox = e.NameScope.Find<TextBox>("PART_TextInputBox");
+        searchKeyboard = e.NameScope.Find<OnScreenKeyboard>("PART_SearchKeyboard");
+        textInputKeyboard = e.NameScope.Find<OnScreenKeyboard>("PART_TextInputKeyboard");
+        gameStatusButton = e.NameScope.Find<Button>("PART_GameStatusButton");
         settingsContent = e.NameScope.Find<ContentControl>("PART_SettingsContent");
         firstMenuButton = e.NameScope.Find<Button>("PART_MenuFirstButton");
         detailsPrimaryButton = e.NameScope.Find<Button>("PART_DetailsPrimaryButton");
@@ -126,6 +143,9 @@ public sealed class FullscreenMainView : TemplatedControl
             nameof(FullscreenAppViewModel.IsNotificationsVisible) when observedViewModel.IsNotificationsVisible => notificationsList,
             nameof(FullscreenAppViewModel.IsActionPickerVisible) when observedViewModel.IsActionPickerVisible => actionList,
             nameof(FullscreenAppViewModel.IsDialogVisible) when observedViewModel.IsDialogVisible => dialogOptions,
+            nameof(FullscreenAppViewModel.IsCommandMenuVisible) when observedViewModel.IsCommandMenuVisible => commandMenuList,
+            nameof(FullscreenAppViewModel.IsTextInputVisible) when observedViewModel.IsTextInputVisible => textInputBox,
+            nameof(FullscreenAppViewModel.IsGameStatusVisible) when observedViewModel.IsGameStatusVisible => gameStatusButton,
             nameof(FullscreenAppViewModel.IsMenuVisible) when observedViewModel.IsMenuVisible => firstMenuButton,
             nameof(FullscreenAppViewModel.IsDetailsVisible) when observedViewModel.IsDetailsVisible => detailsPrimaryButton,
             _ => null

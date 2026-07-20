@@ -15,6 +15,12 @@ public sealed class SdlGamepadInputSource : IDisposable
         remove => manager.DevicesChanged -= value;
     }
 
+    public event EventHandler<GamepadButtonStateChangedEventArgs> ButtonStateChanged
+    {
+        add => manager.ButtonStateChanged += value;
+        remove => manager.ButtonStateChanged -= value;
+    }
+
     public int ControllerCount => manager.Devices.Count;
     public bool IsAvailable => manager.IsAvailable;
     public bool IsStarted => manager.IsStarted;

@@ -179,8 +179,9 @@ internal static class FullscreenPilotSelfTest
                 ? "all ten menu policies control concrete, invokable Avalonia buttons"
                 : throw new InvalidOperationException("A configured Fullscreen menu item is missing or inert."));
         viewModel.OpenToolsCommand.Execute(null);
-        var toolsDialogOpened = viewModel.IsDialogVisible && viewModel.DialogCaption == "Tools";
-        viewModel.CancelDialogCommand.Execute(null);
+        var toolsMenuOpened = viewModel.IsCommandMenuVisible && viewModel.CommandMenuTitle == "Tools" &&
+            viewModel.CommandMenuItems.Count > 0;
+        viewModel.BackCommand.Execute(null);
         var powerActionRaised = false;
         void OnPowerAction(SystemPowerAction _) => powerActionRaised = true;
         viewModel.PowerActionRequested += OnPowerAction;
@@ -191,11 +192,11 @@ internal static class FullscreenPilotSelfTest
         var linuxShutdown = SystemPowerService.CreateLinuxStartInfo(SystemPowerAction.Shutdown, "7");
         var linuxLock = SystemPowerService.CreateLinuxStartInfo(SystemPowerAction.Lock, "7");
         Record(results, "Menu actions are safe and the cross-platform power bridge is explicit", () =>
-            toolsDialogOpened && restartConfirmationOpened && !powerActionRaised &&
+            toolsMenuOpened && restartConfirmationOpened && !powerActionRaised &&
             linuxShutdown.FileName == "systemctl" && linuxShutdown.ArgumentList.SequenceEqual(new[] { "--no-block", "poweroff" }) &&
             linuxLock.FileName == "loginctl" && linuxLock.ArgumentList.SequenceEqual(new[] { "lock-session", "7" }) &&
             window.PowerService.IsSupported(SystemPowerAction.Shutdown)
-                ? "tools opens a controller dialog, destructive actions confirm, and Linux commands use systemd session APIs"
+                ? "tools opens a real submenu, destructive actions confirm, and Linux commands use systemd session APIs"
                 : throw new InvalidOperationException("Menu action safety or platform mapping failed."));
 
         window.GamepadBridge.ButtonDown(GamepadButton.X);
@@ -247,6 +248,16 @@ internal static class FullscreenPilotSelfTest
                 ? $"{viewModel.PluginSummary}; real Core action orchestration is attached"
                 : throw new InvalidOperationException("The Fullscreen runtime host is unavailable."));
 
+        Record(results, "SDL controller events forward through both plugin hosts", () =>
+        {
+            window.RuntimeHost.NotifyControllerButtonStateChanged(GamepadButton.Confirm, true);
+            window.RuntimeHost.NotifyControllerButtonStateChanged(GamepadButton.Confirm, false);
+            var synthetic = new SdlGameControllerDevice("pilot-controller", "Pilot Controller", 7, true);
+            window.RuntimeHost.NotifyControllerConnected(synthetic);
+            window.RuntimeHost.NotifyControllerDisconnected(synthetic);
+            return "button state and connect/disconnect notifications traversed the SDK v6/v7 host bridge";
+        });
+
         Record(results, "SDK v7 host bundle reaches the executable output", () =>
         {
             var bundlePath = Path.Combine(AppContext.BaseDirectory, "SdkV7Host");
@@ -273,12 +284,110 @@ internal static class FullscreenPilotSelfTest
         viewModel.SelectedFilterOption = "All";
         viewModel.ApplyFilterCommand.Execute(null);
 
+        window.GamepadBridge.ButtonDown(GamepadButton.Start);
+        window.GamepadBridge.ButtonUp(GamepadButton.Start);
+        Record(results, "Start opens the selected game's complete action menu", () =>
+        {
+            var titles = viewModel.CommandMenuItems.Select(item => item.Title).ToList();
+            return viewModel.IsCommandMenuVisible &&
+                titles.Any(title => title is "Play" or "Install") &&
+                titles.Any(title => title is "Add to favorites" or "Remove from favorites") &&
+                titles.Contains("Set fields") &&
+                titles.Contains("Extensions") &&
+                titles.Contains("Remove game")
+                    ? $"{titles.Count} actions include launch, custom fields, plugins, and library verbs"
+                    : throw new InvalidOperationException(string.Join(", ", titles));
+        });
+        viewModel.BackCommand.Execute(null);
+
+        viewModel.Filters.ApplyForTest(new Playnite.SDK.Models.FilterPresetSettings { Favorite = true });
+        var preset = viewModel.Filters.SaveForTest("Pilot favorites");
+        viewModel.Filters.RenameForTest(preset, "Pilot favorites renamed");
+        var selectedPresetBeforeCycle = viewModel.Filters.SelectedPreset?.Id;
+        viewModel.Filters.CycleQuickPreset(1);
+        var quickPresetCycled = viewModel.Filters.SelectedPreset?.Id != selectedPresetBeforeCycle;
+        viewModel.Filters.SelectedPreset = viewModel.Filters.Presets.First(item => item.Id == preset.Id);
+        Record(results, "Fullscreen field filters and preset CRUD use the Core database", () =>
+            viewModel.Filters.FieldCount == 29 && viewModel.Games.Count > 0 &&
+            viewModel.Games.All(item => item.Favorite) &&
+            viewModel.Filters.Presets.Any(item => item.Name == "Pilot favorites renamed") &&
+            quickPresetCycled
+                ? $"29 fields matched {viewModel.Games.Count:N0} favorites; CRUD and shoulder cycling persisted"
+                : throw new InvalidOperationException(
+                    $"fields={viewModel.Filters.FieldCount}, games={viewModel.Games.Count}, " +
+                    $"allFavorite={viewModel.Games.All(item => item.Favorite)}, " +
+                    $"presets={string.Join("|", viewModel.Filters.Presets.Select(item => item.Name))}."));
+        viewModel.Filters.DeleteForTest(preset);
+        viewModel.SelectedFilterOption = "All";
+        viewModel.ApplyFilterCommand.Execute(null);
+
+        var hiddenCandidate = library.Games[0];
+        hiddenCandidate.Game.Hidden = true;
+        library.Database.Games.Update(hiddenCandidate.Game);
+        viewModel.RefreshGame(hiddenCandidate.Game.Id);
+        viewModel.ShowHiddenGames = false;
+        var hiddenExcluded = viewModel.Games.All(item => item.Game.Id != hiddenCandidate.Game.Id);
+        viewModel.ShowHiddenGames = true;
+        var hiddenIncluded = viewModel.Games.Any(item => item.Game.Id == hiddenCandidate.Game.Id);
+        hiddenCandidate.Game.Hidden = false;
+        library.Database.Games.Update(hiddenCandidate.Game);
+        viewModel.RefreshGame(hiddenCandidate.Game.Id);
+        viewModel.ShowHiddenGames = false;
+        Record(results, "Show-hidden policy composes with Core field filters", () =>
+            hiddenExcluded && hiddenIncluded
+                ? "the same hidden game was excluded and included without bypassing active filter evaluation"
+                : throw new InvalidOperationException(
+                    $"excluded={hiddenExcluded}, included={hiddenIncluded}."));
+
+        viewModel.OpenSearchCommand.Execute(null);
+        window.MainView.SearchKeyboard.Clear();
+        window.MainView.SearchKeyboard.AppendKey("pilot");
+        window.GamepadBridge.ButtonDown(GamepadButton.Y);
+        window.GamepadBridge.ButtonUp(GamepadButton.Y);
+        window.MainView.SearchKeyboard.AppendKey("game 99");
+        Record(results, "Shared controller keyboard types into Fullscreen search", () =>
+            viewModel.SearchText == "pilot game 99" && viewModel.Games.Count > 0 && viewModel.Games.Count < 20
+                ? $"QWERTY keys and the Y-space chord reduced the library to {viewModel.Games.Count:N0} matches"
+                : throw new InvalidOperationException($"Search text was '{viewModel.SearchText}'."));
+        viewModel.SearchText = string.Empty;
+        viewModel.CloseSearchCommand.Execute(null);
+
+        var statusGame = viewModel.SelectedGame.Game;
+        var restored = false;
+        viewModel.RestoreRequested += (_, _) => restored = true;
+        statusGame.IsLaunching = true;
+        viewModel.SetSyntheticGameStateForTest(statusGame);
+        var launchStatusOpened = viewModel.IsGameStatusVisible &&
+            viewModel.GameStatusText.StartsWith("Starting", StringComparison.Ordinal);
+        statusGame.IsLaunching = false;
+        statusGame.IsRunning = true;
+        viewModel.SetSyntheticGameStateForTest(statusGame);
+        var runningStatusUpdated = viewModel.IsGameStatusVisible &&
+            viewModel.GameStatusText.Contains("running", StringComparison.OrdinalIgnoreCase);
+        statusGame.IsRunning = false;
+        viewModel.SetSyntheticGameStateForTest(statusGame);
+        Record(results, "Game status overlay tracks launch, run, exit, and window restore", () =>
+            launchStatusOpened && runningStatusUpdated && !viewModel.IsGameStatusVisible && restored
+                ? "synthetic GameActionRunner states opened, updated, closed, and restored the shell"
+                : throw new InvalidOperationException("The status overlay state machine was incomplete."));
+
+        var desktopSwitchRequested = false;
+        viewModel.SwitchToDesktopRequested += (_, _) => desktopSwitchRequested = true;
+        viewModel.SwitchToDesktopCommand.Execute(null);
+        Record(results, "Fullscreen-to-Desktop handoff is wired without terminating the self-test", () =>
+            desktopSwitchRequested && !string.IsNullOrWhiteSpace(global::Playnite.PlaynitePaths.DesktopExecutablePath)
+                ? global::Playnite.PlaynitePaths.DesktopExecutablePath
+                : throw new InvalidOperationException("The Desktop handoff request was not raised."));
+
         Record(results, "Settings persist atomically", () =>
         {
             var store = new FullscreenSettingsStore(library.ActiveUserDataDirectory);
             store.Save(new FullscreenSettings
             {
                 ActiveFilter = "Favorites",
+                ActiveFilterPreset = Guid.Parse("9f3bc942-b99b-4d99-b749-85f183807eb7"),
+                SortingOrder = Playnite.SDK.Models.SortOrder.RecentActivity,
+                SortingDirection = Playnite.SDK.Models.SortOrderDirection.Descending,
                 AudioEnabled = false,
                 InterfaceVolume = 42,
                 BackgroundVolume = 23,
@@ -326,6 +435,9 @@ internal static class FullscreenPilotSelfTest
             });
             var loaded = store.Load();
             if (loaded.ActiveFilter != "Favorites" ||
+                loaded.ActiveFilterPreset != Guid.Parse("9f3bc942-b99b-4d99-b749-85f183807eb7") ||
+                loaded.SortingOrder != Playnite.SDK.Models.SortOrder.RecentActivity ||
+                loaded.SortingDirection != Playnite.SDK.Models.SortOrderDirection.Descending ||
                 loaded.AudioEnabled ||
                 loaded.InterfaceVolume != 42 ||
                 loaded.BackgroundVolume != 23 ||
@@ -408,6 +520,23 @@ internal static class FullscreenPilotSelfTest
             dialogResult == "Yes" && !viewModel.IsDialogVisible
                 ? "nested Avalonia dispatcher returned the gamepad-selected option"
                 : throw new InvalidOperationException($"Dialog returned '{dialogResult}'."));
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            window.MainView.TextInputKeyboard.Clear();
+            window.MainView.TextInputKeyboard.AppendKey("controller text");
+            window.GamepadBridge.ButtonDown(GamepadButton.Start);
+            window.GamepadBridge.ButtonUp(GamepadButton.Start);
+        }, DispatcherPriority.Background);
+        var inputResult = window.RuntimeHost.Dialogs.ShowInput(
+            "Enter text with the shared keyboard",
+            "Pilot text input",
+            string.Empty);
+        Record(results, "P-A text input uses the shared Fullscreen controller keyboard", () =>
+            inputResult.Result && inputResult.SelectedString == "controller text" && !viewModel.IsTextInputVisible
+                ? "the OSK updated the two-way input binding and Start completed the nested dialog"
+                : throw new InvalidOperationException(
+                    $"confirmed={inputResult.Result}, value='{inputResult.SelectedString}'."));
 
         Record(results, "Fullscreen audio host initializes safely", () =>
             !string.IsNullOrWhiteSpace(window.AudioService?.Status)

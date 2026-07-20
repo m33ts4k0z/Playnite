@@ -17,6 +17,7 @@ public sealed class GameItemViewModel : INotifyPropertyChanged
     public bool Favorite => Game.Favorite;
     public bool IsInstalled => Game.IsInstalled;
     public string InstallationText => IsInstalled ? "Installed" : "Not installed";
+    public string PrimaryActionText => Game.IsRunning ? "Running" : IsInstalled ? "Play" : "Install";
     public string ActivityText => Game.IsLaunching
         ? "Launching"
         : Game.IsRunning
@@ -55,6 +56,7 @@ public sealed class GameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(e.PropertyName);
         OnPropertyChanged(nameof(InstallationText));
         OnPropertyChanged(nameof(ActivityText));
+        OnPropertyChanged(nameof(PrimaryActionText));
         OnPropertyChanged(nameof(PlaytimeText));
         OnPropertyChanged(nameof(LastPlayedText));
     }
@@ -64,6 +66,7 @@ public sealed class GameItemViewModel : INotifyPropertyChanged
         OnPropertyChanged(string.Empty);
         OnPropertyChanged(nameof(InstallationText));
         OnPropertyChanged(nameof(ActivityText));
+        OnPropertyChanged(nameof(PrimaryActionText));
         OnPropertyChanged(nameof(PlaytimeText));
         OnPropertyChanged(nameof(LastPlayedText));
         OnPropertyChanged(nameof(TileOpacity));

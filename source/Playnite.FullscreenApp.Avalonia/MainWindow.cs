@@ -32,6 +32,8 @@ public sealed class MainWindow : Window
     private int guideFocusRequestCount;
     private readonly DispatcherTimer statusTimer;
     private readonly SystemPowerService powerService = new();
+    private readonly Dictionary<string, SdlGameControllerDevice> connectedControllers =
+        new(StringComparer.OrdinalIgnoreCase);
 
     internal GamepadInputBridge GamepadBridge => gamepadBridge;
     internal SdlGamepadInputSource SdlInput => sdlInput;
@@ -77,12 +79,12 @@ public sealed class MainWindow : Window
         focusedActivationCommand = new RelayCommand(ActivateFocusedControl);
         focusedGameActivationCommand = new RelayCommand(ActivateFocusedControlOrGame);
         UpdateGamepadBindings();
-        gamepadBridge.MapCommand(GamepadButton.Start, viewModel.ToggleMenuCommand);
+        gamepadBridge.MapCommand(GamepadButton.Start, new RelayCommand(HandleStartButton));
         gamepadBridge.MapCommand(GamepadButton.Back, viewModel.ToggleMenuCommand);
-        gamepadBridge.MapCommand(GamepadButton.Y, viewModel.OpenSearchCommand);
-        gamepadBridge.MapCommand(GamepadButton.LeftShoulder, viewModel.SelectPreviousCommand);
-        gamepadBridge.MapCommand(GamepadButton.RightShoulder, viewModel.SelectNextCommand);
-        gamepadBridge.MapCommand(GamepadButton.RightStick, viewModel.ToggleFiltersCommand);
+        gamepadBridge.MapCommand(GamepadButton.Y, new RelayCommand(HandleSpaceOrSearch));
+        gamepadBridge.MapCommand(GamepadButton.LeftShoulder, new RelayCommand(() => HandleShoulder(-1)));
+        gamepadBridge.MapCommand(GamepadButton.RightShoulder, new RelayCommand(() => HandleShoulder(1)));
+        gamepadBridge.MapCommand(GamepadButton.RightStick, new RelayCommand(HandleCapsOrFilters));
         gamepadBridge.MapCommand(GamepadButton.LeftStick, viewModel.ToggleNotificationsCommand);
         sdlInput = new SdlGamepadInputSource(
             gamepadBridge,
@@ -91,7 +93,8 @@ public sealed class MainWindow : Window
         viewModel.Settings.Input.ConfigureControllerSource(
             () => sdlInput.Devices,
             (enabled, disabled) => sdlInput.ApplySettings(enabled, disabled));
-        sdlInput.DevicesChanged += (_, _) => viewModel.Settings.Input.RefreshControllers();
+        sdlInput.DevicesChanged += SdlInput_DevicesChanged;
+        sdlInput.ButtonStateChanged += SdlInput_ButtonStateChanged;
         ApplyCursorSettings();
 
         viewModel.LibraryFocusRequested += (_, _) =>
@@ -102,6 +105,7 @@ public sealed class MainWindow : Window
         viewModel.SettingsChanged += (_, _) => ApplyGeneralSettings();
         viewModel.SettingsChanged += (_, _) => ApplyVisualResources();
         viewModel.GameLaunchSucceeded += (_, _) => MinimizeAfterGameLaunch();
+        viewModel.RestoreRequested += (_, _) => RefocusWindow();
         viewModel.MinimizeRequested += (_, _) => WindowState = WindowState.Minimized;
         viewModel.PowerActionRequested += ExecutePowerAction;
         viewModel.NavigationRequested += (_, _) => audioService?.PlayNavigation();
@@ -209,6 +213,8 @@ public sealed class MainWindow : Window
         statusTimer.Stop();
         SaveSettings();
         viewModel.PluginSearch.Dispose();
+        sdlInput.DevicesChanged -= SdlInput_DevicesChanged;
+        sdlInput.ButtonStateChanged -= SdlInput_ButtonStateChanged;
         sdlInput.Dispose();
         gamepadBridge.Dispose();
         audioService?.Dispose();
@@ -296,7 +302,7 @@ public sealed class MainWindow : Window
             settings.SwapConfirmCancelButtons ? primaryCommand : viewModel.BackCommand);
         gamepadBridge.MapCommand(
             GamepadButton.X,
-            settings.SwapStartDetailsAction ? viewModel.ShowDetailsCommand : viewModel.ActivateCommand);
+            new RelayCommand(HandleBackspaceOrAction));
         if (settings.GuideButtonFocus)
         {
             gamepadBridge.MapCommand(GamepadButton.Guide, new RelayCommand(RefocusWindow));
@@ -352,6 +358,9 @@ public sealed class MainWindow : Window
             !viewModel.IsNotificationsVisible &&
             !viewModel.IsActionPickerVisible &&
             !viewModel.IsDialogVisible &&
+            !viewModel.IsCommandMenuVisible &&
+            !viewModel.IsTextInputVisible &&
+            !viewModel.IsGameStatusVisible &&
             focused != null &&
             mainView.GameList != null &&
             (ReferenceEquals(focused, mainView.GameList) ||
@@ -362,6 +371,106 @@ public sealed class MainWindow : Window
         }
 
         ActivateFocusedControl();
+    }
+
+    private void HandleStartButton()
+    {
+        if (viewModel.IsTextInputVisible)
+        {
+            viewModel.ConfirmTextInputCommand.Execute(null);
+        }
+        else if (viewModel.IsSearchVisible)
+        {
+            viewModel.CloseSearchCommand.Execute(null);
+        }
+        else
+        {
+            viewModel.OpenGameMenuCommand.Execute(null);
+        }
+    }
+
+    private void HandleSpaceOrSearch()
+    {
+        var keyboard = mainView.ActiveKeyboard;
+        if (keyboard != null)
+        {
+            keyboard.AddSpace();
+        }
+        else
+        {
+            viewModel.OpenSearchCommand.Execute(null);
+        }
+    }
+
+    private void HandleBackspaceOrAction()
+    {
+        var keyboard = mainView.ActiveKeyboard;
+        if (keyboard != null)
+        {
+            keyboard.Backspace();
+        }
+        else if (settings.SwapStartDetailsAction)
+        {
+            viewModel.ShowDetailsCommand.Execute(null);
+        }
+        else
+        {
+            viewModel.ActivateCommand.Execute(null);
+        }
+    }
+
+    private void HandleShoulder(int offset)
+    {
+        var keyboard = mainView.ActiveKeyboard;
+        if (keyboard != null)
+        {
+            keyboard.Clear();
+        }
+        else if (viewModel.IsFiltersVisible)
+        {
+            (offset < 0 ? viewModel.CyclePreviousPresetCommand : viewModel.CycleNextPresetCommand).Execute(null);
+        }
+        else
+        {
+            (offset < 0 ? viewModel.SelectPreviousCommand : viewModel.SelectNextCommand).Execute(null);
+        }
+    }
+
+    private void HandleCapsOrFilters()
+    {
+        var keyboard = mainView.ActiveKeyboard;
+        if (keyboard != null)
+        {
+            keyboard.ToggleCaps();
+        }
+        else
+        {
+            viewModel.ToggleFiltersCommand.Execute(null);
+        }
+    }
+
+    private void SdlInput_ButtonStateChanged(object sender, GamepadButtonStateChangedEventArgs e) =>
+        runtimeHost?.NotifyControllerButtonStateChanged(e.Button, e.IsPressed);
+
+    private void SdlInput_DevicesChanged(object sender, EventArgs e)
+    {
+        viewModel.Settings.Input.RefreshControllers();
+        var current = sdlInput.Devices.ToDictionary(device => device.Id, StringComparer.OrdinalIgnoreCase);
+        foreach (var device in current.Values.Where(device => !connectedControllers.ContainsKey(device.Id)))
+        {
+            runtimeHost?.NotifyControllerConnected(device);
+        }
+
+        foreach (var device in connectedControllers.Values.Where(device => !current.ContainsKey(device.Id)))
+        {
+            runtimeHost?.NotifyControllerDisconnected(device);
+        }
+
+        connectedControllers.Clear();
+        foreach (var device in current)
+        {
+            connectedControllers.Add(device.Key, device.Value);
+        }
     }
 
     private void RefocusWindow()

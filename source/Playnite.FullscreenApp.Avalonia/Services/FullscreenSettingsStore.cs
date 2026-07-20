@@ -48,6 +48,14 @@ public sealed class FullscreenSettingsStore
                 {
                     settings.ButtonPrompts = FullscreenButtonPrompts.Xbox;
                 }
+                if (!Enum.IsDefined(settings.SortingOrder))
+                {
+                    settings.SortingOrder = Playnite.SDK.Models.SortOrder.Name;
+                }
+                if (!Enum.IsDefined(settings.SortingDirection))
+                {
+                    settings.SortingDirection = Playnite.SDK.Models.SortOrderDirection.Ascending;
+                }
                 return settings;
             }
         }

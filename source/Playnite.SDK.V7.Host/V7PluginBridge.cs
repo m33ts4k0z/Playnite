@@ -308,6 +308,35 @@ public sealed class V7PluginInstance : IDisposable
     public void InvokeLibraryUpdated() =>
         plugin.OnLibraryUpdated(new OnLibraryUpdatedEventArgs());
 
+    public void InvokeControllerButtonStateChanged(int input, int state) =>
+        plugin.OnControllerButtonStateChanged(new OnControllerButtonStateChangedArgs(
+            (ControllerInput)input,
+            (ControllerInputState)state));
+
+    public void InvokeControllerConnection(
+        bool connected,
+        int instanceId,
+        string path,
+        string name,
+        bool enabled)
+    {
+        var controller = new GamepadController
+        {
+            InstanceId = instanceId,
+            Path = path,
+            Name = name,
+            Enabled = enabled
+        };
+        if (connected)
+        {
+            plugin.OnControllerConnected(new OnControllerConnectedArgs { Controller = controller });
+        }
+        else
+        {
+            plugin.OnControllerDisconnected(new OnControllerDisconnectedArgs { Controller = controller });
+        }
+    }
+
     public void OpenLibraryClient() => GetLibraryClient().Open();
     public void ShutdownLibraryClient() => GetLibraryClient().Shutdown();
 

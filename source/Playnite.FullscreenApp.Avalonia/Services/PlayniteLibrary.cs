@@ -95,9 +95,7 @@ public sealed class PlayniteLibrary : IDisposable
     private void LoadViewModels()
     {
         Games = database.Games
-            .OrderByDescending(game => game.Favorite)
-            .ThenByDescending(game => game.LastActivity)
-            .ThenBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)
+            .OrderBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)
             .Select(game => new GameItemViewModel(game, database))
             .ToList();
     }

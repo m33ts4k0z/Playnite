@@ -33,6 +33,8 @@ public sealed class V7LoadedPlugin
     private readonly MethodInfo getLibraryGames;
     private readonly MethodInfo importLibraryGames;
     private readonly MethodInfo invokeLibraryUpdated;
+    private readonly MethodInfo invokeControllerButtonStateChanged;
+    private readonly MethodInfo invokeControllerConnection;
     private readonly MethodInfo openLibraryClient;
     private readonly MethodInfo shutdownLibraryClient;
     private readonly MethodInfo createMetadataProvider;
@@ -92,6 +94,8 @@ public sealed class V7LoadedPlugin
         getLibraryGames = GetRequiredMethod(type, "GetLibraryGames");
         importLibraryGames = GetRequiredMethod(type, "ImportLibraryGames");
         invokeLibraryUpdated = GetRequiredMethod(type, "InvokeLibraryUpdated");
+        invokeControllerButtonStateChanged = GetRequiredMethod(type, "InvokeControllerButtonStateChanged");
+        invokeControllerConnection = GetRequiredMethod(type, "InvokeControllerConnection");
         openLibraryClient = GetRequiredMethod(type, "OpenLibraryClient");
         shutdownLibraryClient = GetRequiredMethod(type, "ShutdownLibraryClient");
         createMetadataProvider = GetRequiredMethod(type, "CreateMetadataProvider");
@@ -131,6 +135,20 @@ public sealed class V7LoadedPlugin
         ?? throw new InvalidDataException(
             $"SDK v7 library plugin {Id} returned an invalid custom-import sequence.");
     internal void InvokeLibraryUpdated() => Invoke(invokeLibraryUpdated);
+    internal void InvokeControllerButtonStateChanged(int input, int state) =>
+        Invoke(invokeControllerButtonStateChanged, input, state);
+    internal void InvokeControllerConnection(
+        bool connected,
+        int instanceId,
+        string path,
+        string name,
+        bool enabled) => Invoke(
+            invokeControllerConnection,
+            connected,
+            instanceId,
+            path,
+            name,
+            enabled);
     internal void OpenLibraryClient() => Invoke(openLibraryClient);
     internal void ShutdownLibraryClient() => Invoke(shutdownLibraryClient);
     internal object CreateMetadataProvider(string gameJson, bool backgroundDownload) =>
@@ -1501,6 +1519,45 @@ internal sealed class V7PluginHost : IDisposable
             {
                 callbacks.SetStatus(
                     $"SDK v7 plugin {plugin.Name} library-updated event failed: {exception.Message}");
+            }
+        }
+    }
+
+    public void NotifyControllerButtonStateChanged(int input, int state)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        foreach (var plugin in Plugins.ToList())
+        {
+            try
+            {
+                plugin.InvokeControllerButtonStateChanged(input, state);
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                callbacks.SetStatus(
+                    $"SDK v7 plugin {plugin.Name} controller event failed: {exception.Message}");
+            }
+        }
+    }
+
+    public void NotifyControllerConnection(
+        bool connected,
+        int instanceId,
+        string path,
+        string name,
+        bool enabled)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        foreach (var plugin in Plugins.ToList())
+        {
+            try
+            {
+                plugin.InvokeControllerConnection(connected, instanceId, path, name, enabled);
+            }
+            catch (Exception exception) when (!PlayniteEnvironment.ThrowAllErrors)
+            {
+                callbacks.SetStatus(
+                    $"SDK v7 plugin {plugin.Name} controller connection event failed: {exception.Message}");
             }
         }
     }

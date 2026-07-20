@@ -47,7 +47,11 @@ public sealed class App : Application
 
             var settingsStore = new FullscreenSettingsStore(library.ActiveUserDataDirectory);
             var settings = LoadOrImportSettings(settingsStore, library.ActiveUserDataDirectory, options);
-            var viewModel = new FullscreenAppViewModel(library.Games, settings, startupError);
+            var viewModel = new FullscreenAppViewModel(
+                library.Games,
+                library.IsOpen ? library.Database : null,
+                settings,
+                startupError);
             MainWindow window = null;
             if (library.IsOpen)
             {
@@ -67,6 +71,27 @@ public sealed class App : Application
                 window.WindowState = window.WindowState == global::Avalonia.Controls.WindowState.FullScreen
                     ? global::Avalonia.Controls.WindowState.Normal
                     : global::Avalonia.Controls.WindowState.FullScreen;
+            viewModel.SwitchToDesktopRequested += (_, _) =>
+            {
+                if (options.SelfTest)
+                {
+                    return;
+                }
+
+                try
+                {
+                    var arguments = $"--userdatadir {QuoteArgument(options.UserDataDirectory)} " +
+                        $"--library-path {QuoteArgument(options.LibraryPath)}";
+                    Playnite.Common.ProcessStarter.StartProcess(
+                        global::Playnite.PlaynitePaths.DesktopExecutablePath,
+                        arguments);
+                    desktop.Shutdown();
+                }
+                catch (Exception exception)
+                {
+                    viewModel.SetStatusMessage($"Desktop mode could not be started: {exception.Message}");
+                }
+            };
 
             desktop.MainWindow = window;
             ConfigureCrashHandler(
@@ -263,4 +288,7 @@ public sealed class App : Application
         Path.Combine(AppContext.BaseDirectory, "Themes", "Fullscreen"),
         Path.Combine(global::Playnite.PlaynitePaths.ThemesUserDataPath, "Fullscreen")
     };
+
+    private static string QuoteArgument(string value) =>
+        $"\"{(value ?? string.Empty).Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
 }

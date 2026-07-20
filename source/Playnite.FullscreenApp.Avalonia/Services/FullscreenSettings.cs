@@ -1,4 +1,5 @@
 using Playnite.Avalonia.App.Services;
+using Playnite.SDK.Models;
 
 namespace Playnite.FullscreenApp.Avalonia.Services;
 
@@ -12,6 +13,9 @@ public sealed class FullscreenSettings : IAvaloniaHostSettings
 {
     public int Version { get; set; } = 1;
     public string ActiveFilter { get; set; } = "All";
+    public Guid ActiveFilterPreset { get; set; }
+    public SortOrder SortingOrder { get; set; } = SortOrder.Name;
+    public SortOrderDirection SortingDirection { get; set; } = SortOrderDirection.Ascending;
     public bool ShowHiddenGames { get; set; }
     public bool SwapConfirmCancelButtons { get; set; }
     public bool SwapStartDetailsAction { get; set; }

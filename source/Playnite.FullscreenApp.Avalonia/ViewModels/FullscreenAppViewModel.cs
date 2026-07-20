@@ -10,16 +10,18 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Playnite.Database;
 
 namespace Playnite.FullscreenApp.Avalonia.ViewModels;
 
-public sealed class FullscreenAppViewModel : INotifyPropertyChanged
+public sealed partial class FullscreenAppViewModel : INotifyPropertyChanged
 {
     private static readonly IReadOnlyList<string> filterOptions =
         new[] { "All", "Installed", "Favorites", "Recent", "Unplayed", "Hidden" };
 
     private readonly List<GameItemViewModel> allGames;
     private readonly FullscreenSettings settings;
+    private readonly GameDatabase database;
     private FullscreenRuntimeHost runtimeHost;
     private GameItemViewModel selectedGame;
     private IReadOnlyList<GameItemViewModel> games;
@@ -77,6 +79,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     public int ActivateCount => activateCount;
     public AvaloniaSearchSession PluginSearch { get; }
     public FullscreenSettingsViewModel Settings { get; }
+    public FullscreenFilterViewModel Filters { get; }
     public bool IsPluginSearchVisible => PluginSearch.IsVisible;
     public bool ShowClock => settings.ShowClock;
     public bool ShowBattery => settings.ShowBattery && !string.IsNullOrWhiteSpace(BatteryText);
@@ -280,10 +283,12 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
 
     public FullscreenAppViewModel(
         IReadOnlyList<GameItemViewModel> sourceGames,
+        GameDatabase database,
         FullscreenSettings settings,
         string startupError)
     {
         this.settings = settings ?? new FullscreenSettings();
+        this.database = database;
         allGames = sourceGames?.ToList() ?? new List<GameItemViewModel>();
         selectedFilterOption = filterOptions.Contains(this.settings.ActiveFilter)
             ? this.settings.ActiveFilter
@@ -311,6 +316,12 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
                 OnPropertyChanged(nameof(IsPluginSearchVisible));
             }
         };
+        Filters = new FullscreenFilterViewModel(
+            database,
+            allGames,
+            this.settings,
+            ApplyFilters,
+            () => SettingsChanged?.Invoke(this, EventArgs.Empty));
 
         ShowDetailsCommand = new RelayCommand(ShowDetails, () => SelectedGame != null);
         ConfirmCommand = new RelayCommand(Confirm);
@@ -365,15 +376,11 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         HibernateCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Hibernate));
         LockCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Lock));
         LogoutCommand = new RelayCommand(() => RequestPowerAction(SystemPowerAction.Logout));
-        OpenToolsCommand = new RelayCommand(() => OpenMenuInformation(
-            "Tools",
-            "Library search, filters, notifications, settings, and display controls are available from this Fullscreen menu."));
-        OpenExtensionsCommand = new RelayCommand(() => OpenMenuInformation(
-            "Extensions",
-            PluginSummary));
-        OpenClientsCommand = new RelayCommand(() => OpenMenuInformation(
-            "Library clients",
-            "Library-client lifecycle and shutdown policy are managed by the loaded library extensions."));
+        OpenToolsCommand = new RelayCommand(OpenToolsMenu, () => database != null && runtimeHost != null);
+        OpenExtensionsCommand = new RelayCommand(OpenExtensionsMenu, () => runtimeHost != null);
+        OpenClientsCommand = new RelayCommand(OpenClientsMenu, () => runtimeHost != null);
+
+        InitializeParityCommands();
 
         ApplyFilters();
         ApplyGameVisualSettings();
@@ -382,11 +389,16 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     public void AttachRuntime(FullscreenRuntimeHost host)
     {
         runtimeHost = host;
+        Filters.AttachDialogs(host.Dialogs);
+        AttachParityRuntime(host);
         Notifications.CollectionChanged -= Notifications_CollectionChanged;
         Notifications = host.Notifications.Messages;
         Notifications.CollectionChanged += Notifications_CollectionChanged;
         OnPropertyChanged(nameof(Notifications));
         OnPropertyChanged(nameof(NotificationCount));
+        ((RelayCommand)OpenToolsCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)OpenExtensionsCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)OpenClientsCommand).RaiseCanExecuteChanged();
     }
 
     public void SelectGame(Guid gameId)
@@ -514,6 +526,10 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
 
     private void Confirm()
     {
+        if (ConfirmParityOverlay())
+        {
+            return;
+        }
         if (IsDialogVisible)
         {
             ConfirmDialogCommand.Execute(null);
@@ -596,6 +612,11 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
     private void ApplyFilters()
     {
         IEnumerable<GameItemViewModel> filtered = allGames;
+        if (database != null)
+        {
+            var includeHidden = settings.ShowHiddenGames || SelectedFilterOption == "Hidden";
+            filtered = filtered.Where(item => Filters.Matches(item.Game, includeHidden));
+        }
         if (!settings.ShowHiddenGames && SelectedFilterOption != "Hidden")
         {
             filtered = filtered.Where(item => !item.Game.Hidden);
@@ -607,7 +628,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
             "Favorites" => filtered.Where(item => item.Favorite),
             "Recent" => filtered.Where(item => item.Game.LastActivity >= DateTime.Now.AddDays(-30)),
             "Unplayed" => filtered.Where(item => item.Game.Playtime == 0),
-            "Hidden" => allGames.Where(item => item.Game.Hidden),
+            "Hidden" => filtered.Where(item => item.Game.Hidden),
             _ => filtered
         };
 
@@ -618,6 +639,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
                 item.MetadataLine.Contains(SearchText, StringComparison.CurrentCultureIgnoreCase));
         }
 
+        filtered = SortGames(filtered);
         var previous = SelectedGame;
         Games = filtered.ToList();
         SelectedGame = previous != null && Games.Contains(previous) ? previous : Games.FirstOrDefault();
@@ -625,6 +647,10 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
 
     private void Back()
     {
+        if (BackParityOverlay())
+        {
+            return;
+        }
         if (PluginSearch.IsVisible)
         {
             if (PluginSearch.CanGoBack)
@@ -665,6 +691,7 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         IsNotificationsVisible = false;
         IsActionPickerVisible = false;
         IsDialogVisible = false;
+        CloseParityOverlays();
     }
 
     private void ApplySavedSettings()
@@ -722,9 +749,6 @@ public sealed class FullscreenAppViewModel : INotifyPropertyChanged
         CloseOverlays();
         MinimizeRequested?.Invoke(this, EventArgs.Empty);
     }
-
-    private void OpenMenuInformation(string caption, string message) =>
-        OpenDialog(caption, message, new[] { "OK" }, 0, 0, _ => { });
 
     private void ApplyGameVisualSettings()
     {

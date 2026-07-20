@@ -197,7 +197,8 @@
                                            Foreground="{DynamicResource FullscreenTextBrush}" />
                                 <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,12,0,0">
                                     <Button Name="PART_DetailsPrimaryButton" Classes="primary" Command="{Binding ActivateCommand}"
-                                            Content="Play / Install" />
+                                            Content="{Binding SelectedGame.PrimaryActionText}" />
+                                    <Button Command="{Binding OpenGameMenuCommand}" Content="Options" />
                                     <Button Command="{Binding UninstallCommand}"
                                             Content="{DynamicResource LOCFullscreenUninstall}" />
                                     <Button Command="{Binding BackCommand}"
@@ -227,6 +228,12 @@
                                             Content="{DynamicResource LOCFullscreenNotifications}" />
                                     <Button Command="{Binding OpenSettingsCommand}"
                                             Content="{DynamicResource LOCFullscreenSettings}" />
+                                    <Button Command="{Binding SelectRandomGameCommand}"
+                                            Content="Select random game" />
+                                    <Button Command="{Binding UpdateLibraryCommand}"
+                                            Content="Update library" />
+                                    <Button Command="{Binding SwitchToDesktopCommand}"
+                                            Content="Switch to Desktop mode" />
                                     <Button Command="{Binding ToggleFullscreenCommand}"
                                             Content="{DynamicResource LOCFullscreenToggleFullscreen}" />
                                     <Button Name="PART_MenuTools" Command="{Binding OpenToolsCommand}"
@@ -279,6 +286,8 @@
                                          Text="{Binding SearchText, Mode=TwoWay}"
                                          Watermark="Type a game name, platform, or genre"
                                          FontSize="24" Padding="16" />
+                                <foundation:OnScreenKeyboard Name="PART_SearchKeyboard"
+                                                             Text="{Binding SearchText, Mode=TwoWay}" />
                                 <TextBlock Text="{Binding LibrarySummary}"
                                            Foreground="{DynamicResource FullscreenMutedTextBrush}" />
                                 <Button Command="{Binding CloseSearchCommand}"
@@ -341,22 +350,74 @@
 
                     <Grid Grid.RowSpan="3" IsVisible="{Binding IsFiltersVisible}"
                           Background="#D9000000">
-                        <Border Width="600" Padding="38" CornerRadius="16"
+                        <Border Width="1050" MaxHeight="780" Padding="30" CornerRadius="16"
                                 Background="{DynamicResource FullscreenSurfaceStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <StackPanel Spacing="18">
+                            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="16">
                                 <TextBlock Text="{DynamicResource LOCFullscreenFilters}"
                                            FontSize="36" FontWeight="Bold"
                                            Foreground="{DynamicResource FullscreenTextBrush}" />
-                                <ListBox Name="PART_FilterList"
-                                         MaxHeight="420"
-                                         ItemsSource="{Binding FilterOptions}"
-                                         SelectedItem="{Binding SelectedFilterOption, Mode=TwoWay}" />
-                                <Button Classes="primary" Command="{Binding ApplyFilterCommand}"
-                                        Content="{DynamicResource LOCFullscreenApply}" />
-                                <Button Command="{Binding BackCommand}"
-                                        Content="{DynamicResource LOCFullscreenReturn}" />
-                            </StackPanel>
+                                <Grid Grid.Row="1" ColumnDefinitions="2*,*,*,Auto" ColumnSpacing="12">
+                                    <ComboBox Name="PART_FilterList"
+                                              ItemsSource="{Binding Filters.Presets}"
+                                              SelectedItem="{Binding Filters.SelectedPreset, Mode=TwoWay}"
+                                              PlaceholderText="No preset">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding Name}" /></DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <ComboBox Grid.Column="1" ItemsSource="{Binding Filters.SortOptions}"
+                                              SelectedItem="{Binding Filters.SelectedSortOrder, Mode=TwoWay}" />
+                                    <ComboBox Grid.Column="2" ItemsSource="{Binding Filters.SortDirectionOptions}"
+                                              SelectedItem="{Binding Filters.SelectedSortDirection, Mode=TwoWay}" />
+                                    <CheckBox Grid.Column="3" Content="Match all selected values"
+                                              IsChecked="{Binding Filters.UseAndStyle, Mode=TwoWay}" />
+                                </Grid>
+                                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                                    <StackPanel Spacing="10">
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                            <TextBox Text="{Binding Filters.Name, Mode=TwoWay}" Watermark="Game name" />
+                                            <TextBox Grid.Column="1" Text="{Binding Filters.Version, Mode=TwoWay}" Watermark="Version" />
+                                        </Grid>
+                                        <WrapPanel Orientation="Horizontal">
+                                            <CheckBox Margin="0,0,18,0" Content="Installed" IsChecked="{Binding Filters.Installed, Mode=TwoWay}" />
+                                            <CheckBox Margin="0,0,18,0" Content="Uninstalled" IsChecked="{Binding Filters.Uninstalled, Mode=TwoWay}" />
+                                            <CheckBox Margin="0,0,18,0" Content="Favorite" IsChecked="{Binding Filters.Favorite, Mode=TwoWay}" />
+                                            <CheckBox Content="Hidden" IsChecked="{Binding Filters.Hidden, Mode=TwoWay}" />
+                                        </WrapPanel>
+                                        <ItemsControl ItemsSource="{Binding Filters.Groups}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Expander Header="{Binding DisplayTitle}" Margin="0,3">
+                                                        <ItemsControl ItemsSource="{Binding Options}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <CheckBox Content="{Binding DisplayText}"
+                                                                              IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                                              Margin="0,3,18,3" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </Expander>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </ScrollViewer>
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="10">
+                                    <Button Classes="primary" Command="{Binding ApplyFilterCommand}"
+                                            Content="{DynamicResource LOCFullscreenApply}" />
+                                    <Button Command="{Binding Filters.SaveCommand}" Content="Save preset" />
+                                    <Button Command="{Binding Filters.RenameCommand}" Content="Rename" />
+                                    <Button Command="{Binding Filters.DeleteCommand}" Content="Delete" />
+                                    <Button Command="{Binding Filters.ClearCommand}" Content="Clear" />
+                                    <Button Command="{Binding BackCommand}"
+                                            Content="{DynamicResource LOCFullscreenReturn}" />
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
 
@@ -478,6 +539,92 @@
                                     <Button Command="{Binding CancelDialogCommand}"
                                             Content="{DynamicResource LOCFullscreenCancel}" />
                                 </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsCommandMenuVisible}"
+                          Background="#E6000000">
+                        <Border Width="760" MaxHeight="760" Padding="38" CornerRadius="16"
+                                Background="{DynamicResource FullscreenSurfaceStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="18">
+                                <TextBlock Text="{Binding CommandMenuTitle}" FontSize="36" FontWeight="Bold"
+                                           TextWrapping="Wrap" Foreground="{DynamicResource FullscreenTextBrush}" />
+                                <ListBox Name="PART_CommandMenuList" Grid.Row="1" MaxHeight="560"
+                                         ItemsSource="{Binding CommandMenuItems}"
+                                         SelectedItem="{Binding SelectedCommandMenuItem, Mode=TwoWay}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid ColumnDefinitions="*,Auto" Margin="5,8">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Title}" FontSize="22"
+                                                               Foreground="{DynamicResource FullscreenTextBrush}" />
+                                                    <TextBlock Text="{Binding Description}" FontSize="14"
+                                                               Foreground="{DynamicResource FullscreenMutedTextBrush}" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="›" FontSize="28"
+                                                           IsVisible="{Binding HasChildren}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12">
+                                    <Button Classes="primary" Command="{Binding ConfirmCommandMenuItemCommand}"
+                                            Content="{DynamicResource LOCFullscreenConfirm}" />
+                                    <Button Command="{Binding BackCommand}"
+                                            Content="{DynamicResource LOCFullscreenReturn}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsTextInputVisible}"
+                          Background="#F20B0E13">
+                        <Border Width="900" MaxHeight="800" Padding="34" CornerRadius="16"
+                                Background="{DynamicResource FullscreenSurfaceStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <ScrollViewer>
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="{Binding TextInputCaption}" FontSize="34" FontWeight="Bold"
+                                               TextWrapping="Wrap" Foreground="{DynamicResource FullscreenTextBrush}" />
+                                    <TextBlock Text="{Binding TextInputMessage}" FontSize="18" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource FullscreenMutedTextBrush}" />
+                                    <TextBox Name="PART_TextInputBox" Text="{Binding TextInputText, Mode=TwoWay}"
+                                             FontSize="24" Padding="14" />
+                                    <foundation:OnScreenKeyboard Name="PART_TextInputKeyboard"
+                                                                 Text="{Binding TextInputText, Mode=TwoWay}" />
+                                    <ItemsControl ItemsSource="{Binding TextInputToggles}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Title}"
+                                                          IsChecked="{Binding Selected, Mode=TwoWay}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Button Classes="primary" Command="{Binding ConfirmTextInputCommand}"
+                                                Content="Done" />
+                                        <Button Command="{Binding CancelTextInputCommand}"
+                                                Content="{DynamicResource LOCFullscreenCancel}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsGameStatusVisible}"
+                          Background="#D9000000">
+                        <Border Width="620" Padding="38" CornerRadius="16"
+                                Background="{DynamicResource FullscreenSurfaceStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Spacing="18">
+                                <TextBlock Text="{Binding GameStatusGame.Name}" FontSize="34" FontWeight="Bold"
+                                           TextWrapping="Wrap" Foreground="{DynamicResource FullscreenTextBrush}" />
+                                <TextBlock Text="{Binding GameStatusText}" FontSize="23"
+                                           Foreground="{DynamicResource FullscreenAccentBrush}" />
+                                <Button Name="PART_GameStatusButton" Command="{Binding CloseGameStatusCommand}"
+                                        Content="Continue monitoring in background" />
                             </StackPanel>
                         </Border>
                     </Grid>

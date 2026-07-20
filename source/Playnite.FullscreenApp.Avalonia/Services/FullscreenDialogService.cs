@@ -80,8 +80,31 @@ public sealed class FullscreenDialogService : IAvaloniaDialogService
         string message,
         string caption,
         string defaultInput,
-        IReadOnlyList<MessageBoxToggle> toggleOptions = null) =>
-        dialogHost.ShowInput(message, caption, defaultInput, toggleOptions);
+        IReadOnlyList<MessageBoxToggle> toggleOptions = null)
+    {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            return Dispatcher.UIThread.Invoke(() =>
+                ShowInput(message, caption, defaultInput, toggleOptions));
+        }
+
+        var confirmed = false;
+        var selected = defaultInput ?? string.Empty;
+        var frame = new DispatcherFrame();
+        viewModel.OpenTextInput(
+            caption,
+            message,
+            selected,
+            toggleOptions,
+            (result, value) =>
+            {
+                confirmed = result;
+                selected = value;
+                frame.Continue = false;
+            });
+        Dispatcher.UIThread.PushFrame(frame);
+        return new StringSelectionDialogResult(confirmed, selected);
+    }
 
     public void ShowSelectableString(string message, string caption, string value) =>
         dialogHost.ShowSelectableString(message, caption, value);
