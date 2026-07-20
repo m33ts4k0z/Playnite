@@ -2,7 +2,10 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:foundation="using:Playnite.Avalonia.Controls">
     <ControlTemplate x:Key="DesktopDetailsPanelTemplate">
-        <Border Background="{DynamicResource DesktopPanelBrush}"
+        <!-- The details area shares the main canvas with the game list. This
+             lets the selected game's window background continue naturally
+             across the complete library instead of ending at a panel edge. -->
+        <Border Background="Transparent"
                 BorderBrush="#303A49" BorderThickness="{Binding DetailsBorderThickness}">
             <ScrollViewer>
                 <StackPanel Margin="{Binding DetailsContentMargin}" Spacing="15">

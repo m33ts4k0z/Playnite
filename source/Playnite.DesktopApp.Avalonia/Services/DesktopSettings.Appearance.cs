@@ -49,8 +49,11 @@ public sealed partial class DesktopSettings
 
     public Dock GridViewDetailsPosition { get; set; } = Dock.Right;
     public double GridDetailsWidth { get; set; } = 390;
-    public bool ShowPanelSeparators { get; set; } = true;
-    public bool SidebarVisible { get; set; } = true;
+    // Keep the library focused on the games and their details. The optional
+    // sidebar remains available from Appearance settings when its controls
+    // are useful, but it should not compete with the library by default.
+    public bool ShowPanelSeparators { get; set; }
+    public bool SidebarVisible { get; set; }
     public Dock SidebarPosition { get; set; } = Dock.Left;
 
     public bool ShowBackgroundImageOnWindow { get; set; } = true;
