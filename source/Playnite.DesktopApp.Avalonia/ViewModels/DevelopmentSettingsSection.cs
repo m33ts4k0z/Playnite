@@ -10,6 +10,12 @@ namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
 public sealed class DevelopmentSettingsSection : SettingsSectionBase
 {
+    private static StringComparison PathComparison => OperatingSystem.IsWindows()
+        ? StringComparison.OrdinalIgnoreCase
+        : StringComparison.Ordinal;
+    private static StringComparer PathComparer => OperatingSystem.IsWindows()
+        ? StringComparer.OrdinalIgnoreCase
+        : StringComparer.Ordinal;
     private readonly DesktopSettings settings;
     private readonly Func<string> selectFolder;
     private List<(string Path, bool Enabled)> originalExtensions = new();
@@ -66,7 +72,7 @@ public sealed class DevelopmentSettingsSection : SettingsSectionBase
         }
 
         var duplicate = normalized
-            .GroupBy(item => item.Path, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(item => item.Path, PathComparer)
             .FirstOrDefault(group => group.Count() > 1);
         if (duplicate != null)
         {
@@ -114,7 +120,7 @@ public sealed class DevelopmentSettingsSection : SettingsSectionBase
             return;
         }
         path = Path.GetFullPath(path);
-        if (Extensions.Any(extension => string.Equals(extension.Path, path, StringComparison.OrdinalIgnoreCase)))
+        if (Extensions.Any(extension => string.Equals(extension.Path, path, PathComparison)))
         {
             return;
         }
@@ -124,14 +130,15 @@ public sealed class DevelopmentSettingsSection : SettingsSectionBase
     private List<(string Path, bool Enabled)> Snapshot() => Extensions
         .Where(extension => !string.IsNullOrWhiteSpace(extension.Path))
         .Select(extension => (NormalizePathForComparison(extension.Path), extension.IsEnabled))
-        .OrderBy(extension => extension.Item1, StringComparer.OrdinalIgnoreCase)
+        .OrderBy(extension => extension.Item1, PathComparer)
         .ToList();
 
     private static string NormalizePathForComparison(string path)
     {
         try
         {
-            return Path.GetFullPath(path);
+            var fullPath = Path.GetFullPath(path);
+            return OperatingSystem.IsWindows() ? fullPath.ToUpperInvariant() : fullPath;
         }
         catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
         {

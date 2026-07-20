@@ -67,6 +67,43 @@ namespace Playnite.Core.Portable.Tests
         }
 
         [Test]
+        public void UrlShortcutUsesXdgDesktopEntry()
+        {
+            var shortcutPath = Path.Combine(temporaryDirectory, "My Game.desktop");
+            const string url = "playnite://playnite/start/01234567-89ab-cdef-0123-456789abcdef";
+
+            Programs.CreateUrlShortcut(url, "/opt/My Game/icon.png", shortcutPath);
+
+            var content = File.ReadAllText(shortcutPath);
+            var shortcut = Programs.GetLnkShortcutData(shortcutPath);
+            Assert.That(content, Does.Contain("[Desktop Entry]"));
+            Assert.That(content, Does.Contain("Type=Application"));
+            Assert.That(content, Does.Contain("Exec=xdg-open \"" + url + "\""));
+            Assert.That(content, Does.Contain("Terminal=false"));
+            Assert.That(shortcut.Path, Is.EqualTo("xdg-open"));
+            Assert.That(shortcut.Arguments, Is.EqualTo(url));
+        }
+
+        [Test]
+        public void PlatformOpenTargetUsesDesktopOpener()
+        {
+            const string target = "file:///tmp/Playnite%20Manual.pdf";
+            var startInfo = ProcessStarter.CreateOpenTargetStartInfo(target, false);
+
+            if (OperatingSystem.IsWindows())
+            {
+                Assert.That(startInfo.FileName, Is.EqualTo(target));
+                Assert.That(startInfo.UseShellExecute, Is.True);
+            }
+            else
+            {
+                Assert.That(startInfo.FileName, Is.EqualTo(OperatingSystem.IsMacOS() ? "open" : "xdg-open"));
+                Assert.That(startInfo.UseShellExecute, Is.False);
+                Assert.That(startInfo.ArgumentList, Is.EqualTo(new[] { target }));
+            }
+        }
+
+        [Test]
         public void DesktopDiscoverySkipsHiddenEntries()
         {
             File.WriteAllText(Path.Combine(temporaryDirectory, "visible.desktop"),

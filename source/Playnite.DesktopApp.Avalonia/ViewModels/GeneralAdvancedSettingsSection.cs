@@ -7,6 +7,9 @@ namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
 public sealed class GeneralAdvancedSettingsSection : SettingsSectionBase
 {
+    private static StringComparison PathComparison => OperatingSystem.IsWindows()
+        ? StringComparison.OrdinalIgnoreCase
+        : StringComparison.Ordinal;
     private readonly DesktopSettings settings;
     private readonly Func<string> selectFolder;
     private string originalDatabasePath;
@@ -122,7 +125,7 @@ public sealed class GeneralAdvancedSettingsSection : SettingsSectionBase
         settings.DatabasePath = Path.GetFullPath(DatabasePath);
         settings.ClearWebCacheOnNextStartup = clearWebCacheOnNextStartup;
         var restart = clearWebCacheOnNextStartup ||
-            !string.Equals(originalDatabasePath, settings.DatabasePath, StringComparison.OrdinalIgnoreCase);
+            !string.Equals(originalDatabasePath, settings.DatabasePath, PathComparison);
         return restart ? SettingsSectionSaveResult.SavedWithRestart : SettingsSectionSaveResult.Saved;
     }
 

@@ -21,6 +21,12 @@ public sealed class ThemeOption
 public static class ThemeCatalog
 {
     private const string DefaultThemeName = "Default";
+    private static StringComparison PathComparison => OperatingSystem.IsWindows()
+        ? StringComparison.OrdinalIgnoreCase
+        : StringComparison.Ordinal;
+    private static StringComparer PathComparer => OperatingSystem.IsWindows()
+        ? StringComparer.OrdinalIgnoreCase
+        : StringComparer.Ordinal;
 
     public static IReadOnlyList<ThemeOption> DiscoverDesktopThemes(IEnumerable<string> themeRootDirectories)
         => DiscoverThemes(themeRootDirectories, AvaloniaThemeMode.Desktop);
@@ -53,7 +59,7 @@ public static class ThemeCatalog
 
         var themes = DiscoverFullscreenThemes(themeRootDirectories);
         var match = themes.FirstOrDefault(option =>
-            string.Equals(option.Path, reference, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(option.Path, reference, PathComparison) ||
             string.Equals(option.Id, reference, StringComparison.OrdinalIgnoreCase));
         return match?.Path ?? string.Empty;
     }
@@ -77,7 +83,7 @@ public static class ThemeCatalog
             foreach (var directory in Directory.GetDirectories(root))
             {
                 var folderName = System.IO.Path.GetFileName(directory);
-                if (folderName.Equals(DefaultThemeName, StringComparison.OrdinalIgnoreCase) ||
+                if (folderName.Equals(DefaultThemeName, PathComparison) ||
                     !File.Exists(System.IO.Path.Combine(directory, "theme.yaml")))
                 {
                     continue;
@@ -102,7 +108,7 @@ public static class ThemeCatalog
         }
 
         return options
-            .GroupBy(option => option.Path, StringComparer.OrdinalIgnoreCase)
+            .GroupBy(option => option.Path, PathComparer)
             .Select(group => group.First())
             .ToList();
     }

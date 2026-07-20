@@ -56,7 +56,7 @@ public static class AvaloniaStorageDialog
         return file?.TryGetLocalPath();
     }
 
-    private static IReadOnlyList<FilePickerFileType> ParseFileTypes(string filter)
+    internal static IReadOnlyList<FilePickerFileType> ParseFileTypes(string filter)
     {
         if (string.IsNullOrWhiteSpace(filter))
         {
@@ -75,7 +75,10 @@ public static class AvaloniaStorageDialog
         for (var index = 0; index < parts.Length; index += 2)
         {
             var patterns = parts[index + 1]
-                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(pattern => pattern == "*.*" ? "*" : pattern)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
             if (patterns.Length == 0)
             {
                 throw new ArgumentException(

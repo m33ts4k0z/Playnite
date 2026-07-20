@@ -6,6 +6,9 @@ namespace Playnite.FullscreenApp.Avalonia.ViewModels;
 
 public sealed class FullscreenVisualSettingsSection : FullscreenSettingsSectionBase
 {
+    private static StringComparison PathComparison => OperatingSystem.IsWindows()
+        ? StringComparison.OrdinalIgnoreCase
+        : StringComparison.Ordinal;
     private readonly FullscreenSettings settings;
     private ThemeOption selectedTheme;
     private string originalThemePath;
@@ -45,7 +48,7 @@ public sealed class FullscreenVisualSettingsSection : FullscreenSettingsSectionB
     {
         originalThemePath = settings.ThemePath ?? string.Empty;
         selectedTheme = AvailableThemes.FirstOrDefault(option =>
-            string.Equals(option.Path, originalThemePath, StringComparison.OrdinalIgnoreCase)) ?? AvailableThemes[0];
+            string.Equals(option.Path, originalThemePath, PathComparison)) ?? AvailableThemes[0];
         darkenUninstalledGamesGrid = settings.DarkenUninstalledGamesGrid;
         enableMainBackgroundImage = settings.EnableMainBackgroundImage;
         mainBackgroundImageBlurAmount = settings.MainBackgroundImageBlurAmount;
@@ -60,7 +63,7 @@ public sealed class FullscreenVisualSettingsSection : FullscreenSettingsSectionB
     public override FullscreenSettingsSectionSaveResult Save()
     {
         var nextTheme = SelectedTheme?.Path ?? string.Empty;
-        var restart = !string.Equals(nextTheme, originalThemePath, StringComparison.OrdinalIgnoreCase);
+        var restart = !string.Equals(nextTheme, originalThemePath, PathComparison);
         settings.ThemePath = nextTheme;
         originalThemePath = nextTheme;
         settings.DarkenUninstalledGamesGrid = DarkenUninstalledGamesGrid;

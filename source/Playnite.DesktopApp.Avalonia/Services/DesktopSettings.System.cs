@@ -2,6 +2,12 @@ namespace Playnite.DesktopApp.Avalonia.Services;
 
 public sealed partial class DesktopSettings
 {
+    internal static string DefaultDirectoryOpenCommand { get; } = OperatingSystem.IsLinux()
+        ? "xdg-open \"{Dir}\""
+        : OperatingSystem.IsMacOS()
+            ? "open \"{Dir}\""
+            : null;
+
     public bool DisableHwAcceleration { get; set; }
     public bool AsyncImageLoading { get; set; } = true;
     public bool ShowImagePerformanceWarning { get; set; } = true;
@@ -10,7 +16,7 @@ public sealed partial class DesktopSettings
     public bool DiscordPresenceEnabled { get; set; }
     public bool ShowElevatedRightsWarning { get; set; } = true;
     public bool InstallSizeScanUseSizeOnDisk { get; set; }
-    public string DirectoryOpenCommand { get; set; }
+    public string DirectoryOpenCommand { get; set; } = DefaultDirectoryOpenCommand;
     public string DatabasePath { get; set; }
     public bool ClearWebCacheOnNextStartup { get; set; }
 }

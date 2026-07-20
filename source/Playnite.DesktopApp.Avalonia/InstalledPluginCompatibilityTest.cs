@@ -13,6 +13,9 @@ namespace Playnite.DesktopApp.Avalonia;
 internal static class InstalledPluginCompatibilityTest
 {
     private static readonly ILogger logger = LogManager.GetLogger();
+    private static StringComparison PathComparison => OperatingSystem.IsWindows()
+        ? StringComparison.OrdinalIgnoreCase
+        : StringComparison.Ordinal;
 
     public static async Task Run(
         MainWindow window,
@@ -62,7 +65,7 @@ internal static class InstalledPluginCompatibilityTest
                     string.Equals(
                         Path.GetFullPath(script.Path),
                         Path.GetFullPath(Path.Combine(manifest.DirectoryPath, manifest.Module)),
-                        StringComparison.OrdinalIgnoreCase));
+                        PathComparison));
             var loadedV7Plugins = window.RuntimeHost.V7Plugins
                 .Where(item => string.Equals(item.Manifest.Id, manifest.Id, StringComparison.OrdinalIgnoreCase))
                 .ToList();

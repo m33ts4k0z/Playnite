@@ -6,6 +6,9 @@ namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
 public sealed class AppearanceSettingsSection : SettingsSectionBase
 {
+    private static StringComparison PathComparison => OperatingSystem.IsWindows()
+        ? StringComparison.OrdinalIgnoreCase
+        : StringComparison.Ordinal;
     private readonly DesktopSettings settings;
     private ThemeOption selectedTheme;
     private string originalThemePath;
@@ -36,7 +39,7 @@ public sealed class AppearanceSettingsSection : SettingsSectionBase
     {
         originalThemePath = settings.ThemePath ?? string.Empty;
         selectedTheme = AvailableThemes.FirstOrDefault(option =>
-            string.Equals(option.Path, originalThemePath, StringComparison.OrdinalIgnoreCase))
+            string.Equals(option.Path, originalThemePath, PathComparison))
             ?? AvailableThemes.FirstOrDefault();
         OnPropertyChanged(nameof(SelectedTheme));
     }
@@ -44,7 +47,7 @@ public sealed class AppearanceSettingsSection : SettingsSectionBase
     public override SettingsSectionSaveResult Save()
     {
         var newThemePath = SelectedTheme?.Path ?? string.Empty;
-        if (string.Equals(newThemePath, originalThemePath, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(newThemePath, originalThemePath, PathComparison))
         {
             return SettingsSectionSaveResult.Saved;
         }

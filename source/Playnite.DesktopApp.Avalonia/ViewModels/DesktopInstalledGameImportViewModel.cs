@@ -20,6 +20,12 @@ namespace Playnite.DesktopApp.Avalonia.ViewModels;
 public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
 {
     private static readonly ILogger logger = LogManager.GetLogger();
+    private static readonly StringComparer PathComparer = OperatingSystem.IsWindows()
+        ? StringComparer.OrdinalIgnoreCase
+        : StringComparer.Ordinal;
+    private static readonly StringComparison PathComparison = OperatingSystem.IsWindows()
+        ? StringComparison.OrdinalIgnoreCase
+        : StringComparison.Ordinal;
     private static readonly string[] supportedExecutableExtensions = OperatingSystem.IsWindows()
         ? [".exe", ".bat", ".lnk"]
         : [".AppImage", ".appimage", ".sh", ".desktop", ".exe", ".bat"];
@@ -35,7 +41,7 @@ public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
     private Func<Task<string>> chooseFolder = () => Task.FromResult<string>(null);
     private Func<Task<string>> chooseExecutable = () => Task.FromResult<string>(null);
     private Action notifyLibraryUpdated = () => { };
-    private HashSet<string> importedExecutables = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> importedExecutables = new(PathComparer);
     private CancellationTokenSource cancellationSource;
     private bool isVisible;
     private bool isRunning;
@@ -227,7 +233,7 @@ public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
             return false;
         }
 
-        importedExecutables = new HashSet<string>(database.GetImportedExeFiles(), StringComparer.OrdinalIgnoreCase);
+        importedExecutables = new HashSet<string>(database.GetImportedExeFiles(), PathComparer);
         allPrograms.Clear();
         Programs.Clear();
         selectAll = false;
@@ -613,7 +619,7 @@ public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
     {
         var identity = GetExecutableIdentity(detected.Program);
         var existing = allPrograms.FirstOrDefault(program =>
-            string.Equals(GetExecutableIdentity(program.Program), identity, StringComparison.OrdinalIgnoreCase));
+            string.Equals(GetExecutableIdentity(program.Program), identity, PathComparison));
         if (existing != null)
         {
             existing.IsSelected |= select;
@@ -680,7 +686,7 @@ public sealed class DesktopInstalledGameImportViewModel : INotifyPropertyChanged
             actionPath = program.Path.Replace(
                 program.WorkDir.EndWithDirSeparator(),
                 ExpandableVariables.InstallationDirectory.EndWithDirSeparator(),
-                StringComparison.OrdinalIgnoreCase);
+                PathComparison);
         }
 
         game.GameActions = new List<GameAction>

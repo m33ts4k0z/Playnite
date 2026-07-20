@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -77,6 +78,7 @@ namespace Playnite.Common
         public static void CreateUrlShortcut(string url, string iconPath, string shortcutPath)
         {
             FileSystem.PrepareSaveFile(shortcutPath);
+#if WINDOWS
             var content = @"[InternetShortcut]
 IconIndex=0";
             if (!iconPath.IsNullOrEmpty())
@@ -86,6 +88,20 @@ IconIndex=0";
 
             content += Environment.NewLine + $"URL={url}";
             File.WriteAllText(shortcutPath, content);
+#else
+            var builder = new StringBuilder();
+            builder.AppendLine("[Desktop Entry]");
+            builder.AppendLine("Type=Application");
+            builder.AppendLine("Name=" + Path.GetFileNameWithoutExtension(shortcutPath));
+            builder.Append("Exec=xdg-open ").AppendLine(QuoteDesktopArgument(url));
+            if (!string.IsNullOrWhiteSpace(iconPath))
+            {
+                builder.AppendLine("Icon=" + iconPath);
+            }
+
+            builder.AppendLine("Terminal=false");
+            File.WriteAllText(shortcutPath, builder.ToString());
+#endif
         }
 
         private static List<UninstallProgram> GetUninstallProgsFromView(RegistryView view)

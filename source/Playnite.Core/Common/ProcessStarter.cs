@@ -82,6 +82,11 @@ namespace Playnite.Common
         public static Process StartUrl(string url)
         {
             logger.Debug($"Opening URL: {url}");
+            if (!OperatingSystem.IsWindows())
+            {
+                return Process.Start(CreateOpenTargetStartInfo(url));
+            }
+
             try
             {
                 return Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
@@ -90,16 +95,28 @@ namespace Playnite.Common
             {
                 // There are some crash report with 0x80004005 error when opening standard URL.
                 logger.Error(e, "Failed to open URL.");
-                if (OperatingSystem.IsWindows())
-                {
-                    return Process.Start(CmdLineTools.Cmd, $"/C start {url}");
-                }
-
-                var opener = OperatingSystem.IsMacOS() ? "open" : "xdg-open";
-                var info = new ProcessStartInfo(opener) { UseShellExecute = false };
-                info.ArgumentList.Add(url);
-                return Process.Start(info);
+                return Process.Start(CmdLineTools.Cmd, $"/C start {url}");
             }
+        }
+
+        internal static ProcessStartInfo CreateOpenTargetStartInfo(
+            string target,
+            bool? isFlatpakOverride = null)
+        {
+            if (target.IsNullOrWhiteSpace())
+            {
+                throw new ArgumentNullException(nameof(target));
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                return new ProcessStartInfo(target) { UseShellExecute = true };
+            }
+
+            var opener = OperatingSystem.IsMacOS() ? "open" : "xdg-open";
+            var info = new ProcessStartInfo(opener) { UseShellExecute = false };
+            info.ArgumentList.Add(target);
+            return PrepareForFlatpak(info, isFlatpakOverride);
         }
 
         public static Process StartProcess(string path, bool asAdmin = false)

@@ -2,6 +2,7 @@ using System.Windows.Input;
 using Playnite.Avalonia.App.Services;
 using Playnite.Common;
 using Playnite.Controllers;
+using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
@@ -591,13 +592,18 @@ public sealed partial class DesktopAppViewModel
         try
         {
             var manualPath = game.ExpandVariables(game.Manual, true);
-            if (!Uri.TryCreate(manualPath, UriKind.Absolute, out var uri) || uri.IsFile)
+            var hasAbsoluteUri = Uri.TryCreate(manualPath, UriKind.Absolute, out var uri);
+            if (!hasAbsoluteUri || uri.IsFile)
             {
-                if (!Path.IsPathRooted(manualPath))
+                if (hasAbsoluteUri && uri.IsFile)
+                {
+                    manualPath = uri.LocalPath;
+                }
+                else if (!Path.IsPathRooted(manualPath))
                 {
                     manualPath = Path.Combine(database.GetFileStoragePath(game.Id), manualPath);
                 }
-                ProcessStarter.StartProcess(manualPath);
+                ProcessStarter.StartUrl(new Uri(Path.GetFullPath(manualPath)).AbsoluteUri);
             }
             else
             {
@@ -727,7 +733,11 @@ public sealed partial class DesktopAppViewModel
 
         try
         {
-            if (string.IsNullOrWhiteSpace(settings.DirectoryOpenCommand))
+            if (string.IsNullOrWhiteSpace(settings.DirectoryOpenCommand) ||
+                string.Equals(
+                    settings.DirectoryOpenCommand,
+                    DesktopSettings.DefaultDirectoryOpenCommand,
+                    StringComparison.Ordinal))
             {
                 Explorer.OpenDirectory(path);
             }

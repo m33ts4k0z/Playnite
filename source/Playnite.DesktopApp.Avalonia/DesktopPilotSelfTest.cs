@@ -98,19 +98,56 @@ internal static class DesktopPilotSelfTest
         Record(results, "Native tray menu exposes quick launch and lifecycle actions", () =>
         {
             var items = window.TrayService.Menu.Items.OfType<NativeMenuItem>().ToList();
+            var quickLaunchItems = items.Take(window.TrayService.QuickLaunchItemCount).ToList();
             var favoriteMenu = items.FirstOrDefault(item =>
                 item.Header == LocalizeForTest("LOCQuickFilterFavorites", "Favorites"))?.Menu;
             return window.TrayService.IsEnabled &&
                 window.TrayService.QuickLaunchItemCount == 5 &&
+                quickLaunchItems.Count == window.TrayService.QuickLaunchItemCount &&
+                quickLaunchItems.All(item => item.Icon != null) &&
                 window.TrayService.FavoriteItemCount > 0 &&
                 favoriteMenu?.Items.Count == window.TrayService.FavoriteItemCount &&
                 items.Any(item => item.Header == LocalizeForTest("LOCOpenPlaynite", "Open Playnite")) &&
                 items.Any(item => item.Header == "Open Fullscreen") &&
                 items.Any(item => item.Header == LocalizeForTest("LOCExitPlaynite", "Exit Playnite"))
-                    ? $"{window.TrayService.QuickLaunchItemCount} recent and " +
+                    ? $"{window.TrayService.QuickLaunchItemCount} recent games expose StatusNotifier icons and " +
                       $"{window.TrayService.FavoriteItemCount} favorite games are available"
                     : throw new InvalidOperationException("The tray menu lifecycle contract is incomplete.");
         });
+
+        var pickerTypes = AvaloniaStorageDialog.ParseFileTypes(
+            "Images|*.png;*.jpg;*.png|All files|*.*");
+        Record(results, "File-picker filters use portable glob syntax", () =>
+            pickerTypes.Count == 2 &&
+            pickerTypes[0].Patterns.SequenceEqual(new[] { "*.png", "*.jpg" }) &&
+            pickerTypes[1].Patterns.SequenceEqual(new[] { "*" })
+                ? "legacy filters normalize all-files to the Linux/Windows portable '*' glob"
+                : throw new InvalidOperationException("The file-picker filter adapter produced platform-specific globs."));
+
+        var migratedSettingsDirectory = Path.Combine(
+            library.ActiveUserDataDirectory,
+            $"l3-settings-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(migratedSettingsDirectory);
+        File.WriteAllText(
+            Path.Combine(migratedSettingsDirectory, "avaloniaDesktop.json"),
+            "{\"FontFamilyName\":\"trebuchet ms\",\"MonospaceFontFamilyName\":\"CONSOLAS\"}");
+        var migratedSettings = new DesktopSettingsStore(migratedSettingsDirectory).Load();
+        Directory.Delete(migratedSettingsDirectory, true);
+        var defaultSettings = new DesktopSettings();
+        var expectedDirectoryCommand = OperatingSystem.IsLinux()
+            ? "xdg-open \"{Dir}\""
+            : OperatingSystem.IsMacOS()
+                ? "open \"{Dir}\""
+                : null;
+        Record(results, "Platform UX defaults normalize fonts and directory opening", () =>
+            defaultSettings.FontFamilyName == (OperatingSystem.IsWindows() ? "Trebuchet MS" : "Sans") &&
+            defaultSettings.MonospaceFontFamilyName == (OperatingSystem.IsWindows() ? "Consolas" : "Monospace") &&
+            defaultSettings.DirectoryOpenCommand == expectedDirectoryCommand &&
+            migratedSettings.FontFamilyName == (OperatingSystem.IsWindows() ? "trebuchet ms" : "Sans") &&
+            migratedSettings.MonospaceFontFamilyName == (OperatingSystem.IsWindows() ? "CONSOLAS" : "Monospace")
+                ? $"fonts resolved to {migratedSettings.FontFamilyName}/{migratedSettings.MonospaceFontFamilyName}; " +
+                  $"directory command is {expectedDirectoryCommand ?? "the Windows shell"}"
+                : throw new InvalidOperationException("Platform defaults or migrated Windows fonts were incorrect."));
 
         Record(results, "Grid and list views share the Desktop model", () =>
             window.MainView.GridGameList != null && window.MainView.ListGameList != null
@@ -3742,17 +3779,25 @@ internal static class DesktopPilotSelfTest
 
 
         // Track P-A: construct every shared dialog surface, verify SDK v6
-        // routing/round-trip models, and construct (but never show) crash UX.
+        // routing/round-trip models, and exercise crash UX without an owner.
         Record(results, "Shared SDK dialog primitives construct and round-trip", () =>
             AvaloniaDialogPrimitiveSelfTest.ValidateConstructionAndRoundTrip());
-        Record(results, "Standalone Avalonia crash UX constructs", () =>
+        Record(results, "Standalone Avalonia crash UX opens without a main-window owner", () =>
         {
             var crashWindow = AvaloniaCrashHandler.CreateWindowForTest(
                 new InvalidOperationException("Synthetic crash construction"));
-            return crashWindow.Content != null &&
-                crashWindow.Title.Contains("error", StringComparison.OrdinalIgnoreCase)
-                    ? "description, log/diagnostics, report, restart, and safe-mode controls constructed"
-                    : throw new InvalidOperationException("The standalone crash window was incomplete.");
+            try
+            {
+                crashWindow.Show();
+                return crashWindow.IsVisible && crashWindow.ShowInTaskbar && crashWindow.Content != null &&
+                    crashWindow.Title.Contains("error", StringComparison.OrdinalIgnoreCase)
+                        ? "the X11-safe unowned window exposed diagnostics, report, restart, and safe-mode controls"
+                        : throw new InvalidOperationException("The standalone crash window could not open without an owner.");
+            }
+            finally
+            {
+                crashWindow.Close();
+            }
         });
         Record(results, "Safe startup disables user themes and plugins", () =>
         {

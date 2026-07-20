@@ -167,11 +167,17 @@ public sealed class DesktopSettingsStore
                 // choices except for the Windows default faces, which do not exist
                 // there and would silently render as an unrelated fallback.
                 settings.FontFamilyName = string.IsNullOrWhiteSpace(settings.FontFamilyName) ||
-                    (!OperatingSystem.IsWindows() && settings.FontFamilyName.Trim() == "Trebuchet MS")
+                    (!OperatingSystem.IsWindows() && string.Equals(
+                        settings.FontFamilyName.Trim(),
+                        "Trebuchet MS",
+                        StringComparison.OrdinalIgnoreCase))
                     ? DesktopSettings.DefaultFontFamilyName
                     : settings.FontFamilyName.Trim();
                 settings.MonospaceFontFamilyName = string.IsNullOrWhiteSpace(settings.MonospaceFontFamilyName) ||
-                    (!OperatingSystem.IsWindows() && settings.MonospaceFontFamilyName.Trim() == "Consolas")
+                    (!OperatingSystem.IsWindows() && string.Equals(
+                        settings.MonospaceFontFamilyName.Trim(),
+                        "Consolas",
+                        StringComparison.OrdinalIgnoreCase))
                     ? DesktopSettings.DefaultMonospaceFontFamilyName
                     : settings.MonospaceFontFamilyName.Trim();
                 NormalizeDateFormat(settings.DateTimeFormatAdded);
