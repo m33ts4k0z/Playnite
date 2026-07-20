@@ -1801,9 +1801,19 @@ internal static class DesktopPilotSelfTest
         var initialPageText = await offscreenWebView.GetPageTextAsync();
 #endif
         var initialPageSource = await offscreenWebView.GetPageSourceAsync();
+        var offscreenWindow =
+            (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?
+            .Windows.SingleOrDefault(candidate => candidate.Title == "Playnite Web View");
         Record(results, "Offscreen plugin web views navigate through Avalonia NativeWebView", () =>
             offscreenWebView.CanExecuteJavascriptInMainFrame &&
             offscreenWebView.WindowHost == null &&
+            offscreenWindow is
+            {
+                Opacity: 0,
+                Owner: null,
+                ShowActivated: false,
+                ShowInTaskbar: false
+            } &&
 #if WINDOWS
             string.Equals(offscreenWebView.GetCurrentAddress(), webServer.PageUrl, StringComparison.OrdinalIgnoreCase) &&
 #else
@@ -1814,7 +1824,7 @@ internal static class DesktopPilotSelfTest
             loadingStates.Contains(true) &&
             loadingStates.Contains(false) &&
             string.Equals(webServer.LastUserAgent, LoopbackWebServer.ExpectedUserAgent, StringComparison.Ordinal)
-                ? $"loaded {webServer.PageUrl} with SDK loading events and the configured user agent"
+                ? $"loaded {webServer.PageUrl} invisibly and unowned with SDK loading events and the configured user agent"
                 : throw new InvalidOperationException(
 #if WINDOWS
                     $"address={offscreenWebView.GetCurrentAddress()}, states={string.Join(',', loadingStates)}, " +

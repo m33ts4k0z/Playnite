@@ -172,7 +172,14 @@ internal sealed class AvaloniaSdkWebView : IWebView
         this.settings = settings;
         this.offscreen = offscreen;
         this.release = release;
-        InvokeOnUi(CreateControls);
+        if (offscreen)
+        {
+            InvokeOnUi(CreateControls, DispatcherPriority.Background);
+        }
+        else
+        {
+            InvokeOnUi(CreateControls);
+        }
     }
 
     public void Open()
@@ -449,6 +456,7 @@ internal sealed class AvaloniaSdkWebView : IWebView
             MinHeight = 1,
             Background = new SolidColorBrush(background),
             Content = browser,
+            Opacity = offscreen ? 0 : 1,
             ShowInTaskbar = false,
             ShowActivated = false,
             WindowStartupLocation = WindowStartupLocation.Manual,
@@ -525,8 +533,11 @@ internal sealed class AvaloniaSdkWebView : IWebView
                 return;
             }
 
-            var owner = GetOwner();
-            if (owner?.IsVisible == true)
+            if (offscreen)
+            {
+                window.Show();
+            }
+            else if (GetOwner() is { IsVisible: true } owner)
             {
                 window.Show(owner);
             }
@@ -536,7 +547,7 @@ internal sealed class AvaloniaSdkWebView : IWebView
             }
 
             initialized = true;
-        });
+        }, offscreen ? DispatcherPriority.Background : DispatcherPriority.Normal);
         WaitForTask(adapterReady.Task, "initializing the native web-view adapter");
     }
 
@@ -730,6 +741,18 @@ internal sealed class AvaloniaSdkWebView : IWebView
         else
         {
             Dispatcher.UIThread.Invoke(action);
+        }
+    }
+
+    private static void InvokeOnUi(Action action, DispatcherPriority priority)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+        }
+        else
+        {
+            Dispatcher.UIThread.InvokeAsync(action, priority).GetAwaiter().GetResult();
         }
     }
 

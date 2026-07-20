@@ -48,7 +48,14 @@ internal sealed class AvaloniaSdkWebView : IWebView
         this.dataDirectory = dataDirectory;
         this.cacheDirectory = cacheDirectory;
         this.release = release;
-        InvokeOnUi(CreateControls);
+        if (offscreen)
+        {
+            InvokeOnUi(CreateControls, DispatcherPriority.Background);
+        }
+        else
+        {
+            InvokeOnUi(CreateControls);
+        }
     }
 
     public bool CanExecuteJavascriptInMainFrame =>
@@ -389,6 +396,7 @@ internal sealed class AvaloniaSdkWebView : IWebView
             MinHeight = 1,
             Background = background,
             Content = browser,
+            Opacity = offscreen ? 0 : 1,
             ShowInTaskbar = false,
             ShowActivated = false,
             WindowStartupLocation = WindowStartupLocation.Manual,
@@ -477,8 +485,11 @@ internal sealed class AvaloniaSdkWebView : IWebView
                 return;
             }
 
-            var owner = GetOwner();
-            if (owner?.IsVisible == true)
+            if (offscreen)
+            {
+                window.Show();
+            }
+            else if (GetOwner() is { IsVisible: true } owner)
             {
                 window.Show(owner);
             }
@@ -488,7 +499,7 @@ internal sealed class AvaloniaSdkWebView : IWebView
             }
 
             initialized = true;
-        }).ConfigureAwait(false);
+        }, offscreen ? DispatcherPriority.Background : DispatcherPriority.Normal).ConfigureAwait(false);
         await adapterReady.Task.WaitAsync(OperationTimeout, cancellationToken).ConfigureAwait(false);
     }
 
@@ -674,6 +685,18 @@ internal sealed class AvaloniaSdkWebView : IWebView
         }
     }
 
+    private static void InvokeOnUi(Action action, DispatcherPriority priority)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+        }
+        else
+        {
+            Dispatcher.UIThread.InvokeAsync(action, priority).GetAwaiter().GetResult();
+        }
+    }
+
     private static T InvokeOnUi<T>(Func<T> action) => Dispatcher.UIThread.CheckAccess()
         ? action()
         : Dispatcher.UIThread.Invoke(action);
@@ -699,6 +722,30 @@ internal sealed class AvaloniaSdkWebView : IWebView
                 completion.TrySetException(exception);
             }
         });
+        return completion.Task;
+    }
+
+    private static Task InvokeOnUiAsync(Action action, DispatcherPriority priority)
+    {
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            action();
+            return Task.CompletedTask;
+        }
+
+        var completion = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+        Dispatcher.UIThread.Post(() =>
+        {
+            try
+            {
+                action();
+                completion.TrySetResult(null);
+            }
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+        }, priority);
         return completion.Task;
     }
 
