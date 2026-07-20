@@ -399,7 +399,13 @@ internal sealed class AvaloniaSdkWebView : IWebView
             Opacity = offscreen ? 0 : 1,
             ShowInTaskbar = false,
             ShowActivated = false,
-            WindowState = offscreen ? WindowState.Minimized : WindowState.Normal,
+            // Minimizing the host prevents a WebView2 child window from flashing during
+            // Windows startup. X11/Xvfb has no window manager contract for minimization,
+            // while opacity, taskbar suppression, and the offscreen position already keep
+            // the portable host invisible there.
+            WindowState = offscreen && OperatingSystem.IsWindows()
+                ? WindowState.Minimized
+                : WindowState.Normal,
             WindowStartupLocation = WindowStartupLocation.Manual,
             Position = new PixelPoint(-32000, -32000)
         };

@@ -1826,6 +1826,9 @@ internal static class DesktopPilotSelfTest
         var offscreenWindow =
             (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?
             .Windows.SingleOrDefault(candidate => candidate.Title == "Playnite Web View");
+        var expectedOffscreenWindowState = OperatingSystem.IsWindows()
+            ? WindowState.Minimized
+            : WindowState.Normal;
         Record(results, "Offscreen plugin web views navigate through Avalonia NativeWebView", () =>
             offscreenWebView.CanExecuteJavascriptInMainFrame &&
             offscreenWebView.WindowHost == null &&
@@ -1834,9 +1837,9 @@ internal static class DesktopPilotSelfTest
                 Opacity: 0,
                 Owner: null,
                 ShowActivated: false,
-                ShowInTaskbar: false,
-                WindowState: WindowState.Minimized
+                ShowInTaskbar: false
             } &&
+            offscreenWindow.WindowState == expectedOffscreenWindowState &&
 #if WINDOWS
             string.Equals(offscreenWebView.GetCurrentAddress(), webServer.PageUrl, StringComparison.OrdinalIgnoreCase) &&
 #else
@@ -1854,7 +1857,8 @@ internal static class DesktopPilotSelfTest
 #else
                     $"address={offscreenWebView.Address}, states={string.Join(',', loadingStates)}, " +
 #endif
-                    $"userAgent={webServer.LastUserAgent}"));
+                    $"userAgent={webServer.LastUserAgent}, windowState={offscreenWindow?.WindowState}, " +
+                    $"expectedWindowState={expectedOffscreenWindowState}"));
 
         var scriptResult = await offscreenWebView.EvaluateScriptAsync(
             $"document.getElementById('pilot-message').innerText = '{LoopbackWebServer.MutatedText}'; 42");
