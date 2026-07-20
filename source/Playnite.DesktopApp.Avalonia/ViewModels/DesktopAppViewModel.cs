@@ -500,9 +500,11 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         selectedGrouping = this.settings.Grouping;
         FilterPresets = new ObservableCollection<FilterPreset>(
             database?.GetSortedFilterPresets() ?? new List<FilterPreset>());
-        selectedFilterPreset = FilterPresets.FirstOrDefault(preset => preset.Id == this.settings.ActiveFilterPreset) ??
-            FilterPresets.FirstOrDefault(preset => preset.Name == "All") ??
-            FilterPresets.FirstOrDefault();
+        // No stored preset means no filter — the full library. Guessing a preset
+        // (by name or list position) silently hides games on first launch when
+        // the shared database carries the user's legacy presets.
+        selectedFilterPreset = FilterPresets.FirstOrDefault(preset =>
+            preset.Id == this.settings.ActiveFilterPreset);
         InitializeFilterPanel();
         statusText = startupError == null
             ? "Phase 5 Desktop runtime ready"
@@ -971,7 +973,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
             SearchText = string.Empty;
             InstalledOnly = false;
             FavoritesOnly = false;
-            SelectedFilterPreset = FilterPresets.FirstOrDefault(preset => preset.Name == "All");
+            SelectedFilterPreset = null;
         }
 
         SelectedGame = match;
