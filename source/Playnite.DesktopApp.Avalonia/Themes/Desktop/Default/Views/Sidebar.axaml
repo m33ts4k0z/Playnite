@@ -58,6 +58,9 @@
                               IsChecked="{Binding CloseToTray, Mode=TwoWay}" />
                     <Button Content="{DynamicResource LOCDesktopUpdateLibraries}"
                             Command="{Binding OpenLibrarySyncCommand}" />
+                    <Button x:Name="DownloadMetadataSidebarButton"
+                            Content="{DynamicResource LOCDesktopDownloadMetadata}"
+                            Command="{Binding OpenMetadataDownloadCommand}" />
                     <Button Content="{DynamicResource LOCDesktopImportInstalled}"
                             Command="{Binding OpenInstalledGameImportCommand}" />
                     <Button Content="Configure emulators"

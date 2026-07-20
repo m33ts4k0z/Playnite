@@ -1146,8 +1146,10 @@ internal static class DesktopPilotSelfTest
             viewModel.LibrarySync.GameScanners.All(option => !option.IsSelected) &&
             metadataPlugin.ProviderCreationCount == metadataProvidersBeforeRefresh &&
             libraryPlugin.GetGamesCallCount == 2 &&
-            libraryUpdatedCount == 2
-                ? "the existing plugin game refreshed playtime/install state with no duplicate or metadata request"
+            libraryUpdatedCount == 2 &&
+            viewModel.LibrarySync.ProgressText.Contains("use Download metadata", StringComparison.Ordinal)
+                ? "the existing plugin game refreshed playtime/install state with no duplicate or metadata request, " +
+                  "and the completed update points to the existing-game metadata workflow"
                 : throw new InvalidOperationException("Existing library state was duplicated, stale, or redownloaded unexpectedly."));
 
         var scannerConfig = library.Database.GameScanners.Single(scanner => scanner.Name == "Pilot ROM scanner");
@@ -3704,6 +3706,14 @@ internal static class DesktopPilotSelfTest
             chromeCommands.All(command => command != null)
                 ? $"{chromeCommands.Length} native commands cover add/import, library, tools, scripts, help, restart, and exit"
                 : throw new InvalidOperationException("A Desktop chrome command was not initialized."));
+
+        var metadataSidebarButton = window.MainView.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(button => button.Name == "DownloadMetadataSidebarButton");
+        Record(results, "Existing-game metadata download is exposed in the library sidebar", () =>
+            metadataSidebarButton?.Command == viewModel.OpenMetadataDownloadCommand
+                ? "the visible sidebar opens the selected, filtered, or entire-library metadata workflow"
+                : throw new InvalidOperationException("The existing-game metadata workflow is hidden from the sidebar."));
 
         viewModel.SetDetailsViewCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);

@@ -20,6 +20,7 @@
     <x:String x:Key="LOCDesktopLibraries">Library integrations</x:String>
     <x:String x:Key="LOCDesktopPlaytimeImportMode">Playtime import mode</x:String>
     <x:String x:Key="LOCDesktopMetadataOnImport">Download metadata for newly imported games</x:String>
+    <x:String x:Key="LOCDesktopMetadataOnImportHint">Existing games are not refreshed here. Use Download metadata to update selected, filtered, or all existing games.</x:String>
     <x:String x:Key="LOCDesktopUpdateStart">Start update</x:String>
     <x:String x:Key="LOCDesktopUpdateCancel">Cancel update</x:String>
     <x:String x:Key="LOCDesktopImportInstalled">Import installed games</x:String>

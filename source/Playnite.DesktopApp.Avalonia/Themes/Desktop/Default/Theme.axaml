@@ -590,6 +590,9 @@
                                                   SelectedItem="{Binding LibrarySync.PlaytimeMode, Mode=TwoWay}" />
                                         <CheckBox Content="{DynamicResource LOCDesktopMetadataOnImport}"
                                                   IsChecked="{Binding LibrarySync.DownloadMetadataOnImport, Mode=TwoWay}" />
+                                        <TextBlock Text="{DynamicResource LOCDesktopMetadataOnImportHint}"
+                                                   Margin="28,-8,0,0" FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
                                     </StackPanel>
                                 </ScrollViewer>
 

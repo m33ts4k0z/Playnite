@@ -258,7 +258,7 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
         ErrorText = null;
         ProgressValue = 0;
         ProgressTotal = sourceCount;
-        ProgressText = $"Updating libraries [0/{ProgressTotal}]";
+        ProgressText = $"Updating library integrations [0/{ProgressTotal}]";
         IsVisible = false;
         IsRunning = true;
         cancellationSource = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
@@ -277,7 +277,8 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
                 }
 
                 var plugin = selectedPlugins[index];
-                ProgressText = $"Importing {plugin.Name} [{completedSources + 1}/{sourceCount}]";
+                ProgressText = $"Importing {plugin.Name} library " +
+                    $"[{completedSources + 1}/{sourceCount} integration(s)]";
                 try
                 {
                     var beforeIds = database.Games.Select(game => game.Id).ToHashSet();
@@ -492,7 +493,11 @@ public sealed class DesktopLibrarySyncViewModel : INotifyPropertyChanged
             }
 
             ProgressValue = ProgressTotal;
-            ProgressText = $"Library update finished; {addedGames.Count:N0} new game(s) imported.";
+            var metadataGuidance = DownloadMetadataOnImport && addedGames.Count == 0
+                ? " No new games needed metadata; use Download metadata to refresh existing games."
+                : string.Empty;
+            ProgressText = $"Library update finished; {addedGames.Count:N0} new game(s) imported." +
+                metadataGuidance;
             showMessage(ProgressText, false);
             IsVisible = false;
             return true;
