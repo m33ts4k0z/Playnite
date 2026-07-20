@@ -5,13 +5,14 @@
         <StackPanel>
             <Button IsVisible="{Binding ShowGroupHeader}" Command="{Binding ToggleGroupCommand}"
                     Margin="4,14,4,4" Padding="10,5"
+                    Background="Transparent"
                     HorizontalContentAlignment="Stretch">
                 <TextBlock Text="{Binding GroupHeader}" FontWeight="Bold"
                            Foreground="{DynamicResource DesktopAccentBrush}" />
             </Button>
-            <Border Classes="desktopRow" Margin="3" Padding="10"
-                    CornerRadius="6" Background="{DynamicResource DesktopPanelBrush}"
-                    BorderBrush="Transparent" BorderThickness="1"
+            <Border Classes="desktopRow" Padding="10,8"
+                    Background="Transparent"
+                    BorderBrush="#263140" BorderThickness="0,0,0,1"
                     IsVisible="{Binding IsGroupExpanded}">
                 <Grid ColumnDefinitions="Auto,2*,*,*,Auto" ColumnSpacing="12">
                     <Border Width="{Binding ListIconWidth}" Height="{Binding ListIconHeight}" Background="#222B37"

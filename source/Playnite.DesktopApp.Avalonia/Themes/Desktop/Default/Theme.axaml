@@ -6,6 +6,7 @@
     <SolidColorBrush x:Key="DesktopBackgroundBrush" Color="#10141B" />
     <SolidColorBrush x:Key="DesktopPanelBrush" Color="#171D26" />
     <SolidColorBrush x:Key="DesktopPanelStrongBrush" Color="#202834" />
+    <SolidColorBrush x:Key="DesktopListSurfaceBrush" Color="#0D121A" />
     <SolidColorBrush x:Key="DesktopAccentBrush" Color="#00A8E8" />
     <SolidColorBrush x:Key="DesktopTextBrush" Color="#F3F6FA" />
     <SolidColorBrush x:Key="DesktopMutedBrush" Color="#9EABBA" />
@@ -90,10 +91,10 @@
                             </ListBox>
 
                             <ListBox Name="PART_ListGameList"
-                                     Margin="18,14"
-                                     IsVisible="{Binding IsListView}"
-                                     Background="Transparent"
-                                     ItemsSource="{Binding Games}"
+                                      Margin="18,14"
+                                      IsVisible="{Binding IsListView}"
+                                      Background="{DynamicResource DesktopListSurfaceBrush}"
+                                      ItemsSource="{Binding Games}"
                                      SelectionMode="Multiple"
                                      ItemTemplate="{DynamicResource DesktopListItemTemplate}" />
                         </Grid>
