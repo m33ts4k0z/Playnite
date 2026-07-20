@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Playnite.SDK;
+#if WINDOWS
 using LegacyWindow = System.Windows.Window;
+#endif
 
 namespace Playnite.Avalonia.App.Services;
 
@@ -63,9 +65,13 @@ public interface IAvaloniaDialogService
         string message,
         IReadOnlyList<AvaloniaSelectionItem<T>> items);
 
+#if WINDOWS
     LegacyWindow CreateLegacyWindow(WindowCreationOptions options);
 
     LegacyWindow GetCurrentLegacyWindow();
+#else
+    Window CreateWindow(WindowCreationOptions options);
+#endif
 
     Window GetCurrentWindow();
 }

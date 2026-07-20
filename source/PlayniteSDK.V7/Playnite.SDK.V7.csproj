@@ -23,6 +23,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The native shared host constructs SDK event payloads and search
+         requests just like the legacy host assembly does. -->
+    <InternalsVisibleTo Include="Playnite.Avalonia.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 

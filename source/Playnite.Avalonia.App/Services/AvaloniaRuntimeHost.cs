@@ -7,7 +7,6 @@ using Playnite.Plugins;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
-using Playnite.WpfPluginSupport;
 
 namespace Playnite.Avalonia.App.Services;
 
@@ -22,6 +21,7 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
     private readonly V7PluginHost v7Plugins;
     private readonly NotificationsAPI notifications;
     private readonly AvaloniaWebViewFactory webViews;
+    private readonly IPluginCompatibilityHost pluginCompatibility;
     private readonly IPlayniteAPI globalApi;
     private readonly Func<WebViewSettings, IWebView> previousOffscreenWebViewFactory;
     private readonly Func<WebViewSettings, IWebView> offscreenWebViewFactory;
@@ -96,12 +96,13 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
             callbacks,
             webViews);
 
-        WpfPluginSupportRuntime.EnsureApplication();
+        pluginCompatibility = PluginCompatibilityHost.Create();
+        pluginCompatibility.Initialize();
         extensions = factory = new ExtensionFactory(
             database,
             controllers,
             _ => CreateApi(),
-            WpfPluginSupportRuntime.LoadPluginResources);
+            pluginCompatibility.LoadPluginResources);
         var actionPolicy = new GameActionRunnerPolicy
         {
             GlobalPreScript = () => callbacks.Settings.GlobalPreScript,
@@ -134,10 +135,10 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
                 .Concat(v7Plugins?.Plugins.Select(plugin => plugin.Id.ToString()) ?? []),
             pluginApi: globalApi,
             webViews: webViews);
-        previousResourceProvider = ResourceProvider.SetGlobalProvider(globalApi.Resources);
+        previousResourceProvider = pluginCompatibility.InstallResourceProvider(globalApi.Resources);
         pluginConverterResolver = (pluginSource, converterName) =>
             v7Plugins.ResolveConverter(pluginSource, converterName) ??
-            WpfPluginSupportRuntime.ResolveConverter(extensions, pluginSource, converterName);
+            pluginCompatibility.ResolveConverter(extensions, pluginSource, converterName);
         PluginConverterRuntime.Resolver = pluginConverterResolver;
         pluginElementResolver = (pluginSource, elementName, gameContext) =>
         {
@@ -146,7 +147,7 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
                 return v7Plugins.ResolvePluginElement(
                     pluginSource,
                     elementName,
-                    gameContext as Game) ?? WpfPluginElementFactory.Create(
+                    gameContext as Game) ?? pluginCompatibility.CreateElement(
                     extensions,
                     callbacks.Mode,
                     pluginSource,
@@ -196,7 +197,7 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
         var manifests = ExtensionFactory.GetInstalledManifests(externals);
         var v7ManifestIds = v7Plugins.Load(manifests, disabled);
         var v6IgnoreList = disabled.Concat(v7ManifestIds).Distinct().ToList();
-        extensions.LoadPlugins(v6IgnoreList, false, externals);
+        pluginCompatibility.LoadLegacyPlugins(extensions, v6IgnoreList, externals);
         extensions.LoadScripts(disabled, false, externals);
         callbacks.SetPluginSummary(
             $"{LoadedPluginCount} plugins loaded" +
@@ -266,7 +267,7 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
         }
 
         webViews.Dispose();
-        ResourceProvider.SetGlobalProvider(previousResourceProvider);
-        WpfPluginSupportRuntime.Shutdown();
+        pluginCompatibility.RestoreResourceProvider(previousResourceProvider);
+        pluginCompatibility.Shutdown();
     }
 }

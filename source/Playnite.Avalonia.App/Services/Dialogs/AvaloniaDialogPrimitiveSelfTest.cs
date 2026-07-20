@@ -28,7 +28,11 @@ public static class AvaloniaDialogPrimitiveSelfTest
         var progressResult = new GlobalProgressResult(true, false, null);
         var unrouted = typeof(IDialogsFactory)
             .GetMethods()
+#if WINDOWS
             .Where(method => !AvaloniaSdkDialogRouter.Supports(method))
+#else
+            .Where(method => !AvaloniaPluginApi.SupportsDialogCall(method))
+#endif
             .Select(method => method.Name)
             .Distinct()
             .ToList();
@@ -47,6 +51,6 @@ public static class AvaloniaDialogPrimitiveSelfTest
         }
 
         return "text/toggle, search, single/multi-select, image, progress, selectable-text, " +
-            $"and all {typeof(IDialogsFactory).GetMethods().Length} SDK v6 dialog members constructed";
+            $"and all {typeof(IDialogsFactory).GetMethods().Length} SDK dialog members constructed";
     }
 }

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFrameworks>net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
     <RootNamespace>Playnite.Avalonia.App</RootNamespace>
     <AssemblyName>Playnite.Avalonia.App</AssemblyName>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -18,12 +18,24 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Playnite.Avalonia\Playnite.Avalonia.csproj" />
+    <ProjectReference Include="..\Playnite.Avalonia.WebView\Playnite.Avalonia.WebView.csproj"
+                      Condition="'$(TargetFramework)' == 'net10.0'" />
     <ProjectReference Include="..\Playnite.Core\Playnite.Core.csproj" />
     <ProjectReference Include="..\Playnite.SDK.V7.Host\Playnite.SDK.V7.Host.csproj" ReferenceOutputAssembly="false" Private="false" />
     <!-- Build-order only: the SDK v7 assembly is staged below for the isolated
          host and must never be referenced by the application directly. -->
     <ProjectReference Include="..\PlayniteSDK.V7\Playnite.SDK.V7.csproj" ReferenceOutputAssembly="false" Private="false" />
-    <ProjectReference Include="..\Playnite.WpfPluginSupport\Playnite.WpfPluginSupport.csproj" />
+    <ProjectReference Include="..\Playnite.WpfPluginSupport\Playnite.WpfPluginSupport.csproj"
+                      Condition="'$(TargetFramework)' != 'net10.0'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <!-- SDK v6 and WPF-facing adapters are replaced by portable SDK v7
+         implementations with the same host-facing type names. -->
+    <Compile Remove="Services\AvaloniaPluginApi.cs" />
+    <Compile Remove="Services\AvaloniaWebViewFactory.cs" />
+    <Compile Remove="Services\Dialogs\AvaloniaSdkDialogRouter.cs" />
+    <Compile Remove="Services\Dialogs\LegacyWpfWindowBridge.cs" />
   </ItemGroup>
 
   <ItemGroup>
