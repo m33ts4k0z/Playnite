@@ -10,10 +10,9 @@
         <Setter Property="BorderBrush" Value="{DynamicResource DesktopAccentBrush}" />
         <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
     </Style>
-    <Style Selector="ListBoxItem:selected Border.desktopRow">
-        <Setter Property="BorderBrush" Value="{DynamicResource DesktopAccentBrush}" />
-        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
-    </Style>
+    <!-- Row selection is painted by DesktopListItemContainerTheme. A selector on
+         the row Border cannot work: the row template sets its border and
+         background as local values, which outrank style setters in Avalonia. -->
     <Style Selector="Button">
         <Setter Property="Padding" Value="14,8" />
         <Setter Property="FontFamily" Value="{DynamicResource DesktopFontFamily}" />

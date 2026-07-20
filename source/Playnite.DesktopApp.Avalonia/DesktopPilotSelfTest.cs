@@ -8,7 +8,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Chrome;
+using Avalonia.Controls.Presenters;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Playnite.Avalonia.Markup;
@@ -168,6 +170,26 @@ internal static class DesktopPilotSelfTest
             viewModel.IsListView && window.MainView.GameList == window.MainView.ListGameList
                 ? "the persisted view selector switched to the list surface"
                 : throw new InvalidOperationException("The list surface did not become active."));
+        viewModel.SelectedGame = viewModel.Games.FirstOrDefault();
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var realizedListItems = window.MainView.ListGameList.GetVisualDescendants()
+            .OfType<ListBoxItem>()
+            .ToList();
+        var unselectedListItem = realizedListItems.FirstOrDefault(item => !item.IsSelected);
+        var listItemPresenter = unselectedListItem?.GetVisualDescendants()
+            .OfType<ContentPresenter>()
+            .FirstOrDefault(presenter => presenter.Name == "PART_ContentPresenter");
+        Record(results, "Desktop list item containers stay visually transparent", () =>
+            unselectedListItem?.Background is ISolidColorBrush itemBackground && itemBackground.Color.A == 0 &&
+            listItemPresenter?.Background is ISolidColorBrush presenterBackground && presenterBackground.Color.A == 0
+                ? "unselected rows and their presenters keep the window background visible"
+                : throw new InvalidOperationException(
+                    $"item background={unselectedListItem?.Background}, presenter background={listItemPresenter?.Background}."));
+        Record(results, "Desktop list selection stays visible without hiding the background", () =>
+            realizedListItems.FirstOrDefault(item => item.IsSelected)?.Background is ISolidColorBrush selectedBackground &&
+            selectedBackground.Color.A > 0 && selectedBackground.Color.A < 255
+                ? $"the selected row paints a translucent highlight (alpha {selectedBackground.Color.A})"
+                : throw new InvalidOperationException("The selected row did not paint a translucent highlight."));
         viewModel.SelectedViewMode = "Grid";
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
