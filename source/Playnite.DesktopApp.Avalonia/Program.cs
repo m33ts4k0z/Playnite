@@ -21,7 +21,9 @@ internal static class Program
             ? Path.Combine(Path.GetTempPath(), "Playnite", "SelfTests")
             : Options.UserDataDirectory;
         Directory.CreateDirectory(RuntimeOutputDirectory);
-        LogManager.Init(new NLogLogProvider(Path.Combine(RuntimeOutputDirectory, "avaloniaDesktop.log")));
+        LogManager.Init(new NLogLogProvider(
+            Path.Combine(RuntimeOutputDirectory, "avaloniaDesktop.log"),
+            replaceExisting: true));
         try
         {
             if (Options.HostLaunchSelfTest)

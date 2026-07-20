@@ -80,9 +80,13 @@ namespace Playnite.Common
 
     public class NLogLogProvider : ILogProvider
     {
-        public NLogLogProvider(string logFilePath = null)
+        public NLogLogProvider(string logFilePath = null, bool replaceExisting = false)
         {
-            if (NLog.LogManager.Configuration != null)
+            // NLog auto-loads an NLog.config from the application directory on
+            // first use. When another tool's config is co-located (e.g. the
+            // Toolbox's in a shipped package), that ambient config would suppress
+            // this target. replaceExisting lets a host force its own log file.
+            if (!replaceExisting && NLog.LogManager.Configuration != null)
             {
                 return;
             }
