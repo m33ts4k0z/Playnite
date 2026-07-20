@@ -77,7 +77,7 @@
                                      IsVisible="{Binding IsGridView}"
                                      Background="Transparent"
                                      ItemsSource="{Binding Games}"
-                                     SelectionMode="Multiple,AlwaysSelected"
+                                     SelectionMode="Multiple"
                                      ItemTemplate="{DynamicResource DesktopGridItemTemplate}">
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -94,7 +94,7 @@
                                      IsVisible="{Binding IsListView}"
                                      Background="Transparent"
                                      ItemsSource="{Binding Games}"
-                                     SelectionMode="Multiple,AlwaysSelected"
+                                     SelectionMode="Multiple"
                                      ItemTemplate="{DynamicResource DesktopListItemTemplate}" />
                         </Grid>
 

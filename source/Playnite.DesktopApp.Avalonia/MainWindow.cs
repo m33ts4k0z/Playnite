@@ -32,7 +32,9 @@ public sealed class MainWindow : Window
     private readonly global::Playnite.DiscordManager discord;
     private readonly GamepadInputBridge gamepadBridge;
     private readonly SdlGamepadInputSource sdlInput;
+    private readonly Queue<Action> pendingForwardedCommands = new();
     private WindowState restoreWindowState = WindowState.Normal;
+    private bool isReadyForForwardedCommands;
     private bool hasClosed;
     private bool automatedRunStarted;
     private AvaloniaThemePackage activeThemePackage;
@@ -310,6 +312,24 @@ public sealed class MainWindow : Window
         else
         {
             Close();
+        }
+    }
+
+    internal void RunForwardedCommandWhenReady(Action command)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        if (hasClosed)
+        {
+            return;
+        }
+
+        if (isReadyForForwardedCommands)
+        {
+            command();
+        }
+        else
+        {
+            pendingForwardedCommands.Enqueue(command);
         }
     }
 
@@ -681,6 +701,15 @@ public sealed class MainWindow : Window
             trayService.IsEnabled)
         {
             HideToTray();
+        }
+        isReadyForForwardedCommands = true;
+        while (!hasClosed && pendingForwardedCommands.Count > 0)
+        {
+            pendingForwardedCommands.Dequeue()();
+        }
+        if (hasClosed)
+        {
+            return;
         }
         if (!options.PluginCompatibilityTest && !options.SelfTest)
         {

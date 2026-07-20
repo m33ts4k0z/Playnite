@@ -7,6 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
+    <!-- The host is architecture-neutral. Keep one stable output location even
+         when an x64 shell forwards its Platform global property. -->
+    <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
     <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
   </PropertyGroup>
 

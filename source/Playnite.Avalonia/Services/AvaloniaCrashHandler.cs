@@ -61,6 +61,13 @@ public static class AvaloniaCrashHandler
         TaskScheduler.UnobservedTaskException += (_, args) =>
         {
             args.SetObserved();
+            if (IsExpectedLinuxTrayCancellation(args.Exception))
+            {
+                Trace.WriteLine(
+                    $"Linux tray watcher stopped during shutdown: {args.Exception.Message}");
+                return;
+            }
+
             Present(args.Exception, "Unobserved background-task exception", false);
         };
     }
@@ -75,6 +82,12 @@ public static class AvaloniaCrashHandler
         Dispatcher.UIThread.UnhandledException += (_, args) =>
         {
             args.Handled = true;
+            if (IsExpectedLinuxTrayCancellation(args.Exception))
+            {
+                Trace.WriteLine($"Linux tray watcher stopped during shutdown: {args.Exception.Message}");
+                return;
+            }
+
             Present(args.Exception, "Unhandled user-interface exception", false);
         };
     }
@@ -165,6 +178,29 @@ public static class AvaloniaCrashHandler
                 Interlocked.Exchange(ref handlingException, 0);
             }
         }
+    }
+
+    private static bool IsExpectedLinuxTrayCancellation(Exception exception)
+    {
+        if (exception is AggregateException aggregate)
+        {
+            var innerExceptions = aggregate.Flatten().InnerExceptions;
+            return innerExceptions.Count > 0 &&
+                innerExceptions.All(IsExpectedLinuxTrayCancellation);
+        }
+
+        if (!OperatingSystem.IsLinux() || exception is not TaskCanceledException)
+        {
+            return false;
+        }
+
+        var stackTrace = exception.StackTrace;
+        return stackTrace?.Contains(
+                   "Tmds.DBus.Protocol.InnerConnection.Watcher.WaitForOwnerAsync",
+                   StringComparison.Ordinal) == true &&
+               stackTrace.Contains(
+                   "Avalonia.FreeDesktop.DBusTrayIconImpl.WatchAsync",
+                   StringComparison.Ordinal);
     }
 
     private static AvaloniaCrashHandlerOptions GetOptions()

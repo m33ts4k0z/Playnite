@@ -15,6 +15,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <LangVersion>latest</LangVersion>
+    <!-- SDK contracts are architecture-neutral. Keep one stable output location
+         when an x64 shell forwards its Platform global property. -->
+    <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
     <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
   </PropertyGroup>
 

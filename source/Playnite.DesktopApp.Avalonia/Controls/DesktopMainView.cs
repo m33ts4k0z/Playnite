@@ -132,6 +132,7 @@ public sealed class DesktopMainView : TemplatedControl
 
         if (e.PropertyName is nameof(DesktopAppViewModel.SelectedGame) or
             nameof(DesktopAppViewModel.SelectedGames) or
+            nameof(DesktopAppViewModel.Games) or
             nameof(DesktopAppViewModel.IsGridView) or
             nameof(DesktopAppViewModel.IsListView))
         {
@@ -251,6 +252,16 @@ public sealed class DesktopMainView : TemplatedControl
         if (listBox == null || ReferenceEquals(listBox, source))
         {
             return;
+        }
+
+        var selectionMode = SelectionMode.Multiple;
+        if (observedViewModel.Games.Count > 0)
+        {
+            selectionMode |= SelectionMode.AlwaysSelected;
+        }
+        if (listBox.SelectionMode != selectionMode)
+        {
+            listBox.SelectionMode = selectionMode;
         }
 
         listBox.SelectedItems?.Clear();

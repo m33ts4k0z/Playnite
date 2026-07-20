@@ -226,8 +226,7 @@ public sealed class App : Application
                 .ToList();
             runtimeHost?.InitializePlugins(!options.SelfTest && !options.SafeStartup, externalExtensions);
             Program.InstanceCoordinator?.SetCommandHandler(command =>
-                Dispatcher.UIThread.Post(() =>
-                    ProcessCommand(command, window, desktop, runtimeHost, viewModel)));
+                DispatchCommandWhenWindowReady(command, window, desktop, runtimeHost, viewModel));
             if (!string.IsNullOrWhiteSpace(options.UriData) &&
                 !ProcessUri(options.UriData, runtimeHost, viewModel))
             {
@@ -292,6 +291,17 @@ public sealed class App : Application
                 desktop.Shutdown();
                 break;
         }
+    }
+
+    private static void DispatchCommandWhenWindowReady(
+        CommandExecutedEventArgs command,
+        MainWindow window,
+        IClassicDesktopStyleApplicationLifetime desktop,
+        AvaloniaRuntimeHost host,
+        DesktopAppViewModel viewModel)
+    {
+        Dispatcher.UIThread.Post(() => window.RunForwardedCommandWhenReady(
+            () => ProcessCommand(command, window, desktop, host, viewModel)));
     }
 
     private static bool ProcessUri(
