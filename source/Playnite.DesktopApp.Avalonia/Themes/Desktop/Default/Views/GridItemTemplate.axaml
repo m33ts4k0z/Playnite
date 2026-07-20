@@ -2,10 +2,16 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:foundation="using:Playnite.Avalonia.Controls">
     <DataTemplate x:Key="DesktopGridItemTemplate">
+        <StackPanel>
+        <Button IsVisible="{Binding ShowGroupHeader}" Command="{Binding ToggleGroupCommand}"
+                HorizontalContentAlignment="Stretch" Margin="4,6" Padding="8,4">
+            <TextBlock Text="{Binding GroupHeader}" FontSize="{DynamicResource DesktopFontSizeSmall}"
+                       FontWeight="Bold" Foreground="{DynamicResource DesktopAccentBrush}" />
+        </Button>
         <Border Classes="desktopTile" Margin="{Binding GridItemMargin}" CornerRadius="8"
                 Background="Transparent" Opacity="{Binding GridItemOpacity}"
                 BorderBrush="Transparent" BorderThickness="2"
-                ClipToBounds="True">
+                ClipToBounds="True" IsVisible="{Binding IsGroupExpanded}">
             <Grid RowDefinitions="*,Auto">
                 <Border Grid.RowSpan="2" Background="{DynamicResource DesktopPanelBrush}"
                         IsVisible="{Binding ShowGridItemBackground}" />
@@ -19,12 +25,6 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                         <foundation:GameCoverImage SourcePath="{Binding CoverPath}"
                                                    Stretch="{Binding CoverArtStretch}" />
-                        <Border IsVisible="{Binding ShowGroupHeader}"
-                                VerticalAlignment="Top" Padding="8,4"
-                                Background="#E600A8E8">
-                            <TextBlock Text="{Binding GroupHeader}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                       FontWeight="Bold" Foreground="White" />
-                        </Border>
                         <Border IsVisible="{Binding Favorite}" HorizontalAlignment="Right"
                                 VerticalAlignment="Bottom" Padding="7,3"
                                 Background="#D900A8E8" CornerRadius="6,0,0,0">
@@ -42,5 +42,6 @@
                 </StackPanel>
             </Grid>
         </Border>
+        </StackPanel>
     </DataTemplate>
 </ResourceDictionary>

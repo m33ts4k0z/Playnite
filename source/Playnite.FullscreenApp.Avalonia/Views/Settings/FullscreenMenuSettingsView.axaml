@@ -7,16 +7,16 @@
         <StackPanel Spacing="12">
             <TextBlock Text="Menus" FontSize="24" FontWeight="SemiBold"
                        Foreground="{DynamicResource FullscreenTextBrush}" />
-            <CheckBox Content="{DynamicResource LOCFullscreenMenuRestart}" IsChecked="{Binding ShowRestart, Mode=TwoWay}" />
-            <CheckBox Content="{DynamicResource LOCFullscreenMenuShutdown}" IsChecked="{Binding ShowShutdown, Mode=TwoWay}" />
-            <CheckBox Content="{DynamicResource LOCFullscreenMenuSuspend}" IsChecked="{Binding ShowSuspend, Mode=TwoWay}" />
-            <CheckBox Content="{DynamicResource LOCFullscreenMenuHibernate}" IsChecked="{Binding ShowHibernate, Mode=TwoWay}" />
-            <CheckBox Content="{DynamicResource LOCFullscreenMenuMinimize}" IsChecked="{Binding ShowMinimize, Mode=TwoWay}" />
-            <CheckBox Content="{DynamicResource LOCFullscreenMenuLogout}" IsChecked="{Binding ShowLogout, Mode=TwoWay}" />
-            <CheckBox Content="{DynamicResource LOCFullscreenMenuLock}" IsChecked="{Binding ShowLock, Mode=TwoWay}" />
-            <CheckBox Content="{DynamicResource LOCFullscreenMenuTools}" IsChecked="{Binding ShowTools, Mode=TwoWay}" />
-            <CheckBox Content="{DynamicResource LOCFullscreenMenuExtensions}" IsChecked="{Binding ShowExtensions, Mode=TwoWay}" />
-            <CheckBox Content="{DynamicResource LOCFullscreenMenuClients}" IsChecked="{Binding ShowClients, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuRestart}" ToolTip.Tip="{DynamicResource LOCFullscreenMenuRestart}" IsChecked="{Binding ShowRestart, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuShutdown}" ToolTip.Tip="{DynamicResource LOCFullscreenMenuShutdown}" IsChecked="{Binding ShowShutdown, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuSuspend}" ToolTip.Tip="{DynamicResource LOCFullscreenMenuSuspend}" IsChecked="{Binding ShowSuspend, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuHibernate}" ToolTip.Tip="{DynamicResource LOCFullscreenMenuHibernate}" IsChecked="{Binding ShowHibernate, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuMinimize}" ToolTip.Tip="{DynamicResource LOCFullscreenMenuMinimize}" IsChecked="{Binding ShowMinimize, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuLogout}" ToolTip.Tip="{DynamicResource LOCFullscreenMenuLogout}" IsChecked="{Binding ShowLogout, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuLock}" ToolTip.Tip="{DynamicResource LOCFullscreenMenuLock}" IsChecked="{Binding ShowLock, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuTools}" ToolTip.Tip="{DynamicResource LOCFullscreenMenuTools}" IsChecked="{Binding ShowTools, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuExtensions}" ToolTip.Tip="{DynamicResource LOCFullscreenMenuExtensions}" IsChecked="{Binding ShowExtensions, Mode=TwoWay}" />
+            <CheckBox Content="{DynamicResource LOCFullscreenMenuClients}" ToolTip.Tip="{DynamicResource LOCFullscreenMenuClients}" IsChecked="{Binding ShowClients, Mode=TwoWay}" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

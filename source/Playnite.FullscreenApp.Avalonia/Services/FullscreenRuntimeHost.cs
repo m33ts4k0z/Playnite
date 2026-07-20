@@ -5,8 +5,6 @@ using Playnite.Plugins;
 using Playnite.SDK.Models;
 using Playnite.FullscreenApp.Avalonia.ViewModels;
 using Playnite.SDK.Plugins;
-using Playnite.Scripting.PowerShell;
-using Playnite.Common;
 using Playnite.Avalonia.Input;
 
 namespace Playnite.FullscreenApp.Avalonia.Services;
@@ -77,23 +75,6 @@ public sealed class FullscreenRuntimeHost : IDisposable
     public void NotifyControllerDisconnected(Playnite.Avalonia.Input.SdlGameControllerDevice device) =>
         host.NotifyControllerDisconnected(device);
 
-    public void StartSoftwareTool(AppSoftware app)
-    {
-        ArgumentNullException.ThrowIfNull(app);
-        if (app.AppType == AppSoftwareType.Standard)
-        {
-            ProcessStarter.StartProcess(
-                PlaynitePaths.ExpandVariables(app.Path, fixSeparators: true),
-                PlaynitePaths.ExpandVariables(app.Arguments),
-                PlaynitePaths.ExpandVariables(app.WorkingDir, fixSeparators: true));
-            return;
-        }
-
-        using var runtime = new PowerShellRuntime($"Software tool {app.Name} runtime");
-        runtime.Execute(
-            PlaynitePaths.ExpandVariables(app.Script),
-            PlaynitePaths.ProgramPath,
-            new Dictionary<string, object> { ["PlayniteApi"] = host.PluginApi });
-    }
+    public void StartSoftwareTool(AppSoftware app) => host.StartSoftwareTool(app);
     public void Dispose() => host.Dispose();
 }

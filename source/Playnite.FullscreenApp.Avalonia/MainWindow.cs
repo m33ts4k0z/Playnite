@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Playnite.Avalonia.App.Services;
@@ -70,10 +72,15 @@ public sealed class MainWindow : Window
         themeManager = new RuntimeThemeManager(Application.Current, typeof(FullscreenMainView).Assembly);
         ApplyRuntimeTheme();
         ApplyVisualResources();
-        themeManager.ApplyLanguage(ContentPath("Localization", "english.axaml"));
+        themeManager.ApplyLanguage(
+            LanguageCatalog.ResolveLanguagePaths(ContentPath("Localization"), settings.Language));
 
         mainView = new FullscreenMainView();
         Content = mainView;
+        DragDrop.SetAllowDrop(mainView, true);
+        DragDrop.AddDragOverHandler(mainView, OnDragOver);
+        DragDrop.AddDropHandler(mainView, OnDrop);
+        mainView.AddHandler(InputElement.GotFocusEvent, OnControlGotFocus, RoutingStrategies.Bubble);
 
         gamepadBridge = new GamepadInputBridge(this);
         focusedActivationCommand = new RelayCommand(ActivateFocusedControl);
@@ -218,6 +225,20 @@ public sealed class MainWindow : Window
         sdlInput.Dispose();
         gamepadBridge.Dispose();
         audioService?.Dispose();
+    }
+
+    private void OnControlGotFocus(object sender, RoutedEventArgs e)
+    {
+        if (!viewModel.IsSettingsVisible)
+        {
+            viewModel.SetFocusedSettingsDescription(string.Empty);
+            return;
+        }
+
+        var description = e.Source is Control control
+            ? ToolTip.GetTip(control) as string
+            : null;
+        viewModel.SetFocusedSettingsDescription(description ?? string.Empty);
     }
 
     private void ConfigureMonitorOptions()
@@ -510,6 +531,107 @@ public sealed class MainWindow : Window
             viewModel.ToggleFullscreenCommand.Execute(null);
             e.Handled = true;
         }
+    }
+
+    private void OnDragOver(object sender, DragEventArgs args)
+    {
+        args.DragEffects = GetDroppedAddonPaths(args).Count > 0
+            ? DragDropEffects.Copy
+            : DragDropEffects.None;
+        args.Handled = true;
+    }
+
+    private void OnDrop(object sender, DragEventArgs args)
+    {
+        foreach (var path in GetDroppedAddonPaths(args))
+        {
+            try
+            {
+                InstallDroppedAddon(path);
+            }
+            catch (Exception exception)
+            {
+                viewModel.SetStatusMessage($"The dropped add-on could not be installed: {exception.Message}");
+            }
+        }
+
+        args.DragEffects = DragDropEffects.Copy;
+        args.Handled = true;
+    }
+
+    private void InstallDroppedAddon(string path)
+    {
+        var extension = Path.GetExtension(path);
+        string name;
+        if (extension.Equals(global::Playnite.PlaynitePaths.PackedThemeFileExtention, StringComparison.OrdinalIgnoreCase))
+        {
+            global::Playnite.Plugins.ExtensionInstaller.VerifyThemePackage(path);
+            var manifest = global::Playnite.Plugins.ExtensionInstaller.GetPackedThemeManifest(path);
+            manifest.VerifyManifest();
+            name = manifest.Name;
+        }
+        else
+        {
+            global::Playnite.Plugins.ExtensionInstaller.VerifyExtensionPackage(path);
+            var manifest = global::Playnite.Plugins.ExtensionInstaller.GetPackedExtensionManifest(path);
+            manifest.VerifyManifest();
+            name = manifest.Name;
+        }
+
+        viewModel.OpenDialog(
+            Localize("LOCInstallAddon", "Install add-on"),
+            string.Format(Localize("LOCInstallAddonPrompt", "Queue '{0}' for installation?"), name),
+            new[] { Localize("LOCInstall", "Install"), Localize("LOCCancelLabel", "Cancel") },
+            0,
+            1,
+            result =>
+            {
+                if (result != Localize("LOCInstall", "Install"))
+                {
+                    return;
+                }
+
+                global::Playnite.Plugins.ExtensionInstaller.QueuePackageInstall(path);
+                viewModel.OpenDialog(
+                    Localize("LOCRestartRequired", "Restart required"),
+                    Localize("LOCAddonInstallRestartMessage", "The add-on will be installed after Playnite restarts."),
+                    new[] { Localize("LOCRestartNow", "Restart now"), Localize("LOCLater", "Later") },
+                    0,
+                    1,
+                    restartResult =>
+                    {
+                        if (restartResult == Localize("LOCRestartNow", "Restart now"))
+                        {
+                            viewModel.RestartApplicationCommand.Execute(null);
+                        }
+                    });
+            });
+    }
+
+    internal static bool IsSupportedDroppedAddon(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            return false;
+        }
+
+        var extension = Path.GetExtension(path);
+        return extension.Equals(global::Playnite.PlaynitePaths.PackedExtensionFileExtention, StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(global::Playnite.PlaynitePaths.PackedThemeFileExtention, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IReadOnlyList<string> GetDroppedAddonPaths(DragEventArgs args) =>
+        args.DataTransfer.TryGetFiles()
+            ?.Select(file => file.TryGetLocalPath())
+            .Where(IsSupportedDroppedAddon)
+            .ToList() ?? new List<string>();
+
+    private static string Localize(string key, string fallback)
+    {
+        var value = Playnite.SDK.ResourceProvider.GetString(key);
+        return string.IsNullOrWhiteSpace(value) || value == key || value == $"<!{key}!>"
+            ? fallback
+            : value;
     }
 
     private static string ContentPath(params string[] parts) =>

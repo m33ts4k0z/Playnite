@@ -6,6 +6,37 @@
                 Padding="24,0">
             <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="12" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <Menu Background="Transparent">
+                        <MenuItem Header="☰">
+                            <MenuItem Header="{DynamicResource LOCMenuAddGame}">
+                                <MenuItem Header="{DynamicResource LOCMenuAddGameManual}" Command="{Binding AddManualGameCommand}" />
+                                <MenuItem Header="Scan installed programs and Microsoft Store" Command="{Binding OpenInstalledGameImportCommand}" />
+                                <MenuItem Header="Import emulated games" Command="{Binding OpenEmulatedImportCommand}" />
+                            </MenuItem>
+                            <MenuItem Header="{DynamicResource LOCLibrary}">
+                                <MenuItem Header="{DynamicResource LOCCheckLibraryUpdates}" Command="{Binding OpenLibrarySyncCommand}" InputGesture="F5" />
+                                <MenuItem Header="{DynamicResource LOCMenuDownloadMetadata}" Command="{Binding OpenMetadataDownloadCommand}" InputGesture="Ctrl+D" />
+                                <MenuItem Header="{DynamicResource LOCLibraryManager}" Command="{Binding OpenDatabaseFieldsCommand}" InputGesture="Ctrl+W" />
+                                <MenuItem Header="Database explorer" Command="{Binding OpenExplorerCommand}" InputGesture="Ctrl+E" />
+                                <MenuItem Header="{DynamicResource LOCMenuBackupData}" Command="{Binding BackupDataCommand}" />
+                                <MenuItem Header="{DynamicResource LOCMenuRestoreBackup}" Command="{Binding RestoreDataBackupCommand}" />
+                            </MenuItem>
+                            <MenuItem Header="{DynamicResource LOCMenuSelectRandomGame}" Command="{Binding SelectRandomGameCommand}" InputGesture="F6" />
+                            <MenuItem Header="{DynamicResource LOCTopPanelViewSelectRandomGameButtonTooltip}" Command="{Binding SelectRandomFilteredGameCommand}" InputGesture="F7" />
+                            <MenuItem Header="{DynamicResource LOCMenuAddons}" Command="{Binding OpenAddonStoreCommand}" InputGesture="F9" />
+                            <MenuItem Header="{DynamicResource LOCMenuSoftwareTools}" Command="{Binding OpenToolsConfigCommand}" />
+                            <MenuItem Header="{DynamicResource LOCMenuConfigureEmulatorsMenuTitle}" Command="{Binding OpenEmulatorConfigCommand}" InputGesture="Ctrl+T" />
+                            <MenuItem Header="{DynamicResource LOCExtensions}" Command="{Binding OpenPluginMainMenuCommand}" />
+                            <MenuItem Header="{DynamicResource LOCReloadScripts}" Command="{Binding ReloadScriptsCommand}" InputGesture="F12" />
+                            <MenuItem Header="{DynamicResource LOCStartInteractivePowerShell}" Command="{Binding OpenInteractivePowerShellCommand}" />
+                            <MenuItem Header="{DynamicResource LOCMenuPlayniteSettingsTitle}" Command="{Binding OpenSettingsCommand}" InputGesture="F4" />
+                            <MenuItem Header="{DynamicResource LOCMenuHelpTitle}" Command="{Binding OpenHelpCommand}" />
+                            <MenuItem Header="{DynamicResource LOCMenuAbout}" Command="{Binding OpenAboutCommand}" InputGesture="F1" />
+                            <MenuItem Header="{DynamicResource LOCCrashRestartPlaynite}" Command="{Binding RestartCommand}" />
+                            <MenuItem Header="{DynamicResource LOCCrashRestartSafe}" Command="{Binding RestartSafeModeCommand}" />
+                            <MenuItem Header="{DynamicResource LOCExitAppLabel}" Command="{Binding ExitApplicationCommand}" InputGesture="Alt+Q" />
+                        </MenuItem>
+                    </Menu>
                     <Border Width="34" Height="34" CornerRadius="9"
                             Background="{DynamicResource DesktopAccentBrush}">
                         <TextBlock Text="P" FontSize="{DynamicResource DesktopFontSizeLarger}" FontWeight="Bold"
@@ -35,6 +66,20 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <StackPanel Grid.Column="2" HorizontalAlignment="Center" Spacing="3"
+                            IsVisible="{Binding IsGlobalProgressVisible}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding GlobalProgressText}" MaxWidth="400"
+                                   TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                        <Button Content="{DynamicResource LOCCancelLabel}" Command="{Binding CancelGlobalProgressCommand}"
+                                IsVisible="{Binding CanCancelGlobalProgress}" />
+                    </StackPanel>
+                    <ProgressBar Width="360" Height="5"
+                                 Minimum="0" Maximum="{Binding GlobalProgressMaximum}"
+                                 Value="{Binding GlobalProgressValue}"
+                                 IsIndeterminate="{Binding IsGlobalProgressIndeterminate}" />
+                </StackPanel>
                 <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12"
                             VerticalAlignment="Center">
                     <ItemsControl ItemsSource="{Binding PluginTopPanelItems}"
@@ -56,9 +101,17 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    <Button Content="{Binding FilterActiveIndicator}"
+                            Command="{Binding ToggleFilterPanelCommand}"
+                            IsVisible="{Binding ShowFilterStatusInTopPanel}" />
+                    <Button Content="{DynamicResource LOCUpdaterWindowTitle}"
+                            Command="{Binding InstallProgramUpdateCommand}"
+                            IsVisible="{Binding HasProgramUpdate}" />
                     <TextBlock Text="{Binding LibrarySummary}" VerticalAlignment="Center"
+                               IsVisible="{Binding ShowLibrarySummaryInTopPanel}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <Button Command="{Binding ToggleNotificationsCommand}"
+                            IsVisible="{Binding ShowNotificationsInTopPanel}"
                             Content="{Binding NotificationCount, StringFormat='Notifications ({0})'}" />
                 </StackPanel>
             </Grid>

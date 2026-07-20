@@ -7,16 +7,20 @@
         <TextBlock Text="Audio" FontSize="24" FontWeight="SemiBold"
                    Foreground="{DynamicResource FullscreenTextBrush}" />
         <CheckBox Content="{DynamicResource LOCFullscreenAudio}"
+                  ToolTip.Tip="{DynamicResource LOCFullscreenAudio}"
                   IsChecked="{Binding AudioEnabled, Mode=TwoWay}" />
         <TextBlock Text="{DynamicResource LOCFullscreenInterfaceVolume}"
                    Foreground="{DynamicResource FullscreenTextBrush}" />
         <Slider Minimum="0" Maximum="100" TickFrequency="5"
+                ToolTip.Tip="{DynamicResource LOCFullscreenInterfaceVolume}"
                 Value="{Binding InterfaceVolume, Mode=TwoWay}" />
         <TextBlock Text="{DynamicResource LOCFullscreenBackgroundVolume}"
                    Foreground="{DynamicResource FullscreenTextBrush}" />
         <Slider Minimum="0" Maximum="100" TickFrequency="5"
+                ToolTip.Tip="{DynamicResource LOCFullscreenBackgroundVolume}"
                 Value="{Binding BackgroundVolume, Mode=TwoWay}" />
         <CheckBox Content="{DynamicResource LOCFullscreenMuteInBackground}"
+                  ToolTip.Tip="{DynamicResource LOCFullscreenMuteInBackground}"
                   IsChecked="{Binding MuteInBackground, Mode=TwoWay}" />
     </StackPanel>
 </UserControl>

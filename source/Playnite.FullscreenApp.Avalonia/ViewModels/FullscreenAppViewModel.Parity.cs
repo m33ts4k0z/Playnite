@@ -113,6 +113,7 @@ public sealed partial class FullscreenAppViewModel
         SelectRandomGameCommand = new RelayCommand(SelectRandomGame, () => Games.Count > 0);
         CyclePreviousPresetCommand = new RelayCommand(() => Filters.CycleQuickPreset(-1));
         CycleNextPresetCommand = new RelayCommand(() => Filters.CycleQuickPreset(1));
+        InitializeTier3Commands();
     }
 
     private void AttachParityRuntime(FullscreenRuntimeHost host)
@@ -217,7 +218,7 @@ public sealed partial class FullscreenAppViewModel
         var game = SelectedGame.Game;
         var items = new List<FullscreenMenuItemViewModel>
         {
-            new(game.IsInstalled ? "Play" : "Install", () =>
+            new(game.IsInstalled ? Localize("LOCPlayGame", "Play") : Localize("LOCInstallGame", "Install"), () =>
                 RunOperation(game.IsInstalled ? GameOperationKind.Play : GameOperationKind.Install))
         };
         foreach (var action in game.GameActions?.Where(action => !action.IsPlayAction) ?? [])
@@ -227,25 +228,31 @@ public sealed partial class FullscreenAppViewModel
         }
 
         items.Add(new FullscreenMenuItemViewModel(
-            game.Favorite ? "Remove from favorites" : "Add to favorites",
+            game.Favorite
+                ? Localize("LOCRemoveFavoriteGame", "Remove from favorites")
+                : Localize("LOCFavoriteGame", "Add to favorites"),
             () => UpdateGame(game, () => game.Favorite = !game.Favorite)));
         items.Add(new FullscreenMenuItemViewModel(
-            game.Hidden ? "Unhide game" : "Hide game",
+            game.Hidden ? Localize("LOCUnHideGame", "Unhide game") : Localize("LOCHideGame", "Hide game"),
             () => UpdateGame(game, () => game.Hidden = !game.Hidden)));
         if (HdrUtilities.IsHdrSupported())
         {
             items.Add(new FullscreenMenuItemViewModel(
-                game.EnableSystemHdr ? "Disable HDR" : "Enable HDR",
+                game.EnableSystemHdr
+                    ? Localize("LOCDisableHdr", "Disable HDR")
+                    : Localize("LOCEnableHdr", "Enable HDR"),
                 () => UpdateGame(game, () => game.EnableSystemHdr = !game.EnableSystemHdr)));
         }
 
-        items.Add(new FullscreenMenuItemViewModel("Set fields", children: BuildSetFieldItems(game)));
-        items.Add(new FullscreenMenuItemViewModel("Extensions", children: BuildPluginItems(
+        items.Add(new FullscreenMenuItemViewModel(
+            Localize("LOCSetGameFields", "Set fields"), children: BuildSetFieldItems(game)));
+        items.Add(new FullscreenMenuItemViewModel(Localize("LOCMenuExtensions", "Extensions"), children: BuildPluginItems(
             runtimeHost?.GetGameMenuActions(game) ?? Array.Empty<PluginMenuAction>())));
-        items.Add(new FullscreenMenuItemViewModel("Remove game", () => RemoveGame(game)));
+        items.Add(new FullscreenMenuItemViewModel(Localize("LOCRemoveGame", "Remove game"), () => RemoveGame(game)));
         if (!game.IsCustomGame && game.IsInstalled)
         {
-            items.Add(new FullscreenMenuItemViewModel("Uninstall", () => RunOperation(GameOperationKind.Uninstall)));
+            items.Add(new FullscreenMenuItemViewModel(
+                Localize("LOCUninstallGame", "Uninstall"), () => RunOperation(GameOperationKind.Uninstall)));
         }
 
         OpenCommandMenu(game.Name, items);
@@ -306,7 +313,8 @@ public sealed partial class FullscreenAppViewModel
             description: action.PluginName)).ToList();
         if (items.Count == 0)
         {
-            items.Add(new FullscreenMenuItemViewModel("No extension actions are available"));
+            items.Add(new FullscreenMenuItemViewModel(
+                Localize("LOCNoExtensionActions", "No extension actions are available")));
         }
 
         return items;
@@ -315,31 +323,32 @@ public sealed partial class FullscreenAppViewModel
     private IReadOnlyList<FullscreenMenuItemViewModel> BuildSetFieldItems(Game game) =>
         new List<FullscreenMenuItemViewModel>
         {
-            new("Completion status", () => SelectSingleField(database.CompletionStatuses, game.CompletionStatusId,
-                value => game.CompletionStatusId = value, game, "Completion status")),
-            new("User score", () => SelectUserScore(game)),
-            new("Categories", () => SelectMultipleField(database.Categories, game.CategoryIds,
-                value => game.CategoryIds = value, game, "Categories")),
-            new("Tags", () => SelectMultipleField(database.Tags, game.TagIds,
-                value => game.TagIds = value, game, "Tags")),
-            new("Features", () => SelectMultipleField(database.Features, game.FeatureIds,
-                value => game.FeatureIds = value, game, "Features")),
-            new("Platforms", () => SelectMultipleField(database.Platforms, game.PlatformIds,
-                value => game.PlatformIds = value, game, "Platforms")),
-            new("Genres", () => SelectMultipleField(database.Genres, game.GenreIds,
-                value => game.GenreIds = value, game, "Genres")),
-            new("Developers", () => SelectMultipleField(database.Companies, game.DeveloperIds,
-                value => game.DeveloperIds = value, game, "Developers")),
-            new("Publishers", () => SelectMultipleField(database.Companies, game.PublisherIds,
-                value => game.PublisherIds = value, game, "Publishers")),
-            new("Series", () => SelectMultipleField(database.Series, game.SeriesIds,
-                value => game.SeriesIds = value, game, "Series")),
-            new("Age ratings", () => SelectMultipleField(database.AgeRatings, game.AgeRatingIds,
-                value => game.AgeRatingIds = value, game, "Age ratings")),
-            new("Regions", () => SelectMultipleField(database.Regions, game.RegionIds,
-                value => game.RegionIds = value, game, "Regions")),
-            new("Source", () => SelectSingleField(database.Sources, game.SourceId,
-                value => game.SourceId = value, game, "Source"))
+            new(Localize("LOCCompletionStatus", "Completion status"), () => SelectSingleField(
+                database.CompletionStatuses, game.CompletionStatusId,
+                value => game.CompletionStatusId = value, game, Localize("LOCCompletionStatus", "Completion status"))),
+            new(Localize("LOCUserScore", "User score"), () => SelectUserScore(game)),
+            new(Localize("LOCCategoriesLabel", "Categories"), () => SelectMultipleField(database.Categories, game.CategoryIds,
+                value => game.CategoryIds = value, game, Localize("LOCCategoriesLabel", "Categories"))),
+            new(Localize("LOCTagsLabel", "Tags"), () => SelectMultipleField(database.Tags, game.TagIds,
+                value => game.TagIds = value, game, Localize("LOCTagsLabel", "Tags"))),
+            new(Localize("LOCFeaturesLabel", "Features"), () => SelectMultipleField(database.Features, game.FeatureIds,
+                value => game.FeatureIds = value, game, Localize("LOCFeaturesLabel", "Features"))),
+            new(Localize("LOCPlatformsTitle", "Platforms"), () => SelectMultipleField(database.Platforms, game.PlatformIds,
+                value => game.PlatformIds = value, game, Localize("LOCPlatformsTitle", "Platforms"))),
+            new(Localize("LOCGenresLabel", "Genres"), () => SelectMultipleField(database.Genres, game.GenreIds,
+                value => game.GenreIds = value, game, Localize("LOCGenresLabel", "Genres"))),
+            new(Localize("LOCDevelopersLabel", "Developers"), () => SelectMultipleField(database.Companies, game.DeveloperIds,
+                value => game.DeveloperIds = value, game, Localize("LOCDevelopersLabel", "Developers"))),
+            new(Localize("LOCPublishersLabel", "Publishers"), () => SelectMultipleField(database.Companies, game.PublisherIds,
+                value => game.PublisherIds = value, game, Localize("LOCPublishersLabel", "Publishers"))),
+            new(Localize("LOCSeriesLabel", "Series"), () => SelectMultipleField(database.Series, game.SeriesIds,
+                value => game.SeriesIds = value, game, Localize("LOCSeriesLabel", "Series"))),
+            new(Localize("LOCAgeRatingsLabel", "Age ratings"), () => SelectMultipleField(database.AgeRatings, game.AgeRatingIds,
+                value => game.AgeRatingIds = value, game, Localize("LOCAgeRatingsLabel", "Age ratings"))),
+            new(Localize("LOCRegionsLabel", "Regions"), () => SelectMultipleField(database.Regions, game.RegionIds,
+                value => game.RegionIds = value, game, Localize("LOCRegionsLabel", "Regions"))),
+            new(Localize("LOCSourceLabel", "Source"), () => SelectSingleField(database.Sources, game.SourceId,
+                value => game.SourceId = value, game, Localize("LOCSourceLabel", "Source")))
         };
 
     private void SelectSingleField<T>(
@@ -351,7 +360,7 @@ public sealed partial class FullscreenAppViewModel
     {
         var items = new List<AvaloniaSelectionItem<Guid>>
         {
-            new("None", Guid.Empty, selected: selected == Guid.Empty)
+            new(Localize("LOCNone", "None"), Guid.Empty, selected: selected == Guid.Empty)
         };
         items.AddRange(values.OrderBy(item => item.Name, StringComparer.CurrentCultureIgnoreCase)
             .Select(item => new AvaloniaSelectionItem<Guid>(item.Name, item.Id, selected: item.Id == selected)));
@@ -387,11 +396,11 @@ public sealed partial class FullscreenAppViewModel
     {
         var items = new List<AvaloniaSelectionItem<int?>>
         {
-            new("None", null, selected: !game.UserScore.HasValue)
+            new(Localize("LOCNone", "None"), null, selected: !game.UserScore.HasValue)
         };
         items.AddRange(Enumerable.Range(0, 101).Reverse().Select(score =>
             new AvaloniaSelectionItem<int?>(score.ToString(), score, selected: game.UserScore == score)));
-        var result = runtimeHost.Dialogs.SelectSingle("User score", string.Empty, items);
+        var result = runtimeHost.Dialogs.SelectSingle(Localize("LOCUserScore", "User score"), string.Empty, items);
         if (result.Confirmed)
         {
             UpdateGame(game, () => game.UserScore = result.SelectedItem);
@@ -413,11 +422,11 @@ public sealed partial class FullscreenAppViewModel
     private void RemoveGame(Game game)
     {
         if (runtimeHost.Dialogs.ShowMessage(
-            $"Remove {game.Name} from the library?",
-            "Remove game",
-            new[] { "Yes", "No" },
+            LocalizeFormat("LOCGameRemoveAskMessage", "Are you sure you want to remove {0}?", game.Name),
+            Localize("LOCGameRemoveAskTitle", "Remove game"),
+            new[] { Localize("LOCYesLabel", "Yes"), Localize("LOCNoLabel", "No") },
             1,
-            1) != "Yes")
+            1) != Localize("LOCYesLabel", "Yes"))
         {
             return;
         }
@@ -440,14 +449,15 @@ public sealed partial class FullscreenAppViewModel
             .ToList() ?? new List<FullscreenMenuItemViewModel>();
         if (items.Count == 0)
         {
-            items.Add(new FullscreenMenuItemViewModel("No software tools are configured"));
+            items.Add(new FullscreenMenuItemViewModel(
+                Localize("LOCNoSoftwareTools", "No software tools are configured")));
         }
 
-        OpenCommandMenu("Tools", items);
+        OpenCommandMenu(Localize("LOCMenuTools", "Tools"), items);
     }
 
     private void OpenExtensionsMenu() => OpenCommandMenu(
-        "Extensions",
+        Localize("LOCMenuExtensions", "Extensions"),
         BuildPluginItems(runtimeHost?.GetMainMenuActions() ?? Array.Empty<PluginMenuAction>()));
 
     private void OpenClientsMenu()
@@ -471,10 +481,11 @@ public sealed partial class FullscreenAppViewModel
 
         if (items.Count == 0)
         {
-            items.Add(new FullscreenMenuItemViewModel("No installed library clients are available"));
+            items.Add(new FullscreenMenuItemViewModel(
+                Localize("LOCNoLibraryClients", "No installed library clients are available")));
         }
 
-        OpenCommandMenu("Library clients", items);
+        OpenCommandMenu(Localize("LOCLibraryClients", "Library clients"), items);
     }
 
     private void UpdateLibrary()
@@ -488,7 +499,7 @@ public sealed partial class FullscreenAppViewModel
             foreach (var plugin in plugins)
             {
                 args.CancelToken.ThrowIfCancellationRequested();
-                args.Text = $"Updating {plugin.Name}…";
+                args.Text = LocalizeFormat("LOCUpdatingLibrary", "Updating {0}…", plugin.Name);
                 try
                 {
                     database.ImportGames(plugin, args.CancelToken, PlaytimeImportMode.Always);
@@ -500,7 +511,10 @@ public sealed partial class FullscreenAppViewModel
 
                 args.CurrentProgressValue++;
             }
-        }, new GlobalProgressOptions("Updating library…", true) { IsIndeterminate = false });
+        }, new GlobalProgressOptions(Localize("LOCProgressLibraryGames", "Updating library…"), true)
+        {
+            IsIndeterminate = false
+        });
 
         if (result.Error != null)
         {
@@ -511,10 +525,14 @@ public sealed partial class FullscreenAppViewModel
         SynchronizeGamesFromDatabase();
         runtimeHost.NotifyLibraryUpdated();
         StatusText = result.Canceled
-            ? "Library update canceled."
+            ? Localize("LOCLibraryUpdateCanceled", "Library update canceled.")
             : failures.Count == 0
-                ? "Library update completed."
-                : $"Library update completed with {failures.Count} error(s): {string.Join("; ", failures)}";
+                ? Localize("LOCProgressLibImportFinish", "Library update completed.")
+                : LocalizeFormat(
+                    "LOCLibraryUpdateCompletedWithErrors",
+                    "Library update completed with {0} error(s): {1}",
+                    failures.Count,
+                    string.Join("; ", failures));
     }
 
     private void SynchronizeGamesFromDatabase()
@@ -551,13 +569,13 @@ public sealed partial class FullscreenAppViewModel
         if (game.IsLaunching)
         {
             GameStatusGame = item;
-            GameStatusText = $"Starting {game.Name}…";
+            GameStatusText = LocalizeFormat("LOCGameIsStarting", "{0} is starting…", game.Name);
             IsGameStatusVisible = true;
         }
         else if (game.IsRunning)
         {
             GameStatusGame = item;
-            GameStatusText = $"{game.Name} is running";
+            GameStatusText = LocalizeFormat("LOCGameIsRunning", "{0} is running…", game.Name);
             IsGameStatusVisible = true;
         }
         else if (GameStatusGame?.Game.Id == game.Id)

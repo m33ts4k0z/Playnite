@@ -643,6 +643,7 @@ public sealed partial class FullscreenAppViewModel : INotifyPropertyChanged
         var previous = SelectedGame;
         Games = filtered.ToList();
         SelectedGame = previous != null && Games.Contains(previous) ? previous : Games.FirstOrDefault();
+        OnPropertyChanged(nameof(IsLibraryEmpty));
     }
 
     private void Back()
@@ -712,6 +713,7 @@ public sealed partial class FullscreenAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(MainBackgroundDarkOpacity));
         OnPropertyChanged(nameof(DetailsPromptGlyph));
         OnPropertyChanged(nameof(PlayPromptGlyph));
+        RaiseTier3Properties();
         OnPropertyChanged(nameof(MainMenuShowRestart));
         OnPropertyChanged(nameof(MainMenuShowShutdown));
         OnPropertyChanged(nameof(MainMenuShowSuspend));
@@ -725,6 +727,7 @@ public sealed partial class FullscreenAppViewModel : INotifyPropertyChanged
         ApplyGameVisualSettings();
         ApplyFilters();
         SettingsChanged?.Invoke(this, EventArgs.Empty);
+        ShowSettingsRestartPrompt();
     }
 
     private void RequestPowerAction(SystemPowerAction action)
@@ -782,6 +785,7 @@ public sealed partial class FullscreenAppViewModel : INotifyPropertyChanged
     private void Notifications_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         OnPropertyChanged(nameof(NotificationCount));
+        RaiseTier3Properties();
     }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)

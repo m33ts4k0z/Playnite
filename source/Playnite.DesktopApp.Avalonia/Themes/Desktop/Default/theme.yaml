@@ -19,5 +19,6 @@ Resources:
   - Views/EmulatedImport.axaml
   - Views/DatabaseFields.axaml
   - Views/WebImageSearch.axaml
+  - Views/ChromeParity.axaml
 Styles:
   - Styles.axaml

@@ -1,0 +1,149 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ControlTemplate x:Key="DesktopToolsConfigTemplate">
+        <Border Width="940" MaxHeight="760" Padding="30" CornerRadius="14"
+                Background="{DynamicResource DesktopPanelStrongBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="18">
+                <TextBlock Text="{DynamicResource LOCMenuSoftwareTools}" FontSize="30" FontWeight="Bold"
+                           Foreground="{DynamicResource DesktopTextBrush}" />
+                <Grid Grid.Row="1" ColumnDefinitions="280,*" ColumnSpacing="20">
+                    <Grid RowDefinitions="*,Auto" RowSpacing="10">
+                        <ListBox ItemsSource="{Binding ToolsConfig.EditingApps}"
+                                 SelectedItem="{Binding ToolsConfig.SelectedApp, Mode=TwoWay}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate><TextBlock Text="{Binding Name}" Padding="5" /></DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
+                            <Button Content="{DynamicResource LOCAddTitle}" Command="{Binding ToolsConfig.AddCommand}" />
+                            <Button Content="Add from file" Command="{Binding ToolsConfig.AddFromFileCommand}" />
+                            <Button Content="{DynamicResource LOCRemoveLabel}" Command="{Binding ToolsConfig.RemoveCommand}" />
+                        </StackPanel>
+                    </Grid>
+                    <ScrollViewer Grid.Column="1">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{DynamicResource LOCNameLabel}" Classes="sectionLabel" />
+                            <TextBox Text="{Binding ToolsConfig.SelectedApp.Name, Mode=TwoWay}" />
+                            <TextBlock Text="{DynamicResource LOCTypeLabel}" Classes="sectionLabel" />
+                            <ComboBox ItemsSource="{Binding ToolsConfig.AppTypes}"
+                                      SelectedItem="{Binding ToolsConfig.SelectedApp.AppType, Mode=TwoWay}" />
+                            <TextBlock Text="{DynamicResource LOCExecutableTitle}" Classes="sectionLabel" />
+                            <TextBox Text="{Binding ToolsConfig.SelectedApp.Path, Mode=TwoWay}" />
+                            <TextBlock Text="{DynamicResource LOCArgumentsTitle}" Classes="sectionLabel" />
+                            <TextBox Text="{Binding ToolsConfig.SelectedApp.Arguments, Mode=TwoWay}" />
+                            <TextBlock Text="{DynamicResource LOCWorkingDirTitle}" Classes="sectionLabel" />
+                            <TextBox Text="{Binding ToolsConfig.SelectedApp.WorkingDir, Mode=TwoWay}" />
+                            <TextBlock Text="{DynamicResource LOCScripts}" Classes="sectionLabel" />
+                            <TextBox Text="{Binding ToolsConfig.SelectedApp.Script, Mode=TwoWay}"
+                                     AcceptsReturn="True" MinHeight="100" FontFamily="{DynamicResource DesktopMonospaceFontFamily}" />
+                            <CheckBox Content="{DynamicResource LOCToolsShowOnSidebar}"
+                                      IsChecked="{Binding ToolsConfig.SelectedApp.ShowOnSidebar, Mode=TwoWay}" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="Choose icon" Command="{Binding ToolsConfig.SelectIconCommand}" />
+                                <Button Content="Remove icon" Command="{Binding ToolsConfig.RemoveIconCommand}" />
+                                <TextBlock Text="{Binding ToolsConfig.SelectedApp.Icon}" MaxWidth="280"
+                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10">
+                    <Button Classes="primary" Content="{DynamicResource LOCSaveLabel}" Command="{Binding ToolsConfig.SaveCommand}" />
+                    <Button Content="{DynamicResource LOCCancelLabel}" Command="{Binding ToolsConfig.CancelCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="DesktopExplorerTemplate">
+        <Border Width="860" MaxHeight="740" Padding="30" CornerRadius="14"
+                Background="{DynamicResource DesktopPanelStrongBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
+                <TextBlock Text="Database explorer" FontSize="30" FontWeight="Bold"
+                           Foreground="{DynamicResource DesktopTextBrush}" />
+                <TextBox Grid.Row="1" Text="{Binding ExplorerSearchText, Mode=TwoWay}"
+                         Watermark="Search fields and values" />
+                <ListBox Grid.Row="2" ItemsSource="{Binding ExplorerItems}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="180,*,Auto" Margin="4" ColumnSpacing="12">
+                                <TextBlock Text="{Binding Field}" Foreground="{DynamicResource DesktopAccentBrush}" />
+                                <CheckBox Grid.Column="1" Content="{Binding Name}"
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+                                <TextBlock Grid.Column="2" Text="{Binding CountText}"
+                                           Foreground="{DynamicResource DesktopMutedBrush}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Button Grid.Row="3" Content="{DynamicResource LOCCloseLabel}" Command="{Binding CloseOverlayCommand}" />
+            </Grid>
+        </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="DesktopAboutTemplate">
+        <Border Width="720" Padding="34" CornerRadius="14"
+                Background="{DynamicResource DesktopPanelStrongBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel Spacing="14">
+                <TextBlock Text="Playnite" FontSize="36" FontWeight="Bold"
+                           Foreground="{DynamicResource DesktopTextBrush}" />
+                <TextBlock Text="{Binding AboutVersion, StringFormat='Version {0}'}"
+                           Foreground="{DynamicResource DesktopAccentBrush}" />
+                <TextBlock Text="{Binding AboutRuntime}" />
+                <TextBlock Text="{Binding AboutSdkVersions}" />
+                <TextBlock Text="A unified game library with a native Avalonia interface."
+                           TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                <WrapPanel>
+                    <Button Margin="0,0,8,8" Content="{DynamicResource LOCAboutHomePageLink}" Command="{Binding OpenHomepageCommand}" />
+                    <Button Margin="0,0,8,8" Content="{DynamicResource LOCSDKDocumentation}" Command="{Binding OpenHelpCommand}" />
+                    <Button Margin="0,0,8,8" Content="{DynamicResource LOCAboutSourceLink}" Command="{Binding OpenSourceCommand}" />
+                    <Button Margin="0,0,8,8" Content="{DynamicResource LOCMenuIssues}" Command="{Binding OpenIssuesCommand}" />
+                    <Button Margin="0,0,8,8" Content="{DynamicResource LOCLicenseLabel}" Command="{Binding OpenLicenseCommand}" />
+                    <Button Margin="0,0,8,8" Content="{DynamicResource LOCAboutCreateDiagButton}"
+                            Command="{Binding CreateDiagnosticPackageCommand}" />
+                </WrapPanel>
+                <Button Content="{DynamicResource LOCCloseLabel}" Command="{Binding CloseOverlayCommand}" />
+            </StackPanel>
+        </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="DesktopFirstTimeWizardTemplate">
+        <Border Width="780" Padding="40" CornerRadius="16"
+                Background="{DynamicResource DesktopPanelStrongBrush}"
+                HorizontalAlignment="Center" VerticalAlignment="Center">
+            <StackPanel Spacing="18">
+                <TextBlock Text="{DynamicResource LOCWelcomeLabel}" FontSize="38" FontWeight="Bold"
+                           Foreground="{DynamicResource DesktopTextBrush}" />
+                <TextBlock Text="Choose your language, connect library integrations, and import the games already installed on this computer."
+                           TextWrapping="Wrap" FontSize="17"
+                           Foreground="{DynamicResource DesktopMutedBrush}" />
+                <TextBlock Text="{DynamicResource LOCLanguageSettingsLabel}" Classes="sectionLabel" />
+                <ComboBox ItemsSource="{Binding WizardLanguages}"
+                          SelectedItem="{Binding SelectedWizardLanguage, Mode=TwoWay}" />
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                    <Border Padding="18" CornerRadius="10" Background="#263140">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{DynamicResource LOCFirstExternalTitle}" FontWeight="Bold" FontSize="20" />
+                            <TextBlock Text="Browse the add-on catalog for Steam, GOG, Epic, Xbox and other library integrations."
+                                       TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                            <Button Content="{DynamicResource LOCMenuAddons}" Command="{Binding WizardOpenAddonStoreCommand}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1" Padding="18" CornerRadius="10" Background="#263140">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="{DynamicResource LOCGameIsInstalledTitle}" FontWeight="Bold" FontSize="20" />
+                            <TextBlock Text="Detect Windows programs and Microsoft Store games, or scan a folder."
+                                       TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+                            <Button Content="{DynamicResource LOCMenuAddGameInstalled}" Command="{Binding WizardImportInstalledCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                <Button Classes="primary" Content="{DynamicResource LOCFinishLabel}"
+                        Command="{Binding FinishFirstTimeWizardCommand}" />
+            </StackPanel>
+        </Border>
+    </ControlTemplate>
+</ResourceDictionary>

@@ -72,6 +72,12 @@ public sealed class App : Application
                 () => settingsStore.Save(settings));
             if (!options.SelfTest)
             {
+                if (!options.PluginCompatibilityTest && !RunRequestedBackupAction(options, ref startupError))
+                {
+                    desktop.Shutdown();
+                    return;
+                }
+
                 if (!options.PluginCompatibilityTest)
                 {
                     try
@@ -163,15 +169,17 @@ public sealed class App : Application
                     OpenSearchContext = viewModel.PluginSearch.Open,
                     OpenPluginSettings = viewModel.OpenPluginSettings,
                     OpenEditDialog = gameEditor.Show,
-                    ActiveDesktopView = () => viewModel.IsGridView
-                        ? Playnite.SDK.DesktopView.Grid
-                        : Playnite.SDK.DesktopView.List,
+                    ActiveDesktopView = () => viewModel.IsDetailsView
+                        ? Playnite.SDK.DesktopView.Details
+                        : viewModel.IsGridView
+                            ? Playnite.SDK.DesktopView.Grid
+                            : Playnite.SDK.DesktopView.List,
                     SetActiveDesktopView = value => viewModel.SelectedViewMode = value switch
                     {
                         Playnite.SDK.DesktopView.Grid => "Grid",
                         Playnite.SDK.DesktopView.List => "List",
-                        _ => throw new NotSupportedException(
-                            "The Avalonia desktop pilot does not expose a separate details view.")
+                        Playnite.SDK.DesktopView.Details => "Details",
+                        _ => throw new NotSupportedException($"Unsupported Desktop view {value}.")
                     },
                     SortOrder = () => viewModel.SelectedSortOrder,
                     SortDirection = () => viewModel.SelectedSortDirection,
@@ -416,6 +424,10 @@ public sealed class App : Application
         {
             settings.ShowImagePerformanceWarning = defaults.ShowImagePerformanceWarning.Value;
         }
+        if (defaults.FirstTimeWizardComplete.HasValue)
+        {
+            settings.FirstTimeWizardComplete = defaults.FirstTimeWizardComplete.Value;
+        }
 
         var placement = defaults.MainWindow;
         if (placement == null)
@@ -436,5 +448,29 @@ public sealed class App : Application
         settings.WindowX = placement.X;
         settings.WindowY = placement.Y;
         settings.WindowMaximized = placement.Maximized;
+    }
+
+    private static bool RunRequestedBackupAction(StartupOptions options, ref string startupError)
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(options.BackupOptionsPath))
+            {
+                global::Playnite.Backup.BackupData(options.BackupOptionsPath, CancellationToken.None);
+                global::Playnite.Common.FileSystem.DeleteFile(options.BackupOptionsPath);
+            }
+            else if (!string.IsNullOrWhiteSpace(options.RestoreBackupOptionsPath))
+            {
+                global::Playnite.Backup.RestoreBackup(options.RestoreBackupOptionsPath);
+                global::Playnite.Common.FileSystem.DeleteFile(options.RestoreBackupOptionsPath);
+            }
+
+            return true;
+        }
+        catch (Exception exception)
+        {
+            startupError = $"Backup operation failed: {exception.Message}";
+            return false;
+        }
     }
 }

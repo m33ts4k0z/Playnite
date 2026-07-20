@@ -280,7 +280,7 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
         return method.Name switch
         {
             "get_Version" => settings.Version,
-            "get_FirstTimeWizardComplete" => true,
+            "get_FirstTimeWizardComplete" => settings.FirstTimeWizardComplete,
             "get_AsyncImageLoading" => settings.AsyncImageLoading,
             "get_DatabasePath" => databasePath,
             "get_Language" => settings.Language,

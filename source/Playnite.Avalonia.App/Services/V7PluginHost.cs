@@ -393,6 +393,14 @@ internal sealed class V7PluginHost : IDisposable
     private readonly AvaloniaWebViewFactory webViews;
     private readonly V7DatabaseTransport databaseTransport;
     private readonly string hostBundlePath;
+    internal Version SdkVersion
+    {
+        get
+        {
+            var path = Path.Combine(hostBundlePath, "Playnite.SDK.dll");
+            return File.Exists(path) ? AssemblyName.GetAssemblyName(path).Version : new Version(7, 0, 0);
+        }
+    }
     private readonly List<PluginLoadHandle> handles = [];
     private readonly List<Action> unsubscribeEvents = [];
     private readonly List<UiRegistrationPayload> customElementRegistrations = [];

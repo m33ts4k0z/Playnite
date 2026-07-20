@@ -13,6 +13,7 @@ namespace Playnite.Avalonia.App.Services;
 
 public sealed partial class AvaloniaRuntimeHost : IDisposable
 {
+    private List<string> externalExtensionDirectories = new();
     private readonly AvaloniaHostCallbacks callbacks;
     private readonly GameDatabase database;
     private readonly GameControllerFactory controllers;
@@ -32,6 +33,7 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
     public ExtensionFactory Extensions => extensions;
     public NotificationsAPI Notifications => notifications;
     public IAvaloniaDialogService Dialogs => callbacks.Dialogs;
+    public Version V7SdkVersion => v7Plugins.SdkVersion;
     public IPlayniteAPI PluginApi => globalApi;
     public IReadOnlyList<V7LoadedPlugin> V7Plugins => v7Plugins.Plugins;
     public IReadOnlyList<V7PluginLoadFailure> V7PluginFailures => v7Plugins.FailedPlugins;
@@ -190,11 +192,21 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+        this.externalExtensionDirectories = externals;
         var manifests = ExtensionFactory.GetInstalledManifests(externals);
         var v7ManifestIds = v7Plugins.Load(manifests, disabled);
         var v6IgnoreList = disabled.Concat(v7ManifestIds).Distinct().ToList();
         extensions.LoadPlugins(v6IgnoreList, false, externals);
         extensions.LoadScripts(disabled, false, externals);
+        callbacks.SetPluginSummary(
+            $"{LoadedPluginCount} plugins loaded" +
+            (FailedPluginCount == 0 ? string.Empty : $", {FailedPluginCount} failed"));
+    }
+
+    public void ReloadScripts()
+    {
+        var disabled = callbacks.Settings.DisabledPlugins ?? new List<string>();
+        extensions.LoadScripts(disabled, false, externalExtensionDirectories);
         callbacks.SetPluginSummary(
             $"{LoadedPluginCount} plugins loaded" +
             (FailedPluginCount == 0 ? string.Empty : $", {FailedPluginCount} failed"));

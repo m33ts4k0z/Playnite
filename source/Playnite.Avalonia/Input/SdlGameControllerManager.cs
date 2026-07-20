@@ -30,7 +30,8 @@ public sealed class GamepadButtonStateChangedEventArgs : EventArgs
 /// </summary>
 public sealed class SdlGameControllerManager : IDisposable
 {
-    private const short AxisThreshold = 16_383;
+    private const short AxisPressThreshold = 16_383;
+    private const short AxisReleaseThreshold = 12_000;
 
     private sealed record Controller(
         IntPtr Handle,
@@ -205,7 +206,7 @@ public sealed class SdlGameControllerManager : IDisposable
             foreach (var controller in controllers.Where(controller =>
                          !disabledControllerIds.Contains(controller.PersistentId)))
             {
-                MergeState(states, controller.Handle);
+                MergeState(states, controller.Handle, lastStates);
             }
         }
 
@@ -288,7 +289,10 @@ public sealed class SdlGameControllerManager : IDisposable
     private void UpdateStatus() =>
         Status = $"SDL game-controller input active ({controllers.Count} connected).";
 
-    private static void MergeState(Dictionary<GamepadButton, bool> states, IntPtr controller)
+    private static void MergeState(
+        Dictionary<GamepadButton, bool> states,
+        IntPtr controller,
+        IReadOnlyDictionary<GamepadButton, bool> previousStates)
     {
         states[GamepadButton.Confirm] |= Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_A);
         states[GamepadButton.Cancel] |= Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_B);
@@ -301,19 +305,35 @@ public sealed class SdlGameControllerManager : IDisposable
         states[GamepadButton.RightShoulder] |= Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
         states[GamepadButton.LeftStick] |= Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_LEFTSTICK);
         states[GamepadButton.RightStick] |= Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_RIGHTSTICK);
-        states[GamepadButton.TriggerLeft] |= Axis(controller, SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT) > AxisThreshold;
-        states[GamepadButton.TriggerRight] |= Axis(controller, SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT) > AxisThreshold;
+        states[GamepadButton.TriggerLeft] |= AxisDirectionPressed(
+            Axis(controller, SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERLEFT),
+            true,
+            previousStates[GamepadButton.TriggerLeft]);
+        states[GamepadButton.TriggerRight] |= AxisDirectionPressed(
+            Axis(controller, SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_TRIGGERRIGHT),
+            true,
+            previousStates[GamepadButton.TriggerRight]);
 
         var leftX = Axis(controller, SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTX);
         var leftY = Axis(controller, SDL_GameControllerAxis.SDL_CONTROLLER_AXIS_LEFTY);
         states[GamepadButton.DPadLeft] |=
-            Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT) || leftX < -AxisThreshold;
+            Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_LEFT) ||
+            AxisDirectionPressed(leftX, false, previousStates[GamepadButton.DPadLeft]);
         states[GamepadButton.DPadRight] |=
-            Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT) || leftX > AxisThreshold;
+            Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_RIGHT) ||
+            AxisDirectionPressed(leftX, true, previousStates[GamepadButton.DPadRight]);
         states[GamepadButton.DPadUp] |=
-            Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP) || leftY < -AxisThreshold;
+            Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_UP) ||
+            AxisDirectionPressed(leftY, false, previousStates[GamepadButton.DPadUp]);
         states[GamepadButton.DPadDown] |=
-            Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN) || leftY > AxisThreshold;
+            Pressed(controller, SDL_GameControllerButton.SDL_CONTROLLER_BUTTON_DPAD_DOWN) ||
+            AxisDirectionPressed(leftY, true, previousStates[GamepadButton.DPadDown]);
+    }
+
+    internal static bool AxisDirectionPressed(short value, bool positive, bool wasPressed)
+    {
+        var threshold = wasPressed ? AxisReleaseThreshold : AxisPressThreshold;
+        return positive ? value > threshold : value < -threshold;
     }
 
     private static bool Pressed(IntPtr controller, SDL_GameControllerButton button) =>

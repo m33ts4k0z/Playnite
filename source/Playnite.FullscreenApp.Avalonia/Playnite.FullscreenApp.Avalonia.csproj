@@ -46,6 +46,10 @@
     <Content Include="Themes\**\*.axaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Themes\**\*.yaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Localization\**\*.axaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\Playnite.DesktopApp.Avalonia\Localization\Languages\**\*.axaml"
+             Link="Localization\Languages\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\Playnite\gamecontrollerdb.txt" Link="gamecontrollerdb.txt" CopyToOutputDirectory="PreserveNewest" />
     <ContentWithTargetPath Include="..\..\references\x64\SDL2.dll" Condition="'$(TargetFramework)' != 'net10.0'" Link="Dependencies\SDL2.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2.dll" />
     <ContentWithTargetPath Include="..\..\references\x64\SDL2_mixer.dll" Condition="'$(TargetFramework)' != 'net10.0'" Link="Dependencies\SDL2_mixer.dll" CopyToOutputDirectory="PreserveNewest" TargetPath="SDL2_mixer.dll" />

@@ -54,4 +54,22 @@ public sealed class SdlGameControllerManagerTests
             Assert.That(manager.Devices, Is.Empty);
         });
     }
+
+    [TestCase((short)17_000, true, false, true)]
+    [TestCase((short)16_000, true, false, false)]
+    [TestCase((short)13_000, true, true, true)]
+    [TestCase((short)11_000, true, true, false)]
+    [TestCase((short)-17_000, false, false, true)]
+    [TestCase((short)-13_000, false, true, true)]
+    [TestCase((short)-11_000, false, true, false)]
+    public void AnalogDirectionsUseSeparatePressAndReleaseThresholds(
+        short value,
+        bool positive,
+        bool wasPressed,
+        bool expected)
+    {
+        Assert.That(
+            SdlGameControllerManager.AxisDirectionPressed(value, positive, wasPressed),
+            Is.EqualTo(expected));
+    }
 }

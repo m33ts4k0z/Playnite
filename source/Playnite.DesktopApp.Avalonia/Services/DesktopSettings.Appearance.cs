@@ -14,6 +14,7 @@ public sealed partial class DesktopSettings
     public SortOrderDirection SortDirection { get; set; } = SortOrderDirection.Ascending;
     public GroupableField Grouping { get; set; } = GroupableField.None;
     public Guid ActiveFilterPreset { get; set; }
+    public List<string> CollapsedGameGroups { get; set; } = new();
 
     public bool ShowGroupCount { get; set; } = true;
     public bool PlaytimeUseDaysFormat { get; set; }
@@ -49,6 +50,8 @@ public sealed partial class DesktopSettings
     public Dock GridViewDetailsPosition { get; set; } = Dock.Right;
     public double GridDetailsWidth { get; set; } = 390;
     public bool ShowPanelSeparators { get; set; } = true;
+    public bool SidebarVisible { get; set; } = true;
+    public Dock SidebarPosition { get; set; } = Dock.Left;
 
     public bool ShowBackgroundImageOnWindow { get; set; } = true;
     public bool BlurWindowBackgroundImage { get; set; } = true;
@@ -83,4 +86,8 @@ public sealed partial class DesktopSettings
     };
 
     public Dock PluginTopPanelAlignment { get; set; } = Dock.Right;
+    public bool TopPanelShowLibrarySummary { get; set; } = true;
+    public bool TopPanelShowNotifications { get; set; } = true;
+    public bool TopPanelShowFilterStatus { get; set; } = true;
+    public bool TopPanelShowUpdateStatus { get; set; } = true;
 }

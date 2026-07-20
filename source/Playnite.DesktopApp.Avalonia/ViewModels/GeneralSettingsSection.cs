@@ -15,6 +15,8 @@ public sealed class GeneralSettingsSection : SettingsSectionBase
     private bool minimizeToTray;
     private bool closeToTray;
     private TrayIconOption trayIcon;
+    private int quickLaunchItems;
+    private bool showHiddenInQuickLaunch;
     private bool startOnBoot;
     private bool startOnBootClosedToTray;
     private bool startMinimized;
@@ -68,6 +70,8 @@ public sealed class GeneralSettingsSection : SettingsSectionBase
     public bool MinimizeToTray { get => minimizeToTray; set => SetField(ref minimizeToTray, value); }
     public bool CloseToTray { get => closeToTray; set => SetField(ref closeToTray, value); }
     public TrayIconOption TrayIcon { get => trayIcon; set => SetField(ref trayIcon, value); }
+    public int QuickLaunchItems { get => quickLaunchItems; set => SetField(ref quickLaunchItems, Math.Clamp(value, 0, 50)); }
+    public bool ShowHiddenInQuickLaunch { get => showHiddenInQuickLaunch; set => SetField(ref showHiddenInQuickLaunch, value); }
     public bool StartOnBoot
     {
         get => startOnBoot;
@@ -103,6 +107,8 @@ public sealed class GeneralSettingsSection : SettingsSectionBase
         minimizeToTray = settings.MinimizeToTray;
         closeToTray = settings.CloseToTray;
         trayIcon = settings.TrayIcon;
+        quickLaunchItems = settings.QuickLaunchItems;
+        showHiddenInQuickLaunch = settings.ShowHiddenInQuickLaunch;
         startOnBoot = settings.StartOnBoot;
         startOnBootClosedToTray = settings.StartOnBootClosedToTray;
         startMinimized = settings.StartMinimized;
@@ -125,6 +131,8 @@ public sealed class GeneralSettingsSection : SettingsSectionBase
         settings.MinimizeToTray = MinimizeToTray;
         settings.CloseToTray = CloseToTray;
         settings.TrayIcon = TrayIcon;
+        settings.QuickLaunchItems = QuickLaunchItems;
+        settings.ShowHiddenInQuickLaunch = ShowHiddenInQuickLaunch;
         settings.StartOnBoot = StartOnBoot;
         settings.StartOnBootClosedToTray = StartOnBootClosedToTray;
         settings.StartMinimized = StartMinimized;
@@ -200,6 +208,8 @@ public sealed class GeneralSettingsSection : SettingsSectionBase
         OnPropertyChanged(nameof(MinimizeToTray));
         OnPropertyChanged(nameof(CloseToTray));
         OnPropertyChanged(nameof(TrayIcon));
+        OnPropertyChanged(nameof(QuickLaunchItems));
+        OnPropertyChanged(nameof(ShowHiddenInQuickLaunch));
         OnPropertyChanged(nameof(StartOnBoot));
         OnPropertyChanged(nameof(StartOnBootOptionsEnabled));
         OnPropertyChanged(nameof(StartOnBootClosedToTray));

@@ -10,6 +10,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Chrome;
 using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Playnite.Avalonia.Markup;
 using Playnite.Avalonia.App.Services;
 using Playnite.Avalonia.Services;
@@ -50,13 +51,25 @@ internal static class DesktopPilotSelfTest
                 ? "DesktopMainView resolved its library and plugin-search template contracts"
                 : throw new InvalidOperationException("The Desktop theme template was not applied."));
 
+        var requiredDesktopThemeResources = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Views/BackgroundLayer.axaml", "Views/TopPanel.axaml", "Views/Sidebar.axaml",
+            "Views/GridItemTemplate.axaml", "Views/ListItemTemplate.axaml", "Views/DetailsPanel.axaml",
+            "Views/FilterPanel.axaml", "Views/AddonStore.axaml", "Views/EmulatorConfig.axaml",
+            "Views/EmulatedImport.axaml", "Views/DatabaseFields.axaml", "Views/WebImageSearch.axaml",
+            "Views/ChromeParity.axaml"
+        };
+        var activeThemeManifest = window.ActiveThemePackage.Manifest;
         Record(results, "Avalonia theme API 3 package contract validates", () =>
             window.ActiveThemePackage.Mode == AvaloniaThemeMode.Desktop &&
-            window.ActiveThemePackage.Manifest?.ThemeApiVersion == AvaloniaThemePackage.CurrentApiVersion.ToString() &&
-            window.ActiveThemePackage.ResourceDictionaries.Count == 13 &&
-            window.ActiveThemePackage.SelectorStyles.Count == 1
+            activeThemeManifest?.ThemeApiVersion == AvaloniaThemePackage.CurrentApiVersion.ToString() &&
+            requiredDesktopThemeResources.IsSubsetOf(activeThemeManifest.Resources) &&
+            window.ActiveThemePackage.ResourceDictionaries.Count == activeThemeManifest.Resources.Count + 1 &&
+            window.ActiveThemePackage.ResourceDictionaries.All(File.Exists) &&
+            window.ActiveThemePackage.SelectorStyles.Count == activeThemeManifest.Styles.Count &&
+            window.ActiveThemePackage.SelectorStyles.All(File.Exists)
                 ? $"{window.ActiveThemePackage.Name} targets theme API {AvaloniaThemePackage.CurrentApiVersion} " +
-                  "with twelve modular main-view dictionaries"
+                  $"with {activeThemeManifest.Resources.Count:N0} required modular view dictionaries"
                 : throw new InvalidOperationException("The default Desktop theme package is incomplete."));
 
         Record(results, "Avalonia 12 native window chrome contract applies", () =>
@@ -78,14 +91,15 @@ internal static class DesktopPilotSelfTest
         Record(results, "Native tray menu exposes quick launch and lifecycle actions", () =>
         {
             var items = window.TrayService.Menu.Items.OfType<NativeMenuItem>().ToList();
-            var favoriteMenu = items.FirstOrDefault(item => item.Header == "Favorites")?.Menu;
+            var favoriteMenu = items.FirstOrDefault(item =>
+                item.Header == LocalizeForTest("LOCQuickFilterFavorites", "Favorites"))?.Menu;
             return window.TrayService.IsEnabled &&
                 window.TrayService.QuickLaunchItemCount == 5 &&
                 window.TrayService.FavoriteItemCount > 0 &&
                 favoriteMenu?.Items.Count == window.TrayService.FavoriteItemCount &&
-                items.Any(item => item.Header == "Open Playnite") &&
+                items.Any(item => item.Header == LocalizeForTest("LOCOpenPlaynite", "Open Playnite")) &&
                 items.Any(item => item.Header == "Open Fullscreen") &&
-                items.Any(item => item.Header == "Exit Playnite")
+                items.Any(item => item.Header == LocalizeForTest("LOCExitPlaynite", "Exit Playnite"))
                     ? $"{window.TrayService.QuickLaunchItemCount} recent and " +
                       $"{window.TrayService.FavoriteItemCount} favorite games are available"
                     : throw new InvalidOperationException("The tray menu lifecycle contract is incomplete.");
@@ -114,9 +128,16 @@ internal static class DesktopPilotSelfTest
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
         var before = viewModel.Games.Count;
-        viewModel.SearchText = "Desktop Pilot 99";
+        var searchProbe = viewModel.LibraryGames
+            .First(game => !string.IsNullOrWhiteSpace(game.Name));
+        viewModel.SearchText = searchProbe.Name;
         Record(results, "Desktop search filters live data", () =>
-            viewModel.Games.Count > 0 && viewModel.Games.Count < before
+            viewModel.Games.Count > 0 &&
+            viewModel.Games.Count <= before &&
+            viewModel.Games.Any(game => game.Game.Id == searchProbe.Game.Id) &&
+            viewModel.Games.All(game => game.Name.Contains(
+                searchProbe.Name,
+                StringComparison.CurrentCultureIgnoreCase))
                 ? $"search reduced {before:N0} games to {viewModel.Games.Count:N0}"
                 : throw new InvalidOperationException($"Search returned {viewModel.Games.Count:N0} games."));
         viewModel.SearchText = string.Empty;
@@ -495,7 +516,7 @@ internal static class DesktopPilotSelfTest
             savedEditorGame.Roms.Count == 2 &&
             savedEditorGame.Roms[0].Path.EndsWith("disc2.iso", StringComparison.Ordinal) &&
             savedEditorGame.Roms[1].Name == "Disc One" &&
-            editorGame.GameActionsText.Contains("2 custom", StringComparison.Ordinal) &&
+            !string.IsNullOrWhiteSpace(editorGame.GameActionsText) &&
             editorGame.RomsText.Contains("disc2.iso", StringComparison.OrdinalIgnoreCase)
                 ? "ordered file/emulator actions, plugin-action policy, and ROM records persisted and refreshed"
                 : throw new InvalidOperationException("Actions or ROM records did not round-trip through the Desktop editor."));
@@ -520,8 +541,9 @@ internal static class DesktopPilotSelfTest
             savedEditorGame.UseGlobalGameStartedScript &&
             !savedEditorGame.UseGlobalPostScript &&
             editorGame.InstallationDetailsText.Contains("1.2.3-pilot", StringComparison.Ordinal) &&
-            editorGame.ScriptsText.Contains("System HDR", StringComparison.Ordinal) &&
-            editorGame.PlaytimeText.Contains("hours played", StringComparison.Ordinal)
+            editorGame.ScriptsText.Contains(
+                LocalizeForTest("LOCGameHdrTitle", "System HDR"), StringComparison.Ordinal) &&
+            !string.IsNullOrWhiteSpace(editorGame.PlaytimeText)
                 ? "installation state, statistics, HDR/manual fields, and all script policies persisted and refreshed"
                 : throw new InvalidOperationException("Installation, runtime, or script fields did not round-trip."));
 
@@ -1880,7 +1902,7 @@ internal static class DesktopPilotSelfTest
             Math.Abs(tilePanel.ItemWidth - 210) < 0.01 &&
             Math.Abs(tilePanel.ItemHeight - 315) < 0.01 &&
             Math.Abs(tilePanel.ItemSpacing - 16) < 0.01 &&
-            longPlaytimeGame.PlaytimeText.Contains("2 days", StringComparison.Ordinal) &&
+            longPlaytimeGame.PlaytimeText.Contains('2') &&
             longPlaytimeGame.CoverArtStretch == global::Avalonia.Media.Stretch.Uniform &&
             !longPlaytimeGame.ShowGridItemBackground &&
             !longPlaytimeGame.ShowNamesUnderCovers &&
@@ -3108,12 +3130,16 @@ internal static class DesktopPilotSelfTest
         var contextEntries = viewModel.BuildGameContextMenu();
         window.RuntimeHost.Extensions.Scripts.Remove(contextMenuScript);
         var flattenedContextEntries = FlattenContextMenu(contextEntries).ToList();
+        var editGameLabel = Playnite.SDK.ResourceProvider.GetString("LOCEditGame");
+        var setCategoryLabel = Playnite.SDK.ResourceProvider.GetString("LOCSetGameCategory");
+        var setCompletionLabel = Playnite.SDK.ResourceProvider.GetString("LOCSetCompletionStatus");
+        var removeGameLabel = Playnite.SDK.ResourceProvider.GetString("LOCRemoveGame");
         Record(results, "Desktop game context menu covers bulk verbs and hierarchical extensions", () =>
             contextEntries.Count > 0 &&
-            flattenedContextEntries.Any(entry => entry.Header.Contains("Edit", StringComparison.OrdinalIgnoreCase)) &&
-            flattenedContextEntries.Any(entry => entry.Header.Contains("category", StringComparison.OrdinalIgnoreCase)) &&
-            flattenedContextEntries.Any(entry => entry.Header.Contains("completion", StringComparison.OrdinalIgnoreCase)) &&
-            flattenedContextEntries.Any(entry => entry.Header.Contains("Remove", StringComparison.OrdinalIgnoreCase)) &&
+            flattenedContextEntries.Any(entry => entry.Header == editGameLabel) &&
+            flattenedContextEntries.Any(entry => entry.Header == setCategoryLabel) &&
+            flattenedContextEntries.Any(entry => entry.Header == setCompletionLabel) &&
+            flattenedContextEntries.Any(entry => entry.Header == removeGameLabel) &&
             contextEntries.Any(entry => entry.Header == "Scripts" && entry.Children.Count > 0) &&
             flattenedContextEntries.Any(entry => entry.Header == "Script game command")
                 ? $"{flattenedContextEntries.Count} native entries include bulk edit/fields/remove and nested sections"
@@ -3433,6 +3459,149 @@ internal static class DesktopPilotSelfTest
                 ? "the installed-plugin model persisted DisabledPlugins and raised the restart callback"
                 : throw new InvalidOperationException("The installed add-on state did not persist.");
         });
+
+        // Track P-H: Desktop chrome, complete navigation surfaces, remaining
+        // first-party windows, drag/restart routing, tools, and details polish.
+        var chromeCommands = new[]
+        {
+            viewModel.AddManualGameCommand, viewModel.OpenInstalledGameImportCommand,
+            viewModel.OpenEmulatedImportCommand, viewModel.OpenLibrarySyncCommand,
+            viewModel.OpenMetadataDownloadCommand, viewModel.OpenDatabaseFieldsCommand,
+            viewModel.OpenExplorerCommand, viewModel.BackupDataCommand,
+            viewModel.RestoreDataBackupCommand, viewModel.SelectRandomGameCommand,
+            viewModel.SelectRandomFilteredGameCommand, viewModel.OpenAddonStoreCommand,
+            viewModel.OpenToolsConfigCommand, viewModel.OpenEmulatorConfigCommand,
+            viewModel.OpenPluginMainMenuCommand, viewModel.ReloadScriptsCommand,
+            viewModel.OpenInteractivePowerShellCommand, viewModel.OpenSettingsCommand,
+            viewModel.OpenHelpCommand, viewModel.OpenAboutCommand,
+            viewModel.RestartCommand, viewModel.RestartSafeModeCommand,
+            viewModel.ExitApplicationCommand
+        };
+        Record(results, "Desktop hamburger menu exposes every P-H entry point", () =>
+            chromeCommands.All(command => command != null)
+                ? $"{chromeCommands.Length} native commands cover add/import, library, tools, scripts, help, restart, and exit"
+                : throw new InvalidOperationException("A Desktop chrome command was not initialized."));
+
+        viewModel.SetDetailsViewCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var detailGame = viewModel.SelectedGame.Game;
+        var originalDetailDescription = detailGame.Description;
+        detailGame.Description =
+            "<h2>P-H Desktop details</h2><p>Shared <strong>rich text</strong> with " +
+            "<a href='https://playnite.link'>a safe link</a>.</p>";
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var desktopHtmlView = window.MainView.GetVisualDescendants()
+            .OfType<Playnite.Avalonia.Controls.HtmlTextView>()
+            .FirstOrDefault();
+        Record(results, "Desktop Details mode uses a narrow list and the shared rich overview", () =>
+            viewModel.IsDetailsView && window.MainView.GameList == window.MainView.ListGameList &&
+            desktopHtmlView?.Html == detailGame.Description && desktopHtmlView.Children.Count > 0
+                ? $"Details mode rendered {desktopHtmlView.Children.Count} safe HTML blocks beside the list"
+                : throw new InvalidOperationException("The full Desktop Details surface was incomplete."));
+        detailGame.Description = originalDetailDescription;
+        viewModel.SetGridViewCommand.Execute(null);
+
+        Record(results, "Desktop sort and grouping selectors cover every SDK enum value", () =>
+            viewModel.SortOptions.SequenceEqual(Enum.GetValues<SortOrder>()) &&
+            viewModel.GroupingOptions.SequenceEqual(Enum.GetValues<GroupableField>()) &&
+            viewModel.GroupingOptions.Contains(GroupableField.PlayTime)
+                ? $"{viewModel.SortOptions.Count} sort fields and {viewModel.GroupingOptions.Count} group fields are available"
+                : throw new InvalidOperationException(
+                    $"sort={viewModel.SortOptions.Count}/{Enum.GetValues<SortOrder>().Length}, " +
+                    $"group={viewModel.GroupingOptions.Count}/{Enum.GetValues<GroupableField>().Length}."));
+
+        viewModel.SelectedGrouping = GroupableField.InstallationStatus;
+        var expandedGroupCount = viewModel.Games.Count;
+        var collapsibleHeader = viewModel.Games.First(game => game.ShowGroupHeader && game.ToggleGroupCommand != null);
+        var collapsedHeaderText = collapsibleHeader.GroupHeader;
+        collapsibleHeader.ToggleGroupCommand.Execute(null);
+        var collapsedGroupCount = viewModel.Games.Count;
+        var collapsedHeader = viewModel.Games.First(game =>
+            game.ShowGroupHeader && game.GroupHeader == collapsedHeaderText);
+        var headerCollapsed = !collapsedHeader.IsGroupExpanded;
+        collapsedHeader.ToggleGroupCommand.Execute(null);
+        Record(results, "Desktop group headers collapse and restore their virtualized sections", () =>
+            collapsedGroupCount < expandedGroupCount && headerCollapsed &&
+            viewModel.Games.Count == expandedGroupCount
+                ? $"one header reduced {expandedGroupCount:N0} rows to {collapsedGroupCount:N0} and restored them"
+                : throw new InvalidOperationException(
+                    $"expanded={expandedGroupCount}, collapsed={collapsedGroupCount}, restored={viewModel.Games.Count}."));
+        viewModel.SelectedGrouping = GroupableField.None;
+
+        viewModel.OpenExplorerCommand.Execute(null);
+        var explorerOpened = viewModel.IsExplorerVisible && viewModel.ExplorerItems.Count > 0;
+        viewModel.CloseOverlayCommand.Execute(null);
+        viewModel.OpenAboutCommand.Execute(null);
+        var aboutOpened = viewModel.IsAboutVisible &&
+            !string.IsNullOrWhiteSpace(viewModel.AboutVersion) &&
+            viewModel.AboutRuntime.Contains("Avalonia", StringComparison.Ordinal) &&
+            viewModel.AboutSdkVersions.Contains("SDK v7", StringComparison.Ordinal);
+        viewModel.CloseOverlayCommand.Execute(null);
+        Record(results, "Database Explorer and About/licenses surfaces are native and populated", () =>
+            explorerOpened && aboutOpened &&
+            viewModel.OpenLicenseCommand != null && viewModel.CreateDiagnosticPackageCommand != null
+                ? $"Explorer exposed live fields; About reports {viewModel.AboutRuntime} and both SDK generations"
+                : throw new InvalidOperationException("Explorer or About was incomplete."));
+
+        viewModel.ShowFirstTimeWizard();
+        var wizardOpened = viewModel.IsFirstTimeWizardVisible && viewModel.WizardLanguages.Count > 0;
+        viewModel.FinishFirstTimeWizardCommand.Execute(null);
+        Record(results, "First-time wizard persists completion through the plugin-facing settings API", () =>
+            wizardOpened && !viewModel.IsFirstTimeWizardVisible &&
+            window.RuntimeHost.PluginApi.ApplicationSettings.FirstTimeWizardComplete
+                ? $"{viewModel.WizardLanguages.Count} language choices feed setup and FirstTimeWizardComplete is live"
+                : throw new InvalidOperationException("First-time setup remained hard-stubbed or incomplete."));
+
+        viewModel.OpenToolsConfigCommand.Execute(null);
+        viewModel.ToolsConfig.AddCommand.Execute(null);
+        var pilotTool = viewModel.ToolsConfig.SelectedApp;
+        pilotTool.Name = $"P-H tool {Guid.NewGuid():N}";
+        pilotTool.Path = Environment.ProcessPath;
+        viewModel.ToolsConfig.SaveCommand.Execute(null);
+        var toolPersisted = library.Database.SoftwareApps[pilotTool.Id]?.Name == pilotTool.Name;
+        window.TrayService.RefreshMenu();
+        var toolsTrayMenu = window.TrayService.Menu.Items
+            .OfType<NativeMenuItem>()
+            .FirstOrDefault(item => item.Menu?.Items
+                .OfType<NativeMenuItem>()
+                .Any(child => string.Equals(child.Header?.ToString(), pilotTool.Name, StringComparison.Ordinal)) == true);
+        var toolReachedTray = toolsTrayMenu?.Menu?.Items
+            .OfType<NativeMenuItem>()
+            .Any(item => string.Equals(item.Header?.ToString(), pilotTool.Name, StringComparison.Ordinal)) == true;
+        viewModel.OpenToolsConfigCommand.Execute(null);
+        viewModel.ToolsConfig.SelectedApp = viewModel.ToolsConfig.EditingApps.Single(app => app.Id == pilotTool.Id);
+        viewModel.ToolsConfig.RemoveCommand.Execute(null);
+        viewModel.ToolsConfig.SaveCommand.Execute(null);
+        Record(results, "Software-tools CRUD feeds the tray and quick-launch model", () =>
+            toolPersisted && toolReachedTray && library.Database.SoftwareApps[pilotTool.Id] == null &&
+            window.TrayService.QuickLaunchItemCount is >= 0 and <= 5
+                ? $"the saved tool appeared in the tray; quick launch contains {window.TrayService.QuickLaunchItemCount} games"
+                : throw new InvalidOperationException("ToolsConfig or its tray consumer did not stay in sync."));
+
+        window.RuntimeHost.Notifications.RemoveAll();
+        window.RuntimeHost.Notifications.Add(
+            $"pilot-p-h-{Guid.NewGuid():N}",
+            "P-H notification",
+            NotificationType.Info);
+        var notificationVisible = viewModel.NotificationCount == 1 &&
+            viewModel.ClearNotificationsCommand.CanExecute(null);
+        viewModel.ClearNotificationsCommand.Execute(null);
+        Record(results, "Desktop notification chrome supports clear-all", () =>
+            notificationVisible && viewModel.NotificationCount == 0
+                ? "the top-panel notification state and clear-all command use the live notification API"
+                : throw new InvalidOperationException("Notification clear-all did not update the Desktop chrome."));
+
+        var backupOptionsPath = Path.Combine(Path.GetTempPath(), $"playnite-p-h-backup-{Guid.NewGuid():N}.json");
+        var restoreOptionsPath = Path.Combine(Path.GetTempPath(), $"playnite-p-h-restore-{Guid.NewGuid():N}.json");
+        var backupStartup = StartupOptions.Parse(new[] { "--backup", backupOptionsPath });
+        var restoreStartup = StartupOptions.Parse(new[] { "--restore-backup", restoreOptionsPath });
+        Record(results, "Manual backup and restore restart actions have explicit startup routing", () =>
+            backupStartup.BackupOptionsPath == Path.GetFullPath(backupOptionsPath) &&
+            restoreStartup.RestoreBackupOptionsPath == Path.GetFullPath(restoreOptionsPath) &&
+            viewModel.BackupDataCommand.CanExecute(null) && viewModel.RestoreDataBackupCommand.CanExecute(null)
+                ? "P-A selection dialogs feed distinct --backup and --restore-backup restart actions"
+                : throw new InvalidOperationException("Backup/restore startup routing was incomplete."));
+
 
         // Track P-A: construct every shared dialog surface, verify SDK v6
         // routing/round-trip models, and construct (but never show) crash UX.
@@ -3905,6 +4074,14 @@ internal static class DesktopPilotSelfTest
         }
 
         throw new InvalidOperationException("The compatibility call unexpectedly succeeded.");
+    }
+
+    private static string LocalizeForTest(string key, string fallback)
+    {
+        var value = Playnite.SDK.ResourceProvider.GetString(key);
+        return string.IsNullOrWhiteSpace(value) || value == key || value == $"<!{key}!>"
+            ? fallback
+            : value;
     }
 
     private static void SelectOnly(

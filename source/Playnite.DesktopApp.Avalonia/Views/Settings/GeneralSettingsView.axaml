@@ -27,6 +27,16 @@
                 <ComboBox MinWidth="140" ItemsSource="{Binding TrayIconOptions}"
                           SelectedItem="{Binding TrayIcon, Mode=TwoWay}" />
             </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="10" Margin="18,0,0,0"
+                        IsEnabled="{Binding TrayOptionsEnabled}">
+                <TextBlock Text="Quick-launch games" VerticalAlignment="Center"
+                           Foreground="{DynamicResource DesktopTextBrush}" />
+                <NumericUpDown Width="90" Minimum="0" Maximum="50" Increment="1"
+                               Value="{Binding QuickLaunchItems, Mode=TwoWay}" />
+            </StackPanel>
+            <CheckBox Content="Include hidden games in quick launch" Margin="18,0,0,0"
+                      IsEnabled="{Binding TrayOptionsEnabled}"
+                      IsChecked="{Binding ShowHiddenInQuickLaunch, Mode=TwoWay}" />
 
             <Border Height="1" Background="#303A49" Margin="0,4" />
             <TextBlock Text="Library" Classes="sectionLabel" />

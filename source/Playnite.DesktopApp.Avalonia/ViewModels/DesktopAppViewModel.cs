@@ -18,31 +18,8 @@ namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
 public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
 {
-    private static readonly IReadOnlyList<SortOrder> sortOptions = new[]
-    {
-        SortOrder.Name,
-        SortOrder.LastActivity,
-        SortOrder.Playtime,
-        SortOrder.Added,
-        SortOrder.ReleaseDate,
-        SortOrder.IsInstalled,
-        SortOrder.Favorite,
-        SortOrder.Source,
-        SortOrder.Platforms,
-        SortOrder.CompletionStatus
-    };
-
-    private static readonly IReadOnlyList<GroupableField> groupingOptions = new[]
-    {
-        GroupableField.None,
-        GroupableField.Platform,
-        GroupableField.Source,
-        GroupableField.CompletionStatus,
-        GroupableField.InstallationStatus,
-        GroupableField.ReleaseYear,
-        GroupableField.Name,
-        GroupableField.PlayTime
-    };
+    private static readonly IReadOnlyList<SortOrder> sortOptions = Enum.GetValues<SortOrder>();
+    private static readonly IReadOnlyList<GroupableField> groupingOptions = Enum.GetValues<GroupableField>();
 
     private readonly List<DesktopGameItemViewModel> allGames;
     private readonly GameDatabase database;
@@ -109,6 +86,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
 
             selectedGame = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(DetailsFilterLinks));
             OnPropertyChanged(nameof(ShowWindowBackgroundImage));
             SynchronizeSelectedGamesWithPrimary(value);
             MetadataDownload?.RefreshTargetSummary();
@@ -158,12 +136,15 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         get => selectedViewMode;
         set
         {
-            var resolved = value is "Grid" or "List" ? value : "Grid";
+            var resolved = value is "Grid" or "List" or "Details" ? value : "Grid";
             if (SetField(ref selectedViewMode, resolved))
             {
                 settings.ViewMode = resolved;
                 OnPropertyChanged(nameof(IsGridView));
                 OnPropertyChanged(nameof(IsListView));
+                OnPropertyChanged(nameof(IsDetailsView));
+                OnPropertyChanged(nameof(FirstContentColumnWidth));
+                OnPropertyChanged(nameof(SecondContentColumnWidth));
                 OnPropertyChanged(nameof(ShowWindowBackgroundImage));
                 SettingsChanged?.Invoke(this, EventArgs.Empty);
             }
@@ -246,14 +227,15 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         }
     }
 
-    public IReadOnlyList<string> ViewModes { get; } = new[] { "Grid", "List" };
+    public IReadOnlyList<string> ViewModes { get; } = new[] { "Grid", "List", "Details" };
     public IReadOnlyList<SortOrder> SortOptions => sortOptions;
     public IReadOnlyList<SortOrderDirection> SortDirectionOptions { get; } =
         Enum.GetValues<SortOrderDirection>();
     public IReadOnlyList<GroupableField> GroupingOptions => groupingOptions;
     public ObservableCollection<FilterPreset> FilterPresets { get; }
     public bool IsGridView => SelectedViewMode == "Grid";
-    public bool IsListView => SelectedViewMode == "List";
+    public bool IsListView => SelectedViewMode is "List" or "Details";
+    public bool IsDetailsView => SelectedViewMode == "Details";
     public double GridItemWidth => settings.GridItemWidth;
     public double GridItemHeight =>
         settings.GridItemWidth * settings.GridItemHeightRatio / settings.GridItemWidthRatio +
@@ -281,21 +263,44 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public int LibraryContentColumn => settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left ? 2 : 1;
     public int DetailsContentColumn => settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left ? 1 : 2;
     public global::Avalonia.Controls.GridLength FirstContentColumnWidth =>
-        settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
+        IsDetailsView
+            ? settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
+                ? new global::Avalonia.Controls.GridLength(1, global::Avalonia.Controls.GridUnitType.Star)
+                : new global::Avalonia.Controls.GridLength(Math.Clamp(settings.GridDetailsWidth, 300, 520))
+            : settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
             ? new global::Avalonia.Controls.GridLength(settings.GridDetailsWidth)
             : new global::Avalonia.Controls.GridLength(1, global::Avalonia.Controls.GridUnitType.Star);
     public global::Avalonia.Controls.GridLength SecondContentColumnWidth =>
-        settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
+        IsDetailsView
+            ? settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
+                ? new global::Avalonia.Controls.GridLength(Math.Clamp(settings.GridDetailsWidth, 300, 520))
+                : new global::Avalonia.Controls.GridLength(1, global::Avalonia.Controls.GridUnitType.Star)
+            : settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
             ? new global::Avalonia.Controls.GridLength(1, global::Avalonia.Controls.GridUnitType.Star)
             : new global::Avalonia.Controls.GridLength(settings.GridDetailsWidth);
+    public global::Avalonia.Controls.GridLength LeftSidebarWidth =>
+        settings.SidebarVisible && settings.SidebarPosition == global::Avalonia.Controls.Dock.Left
+            ? new global::Avalonia.Controls.GridLength(270)
+            : new global::Avalonia.Controls.GridLength(0);
+    public global::Avalonia.Controls.GridLength RightSidebarWidth =>
+        settings.SidebarVisible && settings.SidebarPosition == global::Avalonia.Controls.Dock.Right
+            ? new global::Avalonia.Controls.GridLength(270)
+            : new global::Avalonia.Controls.GridLength(0);
+    public int SidebarContentColumn => settings.SidebarPosition == global::Avalonia.Controls.Dock.Right ? 3 : 0;
     public Thickness SidebarBorderThickness => settings.ShowPanelSeparators
-        ? new Thickness(0, 0, 1, 0)
+        ? settings.SidebarPosition == global::Avalonia.Controls.Dock.Right
+            ? new Thickness(1, 0, 0, 0)
+            : new Thickness(0, 0, 1, 0)
         : default;
     public Thickness DetailsBorderThickness => !settings.ShowPanelSeparators
         ? default
         : settings.GridViewDetailsPosition == global::Avalonia.Controls.Dock.Left
             ? new Thickness(0, 0, 1, 0)
             : new Thickness(1, 0, 0, 0);
+    public bool ShowLibrarySummaryInTopPanel => settings.TopPanelShowLibrarySummary;
+    public bool ShowNotificationsInTopPanel => settings.TopPanelShowNotifications;
+    public bool ShowFilterStatusInTopPanel => settings.TopPanelShowFilterStatus;
+    public bool ShowUpdateStatusInTopPanel => settings.TopPanelShowUpdateStatus;
     public bool ShowWindowBackgroundImage =>
         settings.ShowBackgroundImageOnWindow && (!IsGridView || settings.ShowBackImageOnGridView);
     public double BackgroundImageBlurRadius => settings.BlurWindowBackgroundImage
@@ -438,7 +443,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public AvaloniaSearchSession PluginSearch { get; }
     public bool IsPluginSearchVisible => PluginSearch.IsVisible;
     private bool IsLibraryManagerVisible => EmulatorConfig.IsVisible || EmulatedImport.IsVisible ||
-        DatabaseFields.IsVisible;
+        DatabaseFields.IsVisible || ToolsConfig?.IsVisible == true || IsExplorerVisible;
 
     public ICommand ActivateCommand { get; }
     public ICommand InstallCommand { get; }
@@ -462,6 +467,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public ICommand ClosePluginSidebarCommand { get; }
     public ICommand SetGridViewCommand { get; }
     public ICommand SetListViewCommand { get; }
+    public ICommand SetDetailsViewCommand { get; }
     public ICommand ClearSearchCommand { get; }
     public ICommand ToggleNotificationsCommand { get; }
     public ICommand CloseOverlayCommand { get; }
@@ -488,7 +494,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         this.games = allGames;
         selectedGame = allGames.FirstOrDefault();
         InitializeLibrarySelection();
-        selectedViewMode = this.settings.ViewMode is "Grid" or "List" ? this.settings.ViewMode : "Grid";
+        selectedViewMode = this.settings.ViewMode is "Grid" or "List" or "Details" ? this.settings.ViewMode : "Grid";
         selectedSortOrder = this.settings.SortOrder;
         selectedSortDirection = this.settings.SortDirection;
         selectedGrouping = this.settings.Grouping;
@@ -880,6 +886,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         ClosePluginSidebarCommand = new AppRelayCommand(ClosePluginSidebar);
         SetGridViewCommand = new AppRelayCommand(() => SelectedViewMode = "Grid");
         SetListViewCommand = new AppRelayCommand(() => SelectedViewMode = "List");
+        SetDetailsViewCommand = new AppRelayCommand(() => SelectedViewMode = "Details");
         ClearSearchCommand = new AppRelayCommand(() => SearchText = string.Empty, () => SearchText.Length > 0);
         ToggleNotificationsCommand = new AppRelayCommand(() => IsNotificationsVisible = !IsNotificationsVisible);
         CloseOverlayCommand = new AppRelayCommand(CloseOverlays);
@@ -897,6 +904,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         CancelDialogCommand = new AppRelayCommand(() => CompleteDialog(
             DialogOptions.Count == 0 ? null : DialogOptions[Math.Clamp(dialogCancelIndex, 0, DialogOptions.Count - 1)]));
         InitializeLibraryInteractionCommands();
+        InitializeChromeParity();
 
         ApplyFilters();
     }
@@ -1243,7 +1251,8 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         new("Import installed games", "Discover installed desktop applications", OpenInstalledGameImport),
         new("Add game manually", "Create a new library game", AddManualGame),
         new("Switch to grid view", "Show library covers", () => SelectedViewMode = "Grid"),
-        new("Switch to list view", "Show the compact game list", () => SelectedViewMode = "List")
+        new("Switch to list view", "Show the compact game list", () => SelectedViewMode = "List"),
+        new("Switch to details view", "Show a narrow list and full game overview", () => SelectedViewMode = "Details")
     ];
 
     private void InvokeGlobalSearchGameAction(Guid gameId, GameSearchItemAction action)
@@ -1453,6 +1462,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         EmulatorConfig.Close();
         EmulatedImport.Close();
         DatabaseFields.Close();
+        CloseChromeParityOverlays();
         SelectedPluginMenuItem = null;
         ClosePluginSidebar();
         Settings.Close();
@@ -1480,31 +1490,52 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
 
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
-            filtered = filtered.Where(game =>
-                game.Name.Contains(SearchText, StringComparison.CurrentCultureIgnoreCase) ||
-                game.MetadataLine.Contains(SearchText, StringComparison.CurrentCultureIgnoreCase));
+            var nameFilter = new FilterPresetSettings { Name = $"!{SearchText}" };
+            filtered = database == null
+                ? filtered.Where(game => game.Name.Contains(
+                    SearchText,
+                    StringComparison.CurrentCultureIgnoreCase))
+                : filtered.Where(game => database.GetGameMatchesFilter(
+                    game.Game,
+                    nameFilter,
+                    settings.FuzzyMatchingInNameFilter));
         }
 
-        var materialized = selectedGrouping == GroupableField.None
-            ? SortGames(filtered).ToList()
-            : filtered
-                .GroupBy(GetGroupName)
-                .OrderBy(group => group.Key, StringComparer.CurrentCultureIgnoreCase)
-                .SelectMany(group => SortGames(group))
-                .ToList();
-        var groupCounts = selectedGrouping == GroupableField.None
-            ? new Dictionary<string, int>()
-            : materialized.GroupBy(GetGroupName).ToDictionary(group => group.Key, group => group.Count());
-        string previousGroup = null;
-        foreach (var game in materialized)
+        List<DesktopGameItemViewModel> materialized;
+        if (selectedGrouping == GroupableField.None)
         {
-            var group = selectedGrouping == GroupableField.None ? string.Empty : GetGroupName(game);
-            var startsGroup = selectedGrouping != GroupableField.None && group != previousGroup;
-            var displayGroup = settings.ShowGroupCount && groupCounts.TryGetValue(group, out var count)
-                ? $"{group} ({count:N0})"
-                : group;
-            game.SetGroup(displayGroup, startsGroup);
-            previousGroup = group;
+            materialized = SortGames(filtered).ToList();
+            foreach (var game in materialized)
+            {
+                game.SetGroup(string.Empty, false);
+            }
+        }
+        else
+        {
+            materialized = new List<DesktopGameItemViewModel>();
+            foreach (var group in filtered
+                .GroupBy(GetGroupName)
+                .OrderBy(entry => entry.Key, StringComparer.CurrentCultureIgnoreCase))
+            {
+                var gamesInGroup = SortGames(group).ToList();
+                var expanded = !settings.CollapsedGameGroups.Contains(GetCollapsedGroupKey(group.Key), StringComparer.Ordinal);
+                var displayGroup = settings.ShowGroupCount
+                    ? $"{group.Key} ({gamesInGroup.Count:N0})"
+                    : group.Key;
+                for (var index = 0; index < gamesInGroup.Count; index++)
+                {
+                    var game = gamesInGroup[index];
+                    game.SetGroup(
+                        displayGroup,
+                        index == 0,
+                        expanded,
+                        index == 0 ? () => ToggleGroup(group.Key) : null);
+                    if (expanded || index == 0)
+                    {
+                        materialized.Add(game);
+                    }
+                }
+            }
         }
 
         Games = materialized;
@@ -1512,19 +1543,54 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         MetadataDownload?.RefreshTargetSummary();
     }
 
+    private string GetCollapsedGroupKey(string group) => $"{(int)selectedGrouping}:{group}";
+
+    private void ToggleGroup(string group)
+    {
+        var key = GetCollapsedGroupKey(group);
+        if (!settings.CollapsedGameGroups.Remove(key))
+        {
+            settings.CollapsedGameGroups.Add(key);
+        }
+
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
+        ApplyFilters();
+    }
+
     private IEnumerable<DesktopGameItemViewModel> SortGames(IEnumerable<DesktopGameItemViewModel> source)
     {
         IOrderedEnumerable<DesktopGameItemViewModel> ordered = selectedSortOrder switch
         {
+            SortOrder.Platforms => source.OrderBy(game => GetNames(game.Game.PlatformIds, id => database.Platforms[id]?.Name), StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.Library => source.OrderBy(game => GetLibraryName(game.Game.PluginId), StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.Categories => source.OrderBy(game => GetNames(game.Game.CategoryIds, id => database.Categories[id]?.Name), StringComparer.CurrentCultureIgnoreCase),
             SortOrder.LastActivity => source.OrderBy(game => game.Game.LastActivity ?? DateTime.MinValue),
+            SortOrder.Genres => source.OrderBy(game => GetNames(game.Game.GenreIds, id => database.Genres[id]?.Name), StringComparer.CurrentCultureIgnoreCase),
             SortOrder.Playtime => source.OrderBy(game => game.Game.Playtime),
             SortOrder.Added => source.OrderBy(game => game.Game.Added ?? DateTime.MinValue),
-            SortOrder.ReleaseDate => source.OrderBy(game => game.Game.ReleaseYear ?? 0),
+            SortOrder.ReleaseDate => source.OrderBy(game => game.Game.ReleaseDate?.Date ?? DateTime.MinValue),
+            SortOrder.Developers => source.OrderBy(game => GetNames(game.Game.DeveloperIds, id => database.Companies[id]?.Name), StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.Publishers => source.OrderBy(game => GetNames(game.Game.PublisherIds, id => database.Companies[id]?.Name), StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.Tags => source.OrderBy(game => GetNames(game.Game.TagIds, id => database.Tags[id]?.Name), StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.Series => source.OrderBy(game => GetNames(game.Game.SeriesIds, id => database.Series[id]?.Name), StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.AgeRatings => source.OrderBy(game => GetNames(game.Game.AgeRatingIds, id => database.AgeRatings[id]?.Name), StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.Version => source.OrderBy(game => game.Game.Version, StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.Regions => source.OrderBy(game => GetNames(game.Game.RegionIds, id => database.Regions[id]?.Name), StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.PlayCount => source.OrderBy(game => game.Game.PlayCount),
             SortOrder.IsInstalled => source.OrderBy(game => game.IsInstalled),
+            SortOrder.Hidden => source.OrderBy(game => game.Game.Hidden),
             SortOrder.Favorite => source.OrderBy(game => game.Favorite),
             SortOrder.Source => source.OrderBy(game => game.SourceName, StringComparer.CurrentCultureIgnoreCase),
-            SortOrder.Platforms => source.OrderBy(game => game.PlatformName, StringComparer.CurrentCultureIgnoreCase),
             SortOrder.CompletionStatus => source.OrderBy(game => game.CompletionStatusName, StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.UserScore => source.OrderBy(game => game.Game.UserScore ?? -1),
+            SortOrder.CriticScore => source.OrderBy(game => game.Game.CriticScore ?? -1),
+            SortOrder.CommunityScore => source.OrderBy(game => game.Game.CommunityScore ?? -1),
+            SortOrder.Modified => source.OrderBy(game => game.Game.Modified ?? DateTime.MinValue),
+            SortOrder.InstallDirectory => source.OrderBy(game => game.Game.InstallDirectory, StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.Features => source.OrderBy(game => GetNames(game.Game.FeatureIds, id => database.Features[id]?.Name), StringComparer.CurrentCultureIgnoreCase),
+            SortOrder.InstallSize => source.OrderBy(game => game.Game.InstallSize ?? 0),
+            SortOrder.RecentActivity => source.OrderBy(game => game.Game.RecentActivity ?? DateTime.MinValue),
+            SortOrder.RomList => source.OrderBy(game => string.Join(", ", game.Game.Roms?.Select(rom => rom.Path) ?? Array.Empty<string>()), StringComparer.CurrentCultureIgnoreCase),
             _ => source.OrderBy(game => game.Name, StringComparer.CurrentCultureIgnoreCase)
         };
         return selectedSortDirection == SortOrderDirection.Descending ? ordered.Reverse() : ordered;
@@ -1532,17 +1598,58 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
 
     private string GetGroupName(DesktopGameItemViewModel game) => selectedGrouping switch
     {
-        GroupableField.Platform => game.PlatformName,
+        GroupableField.Platform => GetNames(game.Game.PlatformIds, id => database.Platforms[id]?.Name),
+        GroupableField.Library => GetLibraryName(game.Game.PluginId),
+        GroupableField.Category => GetNames(game.Game.CategoryIds, id => database.Categories[id]?.Name),
+        GroupableField.LastActivity => game.Game.LastActivitySegment.ToString(),
+        GroupableField.Genre => GetNames(game.Game.GenreIds, id => database.Genres[id]?.Name),
+        GroupableField.Developer => GetNames(game.Game.DeveloperIds, id => database.Companies[id]?.Name),
+        GroupableField.Publisher => GetNames(game.Game.PublisherIds, id => database.Companies[id]?.Name),
+        GroupableField.Tag => GetNames(game.Game.TagIds, id => database.Tags[id]?.Name),
+        GroupableField.Series => GetNames(game.Game.SeriesIds, id => database.Series[id]?.Name),
+        GroupableField.AgeRating => GetNames(game.Game.AgeRatingIds, id => database.AgeRatings[id]?.Name),
+        GroupableField.Region => GetNames(game.Game.RegionIds, id => database.Regions[id]?.Name),
         GroupableField.Source => game.SourceName,
         GroupableField.CompletionStatus => game.CompletionStatusName,
-        GroupableField.InstallationStatus => game.StateText,
+        GroupableField.UserScore => game.Game.UserScoreGroup.ToString(),
+        GroupableField.CriticScore => game.Game.CriticScoreGroup.ToString(),
+        GroupableField.CommunityScore => game.Game.CommunityScoreGroup.ToString(),
+        GroupableField.Added => game.Game.AddedSegment.ToString(),
+        GroupableField.Modified => game.Game.ModifiedSegment.ToString(),
+        GroupableField.Feature => GetNames(game.Game.FeatureIds, id => database.Features[id]?.Name),
+        GroupableField.InstallationStatus => game.Game.InstallationStatus.ToString(),
         GroupableField.ReleaseYear => game.ReleaseYearText,
-        GroupableField.Name => string.IsNullOrWhiteSpace(game.Name) ? "#" : game.Name[..1].ToUpperInvariant(),
-        GroupableField.PlayTime => game.Game.Playtime == 0
-            ? "Not played"
-            : TimeSpan.FromSeconds(game.Game.Playtime).TotalHours < 10 ? "Under 10 hours" : "10+ hours",
+        GroupableField.Name => game.Game.GetNameGroup().ToString(),
+        GroupableField.PlayTime => game.Game.PlaytimeCategory.ToString(),
+        GroupableField.InstallDrive => game.Game.GetInstallDriveGroup(),
+        GroupableField.InstallSize => game.Game.GetInstallSizeGroup().ToString(),
+        GroupableField.RecentActivity => game.Game.RecentActivitySegment.ToString(),
         _ => string.Empty
     };
+
+    private string GetLibraryName(Guid pluginId)
+    {
+        if (pluginId == Guid.Empty)
+        {
+            return Localize("LOCUndefined", "Undefined");
+        }
+
+        if (runtimeHost?.Extensions.Plugins.TryGetValue(pluginId, out var loaded) == true)
+        {
+            return loaded.Description?.Name ?? pluginId.ToString();
+        }
+
+        return runtimeHost?.V7Plugins.FirstOrDefault(plugin => plugin.Id == pluginId)?.Name ?? pluginId.ToString();
+    }
+
+    private static string GetNames(IEnumerable<Guid> ids, Func<Guid, string> resolve)
+    {
+        var value = string.Join(", ", (ids ?? Array.Empty<Guid>())
+            .Select(resolve)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .OrderBy(name => name, StringComparer.CurrentCultureIgnoreCase));
+        return string.IsNullOrWhiteSpace(value) ? "Undefined" : value;
+    }
 
     private void ApplyAppearanceSettings()
     {
@@ -1572,6 +1679,9 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(DetailsContentColumn));
         OnPropertyChanged(nameof(FirstContentColumnWidth));
         OnPropertyChanged(nameof(SecondContentColumnWidth));
+        OnPropertyChanged(nameof(LeftSidebarWidth));
+        OnPropertyChanged(nameof(RightSidebarWidth));
+        OnPropertyChanged(nameof(SidebarContentColumn));
         OnPropertyChanged(nameof(SidebarBorderThickness));
         OnPropertyChanged(nameof(DetailsBorderThickness));
         OnPropertyChanged(nameof(ShowWindowBackgroundImage));
@@ -1580,6 +1690,10 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(BackgroundImageFadeDuration));
         OnPropertyChanged(nameof(ShowPluginTopPanelItemsLeft));
         OnPropertyChanged(nameof(ShowPluginTopPanelItemsRight));
+        OnPropertyChanged(nameof(ShowLibrarySummaryInTopPanel));
+        OnPropertyChanged(nameof(ShowNotificationsInTopPanel));
+        OnPropertyChanged(nameof(ShowFilterStatusInTopPanel));
+        OnPropertyChanged(nameof(ShowUpdateStatusInTopPanel));
         ApplyFilters();
     }
 
@@ -1656,6 +1770,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
 
     private void MetadataDownload_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
+        RaiseGlobalProgressProperties();
         if (e.PropertyName is nameof(DesktopMetadataDownloadViewModel.IsVisible) or
             nameof(DesktopMetadataDownloadViewModel.IsRunning))
         {
@@ -1665,6 +1780,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
 
     private void LibrarySync_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
+        RaiseGlobalProgressProperties();
         if (e.PropertyName is nameof(DesktopLibrarySyncViewModel.IsVisible) or
             nameof(DesktopLibrarySyncViewModel.IsRunning))
         {
@@ -1674,6 +1790,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
 
     private void InstalledGameImport_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
+        RaiseGlobalProgressProperties();
         if (e.PropertyName is nameof(DesktopInstalledGameImportViewModel.IsVisible) or
             nameof(DesktopInstalledGameImportViewModel.IsRunning))
         {
@@ -1683,6 +1800,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
 
     private void PluginSettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
+        RaiseGlobalProgressProperties();
         if (e.PropertyName is nameof(DesktopPluginSettingsViewModel.IsVisible) or
             nameof(DesktopPluginSettingsViewModel.IsRunning))
         {
@@ -1698,8 +1816,11 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         }
     }
 
-    private void Notifications_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e) =>
+    private void Notifications_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    {
         OnPropertyChanged(nameof(NotificationCount));
+        (ClearNotificationsCommand as AppRelayCommand)?.RaiseCanExecuteChanged();
+    }
 
     private bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
     {

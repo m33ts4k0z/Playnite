@@ -63,11 +63,13 @@
 
                     <Grid Grid.Row="1">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="270" />
+                            <ColumnDefinition Width="{Binding LeftSidebarWidth}" />
                             <ColumnDefinition Width="{Binding FirstContentColumnWidth}" />
                             <ColumnDefinition Width="{Binding SecondContentColumnWidth}" />
+                            <ColumnDefinition Width="{Binding RightSidebarWidth}" />
                         </Grid.ColumnDefinitions>
-                        <ContentControl Template="{DynamicResource DesktopSidebarTemplate}" />
+                        <ContentControl Grid.Column="{Binding SidebarContentColumn}"
+                                        Template="{DynamicResource DesktopSidebarTemplate}" />
 
                         <Grid Grid.Column="{Binding LibraryContentColumn}">
                             <ListBox Name="PART_GridGameList"
@@ -196,6 +198,26 @@
                         <ContentControl Template="{DynamicResource DesktopDatabaseFieldsTemplate}" />
                     </Grid>
 
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding ToolsConfig.IsVisible}"
+                          Background="#E6000000">
+                        <ContentControl Template="{DynamicResource DesktopToolsConfigTemplate}" />
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsExplorerVisible}"
+                          Background="#E6000000">
+                        <ContentControl Template="{DynamicResource DesktopExplorerTemplate}" />
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsAboutVisible}"
+                          Background="#E6000000">
+                        <ContentControl Template="{DynamicResource DesktopAboutTemplate}" />
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsFirstTimeWizardVisible}"
+                          Background="#F20B0E13">
+                        <ContentControl Template="{DynamicResource DesktopFirstTimeWizardTemplate}" />
+                    </Grid>
+
                     <Grid Grid.RowSpan="3" IsVisible="{Binding IsNotificationsVisible}"
                           Background="#D9000000">
                         <Border Width="760" MaxHeight="680" Padding="30" CornerRadius="14"
@@ -212,8 +234,11 @@
                                                     <StackPanel>
                                                         <TextBlock Text="{Binding Type}" FontWeight="Bold"
                                                                    Foreground="{DynamicResource DesktopAccentBrush}" />
-                                                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
-                                                                   Foreground="{DynamicResource DesktopTextBrush}" />
+                                                        <Button Command="{Binding ActivateCommand}"
+                                                                HorizontalContentAlignment="Left">
+                                                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap"
+                                                                       Foreground="{DynamicResource DesktopTextBrush}" />
+                                                        </Button>
                                                     </StackPanel>
                                                     <Button Grid.Column="1" Command="{Binding CloseCommand}" Content="×" />
                                                 </Grid>
@@ -221,7 +246,10 @@
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
-                                <Button Command="{Binding CloseOverlayCommand}" Content="Close" />
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Button Command="{Binding ClearNotificationsCommand}" Content="Clear all" />
+                                    <Button Command="{Binding CloseOverlayCommand}" Content="Close" />
+                                </StackPanel>
                             </StackPanel>
                         </Border>
                     </Grid>

@@ -4,6 +4,7 @@ public interface IFullscreenSettingsSection
 {
     string Key { get; }
     string Title { get; }
+    string Description { get; }
     global::Avalonia.Controls.Control Content { get; }
     void Open();
     FullscreenSettingsSectionSaveResult Save();

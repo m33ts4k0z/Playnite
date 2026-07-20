@@ -9,29 +9,38 @@
                        Foreground="{DynamicResource FullscreenTextBrush}" />
             <TextBlock Text="{DynamicResource LOCFullscreenTheme}" />
             <ComboBox ItemsSource="{Binding AvailableThemes}"
+                      ToolTip.Tip="{DynamicResource LOCFullscreenTheme}"
                       SelectedItem="{Binding SelectedTheme, Mode=TwoWay}" />
             <CheckBox Content="{DynamicResource LOCFullscreenDarkenUninstalled}"
+                      ToolTip.Tip="{DynamicResource LOCFullscreenDarkenUninstalled}"
                       IsChecked="{Binding DarkenUninstalledGamesGrid, Mode=TwoWay}" />
             <CheckBox Content="{DynamicResource LOCFullscreenBackgroundImage}"
+                      ToolTip.Tip="{DynamicResource LOCFullscreenBackgroundImage}"
                       IsChecked="{Binding EnableMainBackgroundImage, Mode=TwoWay}" />
             <Grid ColumnDefinitions="220,140" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
                 <TextBlock Text="{DynamicResource LOCFullscreenBackgroundBlur}" VerticalAlignment="Center" />
                 <NumericUpDown Grid.Column="1" Minimum="0" Maximum="100"
+                               ToolTip.Tip="{DynamicResource LOCFullscreenBackgroundBlur}"
                                Value="{Binding MainBackgroundImageBlurAmount, Mode=TwoWay}" />
                 <TextBlock Grid.Row="1" Text="{DynamicResource LOCFullscreenBackgroundDarken}" VerticalAlignment="Center" />
                 <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="100"
+                               ToolTip.Tip="{DynamicResource LOCFullscreenBackgroundDarken}"
                                Value="{Binding MainBackgroundImageDarkAmount, Mode=TwoWay}" />
                 <TextBlock Grid.Row="2" Text="{DynamicResource LOCFullscreenFontSize}" VerticalAlignment="Center" />
                 <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="8" Maximum="72"
+                               ToolTip.Tip="{DynamicResource LOCFullscreenFontSize}"
                                Value="{Binding FontSize, Mode=TwoWay}" />
                 <TextBlock Grid.Row="3" Text="{DynamicResource LOCFullscreenSmallFontSize}" VerticalAlignment="Center" />
                 <NumericUpDown Grid.Row="3" Grid.Column="1" Minimum="8" Maximum="72"
+                               ToolTip.Tip="{DynamicResource LOCFullscreenSmallFontSize}"
                                Value="{Binding FontSizeSmall, Mode=TwoWay}" />
             </Grid>
             <CheckBox Content="{DynamicResource LOCFullscreenShowGameTitles}"
+                      ToolTip.Tip="{DynamicResource LOCFullscreenShowGameTitles}"
                       IsChecked="{Binding ShowGameTitles, Mode=TwoWay}" />
             <TextBlock Text="{DynamicResource LOCFullscreenButtonPrompts}" />
             <ComboBox ItemsSource="{Binding ButtonPromptOptions}"
+                      ToolTip.Tip="{DynamicResource LOCFullscreenButtonPrompts}"
                       SelectedItem="{Binding ButtonPrompts, Mode=TwoWay}" />
         </StackPanel>
     </ScrollViewer>

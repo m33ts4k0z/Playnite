@@ -1,7 +1,10 @@
 using System.Text;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Playnite.Avalonia.Input;
 using Playnite.Avalonia.App.Services;
 using Playnite.Avalonia.Services;
@@ -179,14 +182,16 @@ internal static class FullscreenPilotSelfTest
                 ? "all ten menu policies control concrete, invokable Avalonia buttons"
                 : throw new InvalidOperationException("A configured Fullscreen menu item is missing or inert."));
         viewModel.OpenToolsCommand.Execute(null);
-        var toolsMenuOpened = viewModel.IsCommandMenuVisible && viewModel.CommandMenuTitle == "Tools" &&
+        var toolsMenuOpened = viewModel.IsCommandMenuVisible &&
+            viewModel.CommandMenuTitle == LocalizeForTest("LOCMenuTools", "Tools") &&
             viewModel.CommandMenuItems.Count > 0;
         viewModel.BackCommand.Execute(null);
         var powerActionRaised = false;
         void OnPowerAction(SystemPowerAction _) => powerActionRaised = true;
         viewModel.PowerActionRequested += OnPowerAction;
         viewModel.RestartCommand.Execute(null);
-        var restartConfirmationOpened = viewModel.IsDialogVisible && viewModel.SelectedDialogOption == "Cancel";
+        var restartConfirmationOpened = viewModel.IsDialogVisible &&
+            viewModel.SelectedDialogOption == LocalizeForTest("LOCCancelLabel", "Cancel");
         viewModel.ConfirmDialogCommand.Execute(null);
         viewModel.PowerActionRequested -= OnPowerAction;
         var linuxShutdown = SystemPowerService.CreateLinuxStartInfo(SystemPowerAction.Shutdown, "7");
@@ -290,11 +295,13 @@ internal static class FullscreenPilotSelfTest
         {
             var titles = viewModel.CommandMenuItems.Select(item => item.Title).ToList();
             return viewModel.IsCommandMenuVisible &&
-                titles.Any(title => title is "Play" or "Install") &&
-                titles.Any(title => title is "Add to favorites" or "Remove from favorites") &&
-                titles.Contains("Set fields") &&
-                titles.Contains("Extensions") &&
-                titles.Contains("Remove game")
+                titles.Any(title => title == LocalizeForTest("LOCPlayGame", "Play") ||
+                    title == LocalizeForTest("LOCInstallGame", "Install")) &&
+                titles.Any(title => title == LocalizeForTest("LOCFavoriteGame", "Add to favorites") ||
+                    title == LocalizeForTest("LOCRemoveFavoriteGame", "Remove from favorites")) &&
+                titles.Contains(LocalizeForTest("LOCSetGameFields", "Set fields")) &&
+                titles.Contains(LocalizeForTest("LOCMenuExtensions", "Extensions")) &&
+                titles.Contains(LocalizeForTest("LOCRemoveGame", "Remove game"))
                     ? $"{titles.Count} actions include launch, custom fields, plugins, and library verbs"
                     : throw new InvalidOperationException(string.Join(", ", titles));
         });
@@ -358,7 +365,7 @@ internal static class FullscreenPilotSelfTest
         statusGame.IsLaunching = true;
         viewModel.SetSyntheticGameStateForTest(statusGame);
         var launchStatusOpened = viewModel.IsGameStatusVisible &&
-            viewModel.GameStatusText.StartsWith("Starting", StringComparison.Ordinal);
+            viewModel.GameStatusText.Contains(statusGame.Name, StringComparison.Ordinal);
         statusGame.IsLaunching = false;
         statusGame.IsRunning = true;
         viewModel.SetSyntheticGameStateForTest(statusGame);
@@ -553,6 +560,100 @@ internal static class FullscreenPilotSelfTest
                 : throw new InvalidOperationException("The default package manifest was incomplete.");
         });
 
+        // Track P-H: Fullscreen Tier 3 polish and shared rich-description contracts.
+        Record(results, "Controller prompt image sets are packaged and switch with the selected family", () =>
+        {
+            var paths = new[]
+            {
+                viewModel.ConfirmPromptImagePath,
+                viewModel.ActionPromptImagePath,
+                viewModel.MenuPromptImagePath
+            };
+            return paths.All(File.Exists) &&
+                paths.All(path => Path.GetFileName(path).StartsWith("ps-", StringComparison.Ordinal))
+                    ? "PlayStation confirm, action, and menu prompt images are active and packaged"
+                    : throw new FileNotFoundException(string.Join("; ", paths));
+        });
+
+        var descriptionGame = viewModel.SelectedGame.Game;
+        var originalDescription = descriptionGame.Description;
+        descriptionGame.Description =
+            "<h2>P-H description</h2><p>Rich <strong>text</strong> with " +
+            "<a href='https://playnite.link'>a safe link</a>.</p>";
+        viewModel.ShowDetailsCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var fullscreenHtmlView = window.MainView.GetVisualDescendants()
+            .OfType<Playnite.Avalonia.Controls.HtmlTextView>()
+            .FirstOrDefault();
+        Record(results, "Fullscreen details consume the shared safe HTML renderer", () =>
+            fullscreenHtmlView?.Html == descriptionGame.Description && fullscreenHtmlView.Children.Count > 0
+                ? $"{fullscreenHtmlView.Children.Count} rich description blocks rendered through Playnite.Avalonia"
+                : throw new InvalidOperationException("The shared HTML details control was not active."));
+        viewModel.BackCommand.Execute(null);
+        descriptionGame.Description = originalDescription;
+
+        var unsupportedDrop = Path.Combine(Path.GetTempPath(), $"playnite-p-h-{Guid.NewGuid():N}.txt");
+        var supportedDrop = Path.ChangeExtension(unsupportedDrop, global::Playnite.PlaynitePaths.PackedExtensionFileExtention);
+        File.WriteAllText(unsupportedDrop, "not an add-on");
+        File.WriteAllText(supportedDrop, "synthetic package path");
+        try
+        {
+            Record(results, "Fullscreen window accepts only installable add-on file drops", () =>
+                DragDrop.GetAllowDrop(window.MainView) &&
+                MainWindow.IsSupportedDroppedAddon(supportedDrop) &&
+                !MainWindow.IsSupportedDroppedAddon(unsupportedDrop)
+                    ? "the main surface accepts .pext/.pthm drops and rejects unrelated files"
+                    : throw new InvalidOperationException("Fullscreen drop filtering was not wired."));
+        }
+        finally
+        {
+            File.Delete(unsupportedDrop);
+            File.Delete(supportedDrop);
+        }
+
+        viewModel.SearchText = $"no-match-{Guid.NewGuid():N}";
+        Record(results, "Fullscreen empty-grid state follows the live view", () =>
+            viewModel.Games.Count == 0 && viewModel.IsLibraryEmpty
+                ? "an empty filtered view exposes the controller-operable recovery message"
+                : throw new InvalidOperationException("The empty-grid state did not activate."));
+        viewModel.SearchText = string.Empty;
+
+        window.RuntimeHost.Notifications.RemoveAll();
+        window.RuntimeHost.Notifications.Add(
+            $"pilot-update-{Guid.NewGuid():N}",
+            "P-H update notification",
+            Playnite.SDK.NotificationType.Info);
+        var notificationChromeActive = viewModel.HasNotifications &&
+            viewModel.HasUpdateNotification && viewModel.NotificationBadgeText == "1" &&
+            viewModel.OpenHelpCommand != null && viewModel.OpenUpdatesCommand.CanExecute(null);
+        viewModel.ClearNotificationsCommand.Execute(null);
+        Record(results, "Fullscreen help, update, badge, and clear-all chrome is live", () =>
+            notificationChromeActive && !viewModel.HasNotifications && viewModel.NotificationCount == 0
+                ? "help/update commands, update detection, numeric badge, and clear-all share the live notification API"
+                : throw new InvalidOperationException("Fullscreen Tier 3 notification chrome was incomplete."));
+
+        viewModel.OpenSettingsCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var focusedDescriptionVisible = viewModel.HasFocusedSettingsDescription;
+        viewModel.Settings.CancelCommand.Execute(null);
+        Record(results, "Fullscreen settings expose descriptions for controller focus", () =>
+            focusedDescriptionVisible && !string.IsNullOrWhiteSpace(viewModel.FocusedSettingsDescription)
+                ? viewModel.FocusedSettingsDescription
+                : throw new InvalidOperationException("Focused settings did not surface their description."));
+
+        var restartSection = new PilotRestartRequiredSettingsSection();
+        viewModel.Settings.Sections.Add(restartSection);
+        viewModel.OpenSettingsCommand.Execute(null);
+        viewModel.Settings.SaveCommand.Execute(null);
+        var restartPromptOpened = viewModel.Settings.RestartRequired &&
+            viewModel.IsDialogVisible && viewModel.DialogOptions.Count == 2;
+        viewModel.CancelDialogCommand.Execute(null);
+        viewModel.Settings.Sections.Remove(restartSection);
+        Record(results, "Restart-required settings open a visible restart-now prompt after Save", () =>
+            restartPromptOpened && !viewModel.Settings.IsVisible
+                ? "Save closed settings, then opened the independent restart-now/later dialog"
+                : throw new InvalidOperationException("The restart prompt remained hidden inside settings."));
+
         // Track P-A: shared primitive and crash-window construction checks.
         Record(results, "Shared SDK dialog primitives construct and round-trip", () =>
             AvaloniaDialogPrimitiveSelfTest.ValidateConstructionAndRoundTrip());
@@ -584,6 +685,23 @@ internal static class FullscreenPilotSelfTest
         (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown(failures);
     }
 
+    private sealed class PilotRestartRequiredSettingsSection : IFullscreenSettingsSection
+    {
+        public string Key => "PilotRestart";
+        public string Title => "Pilot restart";
+        public string Description => "Synthetic restart-required settings contract.";
+        public Control Content { get; } = new Border();
+
+        public void Open()
+        {
+        }
+
+        public FullscreenSettingsSectionSaveResult Save() => new(true);
+
+        public FullscreenSettingsSectionSelfCheckResult SelfCheck() =>
+            new(Key, true, "Synthetic restart-required section");
+    }
+
     private static void Record(
         ICollection<(string Name, bool Pass, string Detail)> results,
         string name,
@@ -597,6 +715,14 @@ internal static class FullscreenPilotSelfTest
         {
             results.Add((name, false, exception.Message));
         }
+    }
+
+    private static string LocalizeForTest(string key, string fallback)
+    {
+        var value = Playnite.SDK.ResourceProvider.GetString(key);
+        return string.IsNullOrWhiteSpace(value) || value == key || value == $"<!{key}!>"
+            ? fallback
+            : value;
     }
 
     private static string BuildReport(IEnumerable<(string Name, bool Pass, string Detail)> results)

@@ -38,9 +38,10 @@
                     <TextBlock Text="{Binding SelectedGame.SourceName}"
                                IsVisible="{Binding DetailsVisibility.Source}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.CompletionStatusName}"
-                               IsVisible="{Binding DetailsVisibility.CompletionStatus}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <Button Content="{Binding SelectedGame.CompletionStatusName}"
+                            Command="{Binding SetCompletionStatusCommand}"
+                            IsVisible="{Binding DetailsVisibility.CompletionStatus}"
+                            HorizontalAlignment="Left" />
                     <TextBlock Text="{Binding SelectedGame.UserScoreText}"
                                IsVisible="{Binding DetailsVisibility.UserScore}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
@@ -63,6 +64,17 @@
                                IsVisible="{Binding DetailsVisibility.Added}"
                                Foreground="{DynamicResource DesktopMutedBrush}" />
                     <StackPanel Spacing="3">
+                        <ItemsControl ItemsSource="{Binding DetailsFilterLinks}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Margin="0,0,6,6" Padding="7,3"
+                                            Content="{Binding Name}" Command="{Binding Command}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                         <TextBlock Text="{Binding SelectedGame.GenresText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
                                    IsVisible="{Binding DetailsVisibility.Genres}"
                                    TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
@@ -119,10 +131,9 @@
                     <TextBlock Text="{Binding SelectedGame.NotesText}"
                                IsVisible="{Binding DetailsVisibility.Notes}"
                                TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.DescriptionText}"
-                               IsVisible="{Binding DetailsVisibility.Description}"
-                               TextWrapping="Wrap" LineHeight="23"
-                               Foreground="{DynamicResource DesktopTextBrush}" />
+                    <foundation:HtmlTextView Html="{Binding SelectedGame.Game.Description}"
+                                             IsVisible="{Binding DetailsVisibility.Description}"
+                                             Foreground="{DynamicResource DesktopTextBrush}" />
                     <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
                         <Button Classes="primary" Command="{Binding ActivateCommand}"
                                 Content="{DynamicResource LOCDesktopPlay}" />

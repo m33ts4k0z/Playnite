@@ -8,16 +8,21 @@
         <TextBlock Text="Input" FontSize="24" FontWeight="SemiBold"
                    Foreground="{DynamicResource FullscreenTextBrush}" />
         <CheckBox Content="{DynamicResource LOCFullscreenSwapButtons}"
+                  ToolTip.Tip="{DynamicResource LOCFullscreenSwapButtons}"
                   IsChecked="{Binding SwapConfirmCancelButtons, Mode=TwoWay}" />
         <CheckBox Content="{DynamicResource LOCFullscreenSwapMainButtons}"
+                  ToolTip.Tip="{DynamicResource LOCFullscreenSwapMainButtons}"
                   IsChecked="{Binding SwapStartDetailsAction, Mode=TwoWay}"
                   IsEnabled="{Binding EnableGameControllerSupport}" />
         <CheckBox Content="{DynamicResource LOCFullscreenGuideFocus}"
+                  ToolTip.Tip="{DynamicResource LOCFullscreenGuideFocus}"
                   IsChecked="{Binding GuideButtonFocus, Mode=TwoWay}"
                   IsEnabled="{Binding EnableGameControllerSupport}" />
         <CheckBox Content="{DynamicResource LOCFullscreenHideMouseCursor}"
+                  ToolTip.Tip="{DynamicResource LOCFullscreenHideMouseCursor}"
                   IsChecked="{Binding HideMouseCursor, Mode=TwoWay}" />
         <CheckBox Content="{DynamicResource LOCFullscreenControllerSupport}"
+                  ToolTip.Tip="{DynamicResource LOCFullscreenControllerSupport}"
                   IsChecked="{Binding EnableGameControllerSupport, Mode=TwoWay}" />
         <TextBlock Text="{Binding ControllerStatus}"
                    Foreground="{DynamicResource FullscreenMutedTextBrush}" />
@@ -26,6 +31,7 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="input:GameControllerSettingsOption">
                     <CheckBox Content="{Binding Name}"
+                              ToolTip.Tip="{Binding Name}"
                               IsChecked="{Binding IsEnabled, Mode=TwoWay}"
                               Margin="8,4" />
                 </DataTemplate>

@@ -21,6 +21,8 @@ internal sealed class StartupOptions
     public bool Shutdown { get; private set; }
     public bool HostLaunchSelfTest { get; private set; }
     public bool SafeStartup { get; private set; }
+    public string BackupOptionsPath { get; private set; }
+    public string RestoreBackupOptionsPath { get; private set; }
     public LinuxIntegrationCommand IntegrationCommand { get; private set; }
 
     public static StartupOptions Parse(string[] args)
@@ -72,6 +74,12 @@ internal sealed class StartupOptions
                     break;
                 case "--safestartup":
                     options.SafeStartup = true;
+                    break;
+                case "--backup" when index + 1 < args.Length:
+                    options.BackupOptionsPath = Path.GetFullPath(args[++index]);
+                    break;
+                case "--restore-backup" when index + 1 < args.Length:
+                    options.RestoreBackupOptionsPath = Path.GetFullPath(args[++index]);
                     break;
             }
         }

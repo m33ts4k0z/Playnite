@@ -16,6 +16,7 @@ namespace Playnite.SDK.V7.Host;
 
 public static class V7PluginBridge
 {
+    public static Version SdkVersion => typeof(SdkVersions).Assembly.GetName().Version;
     // Playnite-internal assemblies; referencing them from a plugin is always a
     // packaging mistake and would fail unpredictably inside the isolated
     // context, so refuse them up front the way SDK v6 loading does.

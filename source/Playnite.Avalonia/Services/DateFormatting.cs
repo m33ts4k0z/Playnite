@@ -10,7 +10,7 @@ public class DateFormattingOptions : SettingsValueObject
     public string Format { get => format; set => SetField(ref format, value); }
     public bool PastWeekRelativeFormat { get => pastWeekRelativeFormat; set => SetField(ref pastWeekRelativeFormat, value); }
 
-    public DateFormattingOptions Clone() => new()
+    public virtual DateFormattingOptions Clone() => new()
     {
         Format = Format,
         PastWeekRelativeFormat = PastWeekRelativeFormat
@@ -23,7 +23,7 @@ public sealed class ReleaseDateFormattingOptions : DateFormattingOptions
 
     public string PartialFormat { get => partialFormat; set => SetField(ref partialFormat, value); }
 
-    public new ReleaseDateFormattingOptions Clone() => new()
+    public override ReleaseDateFormattingOptions Clone() => new()
     {
         Format = Format,
         PastWeekRelativeFormat = PastWeekRelativeFormat,

@@ -30,6 +30,7 @@ public static class WpfProfileImport
         public bool? DisableHwAcceleration { get; init; }
         public bool? AsyncImageLoading { get; init; }
         public bool? ShowImagePerformanceWarning { get; init; }
+        public bool? FirstTimeWizardComplete { get; init; }
         public int? FullscreenMonitor { get; init; }
         public int? FullscreenInterfaceVolume { get; init; }
         public int? FullscreenBackgroundVolume { get; init; }
@@ -74,6 +75,7 @@ public static class WpfProfileImport
             DisableHwAcceleration = ReadDesktopBoolean(userDataDirectory, "DisableHwAcceleration"),
             AsyncImageLoading = ReadDesktopBoolean(userDataDirectory, "AsyncImageLoading"),
             ShowImagePerformanceWarning = ReadDesktopBoolean(userDataDirectory, "ShowImagePerformanceWarning"),
+            FirstTimeWizardComplete = ReadDesktopBoolean(userDataDirectory, "FirstTimeWizardComplete"),
             FullscreenMonitor = ReadFullscreenInt(userDataDirectory, "Monitor", nonNegative: true),
             FullscreenInterfaceVolume = ReadFullscreenVolume(userDataDirectory, "InterfaceVolume"),
             FullscreenBackgroundVolume = ReadFullscreenVolume(userDataDirectory, "BackgroundVolume"),

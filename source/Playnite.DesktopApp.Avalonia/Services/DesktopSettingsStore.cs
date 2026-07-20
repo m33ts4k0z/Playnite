@@ -32,7 +32,12 @@ public sealed class DesktopSettingsStore
                     File.ReadAllText(settingsPath),
                     serializerOptions) ?? new DesktopSettings();
                 settings.Language ??= "english";
-                settings.ViewMode = settings.ViewMode is "Grid" or "List" ? settings.ViewMode : "Grid";
+                settings.ViewMode = settings.ViewMode is "Grid" or "List" or "Details" ? settings.ViewMode : "Grid";
+                settings.CollapsedGameGroups ??= new List<string>();
+                settings.CollapsedGameGroups = settings.CollapsedGameGroups
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList();
                 settings.DisabledPlugins ??= new List<string>();
                 settings.DisabledGameControllers ??= new List<string>();
                 settings.DetailsVisibility ??= new Playnite.Avalonia.App.Services.DetailsVisibilitySettings();
@@ -124,6 +129,7 @@ public sealed class DesktopSettingsStore
                 {
                     settings.TrayIcon = Playnite.Avalonia.App.Services.TrayIconOption.Default;
                 }
+                settings.QuickLaunchItems = Math.Clamp(settings.QuickLaunchItems, 0, 50);
                 if (!Enum.IsDefined(settings.CoverArtStretch))
                 {
                     settings.CoverArtStretch = global::Avalonia.Media.Stretch.UniformToFill;
@@ -146,6 +152,10 @@ public sealed class DesktopSettingsStore
                 settings.GameDetailsCoverHeight = Math.Clamp(settings.GameDetailsCoverHeight, 100, 800);
                 settings.DetailsViewListIconSize = Math.Clamp(settings.DetailsViewListIconSize, 20, 160);
                 settings.GridDetailsWidth = Math.Clamp(settings.GridDetailsWidth, 240, 800);
+                if (settings.SidebarPosition is not global::Avalonia.Controls.Dock.Left and not global::Avalonia.Controls.Dock.Right)
+                {
+                    settings.SidebarPosition = global::Avalonia.Controls.Dock.Left;
+                }
                 settings.BackgroundImageBlurAmount = Math.Clamp(settings.BackgroundImageBlurAmount, 0, 100);
                 settings.BackgroundImageDarkAmount = Math.Clamp(settings.BackgroundImageDarkAmount, 0, 1);
                 settings.FontSizeSmall = Math.Clamp(settings.FontSizeSmall, 9, 100);

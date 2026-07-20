@@ -3,15 +3,16 @@
                     xmlns:foundation="using:Playnite.Avalonia.Controls">
     <DataTemplate x:Key="DesktopListItemTemplate">
         <StackPanel>
-            <Border IsVisible="{Binding ShowGroupHeader}"
+            <Button IsVisible="{Binding ShowGroupHeader}" Command="{Binding ToggleGroupCommand}"
                     Margin="4,14,4,4" Padding="10,5"
-                    Background="#26394A" CornerRadius="5">
+                    HorizontalContentAlignment="Stretch">
                 <TextBlock Text="{Binding GroupHeader}" FontWeight="Bold"
                            Foreground="{DynamicResource DesktopAccentBrush}" />
-            </Border>
+            </Button>
             <Border Classes="desktopRow" Margin="3" Padding="10"
                     CornerRadius="6" Background="{DynamicResource DesktopPanelBrush}"
-                    BorderBrush="Transparent" BorderThickness="1">
+                    BorderBrush="Transparent" BorderThickness="1"
+                    IsVisible="{Binding IsGroupExpanded}">
                 <Grid ColumnDefinitions="Auto,2*,*,*,Auto" ColumnSpacing="12">
                     <Border Width="{Binding ListIconWidth}" Height="{Binding ListIconHeight}" Background="#222B37"
                             CornerRadius="4" ClipToBounds="True"

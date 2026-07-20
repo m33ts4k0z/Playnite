@@ -14,6 +14,11 @@
             </Grid>
             <TextBlock Text="Built-in navigation remains in the sidebar; this controls only plugin-provided top-panel items."
                        TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource DesktopMutedBrush}" />
+            <TextBlock Text="Built-in items" Classes="sectionLabel" Margin="0,8,0,0" />
+            <CheckBox Content="Library summary" IsChecked="{Binding ShowLibrarySummary, Mode=TwoWay}" />
+            <CheckBox Content="Notifications" IsChecked="{Binding ShowNotifications, Mode=TwoWay}" />
+            <CheckBox Content="Active filter indicator" IsChecked="{Binding ShowFilterStatus, Mode=TwoWay}" />
+            <CheckBox Content="Update status" IsChecked="{Binding ShowUpdateStatus, Mode=TwoWay}" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

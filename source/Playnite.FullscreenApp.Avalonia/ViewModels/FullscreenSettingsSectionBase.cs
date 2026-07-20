@@ -7,6 +7,16 @@ public abstract class FullscreenSettingsSectionBase : IFullscreenSettingsSection
 {
     public abstract string Key { get; }
     public abstract string Title { get; }
+    public virtual string Description => Key switch
+    {
+        "General" => "Library visibility, clock, battery, display, and behavior after a game starts.",
+        "Input" => "Controller mappings, prompt behavior, cursor visibility, and connected devices.",
+        "Audio" => "Interface and background audio levels plus background muting.",
+        "Layout" => "Grid rows, columns, direction, spacing, and scrolling behavior.",
+        "Visuals" => "Theme, backgrounds, typography, game titles, and controller prompt style.",
+        "Menus" => "Choose which system, extension, tool, and client commands appear in the main menu.",
+        _ => Title
+    };
     public abstract global::Avalonia.Controls.Control Content { get; }
 
     public event PropertyChangedEventHandler PropertyChanged;

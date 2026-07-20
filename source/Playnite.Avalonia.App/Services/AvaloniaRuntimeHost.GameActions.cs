@@ -8,6 +8,25 @@ namespace Playnite.Avalonia.App.Services;
 
 public sealed partial class AvaloniaRuntimeHost
 {
+    public void StartSoftwareTool(AppSoftware app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+        if (app.AppType == AppSoftwareType.Standard)
+        {
+            ProcessStarter.StartProcess(
+                PlaynitePaths.ExpandVariables(app.Path, fixSeparators: true),
+                PlaynitePaths.ExpandVariables(app.Arguments),
+                PlaynitePaths.ExpandVariables(app.WorkingDir, fixSeparators: true));
+            return;
+        }
+
+        using var runtime = new PowerShellRuntime($"Software tool {app.Name} runtime");
+        runtime.Execute(
+            PlaynitePaths.ExpandVariables(app.Script),
+            PlaynitePaths.ProgramPath,
+            new Dictionary<string, object> { ["PlayniteApi"] = globalApi });
+    }
+
     public string ActivateGameAction(Game game, GameAction action)
     {
         ArgumentNullException.ThrowIfNull(game);

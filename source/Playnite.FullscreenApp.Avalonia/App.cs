@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using Avalonia.Themes.Fluent;
+using System.Diagnostics;
 using Playnite.Avalonia.App.Services;
 using Playnite.Avalonia.Services;
 using Playnite.FullscreenApp.Avalonia.Services;
@@ -67,6 +68,34 @@ public sealed class App : Application
                 options.SelfTest ? null : settingsStore,
                 options);
             viewModel.ExitRequested += (_, _) => window.Close();
+            viewModel.RestartApplicationRequested += (_, _) =>
+            {
+                if (options.SelfTest)
+                {
+                    return;
+                }
+
+                try
+                {
+                    var executable = Environment.ProcessPath ?? global::Playnite.CoreRuntime.ApplicationExecutablePath();
+                    var startInfo = new ProcessStartInfo(executable)
+                    {
+                        UseShellExecute = false,
+                        WorkingDirectory = AppContext.BaseDirectory
+                    };
+                    foreach (var argument in options.GetRestartArguments())
+                    {
+                        startInfo.ArgumentList.Add(argument);
+                    }
+
+                    Process.Start(startInfo);
+                    desktop.Shutdown();
+                }
+                catch (Exception exception)
+                {
+                    viewModel.SetStatusMessage($"Playnite could not be restarted: {exception.Message}");
+                }
+            };
             viewModel.ToggleFullscreenRequested += (_, _) =>
                 window.WindowState = window.WindowState == global::Avalonia.Controls.WindowState.FullScreen
                     ? global::Avalonia.Controls.WindowState.Normal

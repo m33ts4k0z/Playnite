@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Threading;
+using System.Windows.Input;
 using Playnite.Database;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK.Models;
@@ -21,6 +22,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     private bool showGroupHeader;
     private string libraryIconPath;
     private string libraryBackgroundPath;
+    private bool isGroupExpanded = true;
+    private ICommand toggleGroupCommand;
 
     public event PropertyChangedEventHandler PropertyChanged;
     public Game Game { get; }
@@ -28,73 +31,101 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public bool Favorite => Game.Favorite;
     public bool IsInstalled => Game.IsInstalled;
     public string StateText => Game.IsLaunching
-        ? "Launching"
+        ? Localize("LOCGameLaunching", "Launching")
         : Game.IsRunning
-            ? "Running"
+            ? Localize("LOCGameRunning", "Running")
             : Game.IsInstalling
-                ? "Installing"
+                ? Localize("LOCSetupRunning", "Installing")
                 : Game.IsUninstalling
-                    ? "Uninstalling"
-                    : IsInstalled ? "Installed" : "Not installed";
+                    ? Localize("LOCUninstalling", "Uninstalling")
+                    : IsInstalled
+                        ? Localize("LOCGameIsInstalledTitle", "Installed")
+                        : Localize("LOCGameIsUnInstalledTitle", "Not installed");
     public string PlaytimeText
     {
         get
         {
             if (Game.Playtime == 0)
             {
-                return "Not played";
+                return Localize("LOCPlayedNone", "Not played");
             }
 
             var playtime = TimeSpan.FromSeconds(Game.Playtime);
-            return appearanceSettings.PlaytimeUseDaysFormat && playtime.TotalHours >= 24
-                ? $"{playtime.TotalDays:0.#} days played"
-                : $"{playtime.TotalHours:0.#} hours played";
+            if (appearanceSettings.PlaytimeUseDaysFormat && playtime.TotalHours >= 24)
+            {
+                return FormatLocalized(
+                    "LOCPlayedDays", "{0}d {1}h {2}m",
+                    (int)playtime.TotalDays, playtime.Hours, playtime.Minutes);
+            }
+
+            if (playtime.TotalHours >= 1)
+            {
+                return FormatLocalized(
+                    "LOCPlayedHours", "{0}h {1}m",
+                    (int)playtime.TotalHours, playtime.Minutes);
+            }
+
+            return playtime.TotalMinutes >= 1
+                ? FormatLocalized("LOCPlayedMinutes", "{0} minutes", (int)playtime.TotalMinutes)
+                : FormatLocalized("LOCPlayedSeconds", "{0} seconds", Math.Max(1, (int)playtime.TotalSeconds));
         }
     }
     public string LastPlayedText => Game.LastActivity.HasValue
-        ? $"Last played {DateFormattingService.Format(Game.LastActivity.Value, appearanceSettings.DateTimeFormatLastPlayed)}"
-        : "Never played";
+        ? FormatLabel("LOCLastPlayedLabel", "Last played",
+            DateFormattingService.Format(Game.LastActivity.Value, appearanceSettings.DateTimeFormatLastPlayed))
+        : FormatLabel("LOCLastPlayedLabel", "Last played", Localize("LOCNever", "Never"));
     public string AddedText => Game.Added.HasValue
-        ? $"Added {DateFormattingService.Format(Game.Added.Value, appearanceSettings.DateTimeFormatAdded)}"
-        : "Added: Unknown";
+        ? FormatLabel("LOCAddedLabel", "Added",
+            DateFormattingService.Format(Game.Added.Value, appearanceSettings.DateTimeFormatAdded))
+        : FormatLabel("LOCAddedLabel", "Added", Localize("LOCUnknown", "Unknown"));
     public string ModifiedText => Game.Modified.HasValue
-        ? $"Modified {DateFormattingService.Format(Game.Modified.Value, appearanceSettings.DateTimeFormatModified)}"
-        : "Modified: Unknown";
+        ? FormatLabel("LOCModifiedLabel", "Modified",
+            DateFormattingService.Format(Game.Modified.Value, appearanceSettings.DateTimeFormatModified))
+        : FormatLabel("LOCModifiedLabel", "Modified", Localize("LOCUnknown", "Unknown"));
     public string RecentActivityText => Game.RecentActivity.HasValue
-        ? $"Recent activity {DateFormattingService.Format(Game.RecentActivity.Value, appearanceSettings.DateTimeFormatRecentActivity)}"
-        : "Recent activity: None";
+        ? FormatLabel("LOCRecentActivityLabel", "Recent activity",
+            DateFormattingService.Format(Game.RecentActivity.Value, appearanceSettings.DateTimeFormatRecentActivity))
+        : FormatLabel("LOCRecentActivityLabel", "Recent activity", Localize("LOCNone", "None"));
     public string ReleaseDateText => Game.ReleaseDate.HasValue
         ? FormatReleaseDate(Game.ReleaseDate.Value)
-        : "Release date: Unknown";
-    public string ReleaseYearText => Game.ReleaseYear?.ToString() ?? "Unknown";
-    public string LibraryText => $"Library: {Game.PluginId}";
-    public string VersionText => string.IsNullOrWhiteSpace(Game.Version) ? "Version: Unknown" : $"Version: {Game.Version}";
+        : FormatLabel("LOCGameReleaseDateTitle", "Release date", Localize("LOCUnknown", "Unknown"));
+    public string ReleaseYearText => Game.ReleaseYear?.ToString() ?? Localize("LOCUnknown", "Unknown");
+    public string LibraryText => FormatLabel("LOCGameProviderTitle", "Library", Game.PluginId.ToString());
+    public string VersionText => FormatLabel(
+        "LOCVersionLabel", "Version",
+        string.IsNullOrWhiteSpace(Game.Version) ? Localize("LOCUnknown", "Unknown") : Game.Version);
     public string InstallSizeText => Game.InstallSize.HasValue
-        ? $"Install size: {Game.InstallSize.Value / 1024d / 1024d:0.##} MB"
-        : "Install size: Unknown";
+        ? FormatLabel("LOCInstallSizeLabel", "Install size", $"{Game.InstallSize.Value / 1024d / 1024d:0.##} MB")
+        : FormatLabel("LOCInstallSizeLabel", "Install size", Localize("LOCUnknown", "Unknown"));
     public string InstallDirectoryText => string.IsNullOrWhiteSpace(Game.InstallDirectory)
-        ? "Install directory: Unknown"
-        : $"Install directory: {Game.InstallDirectory}";
-    public string NotesText => string.IsNullOrWhiteSpace(Game.Notes) ? "Notes: None" : $"Notes: {Game.Notes}";
-    public string SourceName => database.Sources[Game.SourceId]?.Name ?? "No source";
+        ? FormatLabel("LOCGameInstallDirTitle", "Installation folder", Localize("LOCUnknown", "Unknown"))
+        : FormatLabel("LOCGameInstallDirTitle", "Installation folder", Game.InstallDirectory);
+    public string NotesText => FormatLabel(
+        "LOCNotesLabel", "Notes",
+        string.IsNullOrWhiteSpace(Game.Notes) ? Localize("LOCNone", "None") : Game.Notes);
+    public string SourceName => database.Sources[Game.SourceId]?.Name ?? Localize("LOCNoSource", "No source");
     public string PlatformName => Game.PlatformIds?.Select(id => database.Platforms[id]?.Name)
-        .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? "No platform";
-    public string CompletionStatusName => database.CompletionStatuses[Game.CompletionStatusId]?.Name ?? "No status";
-    public string UserScoreText => Game.UserScore.HasValue ? $"User score {Game.UserScore}/100" : "Not rated";
-    public string CriticScoreText => Game.CriticScore.HasValue ? $"Critic score {Game.CriticScore}/100" : "No critic score";
-    public string CommunityScoreText => Game.CommunityScore.HasValue
-        ? $"Community score {Game.CommunityScore}/100"
-        : "No community score";
-    public string GenresText => FormatNames("Genres", Game.GenreIds, id => database.Genres[id]?.Name);
-    public string PlatformsText => FormatNames("Platforms", Game.PlatformIds, id => database.Platforms[id]?.Name);
-    public string CategoriesText => FormatNames("Categories", Game.CategoryIds, id => database.Categories[id]?.Name);
-    public string TagsText => FormatNames("Tags", Game.TagIds, id => database.Tags[id]?.Name);
-    public string DevelopersText => FormatNames("Developers", Game.DeveloperIds, id => database.Companies[id]?.Name);
-    public string PublishersText => FormatNames("Publishers", Game.PublisherIds, id => database.Companies[id]?.Name);
-    public string FeaturesText => FormatNames("Features", Game.FeatureIds, id => database.Features[id]?.Name);
-    public string SeriesText => FormatNames("Series", Game.SeriesIds, id => database.Series[id]?.Name);
+        .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? Localize("LOCNoPlatform", "No platform");
+    public string CompletionStatusName => database.CompletionStatuses[Game.CompletionStatusId]?.Name ?? Localize("LOCNone", "None");
+    public string UserScoreText => FormatLabel(
+        "LOCUserScore", "User score",
+        Game.UserScore.HasValue ? $"{Game.UserScore}/100" : Localize("LOCNone", "None"));
+    public string CriticScoreText => FormatLabel(
+        "LOCCriticScore", "Critic score",
+        Game.CriticScore.HasValue ? $"{Game.CriticScore}/100" : Localize("LOCNone", "None"));
+    public string CommunityScoreText => FormatLabel(
+        "LOCCommunityScore", "Community score",
+        Game.CommunityScore.HasValue ? $"{Game.CommunityScore}/100" : Localize("LOCNone", "None"));
+    public string GenresText => FormatNames(Localize("LOCGenresLabel", "Genres"), Game.GenreIds, id => database.Genres[id]?.Name);
+    public string PlatformsText => FormatNames(Localize("LOCPlatformsTitle", "Platforms"), Game.PlatformIds, id => database.Platforms[id]?.Name);
+    public string CategoriesText => FormatNames(Localize("LOCCategoriesLabel", "Categories"), Game.CategoryIds, id => database.Categories[id]?.Name);
+    public string TagsText => FormatNames(Localize("LOCTagsLabel", "Tags"), Game.TagIds, id => database.Tags[id]?.Name);
+    public string DevelopersText => FormatNames(Localize("LOCDevelopersLabel", "Developers"), Game.DeveloperIds, id => database.Companies[id]?.Name);
+    public string PublishersText => FormatNames(Localize("LOCPublishersLabel", "Publishers"), Game.PublisherIds, id => database.Companies[id]?.Name);
+    public string FeaturesText => FormatNames(Localize("LOCFeaturesLabel", "Features"), Game.FeatureIds, id => database.Features[id]?.Name);
+    public string SeriesText => FormatNames(Localize("LOCSeriesLabel", "Series"), Game.SeriesIds, id => database.Series[id]?.Name);
     public string AgeRatingsText => FormatAgeRatings();
-    public string RegionsText => FormatNames("Regions", Game.RegionIds, id => database.Regions[id]?.Name);
+    public string RegionsText => FormatNames(Localize("LOCRegionsLabel", "Regions"), Game.RegionIds, id => database.Regions[id]?.Name);
     public string LinksText => FormatLinks(Game.Links);
     public string GameActionsText => FormatGameActions(Game);
     public string RomsText => FormatRoms(Game.Roms);
@@ -120,6 +151,34 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     public double ListIconWidth => appearanceSettings.DetailsViewListIconSize * 0.75;
     public string GroupHeader => groupHeader;
     public bool ShowGroupHeader => showGroupHeader;
+    public bool IsGroupExpanded
+    {
+        get => isGroupExpanded;
+        private set
+        {
+            if (isGroupExpanded == value)
+            {
+                return;
+            }
+
+            isGroupExpanded = value;
+            OnPropertyChanged();
+        }
+    }
+    public ICommand ToggleGroupCommand
+    {
+        get => toggleGroupCommand;
+        private set
+        {
+            if (ReferenceEquals(toggleGroupCommand, value))
+            {
+                return;
+            }
+
+            toggleGroupCommand = value;
+            OnPropertyChanged();
+        }
+    }
 
     public DesktopGameItemViewModel(Game game, GameDatabase database)
     {
@@ -128,7 +187,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         Game.PropertyChanged += Game_PropertyChanged;
     }
 
-    internal void SetGroup(string header, bool showHeader)
+    internal void SetGroup(string header, bool showHeader, bool expanded = true, Action toggle = null)
     {
         if (groupHeader != header)
         {
@@ -141,6 +200,11 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             showGroupHeader = showHeader;
             OnPropertyChanged(nameof(ShowGroupHeader));
         }
+
+        IsGroupExpanded = expanded;
+        ToggleGroupCommand = showHeader && toggle != null
+            ? new Playnite.Avalonia.App.ViewModels.RelayCommand(toggle)
+            : null;
     }
 
     internal void Refresh()
@@ -257,14 +321,14 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
                 .Take(2));
         }
 
-        return parts.Count == 0 ? "Playnite library" : string.Join("  •  ", parts);
+        return parts.Count == 0 ? Localize("LOCLibrary", "Playnite library") : string.Join("  •  ", parts);
     }
 
     private static string ToPlainText(string html)
     {
         if (string.IsNullOrWhiteSpace(html))
         {
-            return "No description is available for this game.";
+            return Localize("LOCNoGameDescription", "No description is available for this game.");
         }
 
         return WebUtility.HtmlDecode(Regex.Replace(htmlTags.Replace(html, " "), @"\s+", " ")).Trim();
@@ -339,12 +403,14 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             .Select(selector)
             .FirstOrDefault(path => !string.IsNullOrWhiteSpace(path));
 
-    private string FormatReleaseDate(ReleaseDate releaseDate) =>
-        "Released " + DateFormattingService.FormatReleaseDate(
+    private string FormatReleaseDate(ReleaseDate releaseDate) => FormatLabel(
+        "LOCGameReleaseDateTitle",
+        "Release date",
+        DateFormattingService.FormatReleaseDate(
             releaseDate.Date,
             releaseDate.Month.HasValue,
             releaseDate.Day.HasValue,
-            appearanceSettings.DateTimeFormatReleaseDate);
+            appearanceSettings.DateTimeFormatReleaseDate));
 
     private static string FormatNames(
         string label,
@@ -356,7 +422,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .Distinct(StringComparer.CurrentCultureIgnoreCase)
             .ToList();
-        return names.Count == 0 ? $"{label}: None" : $"{label}: {string.Join(", ", names)}";
+        return $"{label}: {(names.Count == 0 ? Localize("LOCNone", "None") : string.Join(", ", names))}";
     }
 
     private static string FormatLinks(IEnumerable<Link> links)
@@ -365,7 +431,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             .Select(link => link?.Name)
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .ToList();
-        return names.Count == 0 ? "Links: None" : $"Links: {string.Join(", ", names)}";
+        return $"{Localize("LOCLinksLabel", "Links")}: " +
+            (names.Count == 0 ? Localize("LOCNone", "None") : string.Join(", ", names));
     }
 
     private string FormatAgeRatings()
@@ -378,7 +445,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             .OrderByDescending(name => name.StartsWith(preferredPrefix, StringComparison.CurrentCultureIgnoreCase))
             .ThenBy(name => name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
-        return names.Count == 0 ? "Age ratings: None" : $"Age ratings: {string.Join(", ", names)}";
+        return $"{Localize("LOCAgeRatingsLabel", "Age ratings")}: " +
+            (names.Count == 0 ? Localize("LOCNone", "None") : string.Join(", ", names));
     }
 
     private static string FormatGameActions(Game game)
@@ -387,11 +455,13 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         if (game.IncludeLibraryPluginAction)
         {
             return customCount == 0
-                ? "Actions: Library plugin"
-                : $"Actions: Library plugin + {customCount:N0} custom";
+                ? $"{Localize("LOCActionsLabel", "Actions")}: {Localize("LOCPlayActionUsePlugin", "Library plugin")}"
+                : $"{Localize("LOCActionsLabel", "Actions")}: {Localize("LOCPlayActionUsePlugin", "Library plugin")} + {customCount:N0} {Localize("LOCCustomLabel", "custom")}";
         }
 
-        return customCount == 0 ? "Actions: None" : $"Actions: {customCount:N0} custom";
+        return customCount == 0
+            ? $"{Localize("LOCActionsLabel", "Actions")}: {Localize("LOCNone", "None")}"
+            : $"{Localize("LOCActionsLabel", "Actions")}: {customCount:N0} {Localize("LOCCustomLabel", "custom")}";
     }
 
     private static string FormatRoms(IEnumerable<GameRom> roms)
@@ -401,7 +471,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             .Select(rom => string.IsNullOrWhiteSpace(rom.Name) ? GetFileName(rom.Path) : rom.Name)
             .Where(name => !string.IsNullOrWhiteSpace(name))
             .ToList();
-        return names.Count == 0 ? "ROMs: None" : $"ROMs: {string.Join(", ", names)}";
+        return $"{Localize("LOCGameRomsTitle", "ROMs")}: " +
+            (names.Count == 0 ? Localize("LOCNone", "None") : string.Join(", ", names));
     }
 
     private static string GetFileName(string path)
@@ -418,10 +489,15 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
 
     private static string FormatInstallation(Game game)
     {
-        var parts = new List<string> { game.IsInstalled ? "Installed" : "Not installed" };
+        var parts = new List<string>
+        {
+            game.IsInstalled
+                ? Localize("LOCGameIsInstalledTitle", "Installed")
+                : Localize("LOCGameIsUnInstalledTitle", "Not installed")
+        };
         if (!string.IsNullOrWhiteSpace(game.Version))
         {
-            parts.Add($"Version {game.Version}");
+            parts.Add($"{Localize("LOCVersionLabel", "Version")} {game.Version}");
         }
 
         if (game.InstallSize.HasValue)
@@ -434,18 +510,32 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             parts.Add(game.InstallDirectory);
         }
 
-        return $"Installation: {string.Join(" • ", parts)}";
+        return $"{Localize("LOCInstallationLabel", "Installation")}: {string.Join(" • ", parts)}";
     }
 
     private static string FormatScripts(Game game)
     {
         var scripts = new List<string>();
-        if (!string.IsNullOrWhiteSpace(game.PreScript)) scripts.Add("pre");
-        if (!string.IsNullOrWhiteSpace(game.GameStartedScript)) scripts.Add("started");
-        if (!string.IsNullOrWhiteSpace(game.PostScript)) scripts.Add("post");
-        var scriptText = scripts.Count == 0 ? "none" : string.Join(", ", scripts);
+        if (!string.IsNullOrWhiteSpace(game.PreScript)) scripts.Add(Localize("LOCScriptTypeStarting", "starting"));
+        if (!string.IsNullOrWhiteSpace(game.GameStartedScript)) scripts.Add(Localize("LOCScriptTypeStarted", "started"));
+        if (!string.IsNullOrWhiteSpace(game.PostScript)) scripts.Add(Localize("LOCScriptTypeExit", "stopped"));
+        var scriptText = scripts.Count == 0 ? Localize("LOCNone", "None") : string.Join(", ", scripts);
         return game.EnableSystemHdr
-            ? $"Scripts: {scriptText} • System HDR"
-            : $"Scripts: {scriptText}";
+            ? $"{Localize("LOCScripts", "Scripts")}: {scriptText} • {Localize("LOCGameHdrTitle", "System HDR")}"
+            : $"{Localize("LOCScripts", "Scripts")}: {scriptText}";
+    }
+
+    private static string FormatLabel(string key, string fallback, string value) =>
+        $"{Localize(key, fallback)}: {value}";
+
+    private static string FormatLocalized(string key, string fallback, params object[] values) =>
+        string.Format(Localize(key, fallback), values);
+
+    private static string Localize(string key, string fallback)
+    {
+        var value = Playnite.SDK.ResourceProvider.GetString(key);
+        return string.IsNullOrWhiteSpace(value) || value == key || value == $"<!{key}!>"
+            ? fallback
+            : value;
     }
 }

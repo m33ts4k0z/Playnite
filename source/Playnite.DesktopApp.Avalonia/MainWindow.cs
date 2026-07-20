@@ -12,6 +12,7 @@ using Playnite.Avalonia.Input;
 using Playnite.DesktopApp.Avalonia.Controls;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
+using Playnite.Scripting.PowerShell;
 
 namespace Playnite.DesktopApp.Avalonia;
 
@@ -62,7 +63,7 @@ public sealed class MainWindow : Window
         this.settingsStore = settingsStore;
         this.options = options;
 
-        Title = "Playnite — Avalonia Desktop Pilot";
+        Title = "Playnite";
         MinWidth = 1100;
         MinHeight = 680;
         Width = Math.Max(MinWidth, settings.WindowWidth);
@@ -97,6 +98,9 @@ public sealed class MainWindow : Window
             Content = mainView
         };
         Content = chrome;
+        DragDrop.SetAllowDrop(mainView, true);
+        DragDrop.AddDragOverHandler(mainView, OnDragOver);
+        DragDrop.AddDropHandler(mainView, OnDrop);
         gamepadBridge = new GamepadInputBridge(this);
         gamepadBridge.MapCommand(
             GamepadButton.DPadLeft,
@@ -123,16 +127,20 @@ public sealed class MainWindow : Window
         viewModel.Updates.ConfigureProgramInstaller(LaunchProgramUpdater);
         trayService = new DesktopTrayService(
             viewModel,
+            settings,
             iconPath,
             RestoreFromTray,
             RequestExit,
             CanOpenFullscreen,
-            OpenFullscreen);
+            () => OpenFullscreen());
         trayService.ApplySettings(settings.EnableTray, ResolveTrayIconPath(settings.TrayIcon));
         viewModel.PluginSettings.ConfigureOwnerHandle(
             () => TryGetPlatformHandle()?.Handle ?? IntPtr.Zero);
         viewModel.InstalledGameImport.ConfigureFilePickers(PickImportFolderAsync, PickExecutableAsync);
         viewModel.SettingsChanged += ViewModel_SettingsChanged;
+        viewModel.ExitRequested += (_, _) => RequestExit();
+        viewModel.RestartRequested += (_, request) => RestartApplication(request);
+        viewModel.InteractivePowerShellRequested += (_, _) => StartInteractivePowerShell();
         if (runtimeHost != null)
         {
             runtimeHost.Actions.GameStateChanged += OnGameRunStateChanged;
@@ -211,22 +219,67 @@ public sealed class MainWindow : Window
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (e.Key != Key.F || !e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (e.Handled)
         {
             return;
         }
 
-        if (settings.GlobalSearchOpenWithLegacySearch)
+        var focused = FocusManager?.GetFocusedElement();
+        var editingText = focused is TextBox;
+        if (e.KeyModifiers == KeyModifiers.Control && e.Key == Key.F)
         {
-            viewModel.OpenGlobalSearch(string.Empty);
-        }
-        else
-        {
-            mainView.SearchBox?.Focus();
-            mainView.SearchBox?.SelectAll();
+            if (settings.GlobalSearchOpenWithLegacySearch)
+            {
+                viewModel.OpenGlobalSearch(string.Empty);
+            }
+            else
+            {
+                mainView.SearchBox?.Focus();
+                mainView.SearchBox?.SelectAll();
+            }
+
+            e.Handled = true;
+            return;
         }
 
-        e.Handled = true;
+        if (editingText)
+        {
+            return;
+        }
+
+        var handled = e.KeyModifiers switch
+        {
+            KeyModifiers.None => e.Key switch
+            {
+                Key.F1 => TryExecute(viewModel.OpenAboutCommand),
+                Key.F3 => TryExecute(viewModel.EditCommand),
+                Key.F4 => TryExecute(viewModel.OpenSettingsCommand),
+                Key.F5 => TryExecute(viewModel.OpenLibrarySyncCommand),
+                Key.F6 => TryExecute(viewModel.SelectRandomGameCommand),
+                Key.F7 => TryExecute(viewModel.SelectRandomFilteredGameCommand),
+                Key.F9 => TryExecute(viewModel.OpenAddonStoreCommand),
+                Key.F11 => OpenFullscreenAndExit(),
+                Key.F12 => TryExecute(viewModel.ReloadScriptsCommand),
+                Key.Insert => TryExecute(viewModel.AddManualGameCommand),
+                Key.Delete => TryExecute(viewModel.RemoveSelectedGamesCommand),
+                Key.Enter => TryExecute(viewModel.ActivateCommand),
+                Key.Escape => TryExecute(viewModel.CloseOverlayCommand),
+                _ => false
+            },
+            KeyModifiers.Alt when e.Key == Key.Q => TryExecute(viewModel.ExitApplicationCommand),
+            KeyModifiers.Control => e.Key switch
+            {
+                Key.D => TryExecute(viewModel.OpenMetadataDownloadCommand),
+                Key.T => TryExecute(viewModel.OpenEmulatorConfigCommand),
+                Key.Q => TryExecute(viewModel.OpenEmulatedImportCommand),
+                Key.E => TryExecute(viewModel.OpenExplorerCommand),
+                Key.G => TryExecute(viewModel.ToggleFilterPanelCommand),
+                Key.W => TryExecute(viewModel.OpenDatabaseFieldsCommand),
+                _ => false
+            },
+            _ => false
+        };
+        e.Handled = handled;
     }
 
     internal void RequestExit()
@@ -292,6 +345,9 @@ public sealed class MainWindow : Window
         }
         discord.IsPresenceEnabled = settings.DiscordPresenceEnabled;
         ApplyTypographyResources();
+        themeManager.ApplyLanguage(
+            Playnite.Avalonia.App.Services.LanguageCatalog.ResolveLanguagePaths(
+                ContentPath("Localization"), settings.Language));
         trayService.ApplySettings(settings.EnableTray, ResolveTrayIconPath(settings.TrayIcon));
         ApplySystemHotKey();
         SaveSettings();
@@ -548,13 +604,13 @@ public sealed class MainWindow : Window
 
     private bool CanOpenFullscreen() => ResolveFullscreenExecutable() != null;
 
-    private void OpenFullscreen()
+    private bool OpenFullscreen()
     {
         var executable = ResolveFullscreenExecutable();
         if (executable == null)
         {
             viewModel.SetStatusMessage("The Fullscreen application is not installed beside this Desktop build.");
-            return;
+            return false;
         }
 
         try
@@ -572,10 +628,12 @@ public sealed class MainWindow : Window
             }
 
             Process.Start(startInfo);
+            return true;
         }
         catch (Exception exception)
         {
             viewModel.SetStatusMessage($"Fullscreen could not be opened: {exception.Message}");
+            return false;
         }
     }
 
@@ -596,6 +654,7 @@ public sealed class MainWindow : Window
         ApplySystemHotKey();
         if (!options.PluginCompatibilityTest && !options.SelfTest)
         {
+            viewModel.ShowFirstTimeWizard();
             try
             {
                 await viewModel.Updates.StartAsync();
@@ -672,4 +731,175 @@ public sealed class MainWindow : Window
 
     private static string ContentPath(params string[] parts) =>
         Path.Combine(new[] { AppContext.BaseDirectory }.Concat(parts).ToArray());
+
+    private static bool TryExecute(System.Windows.Input.ICommand command, object parameter = null)
+    {
+        if (command?.CanExecute(parameter) != true)
+        {
+            return false;
+        }
+
+        command.Execute(parameter);
+        return true;
+    }
+
+    private bool OpenFullscreenAndExit()
+    {
+        if (!OpenFullscreen())
+        {
+            return false;
+        }
+
+        RequestExit();
+        return true;
+    }
+
+    private void RestartApplication(DesktopRestartRequest request)
+    {
+        var executable = Environment.ProcessPath ?? global::Playnite.CoreRuntime.ApplicationExecutablePath();
+        var startInfo = new ProcessStartInfo(executable)
+        {
+            UseShellExecute = false,
+            WorkingDirectory = AppContext.BaseDirectory
+        };
+        foreach (var argument in options.GetRestartArguments())
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+        if (request.SafeMode)
+        {
+            startInfo.ArgumentList.Add("--safestartup");
+        }
+        foreach (var argument in request.ExtraArguments)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+
+        Process.Start(startInfo);
+        RequestExit();
+    }
+
+    private void StartInteractivePowerShell()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            viewModel.SetStatusMessage("Interactive PowerShell is available on Windows only.");
+            return;
+        }
+
+        try
+        {
+            PowerShellRuntime.StartInteractiveSession(new Dictionary<string, object>
+            {
+                ["PlayniteApi"] = runtimeHost?.PluginApi
+            });
+        }
+        catch (Exception exception)
+        {
+            viewModel.SetStatusMessage($"Interactive PowerShell could not be started: {exception.Message}");
+        }
+    }
+
+    private void OnDragOver(object sender, DragEventArgs args)
+    {
+        args.DragEffects = GetDroppedPaths(args).Count > 0 ? DragDropEffects.Copy : DragDropEffects.None;
+        args.Handled = true;
+    }
+
+    private void OnDrop(object sender, DragEventArgs args)
+    {
+        var paths = GetDroppedPaths(args);
+        if (paths.Count == 0)
+        {
+            args.Handled = true;
+            return;
+        }
+
+        foreach (var path in paths)
+        {
+            try
+            {
+                if (Directory.Exists(path))
+                {
+                    var scan = runtimeHost?.Dialogs.ShowMessage(
+                        $"Scan '{path}' for installed games?",
+                        "Import games",
+                        new[] { "Scan", "Cancel" },
+                        0,
+                        1) == "Scan";
+                    if (scan)
+                    {
+                        viewModel.ImportDroppedFolder(path);
+                    }
+                    continue;
+                }
+
+                var extension = Path.GetExtension(path);
+                if (extension.Equals(global::Playnite.PlaynitePaths.PackedExtensionFileExtention, StringComparison.OrdinalIgnoreCase) ||
+                    extension.Equals(global::Playnite.PlaynitePaths.PackedThemeFileExtention, StringComparison.OrdinalIgnoreCase))
+                {
+                    InstallDroppedAddon(path, extension);
+                }
+                else if (!viewModel.ImportDroppedGame(path))
+                {
+                    viewModel.SetStatusMessage($"The dropped file type '{extension}' is not supported.");
+                }
+            }
+            catch (Exception exception)
+            {
+                viewModel.SetStatusMessage($"The dropped item could not be imported: {exception.Message}");
+            }
+        }
+
+        args.DragEffects = DragDropEffects.Copy;
+        args.Handled = true;
+    }
+
+    private void InstallDroppedAddon(string path, string extension)
+    {
+        string name;
+        if (extension.Equals(global::Playnite.PlaynitePaths.PackedThemeFileExtention, StringComparison.OrdinalIgnoreCase))
+        {
+            global::Playnite.Plugins.ExtensionInstaller.VerifyThemePackage(path);
+            var manifest = global::Playnite.Plugins.ExtensionInstaller.GetPackedThemeManifest(path);
+            manifest.VerifyManifest();
+            name = manifest.Name;
+        }
+        else
+        {
+            global::Playnite.Plugins.ExtensionInstaller.VerifyExtensionPackage(path);
+            var manifest = global::Playnite.Plugins.ExtensionInstaller.GetPackedExtensionManifest(path);
+            manifest.VerifyManifest();
+            name = manifest.Name;
+        }
+
+        var install = runtimeHost?.Dialogs.ShowMessage(
+            $"Queue '{name}' for installation?",
+            "Install add-on",
+            new[] { "Install", "Cancel" },
+            0,
+            1) == "Install";
+        if (!install)
+        {
+            return;
+        }
+
+        global::Playnite.Plugins.ExtensionInstaller.QueuePackageInstall(path);
+        var restart = runtimeHost.Dialogs.ShowMessage(
+            "The add-on will be installed after Playnite restarts.",
+            "Restart required",
+            new[] { "Restart now", "Later" },
+            0,
+            1) == "Restart now";
+        if (restart)
+        {
+            RestartApplication(new DesktopRestartRequest(false));
+        }
+    }
+
+    private static IReadOnlyList<string> GetDroppedPaths(DragEventArgs args) =>
+        args.DataTransfer.TryGetFiles()
+            ?.Select(file => file.TryGetLocalPath())
+            .Where(path => !string.IsNullOrWhiteSpace(path) && (File.Exists(path) || Directory.Exists(path)))
+            .ToList() ?? new List<string>();
 }
