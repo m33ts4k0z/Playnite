@@ -46,7 +46,7 @@ public sealed class DesktopWindowChrome : ContentControl
         ConfigureButton(closeButton, WindowDecorationsElementRole.CloseButton, RequestClose);
     }
 
-    internal void Minimize() => window.WindowState = WindowState.Minimized;
+    internal void Minimize() => window.Minimize();
 
     internal void ToggleMaximize() =>
         window.WindowState = window.WindowState == WindowState.Maximized

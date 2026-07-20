@@ -134,6 +134,9 @@ internal interface IDesktopAddonStoreService
 internal sealed class DesktopAddonStoreService : IDesktopAddonStoreService
 {
     private static readonly Version NativeSdkVersion = new(7, 0);
+    // The portable shell loads SDK v7 into the process, so SdkVersions cannot
+    // describe the separately hosted Windows compatibility generation there.
+    private static readonly Version LegacySdkVersion = new(6, 16);
     private readonly IDesktopAddonCatalogClient client;
     private readonly HttpClient httpClient;
     private readonly ConcurrentDictionary<string, InstallerLookup> installerCache =
@@ -469,16 +472,16 @@ internal sealed class DesktopAddonStoreService : IDesktopAddonStoreService
                 compatible ? string.Empty : $"Requires SDK {required}; this build supports {NativeSdkVersion}.");
         }
 
-        if (required.Major == SdkVersions.SDKVersion.Major)
+        if (required.Major == LegacySdkVersion.Major)
         {
-            var compatible = supportsLegacyV6 && required <= SdkVersions.SDKVersion;
+            var compatible = supportsLegacyV6 && required <= LegacySdkVersion;
             return new DesktopAddonPackageChoice(
                 package,
                 compatible,
                 compatible
                     ? string.Empty
                     : supportsLegacyV6
-                        ? $"Requires SDK {required}; this build supports {SdkVersions.SDKVersion}."
+                        ? $"Requires SDK {required}; this build supports {LegacySdkVersion}."
                         : "SDK v6/WPF add-ons are supported on Windows only; Linux requires SDK v7.");
         }
 
@@ -500,7 +503,7 @@ internal sealed class DesktopAddonStoreService : IDesktopAddonStoreService
 
         if (!supportsLegacyV6 &&
             type is not AddonType.ThemeDesktop and not AddonType.ThemeFullscreen &&
-            packages.Any(package => package.Package.RequiredApiVersion?.Major == SdkVersions.SDKVersion.Major))
+            packages.Any(package => package.Package.RequiredApiVersion?.Major == LegacySdkVersion.Major))
         {
             return "SDK v6/WPF add-ons are supported on Windows only; Linux requires SDK v7.";
         }

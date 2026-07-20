@@ -43,6 +43,7 @@ public sealed class MainWindow : Window
     internal DesktopWindowChrome Chrome => chrome;
     internal DesktopTrayService TrayService => trayService;
     internal bool HasClosed => hasClosed;
+    internal int MinimizeRequestCount { get; private set; }
     internal AvaloniaThemePackage ActiveThemePackage => activeThemePackage;
     internal HotKey RegisteredSystemHotKey => systemHotKeyService.RegisteredHotKey;
     internal GamepadInputBridge GamepadBridge => gamepadBridge;
@@ -215,6 +216,23 @@ public sealed class MainWindow : Window
 
         Activate();
         mainView.FocusSelectedGame();
+    }
+
+    internal void Minimize()
+    {
+        if (hasClosed)
+        {
+            return;
+        }
+
+        MinimizeRequestCount++;
+        if (settings.EnableTray && settings.MinimizeToTray)
+        {
+            HideToTray();
+            return;
+        }
+
+        WindowState = WindowState.Minimized;
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -511,7 +529,7 @@ public sealed class MainWindow : Window
         switch (settings.AfterLaunch)
         {
             case AfterLaunchOption.Minimize:
-                WindowState = WindowState.Minimized;
+                Minimize();
                 break;
             case AfterLaunchOption.Close when !options.SelfTest:
                 RequestExit();

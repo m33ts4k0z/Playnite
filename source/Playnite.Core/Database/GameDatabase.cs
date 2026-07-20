@@ -824,6 +824,7 @@ namespace Playnite.Database
             }
 
             string localPath = null;
+            var ownsLocalPath = file.HasContent || file.Path.IsHttpUrl();
             try
             {
                 localPath = file.GetLocalFile(cancelToken);
@@ -839,7 +840,7 @@ namespace Playnite.Database
             }
 
             var finalFile = AddFile(localPath, parentId, isImage, cancelToken);
-            if (localPath.StartsWith(PlaynitePaths.TempPath))
+            if (ownsLocalPath && localPath.StartsWith(PlaynitePaths.TempPath))
             {
                 FileSystem.DeleteFile(localPath);
             }
@@ -1445,7 +1446,9 @@ namespace Playnite.Database
 
         public HashSet<string> GetImportedRomFiles(string emulatorDir)
         {
-            var importedRoms = new HashSet<string>();
+            var importedRoms = new HashSet<string>(OperatingSystem.IsWindows()
+                ? StringComparer.OrdinalIgnoreCase
+                : StringComparer.Ordinal);
             foreach (var game in Games.Where(a => a.Roms.HasItems()))
             {
                 try
@@ -1457,7 +1460,7 @@ namespace Playnite.Database
                             continue;
                         }
 
-                        var path = ExpandGameVariables(game, rom.Path, true, emulatorDir).ToLowerInvariant();
+                        var path = ExpandGameVariables(game, rom.Path, true, emulatorDir);
                         string absPath = null;
                         try
                         {

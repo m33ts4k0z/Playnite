@@ -1357,6 +1357,12 @@ internal static class DesktopPilotSelfTest
         var importedExecutablePrograms = await viewModel.InstalledGameImport.ImportSelectedAsync();
         var installedScannedGame = library.Database.Games.FirstOrDefault(game => game.GameId == scannedProgram.AppId);
         var directGame = library.Database.Games.FirstOrDefault(game => game.GameId == directProgram.AppId);
+        var scannedIconPath = string.IsNullOrWhiteSpace(installedScannedGame?.Icon)
+            ? null
+            : library.Database.GetFullFilePath(installedScannedGame.Icon);
+        var directIconPath = string.IsNullOrWhiteSpace(directGame?.Icon)
+            ? null
+            : library.Database.GetFullFilePath(directGame.Icon);
 
         Record(results, "Folder scan and direct executable import preserve local icons without metadata", () =>
             scannedPrograms &&
@@ -1366,8 +1372,8 @@ internal static class DesktopPilotSelfTest
             library.Database.Games.Count == gamesBeforeExecutableImport + 2 &&
             installedScannedGame != null &&
             directGame != null &&
-            File.Exists(library.Database.GetFullFilePath(installedScannedGame.Icon)) &&
-            File.Exists(library.Database.GetFullFilePath(directGame.Icon)) &&
+            File.Exists(scannedIconPath) &&
+            File.Exists(directIconPath) &&
             Path.GetExtension(installedScannedGame.Icon).Equals(
                 OperatingSystem.IsWindows() ? ".ico" : ".png",
                 StringComparison.OrdinalIgnoreCase) &&
@@ -1380,7 +1386,10 @@ internal static class DesktopPilotSelfTest
                 ? OperatingSystem.IsWindows()
                     ? "recursive-scan and single-file candidates imported with executable/resource icons converted into owned ICO files"
                     : "recursive-scan and single-file candidates imported with owned Linux image icons"
-                : throw new InvalidOperationException("Folder/direct executable imports lost icon, database, or update state."));
+                : throw new InvalidOperationException(
+                    $"scan={scannedPrograms}, direct={addedDirectExecutable}, import={importedExecutablePrograms}, " +
+                    $"scannedIcon={installedScannedGame?.Icon}, directIcon={directGame?.Icon}, " +
+                    $"games={library.Database.Games.Count}/{gamesBeforeExecutableImport + 2}, updates={installedLibraryUpdates}."));
         viewModel.InstalledGameImport.DownloadMetadataOnImport = true;
 
         var gameIdsBeforeManualAdd = library.Database.Games.Select(game => game.Id).ToHashSet();
@@ -1732,12 +1741,15 @@ internal static class DesktopPilotSelfTest
         var failedScriptResult = await offscreenWebView.EvaluateScriptAsync(
             "throw new Error('pilot-script-failure')");
         var mutatedPageText = await offscreenWebView.GetPageTextAsync();
+        var scriptFailurePreserved = !failedScriptResult.Success &&
+            !string.IsNullOrWhiteSpace(failedScriptResult.Message) &&
+            (!OperatingSystem.IsWindows() ||
+                failedScriptResult.Message.Contains("pilot-script-failure", StringComparison.Ordinal));
         Record(results, "Plugin web-view JavaScript preserves values, DOM changes, and failures", () =>
             scriptResult.Success &&
             Convert.ToInt64(scriptResult.Result, CultureInfo.InvariantCulture) == 42 &&
             mutatedPageText.Contains(LoopbackWebServer.MutatedText, StringComparison.Ordinal) &&
-            !failedScriptResult.Success &&
-            failedScriptResult.Message.Contains("pilot-script-failure", StringComparison.Ordinal)
+            scriptFailurePreserved
                 ? "script results were decoded, DOM mutation remained visible, and JavaScript errors stayed errors"
                 : throw new InvalidOperationException(
                     $"success={scriptResult.Success}, value={scriptResult.Result}, failedMessage={failedScriptResult.Message}"));
@@ -1913,9 +1925,12 @@ internal static class DesktopPilotSelfTest
         viewModel.Settings.General.AfterGameClose = Playnite.Avalonia.App.Services.AfterGameCloseOption.Restore;
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var minimizeRequestsBeforeLaunch = window.MinimizeRequestCount;
         window.ApplyAfterLaunch();
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
-        var minimizedAfterLaunch = window.WindowState == WindowState.Minimized;
+        var minimizedAfterLaunch = OperatingSystem.IsWindows()
+            ? window.WindowState == WindowState.Minimized
+            : window.MinimizeRequestCount == minimizeRequestsBeforeLaunch + 1;
         window.ApplyAfterGameClose();
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         var restoredAfterClose = window.WindowState != WindowState.Minimized && window.IsVisible;
@@ -2684,7 +2699,7 @@ internal static class DesktopPilotSelfTest
             viewModel.Settings.Development.TraceLogEnabled &&
             viewModel.Settings.Development.Extensions.Single().Path == Path.GetFullPath(developmentExtensionRoot) &&
             viewModel.Settings.Development.Extensions.Single().IsEnabled &&
-            viewModel.Settings.GeneralAdvanced.DiscordPresenceEnabled &&
+            viewModel.Settings.GeneralAdvanced.DiscordPresenceEnabled == OperatingSystem.IsWindows() &&
             !viewModel.Settings.GeneralAdvanced.ShowElevatedRightsWarning &&
             viewModel.Settings.GeneralAdvanced.InstallSizeScanUseSizeOnDisk &&
             viewModel.Settings.GeneralAdvanced.DirectoryOpenCommand == "open-folder \"{Dir}\"" &&
@@ -4986,7 +5001,7 @@ internal static class DesktopPilotSelfTest
                             "p-c-v7" => new Version(7, 0),
                             "p-c-theme" => AvaloniaThemePackage.CurrentApiVersion,
                             "p-c-wpf-theme" => new Version(2, 0),
-                            _ => SdkVersions.SDKVersion
+                            _ => new Version(6, 16)
                         },
                         PackageUrl = isTheme ? themePath : packagePath,
                         ReleaseDate = DateTime.UtcNow

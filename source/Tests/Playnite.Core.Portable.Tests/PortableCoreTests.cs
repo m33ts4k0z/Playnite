@@ -275,6 +275,53 @@ namespace Playnite.Core.Portable.Tests
         }
 
         [Test]
+        public void DatabaseMetadataImportPreservesLocalSourceUnderTempDirectory()
+        {
+            var sourcePath = Path.Combine(temporaryDirectory, "source.txt");
+            File.WriteAllText(sourcePath, "local metadata source");
+            using (var database = new GameDatabase(Path.Combine(temporaryDirectory, "library-files")))
+            {
+                database.OpenDatabase();
+                var storedPath = database.AddFile(
+                    new MetadataFile(sourcePath),
+                    Guid.NewGuid(),
+                    false,
+                    CancellationToken.None);
+
+                Assert.That(storedPath, Is.Not.Null.And.Not.Empty);
+                Assert.That(File.Exists(database.GetFullFilePath(storedPath)), Is.True);
+                Assert.That(File.Exists(sourcePath), Is.True);
+            }
+        }
+
+        [Test]
+        public void ImportedRomPathsPreserveHostCaseRules()
+        {
+            var emulatorDirectory = Path.Combine(temporaryDirectory, "EmulatorRoot");
+            var relativeRomPath = Path.Combine("MixedCase", "Pilot.rom");
+            var storedRomPath = Path.Combine(ExpandableVariables.EmulatorDirectory, relativeRomPath);
+            using (var database = new GameDatabase(Path.Combine(temporaryDirectory, "rom-library")))
+            {
+                database.OpenDatabase();
+                database.Games.Add(new Game("Case-sensitive ROM")
+                {
+                    Roms = new System.Collections.ObjectModel.ObservableCollection<GameRom>
+                    {
+                        new GameRom { Name = "Pilot", Path = storedRomPath }
+                    }
+                });
+
+                var imported = database.GetImportedRomFiles(emulatorDirectory);
+                var expected = Path.GetFullPath(Path.Combine(emulatorDirectory, relativeRomPath));
+
+                Assert.That(imported.Single(), Is.EqualTo(expected));
+                Assert.That(imported.Comparer, Is.SameAs(OperatingSystem.IsWindows()
+                    ? StringComparer.OrdinalIgnoreCase
+                    : StringComparer.Ordinal));
+            }
+        }
+
+        [Test]
         public void CurrentArchiveProviderReadsZipEntries()
         {
             var archivePath = Path.Combine(temporaryDirectory, "sample.zip");
