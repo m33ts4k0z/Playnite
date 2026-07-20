@@ -9,20 +9,17 @@
                 BorderBrush="#303A49" BorderThickness="{Binding DetailsBorderThickness}">
             <ScrollViewer>
                 <StackPanel Margin="{Binding DetailsContentMargin}" Spacing="15">
+                    <Border Name="PART_DetailsBackground" Height="230" CornerRadius="10" Background="#222B37"
+                            ClipToBounds="True" IsVisible="{Binding DetailsVisibility.BackgroundImage}">
+                        <foundation:GameCoverImage SourcePath="{Binding SelectedGame.BackgroundPath}"
+                                                   Stretch="UniformToFill" />
+                    </Border>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="22">
+                        <StackPanel Grid.Column="0" Spacing="15">
                     <Border Width="64" Height="64" CornerRadius="8" Background="#222B37"
                             HorizontalAlignment="Left" ClipToBounds="True"
                             IsVisible="{Binding DetailsVisibility.Icon}">
                         <foundation:GameCoverImage SourcePath="{Binding SelectedGame.IconPath}"
-                                                   Stretch="UniformToFill" />
-                    </Border>
-                    <Border Name="PART_DetailsCover" Height="{Binding GameDetailsCoverHeight}" CornerRadius="10" Background="#222B37"
-                            ClipToBounds="True" IsVisible="{Binding DetailsVisibility.CoverImage}">
-                        <foundation:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
-                                                   Stretch="UniformToFill" />
-                    </Border>
-                    <Border Height="110" CornerRadius="8" Background="#222B37"
-                            ClipToBounds="True" IsVisible="{Binding DetailsVisibility.BackgroundImage}">
-                        <foundation:GameCoverImage SourcePath="{Binding SelectedGame.BackgroundPath}"
                                                    Stretch="UniformToFill" />
                     </Border>
                     <TextBlock Name="PART_DetailsName" Text="{Binding SelectedGame.Name}" FontSize="{DynamicResource DesktopFontSizeLargest}"
@@ -154,6 +151,17 @@
                         <Button Content="Open install folder"
                                 Command="{Binding OpenInstallDirectoryCommand}" />
                     </StackPanel>
+                        </StackPanel>
+                        <Border Grid.Column="1" Name="PART_DetailsCover"
+                                Width="{Binding GameDetailsCoverWidth}"
+                                Height="{Binding GameDetailsCoverHeight}"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                CornerRadius="10" Background="#222B37"
+                                ClipToBounds="True" IsVisible="{Binding DetailsVisibility.CoverImage}">
+                            <foundation:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
+                                                       Stretch="Uniform" />
+                        </Border>
+                    </Grid>
                 </StackPanel>
             </ScrollViewer>
         </Border>

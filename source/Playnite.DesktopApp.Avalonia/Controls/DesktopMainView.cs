@@ -37,6 +37,7 @@ public sealed class DesktopMainView : TemplatedControl
     public Control DetailsPanel => detailsPanel;
     public TextBlock DetailsName => FindVisualPart<TextBlock>("PART_DetailsName");
     public Border DetailsCover => FindVisualPart<Border>("PART_DetailsCover");
+    public Border DetailsBackground => FindVisualPart<Border>("PART_DetailsBackground");
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {

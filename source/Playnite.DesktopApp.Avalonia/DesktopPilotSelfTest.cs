@@ -2153,6 +2153,7 @@ internal static class DesktopPilotSelfTest
         viewModel.Settings.AppearanceDetailsView.Visibility.Source = false;
         viewModel.Settings.AppearanceDetailsView.Visibility.Description = false;
         viewModel.Settings.AppearanceDetailsView.Visibility.CoverImage = true;
+        viewModel.Settings.AppearanceDetailsView.Visibility.BackgroundImage = true;
         viewModel.Settings.AppearanceDetailsView.IndentGameDetails = true;
         viewModel.Settings.AppearanceDetailsView.GameDetailsIndentation = 40;
         viewModel.Settings.AppearanceDetailsView.GameDetailsCoverHeight = 360;
@@ -2169,6 +2170,10 @@ internal static class DesktopPilotSelfTest
         var detailsApplied = !window.MainView.DetailsName.IsVisible &&
             window.MainView.DetailsCover.IsVisible &&
             Math.Abs(window.MainView.DetailsCover.Height - 360) < 0.01 &&
+            Math.Abs(window.MainView.DetailsCover.Width - viewModel.GameDetailsCoverWidth) < 0.01 &&
+            window.MainView.DetailsCover.HorizontalAlignment == global::Avalonia.Layout.HorizontalAlignment.Right &&
+            window.MainView.DetailsBackground.IsVisible &&
+            Math.Abs(window.MainView.DetailsBackground.Height - 230) < 0.01 &&
             Grid.GetColumn(window.MainView.DetailsPanel) == 1 &&
             Math.Abs(viewModel.FirstContentColumnWidth.Value - 420) < 0.01 &&
             viewModel.DetailsBorderThickness == default &&
@@ -2179,9 +2184,10 @@ internal static class DesktopPilotSelfTest
             Math.Abs(Playnite.Avalonia.Controls.ScrollBehavior.GetWheelSensitivity(detailsScroll) - 3) < 0.01;
         Record(results, "Desktop details visibility and layout settings apply live", () =>
             detailsApplied
-                ? "field visibility, cover/indent/icon geometry, left layout, width, separators, and scrolling updated"
+                ? "header background, right-aligned portrait cover, field visibility, indent/icon geometry, left layout, width, separators, and scrolling updated"
                 : throw new InvalidOperationException(
-                    $"name={window.MainView.DetailsName.IsVisible}, cover={window.MainView.DetailsCover.IsVisible}/{window.MainView.DetailsCover.Height}, " +
+                    $"name={window.MainView.DetailsName.IsVisible}, cover={window.MainView.DetailsCover.IsVisible}/{window.MainView.DetailsCover.Width}x{window.MainView.DetailsCover.Height}/{window.MainView.DetailsCover.HorizontalAlignment}, " +
+                    $"background={window.MainView.DetailsBackground.IsVisible}/{window.MainView.DetailsBackground.Height}, " +
                     $"column={Grid.GetColumn(window.MainView.DetailsPanel)}, width={viewModel.FirstContentColumnWidth.Value}, " +
                     $"border={viewModel.DetailsBorderThickness}, margin={viewModel.DetailsContentMargin.Left}, " +
                     $"icon={viewModel.SelectedGame.ListIconHeight}, scroll={detailsScroll != null}/" +

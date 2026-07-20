@@ -255,6 +255,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         TimeSpan.FromMilliseconds(settings.DetailsViewScrollDurationMilliseconds);
     public bool DetailsViewSmoothScrollEnabled => settings.DetailsViewSmoothScrollEnabled;
     public double GameDetailsCoverHeight => settings.GameDetailsCoverHeight;
+    public double GameDetailsCoverWidth => Math.Clamp(settings.GameDetailsCoverHeight * 0.65, 90, 240);
     public double ListIconHeight => settings.DetailsViewListIconSize;
     public double ListIconWidth => settings.DetailsViewListIconSize * 0.75;
     public Thickness DetailsContentMargin => settings.IndentGameDetails
@@ -1674,6 +1675,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(DetailsViewScrollDuration));
         OnPropertyChanged(nameof(DetailsViewSmoothScrollEnabled));
         OnPropertyChanged(nameof(GameDetailsCoverHeight));
+        OnPropertyChanged(nameof(GameDetailsCoverWidth));
         OnPropertyChanged(nameof(ListIconHeight));
         OnPropertyChanged(nameof(ListIconWidth));
         OnPropertyChanged(nameof(DetailsContentMargin));
