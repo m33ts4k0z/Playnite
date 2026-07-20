@@ -14,6 +14,7 @@ namespace Playnite.Avalonia.App.Services;
 public sealed partial class AvaloniaRuntimeHost : IDisposable
 {
     private readonly AvaloniaHostCallbacks callbacks;
+    private readonly GameDatabase database;
     private readonly GameControllerFactory controllers;
     private readonly ExtensionFactory extensions;
     private readonly GameActionRunner actionRunner;
@@ -46,6 +47,7 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
     public AvaloniaRuntimeHost(GameDatabase database, AvaloniaHostCallbacks callbacks)
     {
         ArgumentNullException.ThrowIfNull(database);
+        this.database = database;
         this.callbacks = callbacks ?? throw new ArgumentNullException(nameof(callbacks));
         ArgumentNullException.ThrowIfNull(callbacks.Settings);
         ArgumentNullException.ThrowIfNull(callbacks.Dialogs);

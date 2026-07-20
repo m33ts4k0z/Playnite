@@ -16,7 +16,7 @@ using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
 
 namespace Playnite.DesktopApp.Avalonia.ViewModels;
 
-public sealed class DesktopAppViewModel : INotifyPropertyChanged
+public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
 {
     private static readonly IReadOnlyList<SortOrder> sortOptions = new[]
     {
@@ -101,6 +101,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         get => selectedGame;
         set
         {
+            value ??= Games.FirstOrDefault();
             if (ReferenceEquals(selectedGame, value))
             {
                 return;
@@ -109,6 +110,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             selectedGame = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(ShowWindowBackgroundImage));
+            SynchronizeSelectedGamesWithPrimary(value);
             MetadataDownload?.RefreshTargetSummary();
             RaiseGameCommandStates();
         }
@@ -223,6 +225,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             selectedFilterPreset = value;
             settings.ActiveFilterPreset = value?.Id ?? Guid.Empty;
             OnPropertyChanged();
+            LoadWorkingFilter(value?.Settings ?? new FilterPresetSettings(), false);
             if (value?.SortingOrder != null)
             {
                 SelectedSortOrder = value.SortingOrder.Value;
@@ -248,7 +251,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     public IReadOnlyList<SortOrderDirection> SortDirectionOptions { get; } =
         Enum.GetValues<SortOrderDirection>();
     public IReadOnlyList<GroupableField> GroupingOptions => groupingOptions;
-    public IReadOnlyList<FilterPreset> FilterPresets { get; }
+    public ObservableCollection<FilterPreset> FilterPresets { get; }
     public bool IsGridView => SelectedViewMode == "Grid";
     public bool IsListView => SelectedViewMode == "List";
     public double GridItemWidth => settings.GridItemWidth;
@@ -474,14 +477,17 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         }
         this.games = allGames;
         selectedGame = allGames.FirstOrDefault();
+        InitializeLibrarySelection();
         selectedViewMode = this.settings.ViewMode is "Grid" or "List" ? this.settings.ViewMode : "Grid";
         selectedSortOrder = this.settings.SortOrder;
         selectedSortDirection = this.settings.SortDirection;
         selectedGrouping = this.settings.Grouping;
-        FilterPresets = database?.GetSortedFilterPresets() ?? new List<FilterPreset>();
+        FilterPresets = new ObservableCollection<FilterPreset>(
+            database?.GetSortedFilterPresets() ?? new List<FilterPreset>());
         selectedFilterPreset = FilterPresets.FirstOrDefault(preset => preset.Id == this.settings.ActiveFilterPreset) ??
             FilterPresets.FirstOrDefault(preset => preset.Name == "All") ??
             FilterPresets.FirstOrDefault();
+        InitializeFilterPanel();
         statusText = startupError == null
             ? "Phase 5 Desktop runtime ready"
             : $"Library unavailable: {startupError}";
@@ -677,7 +683,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             () => RunOperation(GameOperationKind.Uninstall),
             () => SelectedGame?.IsInstalled == true);
         EditCommand = new AppRelayCommand(
-            () => OpenGameEditor(SelectedGame.Game.Id),
+            () => OpenGameEditor(GetSelectedGameIds()),
             () => SelectedGame != null && database != null && !Editor.IsVisible &&
                 !MetadataDownload.IsVisible && !MetadataDownload.IsRunning &&
                 !LibrarySync.IsVisible && !LibrarySync.IsRunning &&
@@ -764,6 +770,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             () => SelectedDialogOption != null);
         CancelDialogCommand = new AppRelayCommand(() => CompleteDialog(
             DialogOptions.Count == 0 ? null : DialogOptions[Math.Clamp(dialogCancelIndex, 0, DialogOptions.Count - 1)]));
+        InitializeLibraryInteractionCommands();
 
         ApplyFilters();
     }
@@ -835,33 +842,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
     public void SwitchToLibraryView() => CloseOverlays();
 
-    private void OpenInstallDirectory()
-    {
-        var path = SelectedGame?.Game.InstallDirectory;
-        if (string.IsNullOrWhiteSpace(path) || !Directory.Exists(path))
-        {
-            return;
-        }
-
-        try
-        {
-            if (string.IsNullOrWhiteSpace(settings.DirectoryOpenCommand))
-            {
-                Playnite.Common.Explorer.OpenDirectory(path);
-            }
-            else
-            {
-                Playnite.Common.ProcessStarter.ShellExecute(
-                    settings.DirectoryOpenCommand.Replace("{Dir}", path, StringComparison.Ordinal));
-            }
-        }
-        catch (Exception exception)
-        {
-            var message = $"The install directory could not be opened: {exception.Message}";
-            runtimeHost?.ShowMessage(message, true);
-            StatusText = message;
-        }
-    }
+    private void OpenInstallDirectory() => OpenInstallDirectory(SelectedGame?.Game);
 
     internal void ActivateGame(Guid gameId)
     {
@@ -931,7 +912,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
     }
 
     public FilterPresetSettings GetCurrentFilterSettings() =>
-        SelectedFilterPreset?.Settings ?? new FilterPresetSettings();
+        CloneFilterSettings(GetWorkingFilterSettings());
 
     public bool OpenPluginSettings(Guid pluginId) => PluginSettings.OpenSettings(pluginId);
 
@@ -1142,8 +1123,9 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
         CloseOverlays();
         PluginMenuItems.Clear();
+        var selectedGames = GetSelectedGames();
         var items = forSelectedGame
-            ? runtimeHost.GetGameMenuActions([SelectedGame.Game])
+            ? runtimeHost.GetGameMenuActions(selectedGames)
             : runtimeHost.GetMainMenuActions();
         foreach (var item in items)
         {
@@ -1295,6 +1277,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         IsActionPickerVisible = false;
         IsDialogVisible = false;
         IsPluginMenuVisible = false;
+        IsFilterPanelVisible = false;
         SelectedPluginMenuItem = null;
         ClosePluginSidebar();
         Settings.Close();
@@ -1305,7 +1288,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         IEnumerable<DesktopGameItemViewModel> filtered = allGames;
         if (database != null)
         {
-            var filterSettings = SelectedFilterPreset?.Settings ?? new FilterPresetSettings();
+            var filterSettings = GetWorkingFilterSettings();
             filtered = filtered.Where(game =>
                 database.GetGameMatchesFilter(game.Game, filterSettings, settings.FuzzyMatchingInNameFilter));
         }
@@ -1349,9 +1332,8 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
             previousGroup = group;
         }
 
-        var previous = SelectedGame;
         Games = materialized;
-        SelectedGame = previous != null && Games.Contains(previous) ? previous : Games.FirstOrDefault();
+        RetainSelectedGames(Games);
         MetadataDownload?.RefreshTargetSummary();
     }
 
@@ -1443,6 +1425,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
         ((AppRelayCommand)OpenPluginGameMenuCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)OpenInstallDirectoryCommand).RaiseCanExecuteChanged();
         ((AppRelayCommand)InvokePluginMenuItemCommand).RaiseCanExecuteChanged();
+        RaiseLibraryInteractionCommandStates();
     }
 
     private void SynchronizeLibrary()
@@ -1480,9 +1463,7 @@ public sealed class DesktopAppViewModel : INotifyPropertyChanged
 
     private IReadOnlyList<Game> ResolveMetadataGames(Playnite.Metadata.MetadataGamesSource source) => source switch
     {
-        Playnite.Metadata.MetadataGamesSource.Selected => SelectedGame == null
-            ? Array.Empty<Game>()
-            : new[] { SelectedGame.Game },
+        Playnite.Metadata.MetadataGamesSource.Selected => GetSelectedGames(),
         Playnite.Metadata.MetadataGamesSource.Filtered => Games.Select(game => game.Game).ToList(),
         Playnite.Metadata.MetadataGamesSource.AllFromDB => allGames.Select(game => game.Game).ToList(),
         _ => Array.Empty<Game>()

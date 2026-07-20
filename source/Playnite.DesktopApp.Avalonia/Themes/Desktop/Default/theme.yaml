@@ -13,5 +13,6 @@ Resources:
   - Views/GridItemTemplate.axaml
   - Views/ListItemTemplate.axaml
   - Views/DetailsPanel.axaml
+  - Views/FilterPanel.axaml
 Styles:
   - Styles.axaml

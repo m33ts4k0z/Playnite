@@ -52,10 +52,10 @@ internal static class DesktopPilotSelfTest
         Record(results, "Avalonia theme API 3 package contract validates", () =>
             window.ActiveThemePackage.Mode == AvaloniaThemeMode.Desktop &&
             window.ActiveThemePackage.Manifest?.ThemeApiVersion == AvaloniaThemePackage.CurrentApiVersion.ToString() &&
-            window.ActiveThemePackage.ResourceDictionaries.Count == 7 &&
+            window.ActiveThemePackage.ResourceDictionaries.Count == 8 &&
             window.ActiveThemePackage.SelectorStyles.Count == 1
                 ? $"{window.ActiveThemePackage.Name} targets theme API {AvaloniaThemePackage.CurrentApiVersion} " +
-                  "with six modular main-view dictionaries"
+                  "with seven modular main-view dictionaries"
                 : throw new InvalidOperationException("The default Desktop theme package is incomplete."));
 
         Record(results, "Avalonia 12 native window chrome contract applies", () =>
@@ -2955,6 +2955,166 @@ internal static class DesktopPilotSelfTest
             return $"settings round-tripped at {store.SettingsPath}";
         });
 
+        // Track P-B1–B3: multi-selection, complete game-menu composition,
+        // bulk library verbs, and confirmed removal/exclusion persistence.
+        var librarySelection = viewModel.Games.Take(2).ToList();
+        viewModel.SetSelectedGames(librarySelection, librarySelection.LastOrDefault());
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        Record(results, "Desktop game lists share a native multi-selection contract", () =>
+            librarySelection.Count == 2 && viewModel.SelectedGameCount == 2 &&
+            viewModel.SelectedGames.Select(game => game.Game.Id)
+                .SequenceEqual(librarySelection.Select(game => game.Game.Id)) &&
+            window.MainView.GridGameList.SelectionMode.HasFlag(SelectionMode.Multiple) &&
+            window.MainView.GridGameList.SelectionMode.HasFlag(SelectionMode.AlwaysSelected) &&
+            window.MainView.ListGameList.SelectionMode.HasFlag(SelectionMode.Multiple) &&
+            window.MainView.ListGameList.SelectionMode.HasFlag(SelectionMode.AlwaysSelected) &&
+            window.MainView.GridGameList.ContextMenu != null &&
+            window.MainView.ListGameList.ContextMenu != null
+                ? "grid/list selection, primary game, and native context-menu hosts are synchronized"
+                : throw new InvalidOperationException(
+                    $"selection={viewModel.SelectedGameCount}, expected={librarySelection.Count}, " +
+                    $"primary={viewModel.SelectedGame?.Name ?? "none"}, " +
+                    $"grid={window.MainView.GridGameList.SelectionMode}/" +
+                    $"{window.MainView.GridGameList.SelectedItems?.Count}, " +
+                    $"list={window.MainView.ListGameList.SelectionMode}/" +
+                    $"{window.MainView.ListGameList.SelectedItems?.Count}, " +
+                    $"menus={window.MainView.GridGameList.ContextMenu != null}/" +
+                    $"{window.MainView.ListGameList.ContextMenu != null}."));
+
+        using var contextMenuScript = new PilotMenuScript(
+            Path.Combine(library.ActiveUserDataDirectory, "p-b-context-menu.psm1"));
+        window.RuntimeHost.Extensions.Scripts.Add(contextMenuScript);
+        var contextEntries = viewModel.BuildGameContextMenu();
+        window.RuntimeHost.Extensions.Scripts.Remove(contextMenuScript);
+        var flattenedContextEntries = FlattenContextMenu(contextEntries).ToList();
+        Record(results, "Desktop game context menu covers bulk verbs and hierarchical extensions", () =>
+            contextEntries.Count > 0 &&
+            flattenedContextEntries.Any(entry => entry.Header.Contains("Edit", StringComparison.OrdinalIgnoreCase)) &&
+            flattenedContextEntries.Any(entry => entry.Header.Contains("category", StringComparison.OrdinalIgnoreCase)) &&
+            flattenedContextEntries.Any(entry => entry.Header.Contains("completion", StringComparison.OrdinalIgnoreCase)) &&
+            flattenedContextEntries.Any(entry => entry.Header.Contains("Remove", StringComparison.OrdinalIgnoreCase)) &&
+            contextEntries.Any(entry => entry.Header == "Scripts" && entry.Children.Count > 0) &&
+            flattenedContextEntries.Any(entry => entry.Header == "Script game command")
+                ? $"{flattenedContextEntries.Count} native entries include bulk edit/fields/remove and nested sections"
+                : throw new InvalidOperationException(
+                    "Context entries: " + string.Join(" | ", flattenedContextEntries.Select(entry => entry.Header))));
+
+        viewModel.SetSelectedFavoriteCommand.Execute(true);
+        viewModel.SetSelectedHdrCommand.Execute(true);
+        viewModel.SetSelectedHiddenCommand.Execute(true);
+        Record(results, "Bulk favorite, hide, and HDR verbs persist through Core", () =>
+            librarySelection.All(item =>
+            {
+                var persisted = library.Database.Games[item.Game.Id];
+                return persisted?.Favorite == true && persisted.Hidden && persisted.EnableSystemHdr;
+            })
+                ? $"three flags persisted for {librarySelection.Count} selected games"
+                : throw new InvalidOperationException(string.Join(" | ", librarySelection.Select(item =>
+                {
+                    var persisted = library.Database.Games[item.Game.Id];
+                    return $"{item.Name}: favorite={persisted?.Favorite}, hidden={persisted?.Hidden}, " +
+                        $"hdr={persisted?.EnableSystemHdr}";
+                }))));
+
+        var removalPluginId = Guid.NewGuid();
+        var removalGame = new Game
+        {
+            Name = "P-B removal contract",
+            GameId = "p-b-remove",
+            PluginId = removalPluginId
+        };
+        library.Database.Games.Add(removalGame);
+        var removedCount = viewModel.RemoveGamesWithoutConfirmation(new[] { removalGame }, true);
+        var exclusionId = ImportExclusionItem.GetId(removalGame.GameId, removalPluginId);
+        Record(results, "Remove-from-library preserves the future-import exclusion choice", () =>
+            removedCount == 1 && library.Database.Games[removalGame.Id] == null &&
+            library.Database.ImportExclusions[exclusionId]?.GameId == removalGame.GameId
+                ? "the Core game was removed and its stable library exclusion was stored"
+                : throw new InvalidOperationException("Removal or import exclusion persistence failed."));
+
+        // Track P-B B4-B5: full live filter surface and Core preset lifecycle.
+        viewModel.ToggleFilterPanelCommand.Execute(null);
+        var filterFields = viewModel.FilterGroups.Select(group => group.Field).ToHashSet();
+        Record(results, "Desktop filter panel exposes every Core filter field", () =>
+            viewModel.IsFilterPanelVisible && viewModel.FilterFieldCount == 29 &&
+            viewModel.FilterGroups.Count == 23 && filterFields.SetEquals(new[]
+            {
+                nameof(FilterPresetSettings.Platform), nameof(FilterPresetSettings.Library),
+                nameof(FilterPresetSettings.Genre), nameof(FilterPresetSettings.ReleaseYear),
+                nameof(FilterPresetSettings.Developer), nameof(FilterPresetSettings.Publisher),
+                nameof(FilterPresetSettings.Category), nameof(FilterPresetSettings.Tag),
+                nameof(FilterPresetSettings.Feature), nameof(FilterPresetSettings.PlayTime),
+                nameof(FilterPresetSettings.InstallSize), nameof(FilterPresetSettings.CompletionStatuses),
+                nameof(FilterPresetSettings.Series), nameof(FilterPresetSettings.Region),
+                nameof(FilterPresetSettings.Source), nameof(FilterPresetSettings.AgeRating),
+                nameof(FilterPresetSettings.UserScore), nameof(FilterPresetSettings.CommunityScore),
+                nameof(FilterPresetSettings.CriticScore), nameof(FilterPresetSettings.LastActivity),
+                nameof(FilterPresetSettings.RecentActivity), nameof(FilterPresetSettings.Added),
+                nameof(FilterPresetSettings.Modified)
+            })
+                ? "29 fields include text, state, taxonomy, score, date, playtime, and install-size filters"
+                : throw new InvalidOperationException(
+                    $"fields={viewModel.FilterFieldCount}, groups={viewModel.FilterGroups.Count}, " +
+                    $"visible={viewModel.IsFilterPanelVisible}."));
+
+        var filterProbe = viewModel.LibraryGames.First(game => !game.Game.Hidden);
+        var liveFilter = new FilterPresetSettings
+        {
+            Name = $"!{filterProbe.Name}",
+            IsInstalled = filterProbe.Game.IsInstalled,
+            IsUnInstalled = !filterProbe.Game.IsInstalled,
+            UseAndFilteringStyle = true
+        };
+        viewModel.ApplyFilterSettingsForTest(liveFilter);
+        Record(results, "Desktop filter edits evaluate live through the Core matcher", () =>
+            viewModel.IsFilterActive && viewModel.LiveFilterMatchCount > 0 &&
+            viewModel.Games.Any(game => game.Game.Id == filterProbe.Game.Id) &&
+            viewModel.Games.All(game => library.Database.GetGameMatchesFilter(
+                game.Game,
+                viewModel.GetCurrentFilterSettings(),
+                false))
+                ? $"{viewModel.FilterMatchSummary}; AND style and active indicator are live"
+                : throw new InvalidOperationException(
+                    $"active={viewModel.IsFilterActive}, live={viewModel.LiveFilterMatchCount}, " +
+                    $"visible={viewModel.Games.Count}."));
+
+        var libraryGroup = viewModel.FilterGroups.Single(group =>
+            group.Field == nameof(FilterPresetSettings.Library));
+        libraryGroup.Options.First(option => option.Count > 0).IsSelected = true;
+        var selectedLibraryIds = viewModel.GetCurrentFilterSettings().Library?.Ids;
+        Record(results, "Database-backed filter options update the working SDK model", () =>
+            selectedLibraryIds?.Count == 1 && libraryGroup.SelectedCount == 1
+                ? $"{libraryGroup.DisplayTitle} persisted its selected library ID"
+                : throw new InvalidOperationException("The selected database option was not reflected in the SDK filter."));
+
+        var presetName = $"P-B preset {Guid.NewGuid():N}";
+        var savedPreset = viewModel.SaveFilterPresetForTest(presetName);
+        var savedPresetId = savedPreset.Id;
+        Record(results, "Filter preset save persists filters and view options through Core", () =>
+            library.Database.FilterPresets[savedPresetId]?.Settings?.Name == liveFilter.Name &&
+            library.Database.FilterPresets[savedPresetId]?.Settings?.Library?.Ids?.Count == 1 &&
+            library.Database.FilterPresets[savedPresetId]?.SortingOrder == viewModel.SelectedSortOrder &&
+            viewModel.FilterPresets.Any(preset => preset.Id == savedPresetId)
+                ? "the preset stores the complete working filter plus sorting/grouping choices"
+                : throw new InvalidOperationException("The saved filter preset did not round-trip through Core."));
+
+        var renamedPresetName = $"{presetName} renamed";
+        viewModel.RenameFilterPresetForTest(savedPreset, renamedPresetName);
+        var renamedPreset = library.Database.FilterPresets[savedPresetId];
+        Record(results, "Filter preset rename persists through Core", () =>
+            renamedPreset?.Name == renamedPresetName && viewModel.SelectedFilterPreset?.Id == savedPresetId
+                ? "the renamed preset remains selected in the live collection"
+                : throw new InvalidOperationException("The filter preset rename did not persist."));
+
+        viewModel.DeleteFilterPresetForTest(renamedPreset);
+        Record(results, "Filter preset delete clears selection and persists through Core", () =>
+            library.Database.FilterPresets[savedPresetId] == null &&
+            viewModel.FilterPresets.All(preset => preset.Id != savedPresetId) &&
+            viewModel.SelectedFilterPreset == null && !viewModel.IsFilterActive
+                ? "the preset was removed and the working filter returned to its clear state"
+                : throw new InvalidOperationException("The deleted filter preset remained active or persisted."));
+        viewModel.CloseFilterPanelCommand.Execute(null);
+
         // Track P-A: construct every shared dialog surface, verify SDK v6
         // routing/round-trip models, and construct (but never show) crash UX.
         Record(results, "Shared SDK dialog primitives construct and round-trip", () =>
@@ -2997,6 +3157,19 @@ internal static class DesktopPilotSelfTest
         catch (Exception exception)
         {
             results.Add((name, false, exception.Message));
+        }
+    }
+
+    private static IEnumerable<DesktopGameContextMenuEntry> FlattenContextMenu(
+        IEnumerable<DesktopGameContextMenuEntry> entries)
+    {
+        foreach (var entry in entries ?? Array.Empty<DesktopGameContextMenuEntry>())
+        {
+            yield return entry;
+            foreach (var child in FlattenContextMenu(entry.Children))
+            {
+                yield return child;
+            }
         }
     }
 

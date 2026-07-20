@@ -75,7 +75,7 @@
                                      IsVisible="{Binding IsGridView}"
                                      Background="Transparent"
                                      ItemsSource="{Binding Games}"
-                                     SelectedItem="{Binding SelectedGame, Mode=TwoWay}"
+                                     SelectionMode="Multiple,AlwaysSelected"
                                      ItemTemplate="{DynamicResource DesktopGridItemTemplate}">
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -92,7 +92,7 @@
                                      IsVisible="{Binding IsListView}"
                                      Background="Transparent"
                                      ItemsSource="{Binding Games}"
-                                     SelectedItem="{Binding SelectedGame, Mode=TwoWay}"
+                                     SelectionMode="Multiple,AlwaysSelected"
                                      ItemTemplate="{DynamicResource DesktopListItemTemplate}" />
                         </Grid>
 
@@ -106,6 +106,12 @@
                                    VerticalAlignment="Center"
                                    Foreground="{DynamicResource DesktopMutedBrush}" />
                     </Border>
+
+                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsFilterPanelVisible}"
+                          Background="#E6000000">
+                        <ContentControl Template="{DynamicResource DesktopFilterPanelTemplate}"
+                                        HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Grid>
 
                     <Grid Grid.RowSpan="3" IsVisible="{Binding PluginSearch.IsVisible}"
                           Background="#E6000000">

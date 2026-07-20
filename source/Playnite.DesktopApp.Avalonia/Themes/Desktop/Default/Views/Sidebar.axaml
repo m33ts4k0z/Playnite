@@ -21,6 +21,10 @@
                     <TextBlock Text="{DynamicResource LOCDesktopPreset}" Classes="sectionLabel" />
                     <ComboBox ItemsSource="{Binding FilterPresets}"
                               SelectedItem="{Binding SelectedFilterPreset, Mode=TwoWay}" />
+                    <Button Content="Open filters"
+                            Command="{Binding ToggleFilterPanelCommand}" />
+                    <TextBlock Text="{Binding FilterActiveIndicator}" FontSize="11"
+                               Foreground="{DynamicResource DesktopAccentBrush}" />
                     <CheckBox Content="{DynamicResource LOCDesktopInstalled}"
                               IsChecked="{Binding InstalledOnly, Mode=TwoWay}" />
                     <CheckBox Content="{DynamicResource LOCDesktopFavorites}"

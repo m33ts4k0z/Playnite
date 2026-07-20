@@ -1,5 +1,8 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Playnite.Avalonia.Controls;
@@ -15,6 +18,7 @@ public sealed class DesktopMainView : TemplatedControl
     private TextBox pluginSearchBox;
     private Control detailsPanel;
     private DesktopAppViewModel observedViewModel;
+    private bool synchronizingSelection;
 
     public int TemplateAppliedCount { get; private set; }
     public ListBox GameList => gridGameList?.IsVisible == true ? gridGameList : listGameList;
@@ -38,17 +42,22 @@ public sealed class DesktopMainView : TemplatedControl
     {
         base.OnApplyTemplate(e);
         TemplateAppliedCount++;
+        DetachGameList(gridGameList);
+        DetachGameList(listGameList);
         gridGameList = e.NameScope.Find<ListBox>("PART_GridGameList");
         listGameList = e.NameScope.Find<ListBox>("PART_ListGameList");
         searchBox = e.NameScope.Find<TextBox>("PART_SearchBox");
         pluginSearchBox = e.NameScope.Find<TextBox>("PART_PluginSearchBox");
         detailsPanel = e.NameScope.Find<Control>("PART_DetailsPanel");
+        AttachGameList(gridGameList);
+        AttachGameList(listGameList);
         ObserveViewModel();
         Dispatcher.UIThread.Post(() =>
         {
             searchBox ??= FindVisualPart<TextBox>("PART_SearchBox");
             pluginSearchBox ??= FindVisualPart<TextBox>("PART_PluginSearchBox");
             ApplyScrollSettings();
+            SynchronizeGameSelection();
             FocusSelectedGame();
         }, DispatcherPriority.Loaded);
     }
@@ -102,6 +111,7 @@ public sealed class DesktopMainView : TemplatedControl
         if (observedViewModel != null)
         {
             observedViewModel.PropertyChanged += ViewModel_PropertyChanged;
+            SynchronizeGameSelection();
         }
     }
 
@@ -120,6 +130,14 @@ public sealed class DesktopMainView : TemplatedControl
             ApplyScrollSettings();
         }
 
+        if (e.PropertyName is nameof(DesktopAppViewModel.SelectedGame) or
+            nameof(DesktopAppViewModel.SelectedGames) or
+            nameof(DesktopAppViewModel.IsGridView) or
+            nameof(DesktopAppViewModel.IsListView))
+        {
+            Dispatcher.UIThread.Post(() => SynchronizeGameSelection(), DispatcherPriority.Input);
+        }
+
         if (e.PropertyName != nameof(DesktopAppViewModel.IsPluginSearchVisible) ||
             observedViewModel?.IsPluginSearchVisible != true || pluginSearchBox == null)
         {
@@ -135,6 +153,152 @@ public sealed class DesktopMainView : TemplatedControl
 
     private T FindVisualPart<T>(string name) where T : Control =>
         this.GetVisualDescendants().OfType<T>().FirstOrDefault(control => control.Name == name);
+
+    private void AttachGameList(ListBox listBox)
+    {
+        if (listBox == null)
+        {
+            return;
+        }
+
+        listBox.SelectionChanged += GameList_SelectionChanged;
+        listBox.PointerPressed += GameList_PointerPressed;
+        var menu = new ContextMenu();
+        menu.Opened += (_, _) => PopulateContextMenu(menu);
+        listBox.ContextMenu = menu;
+    }
+
+    private void DetachGameList(ListBox listBox)
+    {
+        if (listBox == null)
+        {
+            return;
+        }
+
+        listBox.SelectionChanged -= GameList_SelectionChanged;
+        listBox.PointerPressed -= GameList_PointerPressed;
+        listBox.ContextMenu = null;
+    }
+
+    private void GameList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (synchronizingSelection || observedViewModel == null || sender is not ListBox listBox ||
+            !listBox.IsVisible)
+        {
+            return;
+        }
+
+        var selected = listBox.SelectedItems?
+            .OfType<DesktopGameItemViewModel>()
+            .ToList() ?? new List<DesktopGameItemViewModel>();
+        observedViewModel.SetSelectedGames(selected, listBox.SelectedItem as DesktopGameItemViewModel);
+        SynchronizeGameSelection(listBox);
+    }
+
+    private void GameList_PointerPressed(object sender, PointerPressedEventArgs e)
+    {
+        if (sender is not ListBox listBox ||
+            e.GetCurrentPoint(listBox).Properties.PointerUpdateKind != PointerUpdateKind.RightButtonPressed)
+        {
+            return;
+        }
+
+        var source = e.Source as Visual;
+        var container = source as ListBoxItem ??
+            source?.GetVisualAncestors().OfType<ListBoxItem>().FirstOrDefault();
+        var game = container?.DataContext as DesktopGameItemViewModel;
+        if (game == null || listBox.SelectedItems?.Contains(game) == true)
+        {
+            return;
+        }
+
+        synchronizingSelection = true;
+        try
+        {
+            listBox.SelectedItems?.Clear();
+            listBox.SelectedItems?.Add(game);
+            listBox.SelectedItem = game;
+        }
+        finally
+        {
+            synchronizingSelection = false;
+        }
+        observedViewModel?.SetSelectedGames(new[] { game }, game);
+        SynchronizeGameSelection(listBox);
+    }
+
+    private void SynchronizeGameSelection(ListBox source = null)
+    {
+        if (synchronizingSelection || observedViewModel == null)
+        {
+            return;
+        }
+
+        synchronizingSelection = true;
+        try
+        {
+            SynchronizeListSelection(gridGameList, source);
+            SynchronizeListSelection(listGameList, source);
+        }
+        finally
+        {
+            synchronizingSelection = false;
+        }
+    }
+
+    private void SynchronizeListSelection(ListBox listBox, ListBox source)
+    {
+        if (listBox == null || ReferenceEquals(listBox, source))
+        {
+            return;
+        }
+
+        listBox.SelectedItems?.Clear();
+        listBox.SelectedItem = observedViewModel.SelectedGame;
+        foreach (var game in observedViewModel.SelectedGames)
+        {
+            if (observedViewModel.Games.Contains(game) && listBox.SelectedItems?.Contains(game) != true)
+            {
+                listBox.SelectedItems?.Add(game);
+            }
+        }
+    }
+
+    private void PopulateContextMenu(ContextMenu menu)
+    {
+        var entries = observedViewModel?.BuildGameContextMenu() ??
+            Array.Empty<DesktopGameContextMenuEntry>();
+        menu.ItemsSource = entries.Select(CreateContextMenuItem).ToList();
+    }
+
+    private static object CreateContextMenuItem(DesktopGameContextMenuEntry entry)
+    {
+        if (entry.IsSeparator)
+        {
+            return new Separator();
+        }
+
+        var item = new MenuItem
+        {
+            Header = entry.Header,
+            IsEnabled = entry.IsEnabled,
+            FontWeight = entry.IsBold ? FontWeight.Bold : FontWeight.Normal
+        };
+        if (entry.IsChecked.HasValue)
+        {
+            item.ToggleType = MenuItemToggleType.CheckBox;
+            item.IsChecked = entry.IsChecked.Value;
+        }
+        if (entry.Children.Count > 0)
+        {
+            item.ItemsSource = entry.Children.Select(CreateContextMenuItem).ToList();
+        }
+        else
+        {
+            item.Click += (_, _) => entry.Invoke();
+        }
+        return item;
+    }
 
     private void ApplyScrollSettings()
     {
