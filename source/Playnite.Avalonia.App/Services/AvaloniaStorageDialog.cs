@@ -9,13 +9,16 @@ public static class AvaloniaStorageDialog
     public static IReadOnlyList<string> SelectFiles(
         Window owner,
         string filter,
-        bool allowMultiple)
+        bool allowMultiple,
+        string initialDirectory = null)
     {
         ArgumentNullException.ThrowIfNull(owner);
+        var startLocation = ResolveStartLocation(owner, initialDirectory);
         var files = RunAsync(() => owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             AllowMultiple = allowMultiple,
-            FileTypeFilter = ParseFileTypes(filter)
+            FileTypeFilter = ParseFileTypes(filter),
+            SuggestedStartLocation = startLocation
         }));
         return files
             .Select(file => file.TryGetLocalPath())
@@ -23,14 +26,34 @@ public static class AvaloniaStorageDialog
             .ToList();
     }
 
-    public static string SelectFolder(Window owner)
+    public static string SelectFolder(Window owner, string initialDirectory = null)
     {
         ArgumentNullException.ThrowIfNull(owner);
+        var startLocation = ResolveStartLocation(owner, initialDirectory);
         var folders = RunAsync(() => owner.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            AllowMultiple = false
+            AllowMultiple = false,
+            SuggestedStartLocation = startLocation
         }));
         return folders.FirstOrDefault()?.TryGetLocalPath();
+    }
+
+    public static string SaveFile(
+        Window owner,
+        string filter,
+        bool promptOverwrite,
+        string initialDirectory = null)
+    {
+        ArgumentNullException.ThrowIfNull(owner);
+        var types = ParseFileTypes(filter);
+        var file = RunAsync(() => owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            FileTypeChoices = types,
+            DefaultExtension = GetDefaultExtension(types),
+            ShowOverwritePrompt = promptOverwrite,
+            SuggestedStartLocation = ResolveStartLocation(owner, initialDirectory)
+        }));
+        return file?.TryGetLocalPath();
     }
 
     private static IReadOnlyList<FilePickerFileType> ParseFileTypes(string filter)
@@ -64,6 +87,32 @@ public static class AvaloniaStorageDialog
         }
 
         return types;
+    }
+
+    private static IStorageFolder ResolveStartLocation(Window owner, string initialDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(initialDirectory))
+        {
+            return null;
+        }
+
+        var fullPath = Path.GetFullPath(initialDirectory);
+        if (File.Exists(fullPath))
+        {
+            fullPath = Path.GetDirectoryName(fullPath);
+        }
+
+        return Directory.Exists(fullPath)
+            ? RunAsync(() => owner.StorageProvider.TryGetFolderFromPathAsync(fullPath))
+            : null;
+    }
+
+    private static string GetDefaultExtension(IReadOnlyList<FilePickerFileType> types)
+    {
+        var pattern = types?.FirstOrDefault()?.Patterns?.FirstOrDefault(candidate =>
+            candidate.StartsWith("*.", StringComparison.Ordinal) &&
+            candidate.IndexOfAny(new[] { '*', '?' }, 1) < 0);
+        return pattern?[2..];
     }
 
     private static T RunAsync<T>(Func<Task<T>> operation)

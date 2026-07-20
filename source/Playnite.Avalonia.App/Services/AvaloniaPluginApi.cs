@@ -206,50 +206,7 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
 
     private object HandleDialogCall(MethodInfo method, object[] args)
     {
-        if (method.Name == "ShowMessage" || method.Name == "ShowErrorMessage")
-        {
-            var message = args.OfType<string>().FirstOrDefault() ?? method.Name;
-            var caption = args.OfType<string>().Skip(1).FirstOrDefault() ??
-                (method.Name == "ShowErrorMessage" ? "Error" : "Playnite");
-            var customOptions = args.OfType<List<MessageBoxOption>>().FirstOrDefault();
-            if (customOptions != null)
-            {
-                var labels = customOptions.Select(option => option.Title).ToList();
-                var defaultIndex = customOptions.FindIndex(option => option.IsDefault);
-                var cancelIndex = customOptions.FindIndex(option => option.IsCancel);
-                var selected = callbacks.Dialogs.ShowMessage(message, caption, labels, defaultIndex, cancelIndex);
-                return customOptions.FirstOrDefault(option => option.Title == selected) ?? customOptions.FirstOrDefault();
-            }
-
-            if (method.ReturnType.IsEnum)
-            {
-                var available = GetMessageBoxResults(args);
-                var selected = callbacks.Dialogs.ShowMessage(
-                    message,
-                    caption,
-                    available,
-                    0,
-                    available.FindIndex(option => option == "Cancel"));
-                return Enum.Parse(method.ReturnType, selected);
-            }
-
-            callbacks.Dialogs.ShowMessage(message, caption, new[] { "OK" });
-            return null;
-        }
-
-        return InterfaceProxy.DefaultValue(method.ReturnType);
-    }
-
-    private static List<string> GetMessageBoxResults(object[] args)
-    {
-        var button = args.FirstOrDefault(argument => argument?.GetType().FullName == "System.Windows.MessageBoxButton");
-        return button?.ToString() switch
-        {
-            "OKCancel" => new List<string> { "OK", "Cancel" },
-            "YesNo" => new List<string> { "Yes", "No" },
-            "YesNoCancel" => new List<string> { "Yes", "No", "Cancel" },
-            _ => new List<string> { "OK" }
-        };
+        return AvaloniaSdkDialogRouter.Invoke(callbacks.Dialogs, method, args);
     }
 
     private object HandleMainViewCall(MethodInfo method, object[] args)

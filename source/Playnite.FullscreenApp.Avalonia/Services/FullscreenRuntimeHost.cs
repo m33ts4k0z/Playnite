@@ -18,6 +18,7 @@ public sealed class FullscreenRuntimeHost : IDisposable
     internal FullscreenDialogService Dialogs => dialogs;
     public int LoadedPluginCount => host.LoadedPluginCount;
     public int FailedPluginCount => host.FailedPluginCount;
+    public IReadOnlyList<V7LoadedPlugin> V7Plugins => host.V7Plugins;
 
     public FullscreenRuntimeHost(
         PlayniteLibrary library,

@@ -1,0 +1,13 @@
+<Project>
+
+  <!-- Avalonia 12.1.0's package props can be skipped during the inner Linux
+       build of a multi-target project, while its transitive targets still load.
+       Supply the task assembly from NuGet only when the package left the value
+       empty; Windows and future packages that set it correctly are untouched. -->
+  <PropertyGroup Condition="'$(OS)' != 'Windows_NT' and
+                            '$(AvaloniaBuildTasksLocation)' == '' and
+                            Exists('$(NuGetPackageRoot)avalonia/12.1.0/tools/netstandard2.0/Avalonia.Build.Tasks.dll')">
+    <AvaloniaBuildTasksLocation>$(NuGetPackageRoot)avalonia/12.1.0/tools/netstandard2.0/Avalonia.Build.Tasks.dll</AvaloniaBuildTasksLocation>
+  </PropertyGroup>
+
+</Project>

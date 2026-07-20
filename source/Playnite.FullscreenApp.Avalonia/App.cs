@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using Avalonia.Themes.Fluent;
 using Playnite.Avalonia.App.Services;
+using Playnite.Avalonia.Services;
 using Playnite.FullscreenApp.Avalonia.Services;
 using Playnite.FullscreenApp.Avalonia.ViewModels;
 
@@ -10,12 +11,14 @@ namespace Playnite.FullscreenApp.Avalonia;
 
 public sealed class App : Application
 {
+    private static readonly Playnite.SDK.ILogger logger = Playnite.SDK.LogManager.GetLogger();
     private PlayniteLibrary library;
     private FullscreenRuntimeHost runtimeHost;
 
     public override void Initialize()
     {
         Styles.Add(new FluentTheme());
+        AvaloniaCrashHandler.AttachDispatcherHandler();
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -66,9 +69,16 @@ public sealed class App : Application
                     : global::Avalonia.Controls.WindowState.FullScreen;
 
             desktop.MainWindow = window;
+            ConfigureCrashHandler(
+                desktop,
+                window,
+                runtimeHost,
+                settings,
+                settingsStore,
+                options);
             // Parse the loose theme before third-party assemblies enter the process. A plugin
             // with an incompatible dependency must not interfere with Avalonia's XAML discovery.
-            runtimeHost?.InitializePlugins(!options.SelfTest);
+            runtimeHost?.InitializePlugins(!options.SelfTest && !options.SafeStartup);
             Program.InstanceCoordinator?.SetCommandHandler(command =>
                 Dispatcher.UIThread.Post(() =>
                     ProcessCommand(command, window, desktop, runtimeHost, viewModel)));
@@ -126,6 +136,47 @@ public sealed class App : Application
             viewModel.SetStatusMessage($"Invalid Playnite URI: {exception.Message}");
             return false;
         }
+    }
+
+    private static void ConfigureCrashHandler(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        MainWindow window,
+        FullscreenRuntimeHost host,
+        FullscreenSettings settings,
+        FullscreenSettingsStore settingsStore,
+        StartupOptions startupOptions)
+    {
+        AvaloniaCrashHandler.Configure(new AvaloniaCrashHandlerOptions
+        {
+            CurrentWindow = () => window,
+            ExecutablePath = Environment.ProcessPath ?? global::Playnite.CoreRuntime.ApplicationExecutablePath(),
+            RestartArguments = startupOptions.GetRestartArguments(),
+            LogException = (exception, source) => logger.Error(exception, source),
+            AttributeException = exception => AvaloniaPluginCrashAttribution.Resolve(
+                exception,
+                host?.Extensions,
+                host?.V7Plugins),
+            DisablePlugin = pluginId =>
+            {
+                if (!settings.DisabledPlugins.Contains(pluginId, StringComparer.OrdinalIgnoreCase))
+                {
+                    settings.DisabledPlugins.Add(pluginId);
+                    settingsStore.Save(settings);
+                }
+            },
+            SaveLogPackage = global::Playnite.Diagnostic.CreateLogPackage,
+            SaveDiagnosticPackage = (path, description) =>
+                global::Playnite.Diagnostic.CreateDiagPackage(
+                    path,
+                    description,
+                    new global::Playnite.DiagnosticPackageInfo
+                    {
+                        IsCrashPackage = true,
+                        PlayniteVersion = global::Playnite.CoreRuntime.ApplicationVersion().ToString()
+                    }),
+            ReportIssue = () => Playnite.Common.ProcessStarter.StartUrl(global::Playnite.UrlConstants.Issues),
+            RequestShutdown = () => desktop.Shutdown()
+        });
     }
 
     private static FullscreenSettings LoadOrImportSettings(

@@ -35,6 +35,7 @@ public enum GamepadButton
 public sealed class GamepadInputBridge : IDisposable
 {
     private readonly TopLevel topLevel;
+    private TopLevel activeTopLevel;
     private readonly Dictionary<GamepadButton, ICommand> commandMap = new();
     private readonly Dictionary<GamepadButton, DispatcherTimer> repeatTimers = new();
     private bool disposed;
@@ -56,6 +57,20 @@ public sealed class GamepadInputBridge : IDisposable
     public GamepadInputBridge(TopLevel topLevel)
     {
         this.topLevel = topLevel ?? throw new ArgumentNullException(nameof(topLevel));
+        activeTopLevel = topLevel;
+    }
+
+    public IDisposable RedirectTo(TopLevel target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        TopLevel previous = null;
+        RunOnUiThread(() =>
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            previous = activeTopLevel;
+            activeTopLevel = target;
+        });
+        return new InputTargetScope(this, previous);
     }
 
     public void MapCommand(GamepadButton button, ICommand command)
@@ -143,7 +158,9 @@ public sealed class GamepadInputBridge : IDisposable
 
     private void Dispatch(GamepadButton button)
     {
-        if (commandMap.TryGetValue(button, out var command))
+        var targetTopLevel = activeTopLevel ?? topLevel;
+        if (ReferenceEquals(targetTopLevel, topLevel) &&
+            commandMap.TryGetValue(button, out var command))
         {
             if (command.CanExecute(null))
             {
@@ -154,7 +171,7 @@ public sealed class GamepadInputBridge : IDisposable
 
         if (navigationKeys.TryGetValue(button, out var key))
         {
-            var target = topLevel.FocusManager?.GetFocusedElement() as InputElement ?? topLevel;
+            var target = targetTopLevel.FocusManager?.GetFocusedElement() as InputElement ?? targetTopLevel;
             target.RaiseEvent(new KeyEventArgs
             {
                 RoutedEvent = InputElement.KeyDownEvent,
@@ -174,6 +191,35 @@ public sealed class GamepadInputBridge : IDisposable
         else
         {
             Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Input).GetAwaiter().GetResult();
+        }
+    }
+
+    private sealed class InputTargetScope : IDisposable
+    {
+        private GamepadInputBridge owner;
+        private readonly TopLevel previous;
+
+        public InputTargetScope(GamepadInputBridge owner, TopLevel previous)
+        {
+            this.owner = owner;
+            this.previous = previous;
+        }
+
+        public void Dispose()
+        {
+            var bridge = Interlocked.Exchange(ref owner, null);
+            if (bridge == null)
+            {
+                return;
+            }
+
+            RunOnUiThread(() =>
+            {
+                if (!bridge.disposed)
+                {
+                    bridge.activeTopLevel = previous ?? bridge.topLevel;
+                }
+            });
         }
     }
 }

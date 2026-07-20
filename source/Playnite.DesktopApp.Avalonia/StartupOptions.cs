@@ -20,6 +20,7 @@ internal sealed class StartupOptions
     public bool StartClosedToTray { get; private set; }
     public bool Shutdown { get; private set; }
     public bool HostLaunchSelfTest { get; private set; }
+    public bool SafeStartup { get; private set; }
     public LinuxIntegrationCommand IntegrationCommand { get; private set; }
 
     public static StartupOptions Parse(string[] args)
@@ -69,6 +70,9 @@ internal sealed class StartupOptions
                 case "--host-launch-self-test":
                     options.HostLaunchSelfTest = true;
                     break;
+                case "--safestartup":
+                    options.SafeStartup = true;
+                    break;
             }
         }
 
@@ -79,6 +83,22 @@ internal sealed class StartupOptions
         options.UserDataDirectory ??= global::Playnite.PlaynitePaths.ConfigRootPath;
         options.LibraryPath ??= Path.Combine(options.UserDataDirectory, "library");
 #endif
+        if (options.SafeStartup)
+        {
+            // An explicit empty override prevents MainWindow from falling back
+            // to the persisted third-party theme without mutating that setting.
+            options.CustomThemePath = string.Empty;
+        }
         return options;
+    }
+
+    public IReadOnlyList<string> GetRestartArguments()
+    {
+        var arguments = new List<string>
+        {
+            "--userdatadir", UserDataDirectory,
+            "--library-path", LibraryPath
+        };
+        return arguments;
     }
 }

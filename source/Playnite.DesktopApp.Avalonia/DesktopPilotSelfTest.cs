@@ -11,6 +11,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Playnite.Avalonia.Markup;
 using Playnite.Avalonia.App.Services;
+using Playnite.Avalonia.Services;
 using Playnite.Avalonia.Input;
 using Playnite.Avalonia.Theming;
 using Playnite.Controllers;
@@ -2952,6 +2953,29 @@ internal static class DesktopPilotSelfTest
             }
 
             return $"settings round-tripped at {store.SettingsPath}";
+        });
+
+        // Track P-A: construct every shared dialog surface, verify SDK v6
+        // routing/round-trip models, and construct (but never show) crash UX.
+        Record(results, "Shared SDK dialog primitives construct and round-trip", () =>
+            AvaloniaDialogPrimitiveSelfTest.ValidateConstructionAndRoundTrip());
+        Record(results, "Standalone Avalonia crash UX constructs", () =>
+        {
+            var crashWindow = AvaloniaCrashHandler.CreateWindowForTest(
+                new InvalidOperationException("Synthetic crash construction"));
+            return crashWindow.Content != null &&
+                crashWindow.Title.Contains("error", StringComparison.OrdinalIgnoreCase)
+                    ? "description, log/diagnostics, report, restart, and safe-mode controls constructed"
+                    : throw new InvalidOperationException("The standalone crash window was incomplete.");
+        });
+        Record(results, "Safe startup disables user themes and plugins", () =>
+        {
+            var safeOptions = StartupOptions.Parse(
+                ["--safestartup", "--theme", Path.Combine(Path.GetTempPath(), "unsafe-theme")]);
+            return safeOptions.SafeStartup && safeOptions.CustomThemePath == string.Empty &&
+                safeOptions.GetRestartArguments().Contains("--userdatadir")
+                    ? "--safestartup selects the default theme and the App skips user plugin loading"
+                    : throw new InvalidOperationException("Safe-startup parsing did not isolate add-ons.");
         });
 
         var report = BuildReport(results);

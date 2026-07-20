@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using Avalonia.Themes.Fluent;
 using Playnite.Avalonia.App.Services;
+using Playnite.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
 
@@ -18,6 +19,7 @@ public sealed class App : Application
     public override void Initialize()
     {
         Styles.Add(new FluentTheme());
+        AvaloniaCrashHandler.AttachDispatcherHandler();
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -201,13 +203,20 @@ public sealed class App : Application
                 options.SelfTest || options.PluginCompatibilityTest ? null : settingsStore,
                 options);
             desktop.MainWindow = window;
+            ConfigureCrashHandler(
+                desktop,
+                window,
+                runtimeHost,
+                settings,
+                settingsStore,
+                options);
             // Parse the loose theme before third-party assemblies enter the process. A plugin
             // with an incompatible dependency must not interfere with Avalonia's XAML discovery.
             var externalExtensions = (settings.DevelopmentExtensions ?? new List<DevelopmentExtensionPath>())
                 .Where(extension => extension?.IsEnabled == true && !string.IsNullOrWhiteSpace(extension.Path))
                 .Select(extension => extension.Path)
                 .ToList();
-            runtimeHost?.InitializePlugins(!options.SelfTest, externalExtensions);
+            runtimeHost?.InitializePlugins(!options.SelfTest && !options.SafeStartup, externalExtensions);
             Program.InstanceCoordinator?.SetCommandHandler(command =>
                 Dispatcher.UIThread.Post(() =>
                     ProcessCommand(command, window, desktop, runtimeHost, viewModel)));
@@ -321,6 +330,44 @@ public sealed class App : Application
         {
             return false;
         }
+    }
+
+    private static void ConfigureCrashHandler(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        MainWindow window,
+        AvaloniaRuntimeHost host,
+        DesktopSettings settings,
+        DesktopSettingsStore settingsStore,
+        StartupOptions startupOptions)
+    {
+        AvaloniaCrashHandler.Configure(new AvaloniaCrashHandlerOptions
+        {
+            CurrentWindow = () => window,
+            ExecutablePath = Environment.ProcessPath ?? global::Playnite.CoreRuntime.ApplicationExecutablePath(),
+            RestartArguments = startupOptions.GetRestartArguments(),
+            LogException = (exception, source) => logger.Error(exception, source),
+            AttributeException = exception => AvaloniaPluginCrashAttribution.Resolve(exception, host),
+            DisablePlugin = pluginId =>
+            {
+                if (!settings.DisabledPlugins.Contains(pluginId, StringComparer.OrdinalIgnoreCase))
+                {
+                    settings.DisabledPlugins.Add(pluginId);
+                    settingsStore.Save(settings);
+                }
+            },
+            SaveLogPackage = global::Playnite.Diagnostic.CreateLogPackage,
+            SaveDiagnosticPackage = (path, description) =>
+                global::Playnite.Diagnostic.CreateDiagPackage(
+                    path,
+                    description,
+                    new global::Playnite.DiagnosticPackageInfo
+                    {
+                        IsCrashPackage = true,
+                        PlayniteVersion = global::Playnite.CoreRuntime.ApplicationVersion().ToString()
+                    }),
+            ReportIssue = () => Playnite.Common.ProcessStarter.StartUrl(global::Playnite.UrlConstants.Issues),
+            RequestShutdown = () => desktop.Shutdown()
+        });
     }
 
     private static DesktopSettings LoadOrImportSettings(

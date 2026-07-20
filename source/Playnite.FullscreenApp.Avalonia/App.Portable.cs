@@ -2,16 +2,19 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Threading;
 using Avalonia.Themes.Fluent;
+using Playnite.Avalonia.Services;
 
 namespace Playnite.FullscreenApp.Avalonia;
 
 public sealed class App : Application
 {
+    private static readonly Playnite.SDK.ILogger logger = Playnite.SDK.LogManager.GetLogger();
     private FullscreenLibrary library;
 
     public override void Initialize()
     {
         Styles.Add(new FluentTheme());
+        AvaloniaCrashHandler.AttachDispatcherHandler();
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -39,6 +42,7 @@ public sealed class App : Application
 
             var window = new MainWindow(library, startupError, options);
             desktop.MainWindow = window;
+            ConfigureCrashHandler(desktop, window, options);
             Program.InstanceCoordinator?.SetCommandHandler(command =>
                 Dispatcher.UIThread.Post(() => ProcessCommand(command, window, desktop)));
             if (!string.IsNullOrWhiteSpace(options.UriData))
@@ -50,6 +54,32 @@ public sealed class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private static void ConfigureCrashHandler(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        MainWindow window,
+        StartupOptions startupOptions)
+    {
+        AvaloniaCrashHandler.Configure(new AvaloniaCrashHandlerOptions
+        {
+            CurrentWindow = () => window,
+            ExecutablePath = Environment.ProcessPath ?? global::Playnite.CoreRuntime.ApplicationExecutablePath(),
+            RestartArguments = startupOptions.GetRestartArguments(),
+            LogException = (exception, source) => logger.Error(exception, source),
+            SaveLogPackage = global::Playnite.Diagnostic.CreateLogPackage,
+            SaveDiagnosticPackage = (path, description) =>
+                global::Playnite.Diagnostic.CreateDiagPackage(
+                    path,
+                    description,
+                    new global::Playnite.DiagnosticPackageInfo
+                    {
+                        IsCrashPackage = true,
+                        PlayniteVersion = global::Playnite.CoreRuntime.ApplicationVersion().ToString()
+                    }),
+            ReportIssue = () => Playnite.Common.ProcessStarter.StartUrl(global::Playnite.UrlConstants.Issues),
+            RequestShutdown = () => desktop.Shutdown()
+        });
     }
 
     private static void ProcessCommand(

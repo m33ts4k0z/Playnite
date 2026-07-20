@@ -1,5 +1,6 @@
 using Avalonia;
 using Playnite.Common;
+using Playnite.Avalonia.Services;
 using Playnite.SDK;
 using System.Text.Json;
 
@@ -15,6 +16,7 @@ internal static class Program
     public static int Main(string[] args)
     {
         Options = StartupOptions.Parse(args);
+        AvaloniaCrashHandler.AttachProcessHandlers();
         RuntimeOutputDirectory = Options.SelfTest
             ? Path.Combine(Path.GetTempPath(), "Playnite", "SelfTests")
             : Options.UserDataDirectory;

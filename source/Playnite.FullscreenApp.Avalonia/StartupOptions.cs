@@ -9,6 +9,7 @@ internal sealed class StartupOptions
     public string CustomThemePath { get; private set; }
     public string UriData { get; private set; }
     public bool Shutdown { get; private set; }
+    public bool SafeStartup { get; private set; }
 
     public static StartupOptions Parse(string[] args)
     {
@@ -40,6 +41,9 @@ internal sealed class StartupOptions
                 case "--shutdown":
                     options.Shutdown = true;
                     break;
+                case "--safestartup":
+                    options.SafeStartup = true;
+                    break;
             }
         }
 
@@ -50,6 +54,24 @@ internal sealed class StartupOptions
         options.UserDataDirectory ??= global::Playnite.PlaynitePaths.ConfigRootPath;
         options.LibraryPath ??= Path.Combine(options.UserDataDirectory, "library");
 #endif
+        if (options.SafeStartup)
+        {
+            options.CustomThemePath = string.Empty;
+        }
         return options;
+    }
+
+    public IReadOnlyList<string> GetRestartArguments()
+    {
+        var arguments = new List<string>
+        {
+            "--userdatadir", UserDataDirectory,
+            "--library-path", LibraryPath
+        };
+        if (Windowed)
+        {
+            arguments.Add("--windowed");
+        }
+        return arguments;
     }
 }

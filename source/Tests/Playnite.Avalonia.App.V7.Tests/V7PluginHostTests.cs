@@ -39,7 +39,7 @@ public class V7PluginHostTests
         public List<Guid> ClientShutdownPluginIds { get; } = [];
     }
 
-    private sealed class TestDialogs : IAvaloniaDialogService
+    internal sealed class TestDialogs : IAvaloniaDialogService
     {
         public string ShowMessage(
             string message,
@@ -48,11 +48,83 @@ public class V7PluginHostTests
             int defaultIndex = 0,
             int cancelIndex = -1) => options.ElementAtOrDefault(defaultIndex) ?? string.Empty;
 
-        public IReadOnlyList<string> SelectFiles(string filter, bool allowMultiple) => allowMultiple
+        public IReadOnlyList<string> SelectFiles(
+            string filter,
+            bool allowMultiple,
+            string initialDirectory = null) => allowMultiple
             ? ["C:\\SDKv7First.txt", "C:\\SDKv7Second.txt"]
             : ["C:\\SDKv7Single.txt"];
 
-        public string SelectFolder() => "C:\\SDKv7Folder";
+        public string SelectFolder(string initialDirectory = null) => "C:\\SDKv7Folder";
+
+        public string SaveFile(
+            string filter,
+            bool promptOverwrite = true,
+            string initialDirectory = null) => "C:\\SDKv7Saved.txt";
+
+        public StringSelectionDialogResult ShowInput(
+            string message,
+            string caption,
+            string defaultInput,
+            IReadOnlyList<MessageBoxToggle> toggleOptions = null) =>
+            new(true, defaultInput);
+
+        public void ShowSelectableString(string message, string caption, string value)
+        {
+        }
+
+        public GenericItemOption ChooseItemWithSearch(
+            IReadOnlyList<GenericItemOption> items,
+            Func<string, List<GenericItemOption>> searchFunction,
+            string defaultSearch = null,
+            string caption = null) => items.FirstOrDefault();
+
+        public ImageFileOption ChooseImageFile(
+            IReadOnlyList<ImageFileOption> files,
+            string caption = null,
+            double itemWidth = 240,
+            double itemHeight = 180) => files.FirstOrDefault();
+
+        public GlobalProgressResult ActivateGlobalProgress(
+            Action<GlobalProgressActionArgs> progressAction,
+            GlobalProgressOptions options)
+        {
+            var args = new GlobalProgressActionArgs(null, null, CancellationToken.None);
+            progressAction(args);
+            return new GlobalProgressResult(true, false, null);
+        }
+
+        public GlobalProgressResult ActivateGlobalProgress(
+            Func<GlobalProgressActionArgs, Task> progressAction,
+            GlobalProgressOptions options)
+        {
+            var args = new GlobalProgressActionArgs(null, null, CancellationToken.None);
+            progressAction(args).GetAwaiter().GetResult();
+            return new GlobalProgressResult(true, false, null);
+        }
+
+        public AvaloniaSelectionResult<T> SelectSingle<T>(
+            string caption,
+            string message,
+            IReadOnlyList<AvaloniaSelectionItem<T>> items) =>
+            new(items.Count > 0, items.Take(1).Select(item => item.Value).ToList());
+
+        public AvaloniaSelectionResult<T> SelectMultiple<T>(
+            string caption,
+            string message,
+            IReadOnlyList<AvaloniaSelectionItem<T>> items) =>
+            new(true, items.Where(item => item.Selected).Select(item => item.Value).ToList());
+
+        public System.Windows.Window CreateLegacyWindow(WindowCreationOptions options) =>
+            (System.Windows.Window)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(
+                typeof(System.Windows.Window));
+
+        public System.Windows.Window GetCurrentLegacyWindow() =>
+            (System.Windows.Window)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(
+                typeof(System.Windows.Window));
+
+        public Window GetCurrentWindow() =>
+            (Window)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof(Window));
     }
 
     private sealed class TestMetadataSettings : IMetadataDownloadSettings

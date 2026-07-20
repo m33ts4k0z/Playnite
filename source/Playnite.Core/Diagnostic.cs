@@ -135,12 +135,15 @@ namespace Playnite
                         { "Memory", (PlayniteProcess.WorkingSetMemory / 1024f) / 1024f },
                         { "Path", PlayniteProcess.Path },
                         { "Cmdline", PlayniteProcess.Cmdline },
-                        { "Elevated", PlayniteEnvironment.IsElevated },
-                        { "Playnite.DesktopApp.exe_MD5", FileSystem.GetMD5(PlaynitePaths.DesktopExecutablePath) },
-                        { "Playnite.FullscreenApp.exe_MD5", FileSystem.GetMD5(PlaynitePaths.FullscreenExecutablePath) },
-                        { "Playnite.dll_MD5", FileSystem.GetMD5(PlaynitePaths.PlayniteAssemblyPath) },
-                        { "Playnite.SDK.dll_MD5", FileSystem.GetMD5(PlaynitePaths.PlayniteSDKAssemblyPath) }
+                        { "Elevated", PlayniteEnvironment.IsElevated }
                     };
+                    var applicationExecutable = CoreRuntime.ApplicationExecutablePath();
+                    playniteInfo["ApplicationExecutablePath"] = applicationExecutable ?? string.Empty;
+                    AddFileHash(playniteInfo, "ApplicationExecutable_MD5", applicationExecutable);
+                    AddFileHash(playniteInfo, "Playnite.DesktopApp.exe_MD5", PlaynitePaths.DesktopExecutablePath);
+                    AddFileHash(playniteInfo, "Playnite.FullscreenApp.exe_MD5", PlaynitePaths.FullscreenExecutablePath);
+                    AddFileHash(playniteInfo, "Playnite.dll_MD5", PlaynitePaths.PlayniteAssemblyPath);
+                    AddFileHash(playniteInfo, "Playnite.SDK.dll_MD5", PlaynitePaths.PlayniteSDKAssemblyPath);
 
                     File.WriteAllText(playnitePath, Serialization.ToJson(playniteInfo, true));
                     archive.CreateEntryFromFile(playnitePath, Path.GetFileName(playnitePath));
@@ -217,6 +220,17 @@ namespace Playnite
                         archive.CreateEntryFromFile(logFile, Path.GetFileName(logFile));
                     }
                 }
+            }
+        }
+
+        private static void AddFileHash(
+            IDictionary<string, object> target,
+            string key,
+            string path)
+        {
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            {
+                target[key] = FileSystem.GetMD5(path);
             }
         }
 
