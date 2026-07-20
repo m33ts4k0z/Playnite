@@ -61,8 +61,15 @@ public sealed partial class DesktopSettings
     public bool ShowBackImageOnGridView { get; set; }
     public bool BackgroundImageAnimation { get; set; } = true;
 
-    public string FontFamilyName { get; set; } = "Trebuchet MS";
-    public string MonospaceFontFamilyName { get; set; } = "Consolas";
+    // Fontconfig resolves the generic aliases to the distribution's configured
+    // faces, so Linux profiles show a name that actually renders.
+    internal static string DefaultFontFamilyName { get; } =
+        OperatingSystem.IsWindows() ? "Trebuchet MS" : "Sans";
+    internal static string DefaultMonospaceFontFamilyName { get; } =
+        OperatingSystem.IsWindows() ? "Consolas" : "Monospace";
+
+    public string FontFamilyName { get; set; } = DefaultFontFamilyName;
+    public string MonospaceFontFamilyName { get; set; } = DefaultMonospaceFontFamilyName;
     public double FontSize { get; set; } = 14;
     public double FontSizeSmall { get; set; } = 12;
     public double FontSizeLarge { get; set; } = 15;

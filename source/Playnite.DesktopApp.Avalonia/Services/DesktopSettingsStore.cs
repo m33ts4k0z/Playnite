@@ -163,11 +163,16 @@ public sealed class DesktopSettingsStore
                 settings.FontSizeLarge = Math.Clamp(settings.FontSizeLarge, 9, 100);
                 settings.FontSizeLarger = Math.Clamp(settings.FontSizeLarger, 9, 100);
                 settings.FontSizeLargest = Math.Clamp(settings.FontSizeLargest, 9, 100);
-                settings.FontFamilyName = string.IsNullOrWhiteSpace(settings.FontFamilyName)
-                    ? "Trebuchet MS"
+                // A profile carried from Windows to Linux keeps its explicit font
+                // choices except for the Windows default faces, which do not exist
+                // there and would silently render as an unrelated fallback.
+                settings.FontFamilyName = string.IsNullOrWhiteSpace(settings.FontFamilyName) ||
+                    (!OperatingSystem.IsWindows() && settings.FontFamilyName.Trim() == "Trebuchet MS")
+                    ? DesktopSettings.DefaultFontFamilyName
                     : settings.FontFamilyName.Trim();
-                settings.MonospaceFontFamilyName = string.IsNullOrWhiteSpace(settings.MonospaceFontFamilyName)
-                    ? "Consolas"
+                settings.MonospaceFontFamilyName = string.IsNullOrWhiteSpace(settings.MonospaceFontFamilyName) ||
+                    (!OperatingSystem.IsWindows() && settings.MonospaceFontFamilyName.Trim() == "Consolas")
+                    ? DesktopSettings.DefaultMonospaceFontFamilyName
                     : settings.MonospaceFontFamilyName.Trim();
                 NormalizeDateFormat(settings.DateTimeFormatAdded);
                 NormalizeDateFormat(settings.DateTimeFormatModified);

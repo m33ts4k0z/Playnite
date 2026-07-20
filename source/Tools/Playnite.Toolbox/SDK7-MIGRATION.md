@@ -70,7 +70,11 @@ Playnite supplies both assemblies. A plugin package must not carry its own `Play
 
 SDK 7 web views run on each operating system's native engine through Avalonia's WebView: WebView2 (Edge/Chromium) on Windows, WKWebView on macOS, and WebKit (WPE/WebKitGTK) on Linux. Playnite does not bundle a browser engine; engine security updates arrive with the operating system or distribution. This is the final architecture, not a temporary bridge — do not take a dependency on Chromium-specific behavior.
 
-Capability differences between engines surface as explicit compatibility errors instead of silently changed behavior. Currently rejected everywhere: per-view JavaScript disabling; completed response metadata/body capture (`ResourceLoaded`); non-default SameSite/Priority cookie writes. On Linux, cookie management APIs additionally throw `PlatformNotSupportedException`: the released WebKit adapter (Avalonia.Controls.WebView 12.0.1) does not expose a cookie manager yet, and this is tracked for the next component releases. Write plugins so that cookie-dependent flows fail visibly and recover, and do not remove those errors or silently change the requested policy.
+Capability differences between engines surface as explicit compatibility errors instead of silently changed behavior. Currently rejected everywhere: per-view JavaScript disabling; completed response metadata/body capture (`ResourceLoaded`); non-default SameSite/Priority cookie writes. On Linux, cookie management runs through Playnite's own WebKitGTK bridge; if the active adapter cannot expose the native web view, cookie APIs throw `PlatformNotSupportedException` rather than pretending to succeed. Write plugins so that cookie-dependent flows fail visibly and recover, and do not remove those errors or silently change the requested policy.
+
+## Platform support
+
+SDK 7 plugins are cross-platform: the same package loads on Windows and Linux, and platform-specific behavior belongs behind `OperatingSystem` checks inside the plugin. SDK 6 plugins load only on Windows through the WPF compatibility layer; on Linux the host records a precise per-plugin incompatibility message instead of loading them, and the add-on store lists them as incompatible with the reason shown. Ship SDK 7 packages if you want your add-on available on Linux and Steam Deck.
 
 ## Required completion gate
 
