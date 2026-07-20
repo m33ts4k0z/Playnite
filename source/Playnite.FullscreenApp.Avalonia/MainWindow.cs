@@ -75,7 +75,10 @@ public sealed class MainWindow : Window
         ApplyRuntimeTheme();
         ApplyVisualResources();
         themeManager.ApplyLanguage(
-            LanguageCatalog.ResolveLanguagePaths(ContentPath("Localization"), settings.Language));
+            LanguageCatalog.ResolveLanguagePaths(
+                ContentPath("Localization"),
+                settings.Language,
+                "english.fullscreen.axaml"));
 
         mainView = new FullscreenMainView();
         Content = mainView;

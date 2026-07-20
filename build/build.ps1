@@ -112,6 +112,57 @@ function StageAvaloniaShell()
     }
 
     Copy-Item "$($tfmDir.FullName)\*" $OutputDir -Recurse -Force
+
+    # Local test runs leave runtime state in the shell bins (WebView2 browser
+    # profiles, self-test reports) that must never ship.
+    Get-ChildItem $OutputDir -Directory -Filter "*.WebView2" | Remove-Item -Recurse -Force
+    Get-ChildItem $OutputDir -File -Filter "*-results.txt" | Remove-Item -Force
+}
+
+function VerifyAvaloniaShellStaging()
+{
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$ProjectNames,
+        [Parameter(Mandatory = $true)]
+        [string]$OutputDir
+    )
+
+    # Co-located shells share one directory; a file that two shells ship with
+    # different content gets silently clobbered by whichever staged last (this
+    # shipped a Fullscreen localization dictionary over the Desktop one once).
+    # Every staged shell must find its own file content in the final layout.
+    $conflicts = @()
+    foreach ($projectName in $ProjectNames)
+    {
+        $binRoot = "..\source\$projectName\bin\x64\$Configuration"
+        $tfmDir = Get-ChildItem $binRoot -Directory | Where-Object { $_.Name -like "*-windows*" } | Select-Object -First 1
+        $sourceRoot = $tfmDir.FullName
+        Get-ChildItem $sourceRoot -Recurse -File | ForEach-Object {
+            $relative = $_.FullName.Substring($sourceRoot.Length + 1)
+            if ($relative -like "*.WebView2\*" -or $relative -like "*-results.txt")
+            {
+                return
+            }
+
+            $staged = Join-Path $OutputDir $relative
+            if (!(Test-Path $staged))
+            {
+                $conflicts += "$projectName is missing '$relative' from the package."
+            }
+            elseif ((Get-FileHash $_.FullName -Algorithm MD5).Hash -ne (Get-FileHash $staged -Algorithm MD5).Hash)
+            {
+                $conflicts += "$projectName expects different content for '$relative' than the packaged file."
+            }
+        }
+    }
+
+    if ($conflicts.Count -gt 0)
+    {
+        throw "Avalonia shell staging verification failed:`n" + ($conflicts -join "`n")
+    }
+
+    Write-OperationLog "Avalonia shell staging verified for $($ProjectNames.Count) shells"
 }
 
 # -------------------------------------------
@@ -221,6 +272,7 @@ if (!$SkipBuild)
     # Co-locate the Avalonia shells with the WPF applications (see StageAvaloniaShell).
     StageAvaloniaShell "Playnite.DesktopApp.Avalonia" $OutputDir
     StageAvaloniaShell "Playnite.FullscreenApp.Avalonia" $OutputDir
+    VerifyAvaloniaShellStaging @("Playnite.DesktopApp.Avalonia", "Playnite.FullscreenApp.Avalonia") $OutputDir
 }
 
 New-Folder $InstallerDir

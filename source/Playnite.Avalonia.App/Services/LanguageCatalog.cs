@@ -68,10 +68,15 @@ public static class LanguageCatalog
 
     // The dictionaries to merge, lowest priority first: shell-specific keys, the
     // English corpus base, then the selected culture overlay (if not English).
-    public static IReadOnlyList<string> ResolveLanguagePaths(string localizationDir, string selectedId)
+    // Shells that ship co-located in one directory must use distinct shell-key
+    // file names or the last-staged shell silently overwrites the others.
+    public static IReadOnlyList<string> ResolveLanguagePaths(
+        string localizationDir,
+        string selectedId,
+        string shellKeysFileName = ShellKeysFile)
     {
         var paths = new List<string>();
-        var shellKeys = Path.Combine(localizationDir, ShellKeysFile);
+        var shellKeys = Path.Combine(localizationDir, shellKeysFileName);
         if (File.Exists(shellKeys))
         {
             paths.Add(shellKeys);
