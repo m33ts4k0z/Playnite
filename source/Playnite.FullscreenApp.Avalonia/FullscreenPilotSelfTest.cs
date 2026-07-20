@@ -698,7 +698,9 @@ internal static class FullscreenPilotSelfTest
         });
 
         var report = BuildReport(results);
-        var reportPath = Path.Combine(AppContext.BaseDirectory, "fullscreen-pilot-results.txt");
+        var reportPath = Path.Combine(
+            Program.RuntimeOutputDirectory,
+            "fullscreen-pilot-results.txt");
         File.WriteAllText(reportPath, report);
         Console.WriteLine(report);
 

@@ -3765,7 +3765,9 @@ internal static class DesktopPilotSelfTest
         });
 
         var report = BuildReport(results);
-        File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "desktop-pilot-results.txt"), report);
+        File.WriteAllText(
+            Path.Combine(Program.RuntimeOutputDirectory, "desktop-pilot-results.txt"),
+            report);
         Console.WriteLine(report);
         (Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown(
             results.Count(result => !result.Pass));
