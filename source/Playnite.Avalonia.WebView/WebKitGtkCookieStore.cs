@@ -3,9 +3,11 @@ using Playnite.SDK;
 
 namespace Playnite.Avalonia.WebView;
 
-internal sealed class WebKitGtkCookieStore
+internal sealed class WebKitGtkCookieStore : IAsyncDisposable
 {
-    private readonly IntPtr webView;
+    private static readonly TimeSpan OperationTimeout = TimeSpan.FromSeconds(30);
+
+    private IntPtr webView;
 
     static WebKitGtkCookieStore()
     {
@@ -24,7 +26,11 @@ internal sealed class WebKitGtkCookieStore
             throw new ArgumentException("A live WebKitWebView handle is required.", nameof(webView));
         }
 
-        this.webView = webView;
+        this.webView = Native.g_object_ref(webView);
+        if (this.webView == IntPtr.Zero)
+        {
+            throw new InvalidOperationException("WebKitGTK could not retain the web view for cookie access.");
+        }
     }
 
     public async Task<IReadOnlyList<HttpCookie>> GetCookiesAsync(CancellationToken cancellationToken)
@@ -32,7 +38,7 @@ internal sealed class WebKitGtkCookieStore
         cancellationToken.ThrowIfCancellationRequested();
         var operation = new GetCookiesOperation();
         await GlibDispatcher.RunAsync(() => operation.Start(GetCookieManager())).ConfigureAwait(false);
-        return await operation.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        return await operation.Task.WaitAsync(OperationTimeout, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task SetCookieAsync(HttpCookie cookie, CancellationToken cancellationToken)
@@ -42,7 +48,7 @@ internal sealed class WebKitGtkCookieStore
         var operation = new CookieMutationOperation(delete: false);
         await GlibDispatcher.RunAsync(() => operation.Start(GetCookieManager(), CreateNativeCookie(cookie)))
             .ConfigureAwait(false);
-        await operation.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await operation.Task.WaitAsync(OperationTimeout, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task DeleteCookieAsync(HttpCookie cookie, CancellationToken cancellationToken)
@@ -52,20 +58,32 @@ internal sealed class WebKitGtkCookieStore
         var operation = new CookieMutationOperation(delete: true);
         await GlibDispatcher.RunAsync(() => operation.Start(GetCookieManager(), CreateNativeCookie(cookie)))
             .ConfigureAwait(false);
-        await operation.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await operation.Task.WaitAsync(OperationTimeout, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        var retainedWebView = Interlocked.Exchange(ref webView, IntPtr.Zero);
+        if (retainedWebView != IntPtr.Zero)
+        {
+            await GlibDispatcher.RunAsync(() => Native.g_object_unref(retainedWebView)).ConfigureAwait(false);
+        }
     }
 
     private IntPtr GetCookieManager()
     {
+        var retainedWebView = webView;
+        ObjectDisposedException.ThrowIf(retainedWebView == IntPtr.Zero, this);
+
         var major = Native.webkit_get_major_version();
         var minor = Native.webkit_get_minor_version();
-        if (major < 2 || major == 2 && minor < 42)
+        if (!SupportsCompleteCookieEnumeration(major, minor))
         {
             throw new PlatformNotSupportedException(
                 $"WebKitGTK {major}.{minor} does not expose complete cookie enumeration; version 2.42 or newer is required.");
         }
 
-        var context = Native.webkit_web_view_get_context(webView);
+        var context = Native.webkit_web_view_get_context(retainedWebView);
         if (context == IntPtr.Zero)
         {
             throw new InvalidOperationException("The WebKitGTK web view did not expose a web context.");
@@ -76,6 +94,9 @@ internal sealed class WebKitGtkCookieStore
             ? manager
             : throw new InvalidOperationException("The WebKitGTK web context did not expose a cookie manager.");
     }
+
+    internal static bool SupportsCompleteCookieEnumeration(uint major, uint minor) =>
+        major > 2 || major == 2 && minor >= 42;
 
     private static IntPtr CreateNativeCookie(HttpCookie cookie)
     {
@@ -197,6 +218,7 @@ internal sealed class WebKitGtkCookieStore
             Native.WebKitLibrary => ["libwebkit2gtk-4.1.so.0", "libwebkit2gtk-4.1.so"],
             Native.SoupLibrary => ["libsoup-3.0.so.0", "libsoup-3.0.so"],
             Native.GLibLibrary => ["libglib-2.0.so.0", "libglib-2.0.so"],
+            Native.GObjectLibrary => ["libgobject-2.0.so.0", "libgobject-2.0.so"],
             _ => null
         };
         if (candidates == null)
@@ -490,6 +512,7 @@ internal sealed class WebKitGtkCookieStore
         public const string WebKitLibrary = "Playnite.WebKitGtk";
         public const string SoupLibrary = "Playnite.Soup3";
         public const string GLibLibrary = "Playnite.GLib";
+        public const string GObjectLibrary = "Playnite.GObject";
 
         [DllImport(WebKitLibrary)]
         public static extern uint webkit_get_major_version();
@@ -614,5 +637,11 @@ internal sealed class WebKitGtkCookieStore
 
         [DllImport(GLibLibrary)]
         public static extern void g_date_time_unref(IntPtr dateTime);
+
+        [DllImport(GObjectLibrary)]
+        public static extern IntPtr g_object_ref(IntPtr instance);
+
+        [DllImport(GObjectLibrary)]
+        public static extern void g_object_unref(IntPtr instance);
     }
 }

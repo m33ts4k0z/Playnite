@@ -42,6 +42,17 @@ public sealed class WebViewContractTests
         });
     }
 
+    [TestCase(2u, 41u, false)]
+    [TestCase(2u, 42u, true)]
+    [TestCase(2u, 52u, true)]
+    [TestCase(3u, 0u, true)]
+    public void NativeCookieEnumerationRequiresWebKitGtk242(uint major, uint minor, bool expected)
+    {
+        Assert.That(
+            WebKitGtkCookieStore.SupportsCompleteCookieEnumeration(major, minor),
+            Is.EqualTo(expected));
+    }
+
     [Test]
     public void JavaScriptResultParsesGtkObjectJson()
     {

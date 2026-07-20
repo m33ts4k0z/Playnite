@@ -216,7 +216,7 @@ internal sealed class AvaloniaSdkWebView : IWebView
             return cookies.Select(MapManagedCookie).ToList();
         }
 
-        var store = await GetWebKitGtkCookieStoreAsync(cancellationToken).ConfigureAwait(false);
+        await using var store = await GetWebKitGtkCookieStoreAsync(cancellationToken).ConfigureAwait(false);
         return await store.GetCookiesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -251,7 +251,7 @@ internal sealed class AvaloniaSdkWebView : IWebView
             return;
         }
 
-        var store = await GetWebKitGtkCookieStoreAsync(cancellationToken).ConfigureAwait(false);
+        await using var store = await GetWebKitGtkCookieStoreAsync(cancellationToken).ConfigureAwait(false);
         await store.SetCookieAsync(normalized, cancellationToken).ConfigureAwait(false);
     }
 
@@ -292,7 +292,7 @@ internal sealed class AvaloniaSdkWebView : IWebView
             return;
         }
 
-        var store = await GetWebKitGtkCookieStoreAsync(cancellationToken).ConfigureAwait(false);
+        await using var store = await GetWebKitGtkCookieStoreAsync(cancellationToken).ConfigureAwait(false);
         foreach (var cookie in matches)
         {
             await store.DeleteCookieAsync(cookie, cancellationToken).ConfigureAwait(false);
@@ -513,21 +513,30 @@ internal sealed class AvaloniaSdkWebView : IWebView
 
     private async Task<WebKitGtkCookieStore> GetWebKitGtkCookieStoreAsync(CancellationToken cancellationToken)
     {
-        var handle = await InvokeOnUiAsync(() => browser.TryGetPlatformHandle()).ConfigureAwait(false);
-        var webKitHandle = handle is IGtkWebViewPlatformHandle gtkHandle
-            ? gtkHandle.WebKitWebView
-            : handle?.HandleDescriptor == "WebKitWebView"
-                ? handle.Handle
-                : IntPtr.Zero;
-        if (!OperatingSystem.IsLinux() || webKitHandle == IntPtr.Zero)
-        {
-            throw new PlatformNotSupportedException(
-                "The active Avalonia web-view adapter does not expose cookie management. " +
-                $"Adapter={browser.AdapterInfo}; handle={handle?.HandleDescriptor ?? "none"}.");
-        }
-
         cancellationToken.ThrowIfCancellationRequested();
-        return new WebKitGtkCookieStore(webKitHandle);
+        return await InvokeOnUiAsync(() =>
+        {
+            ThrowIfUnavailable();
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var handle = browser.TryGetPlatformHandle();
+            var webKitHandle = handle is IGtkWebViewPlatformHandle gtkHandle
+                ? gtkHandle.WebKitWebView
+                : handle?.HandleDescriptor == "WebKitWebView"
+                    ? handle.Handle
+                    : IntPtr.Zero;
+            if (!OperatingSystem.IsLinux() || webKitHandle == IntPtr.Zero)
+            {
+                throw new PlatformNotSupportedException(
+                    "The active Avalonia web-view adapter does not expose cookie management. " +
+                    $"Adapter={browser.AdapterInfo}; handle={handle?.HandleDescriptor ?? "none"}.");
+            }
+
+            // Retain the native view while still on the Avalonia/GTK UI thread.
+            // The cookie operations are asynchronous and may otherwise race a
+            // concurrent SDK view disposal after this borrowed handle escapes.
+            return new WebKitGtkCookieStore(webKitHandle);
+        }).ConfigureAwait(false);
     }
 
     private static HttpCookie NormalizeCookie(Uri address, HttpCookie cookie) => new()
