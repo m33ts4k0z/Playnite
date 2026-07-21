@@ -26,7 +26,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
     private ICommand toggleGroupCommand;
 
     public event PropertyChangedEventHandler PropertyChanged;
-    public Game Game { get; }
+    public Game Game { get; private set; }
     public string Name => Game.Name ?? string.Empty;
     public bool Favorite => Game.Favorite;
     public bool IsInstalled => Game.IsInstalled;
@@ -215,6 +215,12 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
 
     internal void Refresh()
     {
+        var currentGame = database?.Games[Game.Id];
+        if (currentGame != null)
+        {
+            Game = currentGame;
+        }
+
         OnPropertyChanged(string.Empty);
     }
 
