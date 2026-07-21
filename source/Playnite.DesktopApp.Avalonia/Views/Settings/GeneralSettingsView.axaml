@@ -10,7 +10,7 @@
                       ItemsSource="{Binding AvailableLanguages}"
                       SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}" />
 
-            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,4" />
             <TextBlock Text="Window &amp; tray" Classes="sectionLabel" />
             <CheckBox Content="{DynamicResource LOCSettingsShowTray}"
                       IsChecked="{Binding EnableTray, Mode=TwoWay}" />
@@ -38,7 +38,7 @@
                       IsEnabled="{Binding TrayOptionsEnabled}"
                       IsChecked="{Binding ShowHiddenInQuickLaunch, Mode=TwoWay}" />
 
-            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,4" />
             <TextBlock Text="Library" Classes="sectionLabel" />
             <CheckBox Content="{DynamicResource LOCSettingsDownloadMetadataOnImport}"
                       IsChecked="{Binding DownloadMetadataOnImport, Mode=TwoWay}" />
@@ -53,7 +53,7 @@
                           SelectedItem="{Binding PlaytimeImportMode, Mode=TwoWay}" />
             </StackPanel>
 
-            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,4" />
             <TextBlock Text="When a game runs" Classes="sectionLabel" />
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <TextBlock Text="{DynamicResource LOCSettingsAfterGameStart}" VerticalAlignment="Center"
@@ -68,7 +68,7 @@
                           SelectedItem="{Binding AfterGameClose, Mode=TwoWay}" />
             </StackPanel>
 
-            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,4" />
             <TextBlock Text="Startup" Classes="sectionLabel" />
             <CheckBox Content="{DynamicResource LOCSettingsStartOnBoot}"
                       IsChecked="{Binding StartOnBoot, Mode=TwoWay}" />
@@ -81,7 +81,7 @@
                       IsChecked="{Binding StartInFullscreen, Mode=TwoWay}" />
 
             <StackPanel IsVisible="{Binding CanSwitchShells}" Spacing="6">
-                <Border Height="1" Background="#303A49" Margin="0,4" />
+                <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,4" />
                 <TextBlock Text="Interface" Classes="sectionLabel" />
                 <CheckBox Content="Use the new Playnite interface (restart required)"
                           IsChecked="{Binding UseAvaloniaShell, Mode=TwoWay}" />

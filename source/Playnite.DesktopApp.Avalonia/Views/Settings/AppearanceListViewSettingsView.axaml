@@ -9,7 +9,7 @@
             <CheckBox Content="Show cover icons in the list"
                       IsChecked="{Binding ShowIconsOnList, Mode=TwoWay}" />
 
-            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,4" />
             <TextBlock Text="Scrolling" Classes="sectionLabel" />
             <CheckBox Content="Smooth scrolling"
                       IsChecked="{Binding SmoothScrollEnabled, Mode=TwoWay}" />

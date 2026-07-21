@@ -30,7 +30,7 @@
                           SelectedItem="{Binding CoverArtStretch, Mode=TwoWay}" />
             </StackPanel>
 
-            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,4" />
             <TextBlock Text="Grid items" Classes="sectionLabel" />
             <CheckBox Content="Show item background"
                       IsChecked="{Binding ShowGridItemBackground, Mode=TwoWay}" />
@@ -41,7 +41,7 @@
             <CheckBox Content="Darken uninstalled games"
                       IsChecked="{Binding DarkenUninstalledGamesGrid, Mode=TwoWay}" />
 
-            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,4" />
             <TextBlock Text="Scrolling" Classes="sectionLabel" />
             <CheckBox Content="Smooth scrolling"
                       IsChecked="{Binding SmoothScrollEnabled, Mode=TwoWay}" />

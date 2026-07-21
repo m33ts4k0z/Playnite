@@ -51,7 +51,7 @@ public static class WpfPluginSupportRuntime
         AddFallbackResource("WarningBrush", Brushes.OrangeRed);
     }
 
-    public static void LoadPluginResources(string extensionDirectory)
+    public static void LoadPluginResources(string extensionDirectory, string language)
     {
         EnsureApplication();
         if (string.IsNullOrWhiteSpace(extensionDirectory))
@@ -65,22 +65,45 @@ public static class WpfPluginSupportRuntime
             return;
         }
 
-        var cultureName = CultureInfo.CurrentUICulture.Name.Replace('-', '_');
-        var localizationPath = Path.Combine(localizationDirectory, cultureName + ".xaml");
-        if (!File.Exists(localizationPath))
-        {
-            localizationPath = Path.Combine(localizationDirectory, "en_US.xaml");
-        }
-
-        if (!File.Exists(localizationPath))
+        var englishPath = Path.Combine(localizationDirectory, "en_US.xaml");
+        if (!File.Exists(englishPath))
         {
             return;
         }
 
+        LoadLocalizationDictionary(englishPath);
+
+        var selectedLanguage = string.IsNullOrWhiteSpace(language)
+            ? CultureInfo.CurrentUICulture.Name.Replace('-', '_')
+            : language;
+        if (string.Equals(selectedLanguage, "english", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(selectedLanguage, "en_US", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var languageFileName = Path.GetFileName(selectedLanguage) + ".xaml";
+        var localizedPath = Path.Combine(localizationDirectory, languageFileName);
+        if (File.Exists(localizedPath))
+        {
+            LoadLocalizationDictionary(localizedPath);
+        }
+    }
+
+    private static void LoadLocalizationDictionary(string localizationPath)
+    {
         using var localizationStream = File.OpenRead(localizationPath);
         if (XamlReader.Load(localizationStream) is not ResourceDictionary resources)
         {
             throw new InvalidDataException($"Plugin localization is not a ResourceDictionary: {localizationPath}");
+        }
+
+        foreach (var key in resources.Keys.Cast<object>().ToList())
+        {
+            if (resources[key] is not string value || string.IsNullOrEmpty(value))
+            {
+                resources.Remove(key);
+            }
         }
 
         System.Windows.Application.Current.Resources.MergedDictionaries.Add(resources);

@@ -39,7 +39,9 @@
       </WrapPanel>
       <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" />
 
-      <Border BorderBrush="#446A6A6A" BorderThickness="1" Padding="10" Margin="0,8,0,0">
+      <Border Background="{DynamicResource DesktopPanelBrush}"
+              BorderBrush="{DynamicResource DesktopBorderBrush}"
+              BorderThickness="1" Padding="10" Margin="0,8,0,0">
         <TextBlock Text="AccessibilityInterface is not ported: Avalonia exposes native automation peers directly and has no WPF automation-mode switch."
                    TextWrapping="Wrap" Opacity="0.75" />
       </Border>

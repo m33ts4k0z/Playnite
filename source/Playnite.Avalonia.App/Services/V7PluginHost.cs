@@ -409,6 +409,8 @@ internal sealed class V7PluginHost : IDisposable
     private readonly Dictionary<Guid, V7LoadedPlugin> uriOwners = [];
     private readonly Dictionary<string, Guid> notificationOwners = new(StringComparer.Ordinal);
     private readonly Dictionary<Guid, HashSet<string>> notificationIdsByOwner = [];
+    private readonly Dictionary<string, string> pluginLocalizationResources =
+        new(StringComparer.Ordinal);
     private readonly Dictionary<Guid, Sqlite> sqliteConnections = [];
     private readonly object sqliteSync = new();
     private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, IV7ControllerAdapter>
@@ -443,6 +445,7 @@ internal sealed class V7PluginHost : IDisposable
         this.pluginApi = pluginApi;
         this.webViews = webViews;
         this.hostBundlePath = hostBundlePath ?? Path.Combine(AppContext.BaseDirectory, "SdkV7Host");
+        PluginResourceRegistry.Clear();
         databaseTransport = new V7DatabaseTransport(database);
         SubscribeDatabaseEvents();
         SubscribeControllerEvents();
@@ -556,6 +559,10 @@ internal sealed class V7PluginHost : IDisposable
         var previousUriSources = uriSources.ToDictionary(item => item.Key, item => item.Value, StringComparer.OrdinalIgnoreCase);
         var previousUriOwners = uriOwners.ToDictionary(item => item.Key, item => item.Value);
         var previousNotificationIds = notificationOwners.Keys.ToHashSet(StringComparer.Ordinal);
+        var previousLocalizationResources = pluginLocalizationResources.ToDictionary(
+            item => item.Key,
+            item => item.Value,
+            StringComparer.Ordinal);
         HashSet<Guid> previousSqliteHandles;
         lock (sqliteSync)
         {
@@ -569,6 +576,13 @@ internal sealed class V7PluginHost : IDisposable
             }
 
             VerifyHostBundle();
+            foreach (var resource in PluginLocalizationCatalog.Load(
+                manifest.DirectoryPath,
+                callbacks.Settings.Language))
+            {
+                pluginLocalizationResources[resource.Key] = resource.Value;
+            }
+            PluginResourceRegistry.Replace(pluginLocalizationResources);
             context = new V7PluginLoadContext(modulePath, hostBundlePath);
             var bridgeAssembly = context.LoadFromAssemblyPath(
                 Path.Combine(hostBundlePath, "Playnite.SDK.V7.Host.dll"));
@@ -645,6 +659,12 @@ internal sealed class V7PluginHost : IDisposable
             {
                 RemoveTrackedNotification(notificationId);
             }
+            pluginLocalizationResources.Clear();
+            foreach (var resource in previousLocalizationResources)
+            {
+                pluginLocalizationResources.Add(resource.Key, resource.Value);
+            }
+            PluginResourceRegistry.Replace(pluginLocalizationResources);
             DisposeSqliteConnections(handle => !previousSqliteHandles.Contains(handle));
         }
     }
@@ -693,7 +713,7 @@ internal sealed class V7PluginHost : IDisposable
             case "Emulation.GetEmulator":
                 return V7DatabaseTransport.Serialize(emulation.GetEmulator(payload));
             case "ResourceString":
-                return AvaloniaPluginApi.SharedResources.GetString(payload);
+                return ResolveResource(payload) as string ?? $"<!{payload}!>";
             case "Log":
                 WritePluginLog(JsonConvert.DeserializeObject<LogPayload>(payload));
                 return string.Empty;
@@ -967,13 +987,18 @@ internal sealed class V7PluginHost : IDisposable
         "CurrentAppWindow" => callbacks.CurrentWindow?.Invoke()
             ?? throw new NotSupportedException(
                 "The current Avalonia application does not expose its active window."),
-        "Resource" => callbacks.ResolveResource?.Invoke(payload),
+        "Resource" => ResolveResource(payload),
         "CreateWebView" => webViews?.CreateV7View(
             JsonConvert.DeserializeObject<V7WebViewCreationPayload>(payload)
             ?? throw new InvalidDataException("SDK v7 web-view creation payload is empty."))
             ?? throw new InvalidOperationException("The Avalonia web-view factory is unavailable."),
         _ => throw new NotSupportedException($"SDK v7 object host operation {operation} is not supported.")
     };
+
+    private object ResolveResource(string key) =>
+        pluginLocalizationResources.TryGetValue(key, out var localizedValue)
+            ? localizedValue
+            : callbacks.ResolveResource?.Invoke(key);
 
     private object HostObjectRequest(string operation, object payload)
     {
@@ -1741,5 +1766,6 @@ internal sealed class V7PluginHost : IDisposable
         LibraryPlugins.Clear();
         MetadataPlugins.Clear();
         Plugins.Clear();
+        PluginResourceRegistry.Clear();
     }
 }

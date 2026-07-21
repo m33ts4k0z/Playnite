@@ -102,11 +102,17 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         : FormatLabel("LOCGameInstallDirTitle", "Installation folder", Game.InstallDirectory);
     public string NotesText => FormatLabel(
         "LOCNotesLabel", "Notes",
-        string.IsNullOrWhiteSpace(Game.Notes) ? Localize("LOCNone", "None") : Game.Notes);
-    public string SourceName => database.Sources[Game.SourceId]?.Name ?? Localize("LOCNoSource", "No source");
+        string.IsNullOrWhiteSpace(Game.Notes)
+            ? Localize("LOCNone", "None")
+            : DesktopLocalization.ResolveStored(Game.Notes));
+    public string SourceName => ResolveStoredLocalization(
+        database.Sources[Game.SourceId]?.Name ?? Localize("LOCNoSource", "No source"));
     public string PlatformName => Game.PlatformIds?.Select(id => database.Platforms[id]?.Name)
-        .FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? Localize("LOCNoPlatform", "No platform");
-    public string CompletionStatusName => database.CompletionStatuses[Game.CompletionStatusId]?.Name ?? Localize("LOCNone", "None");
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Select(ResolveStoredLocalization)
+        .FirstOrDefault() ?? Localize("LOCNoPlatform", "No platform");
+    public string CompletionStatusName => ResolveStoredLocalization(
+        database.CompletionStatuses[Game.CompletionStatusId]?.Name ?? Localize("LOCNone", "None"));
     public string UserScoreText => FormatLabel(
         "LOCUserScore", "User score",
         Game.UserScore.HasValue ? $"{Game.UserScore}/100" : Localize("LOCNone", "None"));
@@ -318,6 +324,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             parts.AddRange(game.PlatformIds
                 .Select(id => database.Platforms[id]?.Name)
                 .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(ResolveStoredLocalization)
                 .Take(2));
         }
 
@@ -331,7 +338,8 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
             return Localize("LOCNoGameDescription", "No description is available for this game.");
         }
 
-        return WebUtility.HtmlDecode(Regex.Replace(htmlTags.Replace(html, " "), @"\s+", " ")).Trim();
+        var resolvedHtml = DesktopLocalization.ResolveStored(html);
+        return WebUtility.HtmlDecode(Regex.Replace(htmlTags.Replace(resolvedHtml, " "), @"\s+", " ")).Trim();
     }
 
     private static string ResolveMediaPath(string path, GameDatabase database)
@@ -420,6 +428,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         var names = (ids ?? Array.Empty<Guid>())
             .Select(resolveName)
             .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(ResolveStoredLocalization)
             .Distinct(StringComparer.CurrentCultureIgnoreCase)
             .ToList();
         return $"{label}: {(names.Count == 0 ? Localize("LOCNone", "None") : string.Join(", ", names))}";
@@ -430,10 +439,14 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         var names = (links ?? Array.Empty<Link>())
             .Select(link => link?.Name)
             .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(ResolveStoredLocalization)
             .ToList();
         return $"{Localize("LOCLinksLabel", "Links")}: " +
             (names.Count == 0 ? Localize("LOCNone", "None") : string.Join(", ", names));
     }
+
+    private static string ResolveStoredLocalization(string value)
+        => DesktopLocalization.ResolveStored(value);
 
     private string FormatAgeRatings()
     {
@@ -441,6 +454,7 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         var names = (Game.AgeRatingIds ?? new List<Guid>())
             .Select(id => database.AgeRatings[id]?.Name)
             .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Select(ResolveStoredLocalization)
             .Distinct(StringComparer.CurrentCultureIgnoreCase)
             .OrderByDescending(name => name.StartsWith(preferredPrefix, StringComparison.CurrentCultureIgnoreCase))
             .ThenBy(name => name, StringComparer.CurrentCultureIgnoreCase)
@@ -532,10 +546,5 @@ public sealed class DesktopGameItemViewModel : INotifyPropertyChanged
         string.Format(Localize(key, fallback), values);
 
     private static string Localize(string key, string fallback)
-    {
-        var value = Playnite.SDK.ResourceProvider.GetString(key);
-        return string.IsNullOrWhiteSpace(value) || value == key || value == $"<!{key}!>"
-            ? fallback
-            : value;
-    }
+        => DesktopLocalization.Resolve(key, fallback);
 }

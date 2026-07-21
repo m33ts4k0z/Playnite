@@ -124,7 +124,7 @@
                 <ComboBox ItemsSource="{Binding WizardLanguages}"
                           SelectedItem="{Binding SelectedWizardLanguage, Mode=TwoWay}" />
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
-                    <Border Padding="18" CornerRadius="10" Background="#263140">
+                    <Border Padding="18" CornerRadius="10" Background="{DynamicResource DesktopControlBrush}">
                         <StackPanel Spacing="10">
                             <TextBlock Text="{DynamicResource LOCFirstExternalTitle}" FontWeight="Bold" FontSize="20" />
                             <TextBlock Text="Browse the add-on catalog for Steam, GOG, Epic, Xbox and other library integrations."
@@ -132,7 +132,7 @@
                             <Button Content="{DynamicResource LOCMenuAddons}" Command="{Binding WizardOpenAddonStoreCommand}" />
                         </StackPanel>
                     </Border>
-                    <Border Grid.Column="1" Padding="18" CornerRadius="10" Background="#263140">
+                    <Border Grid.Column="1" Padding="18" CornerRadius="10" Background="{DynamicResource DesktopControlBrush}">
                         <StackPanel Spacing="10">
                             <TextBlock Text="{DynamicResource LOCGameIsInstalledTitle}" FontWeight="Bold" FontSize="20" />
                             <TextBlock Text="Detect Windows programs and Microsoft Store games, or scan a folder."

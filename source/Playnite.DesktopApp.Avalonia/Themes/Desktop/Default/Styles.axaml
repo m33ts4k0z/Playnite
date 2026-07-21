@@ -17,6 +17,200 @@
         <Setter Property="Padding" Value="14,8" />
         <Setter Property="FontFamily" Value="{DynamicResource DesktopFontFamily}" />
         <Setter Property="FontSize" Value="{DynamicResource DesktopFontSize}" />
+        <Setter Property="Background" Value="{DynamicResource DesktopControlBrush}" />
+    </Style>
+    <Style Selector="Button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DesktopControlHoverBrush}" />
+    </Style>
+    <Style Selector="Button:pressed">
+        <Setter Property="Background" Value="{DynamicResource DesktopSelectedBrush}" />
+    </Style>
+    <Style Selector="ToggleButton">
+        <Setter Property="Background" Value="{DynamicResource DesktopControlBrush}" />
+    </Style>
+    <Style Selector="ToggleButton:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DesktopControlHoverBrush}" />
+    </Style>
+    <Style Selector="ToggleButton:checked">
+        <Setter Property="Background" Value="{DynamicResource DesktopSelectedBrush}" />
+    </Style>
+    <Style Selector="TextBox">
+        <Setter Property="Background" Value="{DynamicResource DesktopListSurfaceBrush}" />
+    </Style>
+    <Style Selector="ComboBox">
+        <Setter Property="Background" Value="{DynamicResource DesktopControlBrush}" />
+    </Style>
+    <Style Selector="ComboBoxItem">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
+    </Style>
+    <Style Selector="ComboBoxItem:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DesktopControlHoverBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer ListBox">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopBorderBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer ListBoxItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Grid.modalLayer ListBoxItem:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DesktopControlHoverBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer ListBoxItem:selected">
+        <Setter Property="Background" Value="{DynamicResource DesktopSelectedBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopAccentBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer Expander">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopBorderBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer TabControl">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopBorderBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer TabItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Grid.modalLayer TabItem:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DesktopControlHoverBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer TabItem:selected">
+        <Setter Property="Background" Value="{DynamicResource DesktopSelectedBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopAccentBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer NumericUpDown">
+        <Setter Property="Background" Value="{DynamicResource DesktopListSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopBorderBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer CalendarDatePicker">
+        <Setter Property="Background" Value="{DynamicResource DesktopListSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopBorderBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer ProgressBar">
+        <Setter Property="Background" Value="{DynamicResource DesktopListSurfaceBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource DesktopAccentBrush}" />
+    </Style>
+    <Style Selector="Grid.modalLayer Separator">
+        <Setter Property="Background" Value="{DynamicResource DesktopBorderBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopBorderBrush}" />
+    </Style>
+    <Style Selector="MenuItem">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource DesktopTextBrush}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="Padding" Value="10,6" />
+    </Style>
+    <Style Selector="MenuItem:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DesktopMenuHighlightBrush}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="MenuItem:selected">
+        <Setter Property="Background" Value="{DynamicResource DesktopMenuHighlightBrush}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <!-- Fluent paints menu interaction states on the template border rather than
+         the MenuItem itself, so these selectors must target PART_LayoutRoot. -->
+    <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="{DynamicResource DesktopMenuHighlightBrush}" />
+    </Style>
+    <Style Selector="MenuItem:selected /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="{DynamicResource DesktopMenuHighlightBrush}" />
+    </Style>
+    <Style Selector="MenuItem:selected /template/ ContentPresenter#PART_HeaderPresenter">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="MenuItem:selected /template/ TextBlock#PART_InputGestureText">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="MenuItem:selected /template/ Path#PART_ChevronPath">
+        <Setter Property="Fill" Value="White" />
+    </Style>
+    <Style Selector="MenuItem:pressed">
+        <Setter Property="Background" Value="{DynamicResource DesktopMenuPressedBrush}" />
+    </Style>
+    <Style Selector="MenuItem:pressed /template/ Border#PART_LayoutRoot:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DesktopMenuPressedBrush}" />
+    </Style>
+    <Style Selector="MenuItem:submenuopen">
+        <Setter Property="Background" Value="{DynamicResource DesktopMenuHighlightBrush}" />
+    </Style>
+    <Style Selector="MenuItem:disabled">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource DesktopMutedBrush}" />
+        <Setter Property="Opacity" Value="0.62" />
+    </Style>
+    <Style Selector="MenuItem:disabled:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
+    </Style>
+    <Style Selector="MenuItem:disabled:selected">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
+    </Style>
+    <Style Selector="MenuItem:disabled:selected /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
+    </Style>
+    <Style Selector="MenuItem:disabled:pressed">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
+    </Style>
+    <Style Selector="MenuItem PathIcon">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+        <Setter Property="Foreground" Value="{DynamicResource DesktopMenuIconBrush}" />
+    </Style>
+    <Style Selector="MenuItem.hamburgerMenu">
+        <Setter Property="Width" Value="52" />
+        <Setter Property="Height" Value="52" />
+        <Setter Property="MinHeight" Value="52" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="MenuItem.hamburgerMenu:pointerover">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="MenuItem.hamburgerMenu:submenuopen">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="MenuItem.hamburgerMenu:selected /template/ Border#PART_LayoutRoot">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="MenuItem.hamburgerMenu:pressed /template/ Border#PART_LayoutRoot:pointerover">
+        <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="MenuItem.hamburgerMenu Border.hamburgerGlyph">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="MenuItem.hamburgerMenu:pointerover Border.hamburgerGlyph">
+        <Setter Property="Background" Value="{DynamicResource DesktopControlHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopBorderBrush}" />
+    </Style>
+    <Style Selector="MenuItem.hamburgerMenu:selected Border.hamburgerGlyph">
+        <Setter Property="Background" Value="{DynamicResource DesktopControlHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopAccentBrush}" />
+    </Style>
+    <Style Selector="MenuItem.hamburgerMenu:submenuopen Border.hamburgerGlyph">
+        <Setter Property="Background" Value="{DynamicResource DesktopSelectedBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopAccentBrush}" />
+    </Style>
+    <Style Selector="Separator.menuGroupSeparator">
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Margin" Value="10,3" />
+        <Setter Property="Background" Value="{DynamicResource DesktopMenuDividerBrush}" />
+    </Style>
+    <Style Selector="ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DesktopBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="5" />
+    </Style>
+    <Style Selector="FlyoutPresenter">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
+    </Style>
+    <Style Selector="MenuFlyoutPresenter">
+        <Setter Property="Background" Value="{DynamicResource DesktopPanelStrongBrush}" />
     </Style>
     <Style Selector="Button.primary">
         <Setter Property="Background" Value="{DynamicResource DesktopAccentBrush}" />
@@ -27,20 +221,66 @@
         <Setter Property="HorizontalContentAlignment" Value="Left" />
     </Style>
     <Style Selector="Button.nav.selected">
-        <Setter Property="Background" Value="#26394A" />
+        <Setter Property="Background" Value="{DynamicResource DesktopSelectedBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource DesktopAccentBrush}" />
     </Style>
+    <Style Selector="Button.libraryToolbar">
+        <Setter Property="Height" Value="42" />
+        <Setter Property="MinHeight" Value="42" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ToggleButton.libraryToolbar">
+        <Setter Property="Height" Value="42" />
+        <Setter Property="MinHeight" Value="42" />
+        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource DesktopMutedBrush}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ToggleButton.libraryToolbar:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DesktopControlHoverBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource DesktopTextBrush}" />
+    </Style>
+    <Style Selector="ToggleButton.libraryToolbar:checked">
+        <Setter Property="Background" Value="{DynamicResource DesktopSelectedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource DesktopAccentBrush}" />
+    </Style>
+    <Style Selector="TextBox.libraryToolbar">
+        <Setter Property="Height" Value="42" />
+        <Setter Property="MinHeight" Value="42" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="ComboBox.libraryToolbar">
+        <Setter Property="Height" Value="42" />
+        <Setter Property="MinHeight" Value="42" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.toolbarGroup">
+        <Setter Property="Height" Value="42" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="Background" Value="{DynamicResource DesktopListSurfaceBrush}" />
+    </Style>
     <Style Selector="Button.windowCaption">
-        <Setter Property="Width" Value="48" />
-        <Setter Property="Height" Value="41" />
+        <Setter Property="Width" Value="46" />
+        <Setter Property="Height" Value="42" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="MinHeight" Value="0" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource DesktopTextBrush}" />
-        <Setter Property="FontSize" Value="{DynamicResource DesktopFontSizeLarge}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
     <Style Selector="Button.windowCaption:pointerover">
-        <Setter Property="Background" Value="#354153" />
+        <Setter Property="Background" Value="{DynamicResource DesktopControlHoverBrush}" />
     </Style>
     <Style Selector="Button.windowClose:pointerover">
         <Setter Property="Background" Value="#C42B1C" />

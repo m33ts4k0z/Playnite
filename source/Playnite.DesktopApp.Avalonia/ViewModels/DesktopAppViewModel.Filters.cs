@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Reflection;
 using System.Windows.Input;
+using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using AppRelayCommand = Playnite.Avalonia.App.ViewModels.RelayCommand;
@@ -227,6 +228,27 @@ public sealed partial class DesktopAppViewModel
 
         FilterGroups = groups;
         OnPropertyChanged(nameof(FilterGroups));
+    }
+
+    internal void RefreshLocalizedContent()
+    {
+        var filterSnapshot = CloneFilterSettings(workingFilterSettings);
+        var wasDirty = IsFilterDirty;
+        BuildFilterGroups();
+        LoadWorkingFilter(filterSnapshot, wasDirty);
+        foreach (var game in allGames)
+        {
+            game.Refresh();
+        }
+
+        Statistics.RefreshLocalization();
+
+        OnPropertyChanged(nameof(InstalledFilterLabel));
+        OnPropertyChanged(nameof(UninstalledFilterLabel));
+        OnPropertyChanged(nameof(HiddenFilterLabel));
+        OnPropertyChanged(nameof(FavoriteFilterLabel));
+        OnPropertyChanged(nameof(FilterMatchSummary));
+        OnPropertyChanged(nameof(FilterActiveIndicator));
     }
 
     private DesktopFilterGroupViewModel CreateIdGroup(
@@ -787,7 +809,7 @@ public sealed class DesktopFilterGroupViewModel : INotifyPropertyChanged
         Action<DesktopFilterGroupViewModel> changed)
     {
         Field = field;
-        Title = title;
+        Title = DesktopLocalization.ResolveStored(title);
         ValueKind = valueKind;
         this.changed = changed;
     }
@@ -838,7 +860,7 @@ public sealed class DesktopFilterOptionViewModel : INotifyPropertyChanged
 
     public DesktopFilterOptionViewModel(string name, object value, int count, Action changed)
     {
-        Name = string.IsNullOrWhiteSpace(name) ? "None" : name;
+        Name = DesktopLocalization.ResolveStored(string.IsNullOrWhiteSpace(name) ? "None" : name);
         Value = value;
         Count = count;
         this.changed = changed;

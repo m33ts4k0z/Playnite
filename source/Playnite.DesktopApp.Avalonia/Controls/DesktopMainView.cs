@@ -265,11 +265,21 @@ public sealed class DesktopMainView : TemplatedControl
             listBox.SelectionMode = selectionMode;
         }
 
+        var expectedSelection = observedViewModel.SelectedGames
+            .Where(observedViewModel.Games.Contains)
+            .ToList();
+        if (ReferenceEquals(listBox.SelectedItem, observedViewModel.SelectedGame) &&
+            listBox.SelectedItems?.Count == expectedSelection.Count &&
+            expectedSelection.All(game => listBox.SelectedItems.Contains(game)))
+        {
+            return;
+        }
+
         listBox.SelectedItems?.Clear();
         listBox.SelectedItem = observedViewModel.SelectedGame;
-        foreach (var game in observedViewModel.SelectedGames)
+        foreach (var game in expectedSelection)
         {
-            if (observedViewModel.Games.Contains(game) && listBox.SelectedItems?.Contains(game) != true)
+            if (listBox.SelectedItems?.Contains(game) != true)
             {
                 listBox.SelectedItems?.Add(game);
             }

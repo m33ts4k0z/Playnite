@@ -23,7 +23,7 @@ internal sealed class PortablePluginCompatibilityHost : IPluginCompatibilityHost
     {
     }
 
-    public void LoadPluginResources(string extensionDirectory)
+    public void LoadPluginResources(string extensionDirectory, string language)
     {
     }
 

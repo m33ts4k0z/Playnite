@@ -65,7 +65,7 @@
                                           SelectedItem="{Binding EmulatorConfig.SelectedDefinition, Mode=TwoWay}" />
                             </Grid>
 
-                            <Border Height="1" Background="#394658" Margin="0,5" />
+                            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,5" />
                             <Grid ColumnDefinitions="260,*" ColumnSpacing="14" MinHeight="380">
                                 <Grid RowDefinitions="*,Auto" RowSpacing="8">
                                     <ListBox ItemsSource="{Binding EmulatorConfig.SelectedEmulator.AllProfiles}"
@@ -251,7 +251,7 @@
                     <ListBox Grid.Row="2" ItemsSource="{Binding EmulatorConfig.VisibleDetectedEmulators}">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="emu:ScannedEmulator">
-                                <Border Margin="3" Padding="12" CornerRadius="7" Background="#263140">
+                                <Border Margin="3" Padding="12" CornerRadius="7" Background="{DynamicResource DesktopControlBrush}">
                                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                                         <CheckBox IsChecked="{Binding Import, Mode=TwoWay}" />
                                         <StackPanel Grid.Column="1" Spacing="5">
@@ -281,7 +281,7 @@
                     <ListBox Grid.Row="1" ItemsSource="{Binding EmulatorConfig.DownloadOptions}">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:EmulatorDownloadOption">
-                                <Border Margin="3" Padding="11" CornerRadius="7" Background="#263140">
+                                <Border Margin="3" Padding="11" CornerRadius="7" Background="{DynamicResource DesktopControlBrush}">
                                     <Grid ColumnDefinitions="180,*,Auto" ColumnSpacing="10">
                                         <TextBlock Text="{Binding Platform}" FontWeight="SemiBold" />
                                         <StackPanel Grid.Column="1">

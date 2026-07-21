@@ -220,12 +220,7 @@ internal sealed class DesktopTrayService : IDisposable
     }
 
     private static string Localize(string key, string fallback)
-    {
-        var value = Playnite.SDK.ResourceProvider.GetString(key);
-        return string.IsNullOrWhiteSpace(value) || value == key || value == $"<!{key}!>"
-            ? fallback
-            : value;
-    }
+        => DesktopLocalization.Resolve(key, fallback);
 
     private void Menu_NeedsUpdate(object sender, EventArgs e) => RefreshMenu();
 

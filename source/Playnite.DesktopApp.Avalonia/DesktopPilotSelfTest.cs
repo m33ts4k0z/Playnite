@@ -9,6 +9,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Chrome;
 using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -65,7 +66,7 @@ internal static class DesktopPilotSelfTest
             "Views/BackgroundLayer.axaml", "Views/TopPanel.axaml", "Views/Sidebar.axaml",
             "Views/GridItemTemplate.axaml", "Views/ListItemTemplate.axaml", "Views/DetailsPanel.axaml",
             "Views/FilterPanel.axaml", "Views/AddonStore.axaml", "Views/EmulatorConfig.axaml",
-            "Views/EmulatedImport.axaml", "Views/DatabaseFields.axaml", "Views/WebImageSearch.axaml",
+            "Views/EmulatedImport.axaml", "Views/DatabaseFields.axaml", "Views/Statistics.axaml", "Views/WebImageSearch.axaml",
             "Views/ChromeParity.axaml"
         };
         var activeThemeManifest = window.ActiveThemePackage.Manifest;
@@ -92,8 +93,16 @@ internal static class DesktopPilotSelfTest
             WindowDecorationProperties.GetElementRole(window.Chrome.MaximizeButton) ==
                 WindowDecorationsElementRole.MaximizeButton &&
             WindowDecorationProperties.GetElementRole(window.Chrome.CloseButton) ==
-                WindowDecorationsElementRole.CloseButton
-                ? "the loose theme supplied drag, minimize, maximize, and close non-client roles"
+                WindowDecorationsElementRole.CloseButton &&
+            window.Chrome.MinimizeButton.Width == 46 && window.Chrome.MinimizeButton.Height == 42 &&
+            window.Chrome.MaximizeButton.Width == 46 && window.Chrome.MaximizeButton.Height == 42 &&
+            window.Chrome.CloseButton.Width == 46 && window.Chrome.CloseButton.Height == 42 &&
+            window.Chrome.MinimizeButton.Content is Border &&
+            window.Chrome.MaximizeButton.Content is global::Avalonia.Controls.Shapes.Rectangle &&
+            window.Chrome.CloseButton.Content is global::Avalonia.Controls.Shapes.Path &&
+            window.Chrome.MinimizeButton.HorizontalContentAlignment == global::Avalonia.Layout.HorizontalAlignment.Center &&
+            window.Chrome.MinimizeButton.VerticalContentAlignment == global::Avalonia.Layout.VerticalAlignment.Center
+                ? "the loose theme supplied aligned vector caption controls and every native non-client role"
                 : throw new InvalidOperationException("The custom chrome did not expose every native role."));
 
         window.TrayService.RefreshMenu();
@@ -170,6 +179,53 @@ internal static class DesktopPilotSelfTest
             viewModel.IsListView && window.MainView.GameList == window.MainView.ListGameList
                 ? "the persisted view selector switched to the list surface"
                 : throw new InvalidOperationException("The list surface did not become active."));
+        var libraryToolbar = window.MainView.GetVisualDescendants()
+            .OfType<Border>()
+            .FirstOrDefault(border => border.Name == "PART_LibraryToolbar");
+        var globalSearchButton = window.MainView.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(button => button.Name == "PART_GlobalSearchButton");
+        var gridViewButton = window.MainView.GetVisualDescendants()
+            .OfType<ToggleButton>()
+            .FirstOrDefault(button => button.Name == "PART_GridViewButton");
+        var listViewButton = window.MainView.GetVisualDescendants()
+            .OfType<ToggleButton>()
+            .FirstOrDefault(button => button.Name == "PART_ListViewButton");
+        var detailsViewButton = window.MainView.GetVisualDescendants()
+            .OfType<ToggleButton>()
+            .FirstOrDefault(button => button.Name == "PART_DetailsViewButton");
+        var installedFilterButton = window.MainView.GetVisualDescendants()
+            .OfType<ToggleButton>()
+            .FirstOrDefault(button => button.Name == "PART_InstalledFilterButton");
+        var favoritesFilterButton = window.MainView.GetVisualDescendants()
+            .OfType<ToggleButton>()
+            .FirstOrDefault(button => button.Name == "PART_FavoritesFilterButton");
+        var filterButton = window.MainView.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(button => button.Name == "PART_FilterButton");
+        var pluginOverflowButton = window.MainView.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(button => button.Name == "PART_PluginOverflowButton");
+        var toolbarSelectors = window.MainView.GetVisualDescendants()
+            .OfType<ComboBox>()
+            .Where(selector => selector.Name is "PART_FilterPresetSelector" or "PART_SortSelector" or
+                "PART_SortDirectionSelector" or "PART_GroupSelector")
+            .ToList();
+        Record(results, "Responsive Desktop library toolbar consolidates primary controls", () =>
+            libraryToolbar is { Bounds.Height: > 0 and <= 120 } &&
+            libraryToolbar.Bounds.Width > libraryToolbar.Bounds.Height * 5 &&
+            window.MainView.SearchBox != null &&
+            globalSearchButton?.Command == viewModel.OpenGlobalSearchCommand &&
+            gridViewButton?.Command == viewModel.SetGridViewCommand &&
+            listViewButton?.Command == viewModel.SetListViewCommand && listViewButton.IsChecked == true &&
+            detailsViewButton?.Command == viewModel.SetDetailsViewCommand &&
+            installedFilterButton != null && favoritesFilterButton != null &&
+            filterButton?.Command == viewModel.ToggleFilterPanelCommand &&
+            pluginOverflowButton?.Flyout != null && toolbarSelectors.Count == 4
+                ? $"{toolbarSelectors.Count} selectors, view/filter chips, search, and plugin overflow fit in a {libraryToolbar.Bounds.Height:0.#}-pixel strip"
+                : throw new InvalidOperationException(
+                    $"toolbar={libraryToolbar?.Bounds}, search={window.MainView.SearchBox != null}, " +
+                    $"selectors={toolbarSelectors.Count}, plugins={pluginOverflowButton?.Flyout != null}."));
         viewModel.SelectedGame = viewModel.Games.FirstOrDefault();
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         var realizedListItems = window.MainView.ListGameList.GetVisualDescendants()
@@ -190,6 +246,40 @@ internal static class DesktopPilotSelfTest
             selectedBackground.Color.A > 0 && selectedBackground.Color.A < 255
                 ? $"the selected row paints a translucent highlight (alpha {selectedBackground.Color.A})"
                 : throw new InvalidOperationException("The selected row did not paint a translucent highlight."));
+        var visibleListText = unselectedListItem?.GetVisualDescendants()
+            .OfType<TextBlock>()
+            .Where(text => text.IsVisible)
+            .ToList() ?? new List<TextBlock>();
+        Record(results, "Desktop list rows show the complete game title only", () =>
+            unselectedListItem?.DataContext is DesktopGameItemViewModel listGame &&
+            visibleListText.Count == 1 &&
+            visibleListText[0].Name == "PART_GameTitle" &&
+            visibleListText[0].Text == listGame.Name &&
+            visibleListText[0].TextWrapping == TextWrapping.Wrap
+                ? $"{listGame.Name} is the row's only text and wraps when needed"
+                : throw new InvalidOperationException(
+                    $"visible text={string.Join(" | ", visibleListText.Select(text => $"{text.Name}:{text.Text}"))}."));
+        var clickSelectionTarget = realizedListItems
+            .Select(item => item.DataContext as DesktopGameItemViewModel)
+            .FirstOrDefault(game => game != null && game != viewModel.SelectedGame);
+        var listScrollViewer = window.MainView.ListScrollViewer;
+        var selectionEventCount = 0;
+        EventHandler<SelectionChangedEventArgs> selectionCounter = (_, _) => selectionEventCount++;
+        window.MainView.ListGameList.SelectionChanged += selectionCounter;
+        var listOffsetBeforeSelection = listScrollViewer?.Offset.Y ?? 0;
+        window.MainView.ListGameList.SelectedItem = clickSelectionTarget;
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var listOffsetAfterSelection = listScrollViewer?.Offset.Y ?? 0;
+        window.MainView.ListGameList.SelectionChanged -= selectionCounter;
+        Record(results, "Click selection keeps a visible Desktop list row in place", () =>
+            clickSelectionTarget != null &&
+            viewModel.SelectedGame == clickSelectionTarget &&
+            selectionEventCount == 1 &&
+            Math.Abs(listOffsetAfterSelection - listOffsetBeforeSelection) < 0.01
+                ? $"one selection event preserved scroll offset {listOffsetBeforeSelection:0.##}"
+                : throw new InvalidOperationException(
+                    $"target={clickSelectionTarget?.Name}, selected={viewModel.SelectedGame?.Name}, " +
+                    $"events={selectionEventCount}, offset={listOffsetBeforeSelection:0.##}->{listOffsetAfterSelection:0.##}."));
         viewModel.SelectedViewMode = "Grid";
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
@@ -299,6 +389,46 @@ internal static class DesktopPilotSelfTest
             System.Windows.Application.Current?.TryFindResource("BaseTextBlockStyle") is System.Windows.Style
                 ? "localized strings and WPF-compatible theme primitives are available during plugin construction"
                 : throw new InvalidOperationException("The static legacy resource bridge is incomplete."));
+
+        Record(results, "Legacy plugin localization retains English fallbacks", () =>
+        {
+            var extensionDirectory = Path.Combine(
+                Path.GetTempPath(),
+                $"playnite-plugin-localization-{Guid.NewGuid():N}");
+            var localizationDirectory = Path.Combine(extensionDirectory, "Localization");
+            Directory.CreateDirectory(localizationDirectory);
+            try
+            {
+                const string dictionaryStart =
+                    "<ResourceDictionary xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" " +
+                    "xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" " +
+                    "xmlns:sys=\"clr-namespace:System;assembly=mscorlib\">";
+                File.WriteAllText(
+                    Path.Combine(localizationDirectory, "en_US.xaml"),
+                    dictionaryStart +
+                    "<sys:String x:Key=\"LOCPluginFallbackSelfTest\">English fallback</sys:String>" +
+                    "<sys:String x:Key=\"LOCPluginOverlaySelfTest\">English value</sys:String>" +
+                    "</ResourceDictionary>");
+                File.WriteAllText(
+                    Path.Combine(localizationDirectory, "sv_SE.xaml"),
+                    dictionaryStart +
+                    "<sys:String x:Key=\"LOCPluginFallbackSelfTest\"></sys:String>" +
+                    "<sys:String x:Key=\"LOCPluginOverlaySelfTest\">Svenskt värde</sys:String>" +
+                    "</ResourceDictionary>");
+
+                WpfPluginSupportRuntime.LoadPluginResources(extensionDirectory, "sv_SE");
+                var fallback = Playnite.SDK.ResourceProvider.GetString("LOCPluginFallbackSelfTest");
+                var overlay = Playnite.SDK.ResourceProvider.GetString("LOCPluginOverlaySelfTest");
+                return fallback == "English fallback" && overlay == "Svenskt värde"
+                    ? "English loads first; non-empty selected-language strings overlay it"
+                    : throw new InvalidOperationException(
+                        $"Unexpected localized values: fallback='{fallback}', overlay='{overlay}'.");
+            }
+            finally
+            {
+                Directory.Delete(extensionDirectory, true);
+            }
+        });
 #endif
 
         viewModel.SelectedGame = viewModel.Games.First(game => game.IsInstalled);
@@ -871,6 +1001,7 @@ internal static class DesktopPilotSelfTest
         library.Database.Games.Update(metadataGameCopy);
         viewModel.RefreshGame(metadataGame.Id);
         viewModel.SelectGame(metadataGame.Id);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         var originalMetadataName = metadataGame.Name;
         await using var metadataServer = new LoopbackImageServer(File.ReadAllBytes(library.SelfTestMediaPath));
         var metadataPlugin = new PilotMetadataPlugin(window.RuntimeHost.PluginApi, metadataServer.BaseUrl);
@@ -3472,6 +3603,36 @@ internal static class DesktopPilotSelfTest
                     $"fields={viewModel.FilterFieldCount}, groups={viewModel.FilterGroups.Count}, " +
                     $"visible={viewModel.IsFilterPanelVisible}."));
 
+        var unresolvedFilterLabels = viewModel.FilterGroups
+            .SelectMany(group => new[] { group.Title, group.DisplayTitle }
+                .Concat(group.Options.Select(option => option.DisplayText)))
+            .Where(DesktopLocalization.ContainsUnresolvedToken)
+            .ToList();
+        Record(results, "Generated filter labels resolve localization tokens", () =>
+            unresolvedFilterLabels.Count == 0
+                ? $"{viewModel.FilterGroups.Count:N0} groups and " +
+                    $"{viewModel.FilterGroups.Sum(group => group.Options.Count):N0} options contain no raw localization keys"
+                : throw new InvalidOperationException(
+                    $"Unresolved filter labels: {string.Join(", ", unresolvedFilterLabels)}"));
+
+        var localizationProbe = viewModel.LibraryGames.First();
+        var unresolvedGeneratedText = typeof(DesktopAppViewModel).GetProperties()
+            .Where(property => property.CanRead && property.PropertyType == typeof(string) &&
+                property.GetIndexParameters().Length == 0)
+            .Select(property => (property.Name, Value: (string)property.GetValue(viewModel)))
+            .Concat(typeof(DesktopGameItemViewModel).GetProperties()
+                .Where(property => property.CanRead && property.PropertyType == typeof(string) &&
+                    property.GetIndexParameters().Length == 0)
+                .Select(property => (property.Name, Value: (string)property.GetValue(localizationProbe))))
+            .Where(item => DesktopLocalization.ContainsUnresolvedToken(item.Value))
+            .Select(item => $"{item.Name}={item.Value}")
+            .ToList();
+        Record(results, "Generated Desktop text surfaces contain no localization keys", () =>
+            unresolvedGeneratedText.Count == 0
+                ? "view-model summaries and every game-details string resolve stored and generated tokens"
+                : throw new InvalidOperationException(
+                    $"Unresolved generated text: {string.Join(", ", unresolvedGeneratedText)}"));
+
         var filterProbe = viewModel.LibraryGames.First(game => !game.Game.Hidden);
         var liveFilter = new FilterPresetSettings
         {
@@ -3735,7 +3896,7 @@ internal static class DesktopPilotSelfTest
             viewModel.AddManualGameCommand, viewModel.OpenInstalledGameImportCommand,
             viewModel.OpenEmulatedImportCommand, viewModel.OpenLibrarySyncCommand,
             viewModel.OpenMetadataDownloadCommand, viewModel.OpenDatabaseFieldsCommand,
-            viewModel.OpenExplorerCommand, viewModel.BackupDataCommand,
+            viewModel.OpenExplorerCommand, viewModel.OpenStatisticsCommand, viewModel.BackupDataCommand,
             viewModel.RestoreDataBackupCommand, viewModel.SelectRandomGameCommand,
             viewModel.SelectRandomFilteredGameCommand, viewModel.OpenAddonStoreCommand,
             viewModel.OpenToolsConfigCommand, viewModel.OpenEmulatorConfigCommand,
@@ -3750,13 +3911,44 @@ internal static class DesktopPilotSelfTest
                 ? $"{chromeCommands.Length} native commands cover add/import, library, tools, scripts, help, restart, and exit"
                 : throw new InvalidOperationException("A Desktop chrome command was not initialized."));
 
-        var metadataSidebarButton = window.MainView.GetVisualDescendants()
-            .OfType<Button>()
-            .FirstOrDefault(button => button.Name == "DownloadMetadataSidebarButton");
-        Record(results, "Existing-game metadata download is exposed in the library sidebar", () =>
-            metadataSidebarButton?.Command == viewModel.OpenMetadataDownloadCommand
-                ? "the visible sidebar opens the selected, filtered, or entire-library metadata workflow"
-                : throw new InvalidOperationException("The existing-game metadata workflow is hidden from the sidebar."));
+        Record(results, "Existing-game metadata download remains exposed in the hamburger menu", () =>
+            chromeCommands.Contains(viewModel.OpenMetadataDownloadCommand)
+                ? "the compact layout keeps the selected, filtered, or entire-library metadata workflow in Library"
+                : throw new InvalidOperationException("The existing-game metadata workflow is missing from the hamburger menu."));
+
+        viewModel.OpenStatisticsCommand.Execute(null);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        var statistics = viewModel.Statistics;
+        var visibleStatisticsGames = library.Database.Games.Where(game => !game.Hidden).ToList();
+        var expectedStatisticsCount = (ulong)visibleStatisticsGames.Count;
+        var expectedInstalledStatisticsCount = (ulong)visibleStatisticsGames.Count(game => game.IsInstalled);
+        var topPlaytimes = statistics.GlobalStats.TopPlayed.Select(item => item.Value).ToList();
+        var providerCount = statistics.GlobalStats.Libraries.Aggregate(0UL, (total, item) => total + item.Value);
+        Record(results, "Native Statistics dashboard reproduces Core library totals", () =>
+            statistics.IsVisible &&
+            statistics.GlobalStats.TotalCount == expectedStatisticsCount &&
+            statistics.GlobalStats.Overview.First().Value == expectedStatisticsCount &&
+            statistics.GlobalStats.Overview[1].Value == expectedInstalledStatisticsCount &&
+            providerCount == expectedStatisticsCount &&
+            topPlaytimes.SequenceEqual(topPlaytimes.OrderByDescending(value => value))
+                ? $"global statistics cover {expectedStatisticsCount:N0} visible games across " +
+                  $"{statistics.GlobalStats.Libraries.Count:N0} libraries"
+                : throw new InvalidOperationException(
+                    $"visible={statistics.IsVisible}, total={statistics.GlobalStats.TotalCount}/{expectedStatisticsCount}, " +
+                    $"installed={statistics.GlobalStats.Overview.ElementAtOrDefault(1)?.Value}/{expectedInstalledStatisticsCount}, " +
+                    $"providers={providerCount}.") );
+
+        statistics.SelectedFilter = statistics.Filters.First(filter =>
+            filter.Kind == DesktopStatisticsFilterKind.InstallationStatus);
+        statistics.SelectedFilterOption = statistics.FilterOptions.First(option => option.Value is true);
+        Record(results, "Statistics filters reuse the live Core game state", () =>
+            statistics.FilteredStats.TotalCount == expectedInstalledStatisticsCount &&
+            statistics.FilteredStats.Overview[1].Value == expectedInstalledStatisticsCount
+                ? $"the installation filter reports {expectedInstalledStatisticsCount:N0} installed games"
+                : throw new InvalidOperationException(
+                    $"filtered={statistics.FilteredStats.TotalCount}, expected={expectedInstalledStatisticsCount}."));
+        statistics.SelectedFilter = statistics.Filters.First(filter => filter.Kind == DesktopStatisticsFilterKind.None);
+        statistics.CloseCommand.Execute(null);
 
         viewModel.SetDetailsViewCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);

@@ -1,0 +1,189 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <DataTemplate x:Key="DesktopStatisticsCountRowTemplate">
+        <Grid ColumnDefinitions="*,Auto,48" Margin="0,5">
+            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"
+                       Foreground="{DynamicResource DesktopTextBrush}" />
+            <TextBlock Grid.Column="1" Text="{Binding ValueText}" Margin="12,0,0,0"
+                       FontWeight="SemiBold" Foreground="{DynamicResource DesktopTextBrush}" />
+            <TextBlock Grid.Column="2" Text="{Binding PercentageText}" Margin="8,0,0,0"
+                       HorizontalAlignment="Right" Foreground="{DynamicResource DesktopMutedBrush}" />
+        </Grid>
+    </DataTemplate>
+
+    <DataTemplate x:Key="DesktopStatisticsGameRowTemplate">
+        <Button Command="{Binding OpenCommand}" Background="Transparent" BorderThickness="0"
+                Padding="5,4" HorizontalContentAlignment="Stretch">
+            <Grid ColumnDefinitions="*,Auto,48">
+                <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource DesktopAccentBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding ValueText}" Margin="12,0,0,0"
+                           FontWeight="SemiBold" Foreground="{DynamicResource DesktopTextBrush}" />
+                <TextBlock Grid.Column="2" Text="{Binding PercentageText}" Margin="8,0,0,0"
+                           HorizontalAlignment="Right" Foreground="{DynamicResource DesktopMutedBrush}" />
+            </Grid>
+        </Button>
+    </DataTemplate>
+
+    <ControlTemplate x:Key="DesktopStatisticsOverviewCardTemplate">
+        <Border Background="{DynamicResource DesktopPanelBrush}"
+                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1"
+                CornerRadius="8" MinHeight="345">
+            <Grid RowDefinitions="Auto,*">
+                <Border Padding="14,10" Background="{DynamicResource DesktopPanelStrongBrush}"
+                        BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1"
+                        CornerRadius="8,8,0,0">
+                    <TextBlock Text="{DynamicResource LOCOverviewLabel}" FontWeight="SemiBold" />
+                </Border>
+                <StackPanel Grid.Row="1" Margin="16,12" Spacing="2">
+                    <ItemsControl ItemsSource="{Binding Overview}"
+                                  ItemTemplate="{StaticResource DesktopStatisticsCountRowTemplate}" />
+                    <Separator Margin="0,8" />
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                        <TextBlock Text="{DynamicResource LOCStatsTotalPlayTime}" />
+                        <TextBlock Grid.Column="1" Text="{Binding TotalPlaytimeText}" FontWeight="SemiBold" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                        <TextBlock Text="{DynamicResource LOCStatsAvaragePlayTime}" />
+                        <TextBlock Grid.Column="1" Text="{Binding AveragePlaytimeText}" FontWeight="SemiBold" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                        <TextBlock Text="{DynamicResource LOCStatsTotalInstallSize}" />
+                        <TextBlock Grid.Column="1" Text="{Binding TotalInstallSizeText}" FontWeight="SemiBold" />
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="DesktopStatisticsCompletionCardTemplate">
+        <Border Background="{DynamicResource DesktopPanelBrush}"
+                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1"
+                CornerRadius="8" MinHeight="345">
+            <Grid RowDefinitions="Auto,*">
+                <Border Padding="14,10" Background="{DynamicResource DesktopPanelStrongBrush}"
+                        BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1"
+                        CornerRadius="8,8,0,0">
+                    <TextBlock Text="{DynamicResource LOCCompletionStatus}" FontWeight="SemiBold" />
+                </Border>
+                <ScrollViewer Grid.Row="1" Margin="14,10" MaxHeight="285">
+                    <ItemsControl ItemsSource="{Binding CompletionStates}"
+                                  ItemTemplate="{StaticResource DesktopStatisticsCountRowTemplate}" />
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="DesktopStatisticsTopPlayedCardTemplate">
+        <Border Background="{DynamicResource DesktopPanelBrush}"
+                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1"
+                CornerRadius="8" MinHeight="345">
+            <Grid RowDefinitions="Auto,*">
+                <Border Padding="14,10" Background="{DynamicResource DesktopPanelStrongBrush}"
+                        BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1"
+                        CornerRadius="8,8,0,0">
+                    <TextBlock Text="{DynamicResource LOCStatsTopPlayTime}" FontWeight="SemiBold" />
+                </Border>
+                <ScrollViewer Grid.Row="1" Margin="8,8" MaxHeight="285">
+                    <ItemsControl ItemsSource="{Binding TopPlayed}"
+                                  ItemTemplate="{StaticResource DesktopStatisticsGameRowTemplate}" />
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="DesktopStatisticsLibrariesCardTemplate">
+        <Border Background="{DynamicResource DesktopPanelBrush}"
+                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1"
+                CornerRadius="8" MinHeight="345">
+            <Grid RowDefinitions="Auto,*">
+                <Border Padding="14,10" Background="{DynamicResource DesktopPanelStrongBrush}"
+                        BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1"
+                        CornerRadius="8,8,0,0">
+                    <TextBlock Text="{DynamicResource LOCGameProviderTitle}" FontWeight="SemiBold" />
+                </Border>
+                <ScrollViewer Grid.Row="1" Margin="14,10" MaxHeight="285">
+                    <ItemsControl ItemsSource="{Binding Libraries}"
+                                  ItemTemplate="{StaticResource DesktopStatisticsCountRowTemplate}" />
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="DesktopStatisticsFilterCardTemplate">
+        <Border Background="{DynamicResource DesktopPanelBrush}"
+                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1"
+                CornerRadius="8" MinHeight="345">
+            <Grid RowDefinitions="Auto,*">
+                <Border Padding="14,10" Background="{DynamicResource DesktopPanelStrongBrush}"
+                        BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1"
+                        CornerRadius="8,8,0,0">
+                    <TextBlock Text="{DynamicResource LOCFilter}" FontWeight="SemiBold" />
+                </Border>
+                <StackPanel Grid.Row="1" Margin="16" Spacing="12">
+                    <ComboBox ItemsSource="{Binding Filters}"
+                              SelectedItem="{Binding SelectedFilter, Mode=TwoWay}" />
+                    <ListBox ItemsSource="{Binding FilterOptions}"
+                             SelectedItem="{Binding SelectedFilterOption, Mode=TwoWay}"
+                             MaxHeight="230">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" Margin="5,3" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="DesktopStatisticsTemplate">
+        <Grid Background="{DynamicResource DesktopBackgroundBrush}" RowDefinitions="Auto,*">
+            <Border Background="{DynamicResource DesktopPanelStrongBrush}"
+                    BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1"
+                    Padding="22,12">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14" VerticalAlignment="Center">
+                    <Button Command="{Binding CloseCommand}" Width="42" Height="42" Padding="8"
+                            ToolTip.Tip="{DynamicResource LOCBackLabel}">
+                        <PathIcon Data="M20,11H7.8L13.4,5.4L12,4L4,12L12,20L13.4,18.6L7.8,13H20V11Z" />
+                    </Button>
+                    <TextBlock Grid.Column="1" Text="{DynamicResource LOCStatistics}"
+                               FontSize="28" FontWeight="Bold" VerticalAlignment="Center" />
+                    <CheckBox Grid.Column="2" Content="{DynamicResource LOCStatsIncludeHidden}"
+                              IsChecked="{Binding IncludeHidden, Mode=TwoWay}"
+                              VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="24" Spacing="22" MinWidth="1180">
+                    <Border Background="{DynamicResource DesktopSelectedBrush}" CornerRadius="6" Padding="14,9">
+                        <TextBlock Text="{DynamicResource LOCStatsGlobal}" FontSize="18" FontWeight="SemiBold" />
+                    </Border>
+                    <Grid ColumnDefinitions="1.05*,1.05*,1.55*,1.05*" ColumnSpacing="14"
+                          DataContext="{Binding GlobalStats}">
+                        <ContentControl Template="{StaticResource DesktopStatisticsOverviewCardTemplate}" />
+                        <ContentControl Grid.Column="1" Template="{StaticResource DesktopStatisticsCompletionCardTemplate}" />
+                        <ContentControl Grid.Column="2" Template="{StaticResource DesktopStatisticsTopPlayedCardTemplate}" />
+                        <ContentControl Grid.Column="3" Template="{StaticResource DesktopStatisticsLibrariesCardTemplate}" />
+                    </Grid>
+
+                    <Border Background="{DynamicResource DesktopSelectedBrush}" CornerRadius="6" Padding="14,9">
+                        <TextBlock Text="{DynamicResource LOCStatsFiltered}" FontSize="18" FontWeight="SemiBold" />
+                    </Border>
+                    <Grid ColumnDefinitions="1.05*,1.05*,1.55*,1.05*" ColumnSpacing="14">
+                        <ContentControl DataContext="{Binding FilteredStats}"
+                                        Template="{StaticResource DesktopStatisticsOverviewCardTemplate}" />
+                        <ContentControl Grid.Column="1" DataContext="{Binding FilteredStats}"
+                                        Template="{StaticResource DesktopStatisticsCompletionCardTemplate}" />
+                        <ContentControl Grid.Column="2" DataContext="{Binding FilteredStats}"
+                                        Template="{StaticResource DesktopStatisticsTopPlayedCardTemplate}" />
+                        <ContentControl Grid.Column="3"
+                                        Template="{StaticResource DesktopStatisticsFilterCardTemplate}" />
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </ControlTemplate>
+</ResourceDictionary>

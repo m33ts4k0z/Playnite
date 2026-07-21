@@ -3,11 +3,26 @@
                     xmlns:local="using:Playnite.DesktopApp.Avalonia.Controls"
                     xmlns:foundation="using:Playnite.Avalonia.Controls">
 
-    <SolidColorBrush x:Key="DesktopBackgroundBrush" Color="#10141B" />
-    <SolidColorBrush x:Key="DesktopPanelBrush" Color="#171D26" />
-    <SolidColorBrush x:Key="DesktopPanelStrongBrush" Color="#202834" />
-    <SolidColorBrush x:Key="DesktopListSurfaceBrush" Color="#0D121A" />
+    <SolidColorBrush x:Key="DesktopBackgroundBrush" Color="#081321" />
+    <SolidColorBrush x:Key="DesktopPanelBrush" Color="#0E1C2E" />
+    <SolidColorBrush x:Key="DesktopPanelStrongBrush" Color="#152943" />
+    <SolidColorBrush x:Key="DesktopListSurfaceBrush" Color="#07111E" />
+    <SolidColorBrush x:Key="DesktopSurfaceRaisedBrush" Color="#1A304D" />
+    <SolidColorBrush x:Key="DesktopControlBrush" Color="#1D3655" />
+    <SolidColorBrush x:Key="DesktopControlHoverBrush" Color="#29496D" />
+    <SolidColorBrush x:Key="DesktopSelectedBrush" Color="#214F76" />
+    <SolidColorBrush x:Key="DesktopBorderBrush" Color="#31506F" />
+    <SolidColorBrush x:Key="DesktopModalOverlayBrush" Color="#E6081321" />
+    <SolidColorBrush x:Key="DesktopModalOpaqueOverlayBrush" Color="#F0081321" />
     <SolidColorBrush x:Key="DesktopAccentBrush" Color="#00A8E8" />
+    <SolidColorBrush x:Key="DesktopMenuHighlightBrush" Color="#0D8DD6" />
+    <SolidColorBrush x:Key="DesktopMenuPressedBrush" Color="#086FA9" />
+    <SolidColorBrush x:Key="DesktopMenuIconBrush" Color="#8EDCFA" />
+    <SolidColorBrush x:Key="DesktopMenuDividerBrush" Color="#21496F" />
+    <SolidColorBrush x:Key="DesktopMenuFrameBrush" Color="#102A44" />
+    <!-- Fluent's submenu template resolves these keys for the padding and outer frame. -->
+    <SolidColorBrush x:Key="MenuFlyoutPresenterBackground" Color="#102A44" />
+    <SolidColorBrush x:Key="MenuFlyoutPresenterBorderBrush" Color="#1B4265" />
     <SolidColorBrush x:Key="DesktopTextBrush" Color="#F3F6FA" />
     <SolidColorBrush x:Key="DesktopMutedBrush" Color="#9EABBA" />
 
@@ -37,7 +52,7 @@
              "Border.desktopRow" selector could never paint the selected row.
              These brushes stay translucent so the window background shows through. -->
         <Style Selector="^:pointerover">
-            <Setter Property="Background" Value="#1AFFFFFF" />
+            <Setter Property="Background" Value="#3329496D" />
         </Style>
         <Style Selector="^:selected">
             <Setter Property="Background" Value="#3300A8E8" />
@@ -56,7 +71,7 @@
                 <Grid RowDefinitions="42,*" Background="{DynamicResource DesktopBackgroundBrush}">
                     <Border Name="PART_TitleBar"
                             Background="{DynamicResource DesktopPanelStrongBrush}"
-                            BorderBrush="#303A49" BorderThickness="0,0,0,1">
+                            BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Orientation="Horizontal" Spacing="10" Margin="14,0"
                                         IsHitTestVisible="False" VerticalAlignment="Center">
@@ -71,11 +86,27 @@
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
                                 <Button Name="PART_MinimizeButton" Classes="windowCaption"
-                                        Content="—" ToolTip.Tip="Minimize" />
+                                        ToolTip.Tip="Minimize">
+                                    <Border Width="11" Height="1"
+                                            Background="{DynamicResource DesktopTextBrush}"
+                                            IsHitTestVisible="False" />
+                                </Button>
                                 <Button Name="PART_MaximizeButton" Classes="windowCaption"
-                                        Content="□" ToolTip.Tip="Maximize or restore" />
+                                        ToolTip.Tip="Maximize or restore">
+                                    <Rectangle Width="10" Height="10"
+                                               Stroke="{DynamicResource DesktopTextBrush}"
+                                               StrokeThickness="1"
+                                               IsHitTestVisible="False" />
+                                </Button>
                                 <Button Name="PART_CloseButton" Classes="windowCaption windowClose"
-                                        Content="×" ToolTip.Tip="Close" />
+                                        ToolTip.Tip="Close">
+                                    <Path Width="11" Height="11"
+                                          Data="M 0,0 L 11,11 M 11,0 L 0,11"
+                                          Stroke="{DynamicResource DesktopTextBrush}"
+                                          StrokeThickness="1.2"
+                                          Stretch="Uniform"
+                                          IsHitTestVisible="False" />
+                                </Button>
                             </StackPanel>
                         </Grid>
                     </Border>
@@ -98,63 +129,71 @@
                                     Template="{DynamicResource DesktopBackgroundLayerTemplate}" />
                     <ContentControl Template="{DynamicResource DesktopTopPanelTemplate}" />
 
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="{Binding LeftSidebarWidth}" />
+                    <Grid Grid.Row="1" RowDefinitions="Auto,*">
+                        <ContentControl Template="{DynamicResource DesktopLibraryToolbarTemplate}" />
+
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="0" />
                             <ColumnDefinition Width="{Binding FirstContentColumnWidth}" />
                             <ColumnDefinition Width="{Binding SecondContentColumnWidth}" />
-                            <ColumnDefinition Width="{Binding RightSidebarWidth}" />
-                        </Grid.ColumnDefinitions>
-                        <ContentControl Grid.Column="{Binding SidebarContentColumn}"
-                                        Template="{DynamicResource DesktopSidebarTemplate}" />
+                            <ColumnDefinition Width="0" />
+                            </Grid.ColumnDefinitions>
 
-                        <Grid Grid.Column="{Binding LibraryContentColumn}">
-                            <ListBox Name="PART_GridGameList"
-                                     Margin="18,14"
-                                     IsVisible="{Binding IsGridView}"
-                                     Background="Transparent"
-                                     ItemsSource="{Binding Games}"
-                                     SelectionMode="Multiple"
-                                     ItemTemplate="{DynamicResource DesktopGridItemTemplate}">
-                                <ListBox.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <foundation:UniformGridVirtualizingPanel
-                                            ItemWidth="{Binding GridItemWidth}"
-                                            ItemHeight="{Binding GridItemHeight}"
-                                            ItemSpacing="{Binding GridItemSpacing}" />
-                                    </ItemsPanelTemplate>
-                                </ListBox.ItemsPanel>
-                            </ListBox>
+                            <Grid Grid.Column="{Binding LibraryContentColumn}">
+                                <ListBox Name="PART_GridGameList"
+                                         Margin="18,14"
+                                         IsVisible="{Binding IsGridView}"
+                                         Background="Transparent"
+                                         ItemsSource="{Binding Games}"
+                                         SelectionMode="Multiple"
+                                         ItemTemplate="{DynamicResource DesktopGridItemTemplate}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <foundation:UniformGridVirtualizingPanel
+                                                ItemWidth="{Binding GridItemWidth}"
+                                                ItemHeight="{Binding GridItemHeight}"
+                                                ItemSpacing="{Binding GridItemSpacing}" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
 
-                            <ListBox Name="PART_ListGameList"
-                                      Margin="18,14"
-                                      IsVisible="{Binding IsListView}"
-                                      Background="Transparent"
-                                      ItemsSource="{Binding Games}"
-                                      SelectionMode="Multiple"
-                                      ItemContainerTheme="{DynamicResource DesktopListItemContainerTheme}"
-                                      ItemTemplate="{DynamicResource DesktopListItemTemplate}" />
+                                <ListBox Name="PART_ListGameList"
+                                         Margin="18,14"
+                                         IsVisible="{Binding IsListView}"
+                                         Background="Transparent"
+                                         ItemsSource="{Binding Games}"
+                                         SelectionMode="Multiple"
+                                         ItemContainerTheme="{DynamicResource DesktopListItemContainerTheme}"
+                                         ItemTemplate="{DynamicResource DesktopListItemTemplate}" />
+                            </Grid>
+
+                            <ContentControl Name="PART_DetailsPanel"
+                                            Grid.Column="{Binding DetailsContentColumn}"
+                                            Template="{DynamicResource DesktopDetailsPanelTemplate}" />
                         </Grid>
-
-                        <ContentControl Name="PART_DetailsPanel"
-                                        Grid.Column="{Binding DetailsContentColumn}"
-                                        Template="{DynamicResource DesktopDetailsPanelTemplate}" />
                     </Grid>
 
-                    <Border Grid.Row="2" Background="#0C1016" Padding="18,0">
+                    <Border Grid.Row="2" Background="{DynamicResource DesktopListSurfaceBrush}" Padding="18,0">
                         <TextBlock Text="{Binding StatusText}" FontSize="11"
                                    VerticalAlignment="Center"
                                    Foreground="{DynamicResource DesktopMutedBrush}" />
                     </Border>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsFilterPanelVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsFilterPanelVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <ContentControl Template="{DynamicResource DesktopFilterPanelTemplate}"
                                         HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding PluginSearch.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding Statistics.IsVisible}"
+                          Background="{DynamicResource DesktopBackgroundBrush}">
+                        <ContentControl Template="{DynamicResource DesktopStatisticsTemplate}"
+                                        DataContext="{Binding Statistics}" />
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding PluginSearch.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="820" MaxHeight="760" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -180,7 +219,7 @@
                                          SelectedItem="{Binding PluginSearch.SelectedResult, Mode=TwoWay}">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="3" Padding="13" CornerRadius="7" Background="#263140">
+                                            <Border Margin="3" Padding="13" CornerRadius="7" Background="{DynamicResource DesktopControlBrush}">
                                                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                                                     <Image Source="{Binding IconPath}" Width="26" Height="26"
                                                            IsVisible="{Binding HasIconPath}" />
@@ -216,48 +255,48 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding AddonStore.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding AddonStore.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <ContentControl Template="{DynamicResource DesktopAddonStoreTemplate}" />
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding EmulatorConfig.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding EmulatorConfig.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <ContentControl Template="{DynamicResource DesktopEmulatorConfigTemplate}" />
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding EmulatedImport.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding EmulatedImport.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <ContentControl Template="{DynamicResource DesktopEmulatedImportTemplate}" />
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding DatabaseFields.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding DatabaseFields.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <ContentControl Template="{DynamicResource DesktopDatabaseFieldsTemplate}" />
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding ToolsConfig.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding ToolsConfig.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <ContentControl Template="{DynamicResource DesktopToolsConfigTemplate}" />
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsExplorerVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsExplorerVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <ContentControl Template="{DynamicResource DesktopExplorerTemplate}" />
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsAboutVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsAboutVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <ContentControl Template="{DynamicResource DesktopAboutTemplate}" />
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsFirstTimeWizardVisible}"
-                          Background="#F20B0E13">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsFirstTimeWizardVisible}"
+                          Background="{DynamicResource DesktopModalOpaqueOverlayBrush}">
                         <ContentControl Template="{DynamicResource DesktopFirstTimeWizardTemplate}" />
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsNotificationsVisible}"
-                          Background="#D9000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsNotificationsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="760" MaxHeight="680" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -267,7 +306,7 @@
                                 <ListBox MaxHeight="450" ItemsSource="{Binding Notifications}">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="3" Padding="12" CornerRadius="7" Background="#263140">
+                                            <Border Margin="3" Padding="12" CornerRadius="7" Background="{DynamicResource DesktopControlBrush}">
                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                                                     <StackPanel>
                                                         <TextBlock Text="{Binding Type}" FontWeight="Bold"
@@ -292,8 +331,8 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsActionPickerVisible}"
-                          Background="#D9000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsActionPickerVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="620" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -311,8 +350,8 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsPluginMenuVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsPluginMenuVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="720" MaxHeight="720" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -324,7 +363,7 @@
                                          SelectedItem="{Binding SelectedPluginMenuItem, Mode=TwoWay}">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="3" Padding="13" CornerRadius="7" Background="#263140">
+                                            <Border Margin="3" Padding="13" CornerRadius="7" Background="{DynamicResource DesktopControlBrush}">
                                                 <StackPanel Spacing="3">
                                                     <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource DesktopTextBrush}" />
@@ -345,8 +384,8 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsPluginSidebarVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsPluginSidebarVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="900" MaxHeight="760" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -364,8 +403,8 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding PluginSettings.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding PluginSettings.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="760" MaxHeight="720" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -385,7 +424,7 @@
                                          IsEnabled="{Binding PluginSettings.CanConfigure}">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Margin="3" Padding="14" CornerRadius="7" Background="#263140">
+                                            <Border Margin="3" Padding="14" CornerRadius="7" Background="{DynamicResource DesktopControlBrush}">
                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="18">
                                                     <StackPanel Spacing="3">
                                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
@@ -435,8 +474,8 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding Settings.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding Settings.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="840" MaxHeight="720" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -461,11 +500,18 @@
                                         </ListBox.ItemTemplate>
                                     </ListBox>
 
-                                    <ContentControl Grid.Column="1"
-                                                    Content="{Binding Settings.SelectedSection.Content}" />
+                                    <Border Grid.Column="1"
+                                            Background="{DynamicResource DesktopPanelBrush}"
+                                            BorderBrush="{DynamicResource DesktopBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="8"
+                                            ClipToBounds="True">
+                                        <ContentControl Content="{Binding Settings.SelectedSection.Content}" />
+                                    </Border>
                                 </Grid>
 
-                                <Border Grid.Row="2" BorderThickness="0,1,0,0" BorderBrush="#303A49"
+                                <Border Grid.Row="2" BorderThickness="0,1,0,0"
+                                        BorderBrush="{DynamicResource DesktopBorderBrush}"
                                         Padding="30,14">
                                     <Grid ColumnDefinitions="*,Auto,Auto">
                                         <TextBlock Text="Some changes require a restart to take effect."
@@ -483,8 +529,8 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding InstalledGameImport.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding InstalledGameImport.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="900" MaxHeight="800" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -581,8 +627,8 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding LibrarySync.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding LibrarySync.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="720" MaxHeight="720" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -657,8 +703,8 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding IsDialogVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsDialogVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="680" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -678,8 +724,8 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding MetadataDownload.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding MetadataDownload.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="860" MaxHeight="790" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -763,8 +809,8 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" IsVisible="{Binding Editor.IsVisible}"
-                          Background="#E6000000">
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding Editor.IsVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="920" MaxHeight="820" Padding="30" CornerRadius="14"
                                 Background="{DynamicResource DesktopPanelStrongBrush}"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -785,7 +831,7 @@
                                             </StackPanel>
                                         </Grid>
                                         <Border IsVisible="{Binding Editor.IsSingleEdit}" Padding="10" CornerRadius="7"
-                                                BorderBrush="#394657" BorderThickness="1">
+                                                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1">
                                             <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="14">
                                                 <StackPanel Spacing="2">
                                                     <TextBlock Text="Library provenance" Classes="sectionLabel" />
@@ -1131,7 +1177,7 @@
                                                 </StackPanel>
                                                 <local:DesktopMediaDropZone Height="100" Target="Cover"
                                                                             DropCommand="{Binding Editor.MediaDropCommand}">
-                                                    <Border Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                    <Border Background="{DynamicResource DesktopSurfaceRaisedBrush}" CornerRadius="5" ClipToBounds="True">
                                                     <foundation:GameCoverImage SourcePath="{Binding Editor.CoverPreviewPath}"
                                                                                 Stretch="UniformToFill" />
                                                     </Border>
@@ -1161,7 +1207,7 @@
                                                 </StackPanel>
                                                 <local:DesktopMediaDropZone Height="100" Target="Background"
                                                                             DropCommand="{Binding Editor.MediaDropCommand}">
-                                                    <Border Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                    <Border Background="{DynamicResource DesktopSurfaceRaisedBrush}" CornerRadius="5" ClipToBounds="True">
                                                     <foundation:GameCoverImage SourcePath="{Binding Editor.BackgroundPreviewPath}"
                                                                                 Stretch="UniformToFill" />
                                                     </Border>
@@ -1191,7 +1237,7 @@
                                                 </StackPanel>
                                                 <local:DesktopMediaDropZone Height="100" Target="Icon"
                                                                             DropCommand="{Binding Editor.MediaDropCommand}">
-                                                    <Border Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                                    <Border Background="{DynamicResource DesktopSurfaceRaisedBrush}" CornerRadius="5" ClipToBounds="True">
                                                     <foundation:GameCoverImage SourcePath="{Binding Editor.IconPreviewPath}"
                                                                                 Stretch="Uniform" />
                                                     </Border>
@@ -1214,7 +1260,7 @@
                                             </StackPanel>
                                         </Grid>
                                         <Border IsVisible="{Binding Editor.IsSingleEdit}" Padding="10" CornerRadius="7"
-                                                BorderBrush="#394657" BorderThickness="1">
+                                                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1">
                                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                                                 <StackPanel Spacing="3">
                                                     <TextBlock Text="Metadata source" Classes="sectionLabel" />
@@ -1301,7 +1347,7 @@
                                                      IsEnabled="{Binding Editor.CanEditGameActions}">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
-                                                        <Border BorderBrush="#394657" BorderThickness="1" CornerRadius="7"
+                                                        <Border BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1" CornerRadius="7"
                                                                 Padding="10" Margin="0,3">
                                                             <StackPanel Spacing="8">
                                                                 <Grid ColumnDefinitions="2*,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="7">
@@ -1553,7 +1599,7 @@
                                         </StackPanel>
                                         <StackPanel Spacing="8">
                                             <TextBlock Text="{DynamicResource LOCDesktopScripts}" Classes="sectionLabel" />
-                                            <Border BorderBrush="#394657" BorderThickness="1" CornerRadius="7" Padding="10">
+                                            <Border BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1" CornerRadius="7" Padding="10">
                                                 <StackPanel Spacing="6">
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                                         <TextBlock Text="{DynamicResource LOCDesktopPreScript}" Classes="sectionLabel" />
@@ -1577,7 +1623,7 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
-                                            <Border BorderBrush="#394657" BorderThickness="1" CornerRadius="7" Padding="10">
+                                            <Border BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1" CornerRadius="7" Padding="10">
                                                 <StackPanel Spacing="6">
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                                         <TextBlock Text="{DynamicResource LOCDesktopGameStartedScript}" Classes="sectionLabel" />
@@ -1601,7 +1647,7 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>
-                                            <Border BorderBrush="#394657" BorderThickness="1" CornerRadius="7" Padding="10">
+                                            <Border BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1" CornerRadius="7" Padding="10">
                                                 <StackPanel Spacing="6">
                                                     <StackPanel Orientation="Horizontal" Spacing="10">
                                                         <TextBlock Text="{DynamicResource LOCDesktopPostScript}" Classes="sectionLabel" />

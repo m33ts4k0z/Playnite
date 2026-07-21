@@ -115,6 +115,7 @@ public sealed partial class DesktopAppViewModel
     public ICommand RunSoftwareToolCommand { get; private set; }
     public ICommand OpenAboutCommand { get; private set; }
     public ICommand OpenExplorerCommand { get; private set; }
+    public ICommand OpenStatisticsCommand { get; private set; }
     public ICommand SelectRandomGameCommand { get; private set; }
     public ICommand SelectRandomFilteredGameCommand { get; private set; }
     public ICommand ClearNotificationsCommand { get; private set; }
@@ -182,6 +183,11 @@ public sealed partial class DesktopAppViewModel
             CloseOverlays();
             RefreshExplorerItems();
             IsExplorerVisible = true;
+        }, () => database != null);
+        OpenStatisticsCommand = new AppRelayCommand(() =>
+        {
+            CloseOverlays();
+            Statistics.Open();
         }, () => database != null);
         SelectRandomGameCommand = new AppRelayCommand(() => SelectRandom(allGames));
         SelectRandomFilteredGameCommand = new AppRelayCommand(() => SelectRandom(Games));

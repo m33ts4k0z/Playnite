@@ -40,7 +40,7 @@
                 <CheckBox Content="Notes" IsChecked="{Binding Visibility.Notes, Mode=TwoWay}" />
             </WrapPanel>
 
-            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,4" />
             <TextBlock Text="Details geometry" Classes="sectionLabel" />
             <CheckBox Content="Indent game details" IsChecked="{Binding IndentGameDetails, Mode=TwoWay}" />
             <Grid ColumnDefinitions="240,150" RowDefinitions="Auto,Auto,Auto" RowSpacing="8" ColumnSpacing="12">
@@ -55,7 +55,7 @@
                                Value="{Binding DetailsViewListIconSize, Mode=TwoWay}" />
             </Grid>
 
-            <Border Height="1" Background="#303A49" Margin="0,4" />
+            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,4" />
             <TextBlock Text="Scrolling" Classes="sectionLabel" />
             <CheckBox Content="Smooth scrolling" IsChecked="{Binding SmoothScrollEnabled, Mode=TwoWay}" />
             <Grid ColumnDefinitions="240,150" RowDefinitions="Auto,Auto" RowSpacing="8" ColumnSpacing="12">

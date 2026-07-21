@@ -2,39 +2,119 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ControlTemplate x:Key="DesktopTopPanelTemplate">
         <Border Background="{DynamicResource DesktopPanelStrongBrush}"
-                BorderBrush="#303A49" BorderThickness="0,0,0,1"
+                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1"
                 Padding="24,0">
             <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="12" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                     <Menu Background="Transparent">
-                        <MenuItem Header="☰">
+                        <MenuItem Classes="hamburgerMenu">
+                            <MenuItem.Header>
+                                <Border Classes="hamburgerGlyph" Width="42" Height="42" CornerRadius="8">
+                                    <PathIcon Width="23" Height="23" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Foreground="{DynamicResource DesktopTextBrush}"
+                                              Data="M4,6H20V8H4V6M4,11H20V13H4V11M4,16H20V18H4V16Z" />
+                                </Border>
+                            </MenuItem.Header>
                             <MenuItem Header="{DynamicResource LOCMenuAddGame}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                                </MenuItem.Icon>
                                 <MenuItem Header="{DynamicResource LOCMenuAddGameManual}" Command="{Binding AddManualGameCommand}" />
                                 <MenuItem Header="Scan installed programs and Microsoft Store" Command="{Binding OpenInstalledGameImportCommand}" />
                                 <MenuItem Header="Import emulated games" Command="{Binding OpenEmulatedImportCommand}" />
                             </MenuItem>
                             <MenuItem Header="{DynamicResource LOCLibrary}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M4,5H7V19H4V5M9,5H12V19H9V5M15.5,4L20,17.5L17.2,18.5L12.8,5L15.5,4Z" />
+                                </MenuItem.Icon>
                                 <MenuItem Header="{DynamicResource LOCCheckLibraryUpdates}" Command="{Binding OpenLibrarySyncCommand}" InputGesture="F5" />
                                 <MenuItem Header="{DynamicResource LOCMenuDownloadMetadata}" Command="{Binding OpenMetadataDownloadCommand}" InputGesture="Ctrl+D" />
                                 <MenuItem Header="{DynamicResource LOCLibraryManager}" Command="{Binding OpenDatabaseFieldsCommand}" InputGesture="Ctrl+W" />
                                 <MenuItem Header="Database explorer" Command="{Binding OpenExplorerCommand}" InputGesture="Ctrl+E" />
+                                <MenuItem Header="{DynamicResource LOCStatistics}" Command="{Binding OpenStatisticsCommand}">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="M4,19H20V21H2V3H4V19M7,17V10H10V17H7M12,17V6H15V17H12M17,17V12H20V17H17Z" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                                 <MenuItem Header="{DynamicResource LOCMenuBackupData}" Command="{Binding BackupDataCommand}" />
                                 <MenuItem Header="{DynamicResource LOCMenuRestoreBackup}" Command="{Binding RestoreDataBackupCommand}" />
                             </MenuItem>
-                            <MenuItem Header="{DynamicResource LOCMenuSelectRandomGame}" Command="{Binding SelectRandomGameCommand}" InputGesture="F6" />
-                            <MenuItem Header="{DynamicResource LOCTopPanelViewSelectRandomGameButtonTooltip}" Command="{Binding SelectRandomFilteredGameCommand}" InputGesture="F7" />
-                            <MenuItem Header="{DynamicResource LOCMenuAddons}" Command="{Binding OpenAddonStoreCommand}" InputGesture="F9" />
-                            <MenuItem Header="{DynamicResource LOCMenuSoftwareTools}" Command="{Binding OpenToolsConfigCommand}" />
-                            <MenuItem Header="{DynamicResource LOCMenuConfigureEmulatorsMenuTitle}" Command="{Binding OpenEmulatorConfigCommand}" InputGesture="Ctrl+T" />
-                            <MenuItem Header="{DynamicResource LOCExtensions}" Command="{Binding OpenPluginMainMenuCommand}" />
-                            <MenuItem Header="{DynamicResource LOCReloadScripts}" Command="{Binding ReloadScriptsCommand}" InputGesture="F12" />
-                            <MenuItem Header="{DynamicResource LOCStartInteractivePowerShell}" Command="{Binding OpenInteractivePowerShellCommand}" />
-                            <MenuItem Header="{DynamicResource LOCMenuPlayniteSettingsTitle}" Command="{Binding OpenSettingsCommand}" InputGesture="F4" />
-                            <MenuItem Header="{DynamicResource LOCMenuHelpTitle}" Command="{Binding OpenHelpCommand}" />
-                            <MenuItem Header="{DynamicResource LOCMenuAbout}" Command="{Binding OpenAboutCommand}" InputGesture="F1" />
-                            <MenuItem Header="{DynamicResource LOCCrashRestartPlaynite}" Command="{Binding RestartCommand}" />
-                            <MenuItem Header="{DynamicResource LOCCrashRestartSafe}" Command="{Binding RestartSafeModeCommand}" />
-                            <MenuItem Header="{DynamicResource LOCExitAppLabel}" Command="{Binding ExitApplicationCommand}" InputGesture="Alt+Q" />
+                            <Separator Classes="menuGroupSeparator" />
+                            <MenuItem Header="{DynamicResource LOCMenuSelectRandomGame}" Command="{Binding SelectRandomGameCommand}" InputGesture="F6">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M4,4H20V20H4V4M7,7V10H10V7H7M14,7V10H17V7H14M10.5,10.5V13.5H13.5V10.5H10.5M7,14V17H10V14H7M14,14V17H17V14H14Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{DynamicResource LOCTopPanelViewSelectRandomGameButtonTooltip}" Command="{Binding SelectRandomFilteredGameCommand}" InputGesture="F7">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M16,3H21V8H19V6.4L14.7,10.7L13.3,9.3L17.6,5H16V3M4,5H12V7H6V18H17V12H19V20H4V5Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator Classes="menuGroupSeparator" />
+                            <MenuItem Header="{DynamicResource LOCMenuAddons}" Command="{Binding OpenAddonStoreCommand}" InputGesture="F9">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M4,4H10V10H4V4M14,4H20V10H14V4M4,14H10V20H4V14M14,14H20V20H14V14Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{DynamicResource LOCMenuSoftwareTools}" Command="{Binding OpenToolsConfigCommand}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M22,19.6L13.4,11C14.2,8.9 13.7,6.4 12,4.7C10.2,2.9 7.6,2.5 5.4,3.4L9.5,7.5L7.5,9.5L3.4,5.4C2.5,7.6 2.9,10.2 4.7,12C6.4,13.7 8.9,14.2 11,13.4L19.6,22L22,19.6Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{DynamicResource LOCMenuConfigureEmulatorsMenuTitle}" Command="{Binding OpenEmulatorConfigCommand}" InputGesture="Ctrl+T">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M7,6H17A5,5 0 0 1 22,11V14A3,3 0 0 1 19,17H17L15,15H9L7,17H5A3,3 0 0 1 2,14V11A5,5 0 0 1 7,6M7,9V11H5V13H7V15H9V13H11V11H9V9H7M17,10V12H19V10H17M15,13V15H17V13H15Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{DynamicResource LOCExtensions}" Command="{Binding OpenPluginMainMenuCommand}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M8,3V7H5V11H9V21H15V11H19V7H16V3H14V7H10V3H8Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator Classes="menuGroupSeparator" />
+                            <MenuItem Header="{DynamicResource LOCReloadScripts}" Command="{Binding ReloadScriptsCommand}" InputGesture="F12">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M17.7,6.3A8,8 0 1 0 20,12H18A6,6 0 1 1 16.3,7.7L13,11H21V3L17.7,6.3Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{DynamicResource LOCStartInteractivePowerShell}" Command="{Binding OpenInteractivePowerShellCommand}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M3,5H21V19H3V5M5,7V17H19V7H5M7,9L10,12L7,15V13L8,12L7,11V9M11,14H16V16H11V14Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator Classes="menuGroupSeparator" />
+                            <MenuItem Header="{DynamicResource LOCMenuPlayniteSettingsTitle}" Command="{Binding OpenSettingsCommand}" InputGesture="F4">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M19.4,13A7.8,7.8 0 0 0 19.5,12A7.8,7.8 0 0 0 19.4,11L21.5,9.4L19.5,6L17,7A8,8 0 0 0 15.3,6L15,3.3H11L10.7,6A8,8 0 0 0 9,7L6.5,6L4.5,9.4L6.6,11A7.8,7.8 0 0 0 6.5,12A7.8,7.8 0 0 0 6.6,13L4.5,14.6L6.5,18L9,17A8,8 0 0 0 10.7,18L11,20.7H15L15.3,18A8,8 0 0 0 17,17L19.5,18L21.5,14.6L19.4,13M13,15.5A3.5,3.5 0 1 1 13,8.5A3.5,3.5 0 0 1 13,15.5Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{DynamicResource LOCMenuHelpTitle}" Command="{Binding OpenHelpCommand}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M11,18H13V20H11V18M12,4A5,5 0 0 1 17,9C17,12 13,12.5 13,15H11C11,11.5 15,11.5 15,9A3,3 0 0 0 9,9H7A5,5 0 0 1 12,4Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{DynamicResource LOCMenuAbout}" Command="{Binding OpenAboutCommand}" InputGesture="F1">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M11,10H13V18H11V10M11,6H13V8H11V6M12,2A10,10 0 1 0 22,12A10,10 0 0 0 12,2Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator Classes="menuGroupSeparator" />
+                            <MenuItem Header="{DynamicResource LOCCrashRestartPlaynite}" Command="{Binding RestartCommand}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M17.7,6.3A8,8 0 1 0 20,12H18A6,6 0 1 1 16.3,7.7L13,11H21V3L17.7,6.3Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="{DynamicResource LOCCrashRestartSafe}" Command="{Binding RestartSafeModeCommand}">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M12,2L20,5V11C20,16.5 16.2,21.7 12,23C7.8,21.7 4,16.5 4,11V5L12,2M12,5V20C15,18.8 17.8,14.9 18,11V6.4L12,4.2V5Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator Classes="menuGroupSeparator" />
+                            <MenuItem Header="{DynamicResource LOCExitAppLabel}" Command="{Binding ExitApplicationCommand}" InputGesture="Alt+Q">
+                                <MenuItem.Icon>
+                                    <PathIcon Data="M10,3H5A2,2 0 0 0 3,5V19A2,2 0 0 0 5,21H10V19H5V5H10V3M16,7L14.6,8.4L17.2,11H8V13H17.2L14.6,15.6L16,17L21,12L16,7Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </MenuItem>
                     </Menu>
                     <Border Width="34" Height="34" CornerRadius="9"
@@ -45,10 +125,6 @@
                     <TextBlock Text="Playnite" FontSize="{DynamicResource DesktopFontSizeLarger}" FontWeight="SemiBold"
                                Foreground="{DynamicResource DesktopTextBrush}"
                                VerticalAlignment="Center" />
-                    <Border Background="#263140" CornerRadius="12" Padding="9,4">
-                        <TextBlock Text="Avalonia Desktop" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   Foreground="{DynamicResource DesktopAccentBrush}" />
-                    </Border>
                 </StackPanel>
                 <ItemsControl Grid.Column="1" ItemsSource="{Binding PluginTopPanelItems}"
                               IsVisible="{Binding ShowPluginTopPanelItemsLeft}">
@@ -57,11 +133,8 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button Command="{Binding Command}" IsVisible="{Binding Visible}" ToolTip.Tip="{Binding PluginName}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <ContentPresenter Content="{Binding Icon}" MaxWidth="18" MaxHeight="18" />
-                                    <TextBlock Text="{Binding Title}" />
-                                </StackPanel>
+                            <Button Command="{Binding Command}" IsVisible="{Binding Visible}" ToolTip.Tip="{Binding Title}">
+                                <ContentPresenter Content="{Binding Icon}" MaxHeight="18" />
                             </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -92,11 +165,8 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Button Command="{Binding Command}" IsVisible="{Binding Visible}"
-                                        ToolTip.Tip="{Binding PluginName}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <ContentPresenter Content="{Binding Icon}" MaxWidth="18" MaxHeight="18" />
-                                        <TextBlock Text="{Binding Title}" />
-                                    </StackPanel>
+                                        ToolTip.Tip="{Binding Title}">
+                                    <ContentPresenter Content="{Binding Icon}" MaxHeight="18" />
                                 </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

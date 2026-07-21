@@ -6,17 +6,17 @@
              lets the selected game's window background continue naturally
              across the complete library instead of ending at a panel edge. -->
         <Border Background="Transparent"
-                BorderBrush="#303A49" BorderThickness="{Binding DetailsBorderThickness}">
+                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="{Binding DetailsBorderThickness}">
             <ScrollViewer>
                 <StackPanel Margin="{Binding DetailsContentMargin}" Spacing="15">
-                    <Border Name="PART_DetailsBackground" Height="230" CornerRadius="10" Background="#222B37"
+                    <Border Name="PART_DetailsBackground" Height="230" CornerRadius="10" Background="{DynamicResource DesktopSurfaceRaisedBrush}"
                             ClipToBounds="True" IsVisible="{Binding DetailsVisibility.BackgroundImage}">
                         <foundation:GameCoverImage SourcePath="{Binding SelectedGame.BackgroundPath}"
                                                    Stretch="UniformToFill" />
                     </Border>
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="22">
                         <StackPanel Grid.Column="0" Spacing="15">
-                    <Border Width="64" Height="64" CornerRadius="8" Background="#222B37"
+                    <Border Width="64" Height="64" CornerRadius="8" Background="{DynamicResource DesktopSurfaceRaisedBrush}"
                             HorizontalAlignment="Left" ClipToBounds="True"
                             IsVisible="{Binding DetailsVisibility.Icon}">
                         <foundation:GameCoverImage SourcePath="{Binding SelectedGame.IconPath}"
@@ -156,7 +156,7 @@
                                 Width="{Binding GameDetailsCoverWidth}"
                                 Height="{Binding GameDetailsCoverHeight}"
                                 HorizontalAlignment="Right" VerticalAlignment="Top"
-                                CornerRadius="10" Background="#222B37"
+                                CornerRadius="10" Background="{DynamicResource DesktopSurfaceRaisedBrush}"
                                 ClipToBounds="True" IsVisible="{Binding DetailsVisibility.CoverImage}">
                             <foundation:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
                                                        Stretch="Uniform" />

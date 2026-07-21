@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Playnite.Avalonia.App.V7.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Playnite.Avalonia\Playnite.Avalonia.csproj" />
     <ProjectReference Include="..\Playnite.Avalonia.WebView\Playnite.Avalonia.WebView.csproj"
                       Condition="'$(TargetFramework)' == 'net10.0'" />

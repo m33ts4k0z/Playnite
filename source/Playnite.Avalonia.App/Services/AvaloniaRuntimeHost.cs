@@ -102,7 +102,9 @@ public sealed partial class AvaloniaRuntimeHost : IDisposable
             database,
             controllers,
             _ => CreateApi(),
-            pluginCompatibility.LoadPluginResources);
+            extensionDirectory => pluginCompatibility.LoadPluginResources(
+                extensionDirectory,
+                callbacks.Settings.Language));
         var actionPolicy = new GameActionRunnerPolicy
         {
             GlobalPreScript = () => callbacks.Settings.GlobalPreScript,

@@ -5,6 +5,8 @@ using Avalonia.Threading;
 using Avalonia.Themes.Fluent;
 using Playnite.Avalonia.App.Services;
 using Playnite.Avalonia.Services;
+using Playnite.Avalonia.Theming;
+using Playnite.DesktopApp.Avalonia.Controls;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
 
@@ -144,6 +146,12 @@ public sealed class App : Application
                 return;
             }
 
+            // Generated view-model labels (filters, enum descriptions, dialogs) must
+            // see the language dictionaries while they are being constructed.
+            var themeManager = new RuntimeThemeManager(this, typeof(DesktopMainView).Assembly);
+            themeManager.ApplyLanguage(LanguageCatalog.ResolveLanguagePaths(
+                Path.Combine(AppContext.BaseDirectory, "Localization"), settings.Language));
+
             var viewModel = new DesktopAppViewModel(
                 library.Games,
                 library.Database,
@@ -209,7 +217,8 @@ public sealed class App : Application
                 runtimeHost,
                 settings,
                 options.SelfTest || options.PluginCompatibilityTest ? null : settingsStore,
-                options);
+                options,
+                themeManager);
             desktop.MainWindow = window;
             // Query the backend once the window has rendered a frame; the GPU
             // context is created lazily on first render, not at framework init.

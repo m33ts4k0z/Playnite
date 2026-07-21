@@ -45,7 +45,7 @@
                         </WrapPanel>
                     </Grid>
 
-                    <Border Grid.Column="2" Padding="16" CornerRadius="8" Background="#151B24">
+                    <Border Grid.Column="2" Padding="16" CornerRadius="8" Background="{DynamicResource DesktopPanelBrush}">
                         <ScrollViewer>
                             <StackPanel Spacing="14">
                                 <StackPanel IsVisible="{Binding DatabaseFields.IsPlatformSection}" Spacing="12">
@@ -56,7 +56,7 @@
                                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
                                         <StackPanel Spacing="6">
                                             <TextBlock Text="Icon" Classes="sectionLabel" />
-                                            <Border Height="120" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                            <Border Height="120" Background="{DynamicResource DesktopSurfaceRaisedBrush}" CornerRadius="5" ClipToBounds="True">
                                                 <foundation:GameCoverImage SourcePath="{Binding DatabaseFields.SelectedPlatformIconPreview}"
                                                                            Stretch="Uniform" />
                                             </Border>
@@ -69,7 +69,7 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="1" Spacing="6">
                                             <TextBlock Text="Cover" Classes="sectionLabel" />
-                                            <Border Height="120" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                            <Border Height="120" Background="{DynamicResource DesktopSurfaceRaisedBrush}" CornerRadius="5" ClipToBounds="True">
                                                 <foundation:GameCoverImage SourcePath="{Binding DatabaseFields.SelectedPlatformCoverPreview}"
                                                                            Stretch="UniformToFill" />
                                             </Border>
@@ -82,7 +82,7 @@
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Spacing="6">
                                             <TextBlock Text="Background" Classes="sectionLabel" />
-                                            <Border Height="120" Background="#222B37" CornerRadius="5" ClipToBounds="True">
+                                            <Border Height="120" Background="{DynamicResource DesktopSurfaceRaisedBrush}" CornerRadius="5" ClipToBounds="True">
                                                 <foundation:GameCoverImage SourcePath="{Binding DatabaseFields.SelectedPlatformBackgroundPreview}"
                                                                            Stretch="UniformToFill" />
                                             </Border>

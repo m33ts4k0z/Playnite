@@ -34,6 +34,7 @@ public sealed class MainWindow : Window
     private readonly SdlGamepadInputSource sdlInput;
     private readonly Queue<Action> pendingForwardedCommands = new();
     private WindowState restoreWindowState = WindowState.Normal;
+    private string appliedLanguage;
     private bool isReadyForForwardedCommands;
     private bool hasClosed;
     private bool automatedRunStarted;
@@ -57,7 +58,8 @@ public sealed class MainWindow : Window
         AvaloniaRuntimeHost runtimeHost,
         DesktopSettings settings,
         DesktopSettingsStore settingsStore,
-        StartupOptions options)
+        StartupOptions options,
+        RuntimeThemeManager themeManager)
     {
         this.viewModel = viewModel;
         this.library = library;
@@ -88,12 +90,13 @@ public sealed class MainWindow : Window
             WindowState = WindowState.Minimized;
         }
 
-        themeManager = new RuntimeThemeManager(Application.Current, typeof(DesktopMainView).Assembly);
+        this.themeManager = themeManager ?? throw new ArgumentNullException(nameof(themeManager));
         ApplyRuntimeTheme();
         ApplyTypographyResources();
         themeManager.ApplyLanguage(
             Playnite.Avalonia.App.Services.LanguageCatalog.ResolveLanguagePaths(
                 ContentPath("Localization"), settings.Language));
+        appliedLanguage = settings.Language;
 
         mainView = new DesktopMainView();
         chrome = new DesktopWindowChrome(this)
@@ -385,9 +388,14 @@ public sealed class MainWindow : Window
         }
         discord.IsPresenceEnabled = discordEnabled;
         ApplyTypographyResources();
-        themeManager.ApplyLanguage(
-            Playnite.Avalonia.App.Services.LanguageCatalog.ResolveLanguagePaths(
-                ContentPath("Localization"), settings.Language));
+        if (!string.Equals(appliedLanguage, settings.Language, StringComparison.OrdinalIgnoreCase))
+        {
+            themeManager.ApplyLanguage(
+                Playnite.Avalonia.App.Services.LanguageCatalog.ResolveLanguagePaths(
+                    ContentPath("Localization"), settings.Language));
+            appliedLanguage = settings.Language;
+            viewModel.RefreshLocalizedContent();
+        }
         trayService.ApplySettings(settings.EnableTray, ResolveTrayIconPath(settings.TrayIcon));
         ApplySystemHotKey();
         SaveSettings();

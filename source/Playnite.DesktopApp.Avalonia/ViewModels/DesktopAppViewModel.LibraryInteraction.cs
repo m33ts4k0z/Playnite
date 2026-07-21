@@ -761,10 +761,7 @@ public sealed partial class DesktopAppViewModel
     }
 
     private static string Localize(string key, string fallback)
-    {
-        var localized = ResourceProvider.GetString(key);
-        return string.IsNullOrWhiteSpace(localized) || localized == key ? fallback : localized;
-    }
+        => DesktopLocalization.Resolve(key, fallback);
 
     private sealed class PluginMenuNode
     {

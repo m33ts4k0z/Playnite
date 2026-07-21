@@ -80,18 +80,7 @@ internal sealed record DesktopInstalledAddon(
 internal static class DesktopAddonStoreLocalization
 {
     public static string Resolve(string resourceKey, string fallback)
-    {
-        if (string.IsNullOrWhiteSpace(resourceKey))
-        {
-            return fallback;
-        }
-
-        var application = global::Avalonia.Application.Current;
-        return application?.TryGetResource(resourceKey, null, out var resource) == true &&
-            resource is string localized && !string.IsNullOrWhiteSpace(localized)
-                ? localized
-                : fallback;
-    }
+        => DesktopLocalization.Resolve(resourceKey, fallback);
 }
 
 internal interface IDesktopAddonCatalogClient

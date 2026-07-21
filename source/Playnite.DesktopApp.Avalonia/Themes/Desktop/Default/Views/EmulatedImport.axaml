@@ -126,7 +126,7 @@
                              SelectedItem="{Binding EmulatedImport.SelectedGame, Mode=TwoWay}">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:EmulatedImportGameRow">
-                                <Border Margin="3" Padding="11" CornerRadius="7" Background="#263140">
+                                <Border Margin="3" Padding="11" CornerRadius="7" Background="{DynamicResource DesktopControlBrush}">
                                     <Grid ColumnDefinitions="Auto,Auto,2*,170,150,Auto" ColumnSpacing="9">
                                         <CheckBox IsChecked="{Binding Import, Mode=TwoWay}" ToolTip.Tip="Import game" />
                                         <CheckBox Grid.Column="1" IsChecked="{Binding IsMarked, Mode=TwoWay}"

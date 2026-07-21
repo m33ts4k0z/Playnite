@@ -18,14 +18,9 @@
             </Grid>
             <CheckBox Content="Show panel separators"
                       IsChecked="{Binding ShowPanelSeparators, Mode=TwoWay}" />
-            <TextBlock Text="Sidebar" Classes="sectionLabel" Margin="0,8,0,0" />
-            <CheckBox Content="Show sidebar"
-                      IsChecked="{Binding SidebarVisible, Mode=TwoWay}" />
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <TextBlock Text="Sidebar position" Width="228" VerticalAlignment="Center" />
-                <ComboBox Width="150" ItemsSource="{Binding SidebarPositions}"
-                          SelectedItem="{Binding SidebarPosition, Mode=TwoWay}" />
-            </StackPanel>
+            <TextBlock Text="The Default theme uses a responsive horizontal library toolbar. Sidebar settings remain available to plugins and custom themes through the compatibility API."
+                       TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}"
+                       Margin="0,8,0,0" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

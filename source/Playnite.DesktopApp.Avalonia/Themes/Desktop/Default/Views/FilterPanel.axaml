@@ -64,7 +64,12 @@
                         <ItemsControl ItemsSource="{Binding FilterGroups}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Expander Header="{Binding DisplayTitle}" Margin="0,2">
+                                    <Expander Header="{Binding DisplayTitle}"
+                                              Margin="0,2"
+                                              Padding="0"
+                                              HorizontalAlignment="Stretch"
+                                              Background="{DynamicResource DesktopPanelBrush}"
+                                              BorderBrush="{DynamicResource DesktopBorderBrush}">
                                         <Border Background="{DynamicResource DesktopPanelBrush}"
                                                 CornerRadius="0,0,8,8" Padding="12">
                                             <ItemsControl ItemsSource="{Binding Options}">

@@ -16,7 +16,7 @@ internal interface IPluginCompatibilityHost
 
     void RestoreResourceProvider(Playnite.SDK.IResourceProvider provider);
 
-    void LoadPluginResources(string extensionDirectory);
+    void LoadPluginResources(string extensionDirectory, string language);
 
     void LoadLegacyPlugins(
         ExtensionFactory extensions,

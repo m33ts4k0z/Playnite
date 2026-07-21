@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:foundation="using:Playnite.Avalonia.Controls">
     <ControlTemplate x:Key="DesktopWebImageSearchTemplate">
-        <Grid IsVisible="{Binding Editor.IsWebImageSearchVisible}" Background="#F0000000">
+        <Grid Classes="modalLayer" IsVisible="{Binding Editor.IsWebImageSearchVisible}"
+              Background="{DynamicResource DesktopModalOpaqueOverlayBrush}">
             <Border Width="1040" MaxHeight="800" Padding="26" CornerRadius="14"
                     Background="{DynamicResource DesktopPanelStrongBrush}"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -34,7 +35,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Border Width="180" Height="150" Padding="5" Margin="3"
-                                        Background="#151B24" CornerRadius="6">
+                                        Background="{DynamicResource DesktopPanelBrush}" CornerRadius="6">
                                     <Grid RowDefinitions="*,Auto">
                                         <foundation:GameCoverImage SourcePath="{Binding PreviewPath}"
                                                                    Stretch="Uniform" />
@@ -57,7 +58,8 @@
     </ControlTemplate>
 
     <ControlTemplate x:Key="DesktopMetadataComparisonTemplate">
-        <Grid IsVisible="{Binding Editor.IsMetadataComparisonVisible}" Background="#F0000000">
+        <Grid Classes="modalLayer" IsVisible="{Binding Editor.IsMetadataComparisonVisible}"
+              Background="{DynamicResource DesktopModalOpaqueOverlayBrush}">
             <Border Width="1080" MaxHeight="810" Padding="26" CornerRadius="14"
                     Background="{DynamicResource DesktopPanelStrongBrush}"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -71,7 +73,7 @@
                     <ListBox Grid.Row="1" MaxHeight="640" ItemsSource="{Binding Editor.MetadataComparisonItems}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="#394657" BorderThickness="1" CornerRadius="7"
+                                <Border BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1" CornerRadius="7"
                                         Padding="10" Margin="0,3">
                                     <Grid ColumnDefinitions="Auto,150,*,*" ColumnSpacing="12">
                                         <CheckBox IsChecked="{Binding UseDownloadedValue, Mode=TwoWay}"

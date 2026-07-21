@@ -28,7 +28,7 @@
                 </ListBox.ItemTemplate>
             </ListBox>
             <Button Content="Remove selected exclusion" Command="{Binding RemoveCommand}" HorizontalAlignment="Left" />
-            <Border Height="1" Background="#394658" Margin="0,8" />
+            <Border Height="1" Background="{DynamicResource DesktopBorderBrush}" Margin="0,8" />
             <TextBlock Text="Emulated-game scanner paths" Classes="sectionLabel" />
             <TextBlock Text="Add relative ROM or folder paths that a saved scanner must ignore. Changes are applied when settings are saved."
                        TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource DesktopMutedBrush}" />

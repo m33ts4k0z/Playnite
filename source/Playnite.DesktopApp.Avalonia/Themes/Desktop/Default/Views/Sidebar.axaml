@@ -1,102 +1,127 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <ControlTemplate x:Key="DesktopSidebarTemplate">
-        <Border Background="{DynamicResource DesktopPanelBrush}"
-                BorderBrush="#303A49" BorderThickness="{Binding SidebarBorderThickness}"
-                Padding="20">
-            <ScrollViewer>
-                <StackPanel Spacing="12">
-                    <TextBlock Text="{DynamicResource LOCDesktopLibrary}"
-                               FontSize="25" FontWeight="Bold"
-                               Foreground="{DynamicResource DesktopTextBrush}" />
+    <ControlTemplate x:Key="DesktopLibraryToolbarTemplate">
+        <Border Name="PART_LibraryToolbar"
+                Background="{DynamicResource DesktopPanelBrush}"
+                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1"
+                Padding="14,7">
+            <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="280" Height="42" ColumnDefinitions="*,Auto" Margin="4">
                     <TextBox Name="PART_SearchBox"
+                             Classes="libraryToolbar"
                              Text="{Binding SearchText, Mode=TwoWay}"
-                             Watermark="Search games"
-                             Padding="12,9" />
-                    <Button Content="Global search (Ctrl+F)"
+                             Watermark="Search games" />
+                    <Button Grid.Column="1" Name="PART_GlobalSearchButton"
+                            Classes="libraryToolbar"
+                            Width="46" MinWidth="46" Padding="0"
+                            Content="⌕" FontSize="18"
+                            ToolTip.Tip="Global search (Ctrl+F)"
                             Command="{Binding OpenGlobalSearchCommand}" />
-                    <TextBlock Text="{Binding LibrarySummary}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <Border Height="1" Background="#303A49" Margin="0,5" />
-                    <TextBlock Text="{DynamicResource LOCDesktopPreset}" Classes="sectionLabel" />
-                    <ComboBox ItemsSource="{Binding FilterPresets}"
-                              SelectedItem="{Binding SelectedFilterPreset, Mode=TwoWay}" />
-                    <Button Content="Open filters"
-                            Command="{Binding ToggleFilterPanelCommand}" />
-                    <TextBlock Text="{Binding FilterActiveIndicator}" FontSize="11"
-                               Foreground="{DynamicResource DesktopAccentBrush}" />
-                    <CheckBox Content="{DynamicResource LOCDesktopInstalled}"
-                              IsChecked="{Binding InstalledOnly, Mode=TwoWay}" />
-                    <CheckBox Content="{DynamicResource LOCDesktopFavorites}"
-                              IsChecked="{Binding FavoritesOnly, Mode=TwoWay}" />
-                    <Border Height="1" Background="#303A49" Margin="0,5" />
-                    <TextBlock Text="{DynamicResource LOCDesktopView}" Classes="sectionLabel" />
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Classes="nav" Command="{Binding SetGridViewCommand}" Content="Grid" />
-                        <Button Classes="nav" Command="{Binding SetListViewCommand}" Content="List" />
-                        <Button Classes="nav" Command="{Binding SetDetailsViewCommand}" Content="Details" />
+                </Grid>
+
+                <Border Classes="toolbarGroup" Margin="4">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <ToggleButton Name="PART_GridViewButton" Classes="libraryToolbar"
+                                      Width="76"
+                                      Content="Grid" ToolTip.Tip="Grid view"
+                                      IsChecked="{Binding IsGridView, Mode=OneWay}"
+                                      Command="{Binding SetGridViewCommand}" />
+                        <ToggleButton Name="PART_ListViewButton" Classes="libraryToolbar"
+                                      Width="76"
+                                      Content="List" ToolTip.Tip="List view"
+                                      IsChecked="{Binding IsListViewSelected, Mode=OneWay}"
+                                      Command="{Binding SetListViewCommand}" />
+                        <ToggleButton Name="PART_DetailsViewButton" Classes="libraryToolbar"
+                                      Width="76"
+                                      Content="Details" ToolTip.Tip="Details view"
+                                      IsChecked="{Binding IsDetailsView, Mode=OneWay}"
+                                      Command="{Binding SetDetailsViewCommand}" />
                     </StackPanel>
-                    <TextBlock Text="{DynamicResource LOCDesktopSort}" Classes="sectionLabel" />
-                    <ComboBox ItemsSource="{Binding SortOptions}"
-                              SelectedItem="{Binding SelectedSortOrder, Mode=TwoWay}" />
-                    <ComboBox ItemsSource="{Binding SortDirectionOptions}"
-                              SelectedItem="{Binding SelectedSortDirection, Mode=TwoWay}" />
-                    <TextBlock Text="{DynamicResource LOCDesktopGroup}" Classes="sectionLabel" />
-                    <ComboBox ItemsSource="{Binding GroupingOptions}"
-                              SelectedItem="{Binding SelectedGrouping, Mode=TwoWay}" />
-                    <Border Background="#202A37" CornerRadius="7" Padding="10" Margin="0,8,0,0">
-                        <TextBlock Text="{Binding PluginSummary}" FontSize="11"
-                                   TextWrapping="Wrap"
-                                   Foreground="{DynamicResource DesktopMutedBrush}" />
-                    </Border>
-                    <TextBlock Text="{DynamicResource LOCDesktopWindowTray}" Classes="sectionLabel" />
-                    <CheckBox Content="{DynamicResource LOCDesktopEnableTray}"
-                              IsChecked="{Binding EnableTray, Mode=TwoWay}" />
-                    <CheckBox Content="{DynamicResource LOCDesktopMinimizeTray}"
-                              IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" />
-                    <CheckBox Content="{DynamicResource LOCDesktopCloseTray}"
-                              IsChecked="{Binding CloseToTray, Mode=TwoWay}" />
-                    <Button Content="{DynamicResource LOCDesktopUpdateLibraries}"
-                            Command="{Binding OpenLibrarySyncCommand}" />
-                    <Button x:Name="DownloadMetadataSidebarButton"
-                            Content="{DynamicResource LOCDesktopDownloadMetadata}"
-                            Command="{Binding OpenMetadataDownloadCommand}" />
-                    <Button Content="{DynamicResource LOCDesktopImportInstalled}"
-                            Command="{Binding OpenInstalledGameImportCommand}" />
-                    <Button Content="Configure emulators"
-                            Command="{Binding OpenEmulatorConfigCommand}" />
-                    <Button Content="Import emulated games"
-                            Command="{Binding OpenEmulatedImportCommand}" />
-                    <Button Content="Manage library fields"
-                            Command="{Binding OpenDatabaseFieldsCommand}" />
-                    <Button Content="{DynamicResource LOCDesktopAddManualGame}"
-                            Command="{Binding AddManualGameCommand}" />
-                    <Button Content="Settings" Command="{Binding OpenSettingsCommand}" />
-                    <Button Content="{DynamicResource LOCMenuAddons}" Command="{Binding OpenAddonStoreCommand}" />
-                    <Button Content="{DynamicResource LOCDesktopPluginSettings}"
-                            Command="{Binding OpenPluginSettingsListCommand}" />
-                    <Button Content="{DynamicResource LOCDesktopPluginCommands}"
-                            Command="{Binding OpenPluginMainMenuCommand}" />
-                    <TextBlock Text="{DynamicResource LOCDesktopPluginExtensions}"
-                               Classes="sectionLabel" Margin="0,6,0,0" />
-                    <ItemsControl ItemsSource="{Binding PluginSidebarItems}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel IsVisible="{Binding Visible}" Spacing="2">
-                                    <Button Command="{Binding Command}" ToolTip.Tip="{Binding PluginName}">
-                                        <StackPanel Orientation="Horizontal" Spacing="7">
-                                            <ContentPresenter Content="{Binding Icon}" MaxWidth="20" MaxHeight="20" />
-                                            <TextBlock Text="{Binding Title}" />
-                                        </StackPanel>
-                                    </Button>
-                                    <ProgressBar Height="3" Value="{Binding ProgressValue}"
-                                                 Maximum="{Binding ProgressMaximum}" />
+                </Border>
+
+                <ComboBox Name="PART_FilterPresetSelector" Classes="libraryToolbar"
+                          Width="132" Margin="4" ToolTip.Tip="Filter preset"
+                          ItemsSource="{Binding FilterPresets}"
+                          SelectedItem="{Binding SelectedFilterPreset, Mode=TwoWay}" />
+                <ComboBox Name="PART_SortSelector" Classes="libraryToolbar"
+                          Width="132" Margin="4" ToolTip.Tip="Sort games"
+                          ItemsSource="{Binding SortOptions}"
+                          SelectedItem="{Binding SelectedSortOrder, Mode=TwoWay}" />
+                <ComboBox Name="PART_SortDirectionSelector" Classes="libraryToolbar"
+                          Width="132" Margin="4" ToolTip.Tip="Sort direction"
+                          ItemsSource="{Binding SortDirectionOptions}"
+                          SelectedItem="{Binding SelectedSortDirection, Mode=TwoWay}" />
+                <ComboBox Name="PART_GroupSelector" Classes="libraryToolbar"
+                          Width="132" Margin="4" ToolTip.Tip="Group games"
+                          ItemsSource="{Binding GroupingOptions}"
+                          SelectedItem="{Binding SelectedGrouping, Mode=TwoWay}" />
+
+                <ToggleButton Name="PART_InstalledFilterButton" Classes="libraryToolbar"
+                              Width="132" Margin="4"
+                              Content="{DynamicResource LOCDesktopInstalled}"
+                              ToolTip.Tip="Show installed games only"
+                              IsChecked="{Binding InstalledOnly, Mode=TwoWay}" />
+                <ToggleButton Name="PART_FavoritesFilterButton" Classes="libraryToolbar"
+                              Width="132" Margin="4"
+                              Content="{DynamicResource LOCDesktopFavorites}"
+                              ToolTip.Tip="Show favorite games only"
+                              IsChecked="{Binding FavoritesOnly, Mode=TwoWay}" />
+                <Button Name="PART_FilterButton" Classes="libraryToolbar"
+                        Width="132" Margin="4"
+                        Command="{Binding ToggleFilterPanelCommand}"
+                        ToolTip.Tip="{Binding FilterActiveIndicator}">
+                    <StackPanel Orientation="Horizontal" Spacing="7"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock Text="Filters" />
+                        <Border Width="7" Height="7" CornerRadius="4"
+                                Background="{DynamicResource DesktopAccentBrush}"
+                                IsVisible="{Binding IsFilterActive}" />
+                    </StackPanel>
+                </Button>
+
+                <Button Name="PART_PluginOverflowButton" Classes="libraryToolbar"
+                        Width="132" Margin="4"
+                        Content="Plugins" ToolTip.Tip="Plugin commands and sidebar views">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedRight">
+                            <Border Width="260" Padding="12" CornerRadius="8"
+                                    Background="{DynamicResource DesktopPanelStrongBrush}">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="Plugins" Classes="sectionLabel" Margin="4,0,4,4" />
+                                    <Button Content="Plugin settings"
+                                            Command="{Binding OpenPluginSettingsListCommand}" />
+                                    <Button Content="Plugin commands"
+                                            Command="{Binding OpenPluginMainMenuCommand}" />
+                                    <ItemsControl ItemsSource="{Binding PluginSidebarItems}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Command="{Binding Command}"
+                                                        IsVisible="{Binding Visible}"
+                                                        ToolTip.Tip="{Binding PluginName}"
+                                                        HorizontalContentAlignment="Left">
+                                                    <StackPanel Orientation="Horizontal" Spacing="7">
+                                                        <ContentPresenter Content="{Binding Icon}"
+                                                                          MaxWidth="18" MaxHeight="18" />
+                                                        <TextBlock Text="{Binding Title}" />
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </ScrollViewer>
+                            </Border>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+
+                <Border Width="132" Height="42" Margin="4">
+                    <TextBlock Name="PART_LibrarySummary"
+                               Text="{Binding LibrarySummary}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               TextAlignment="Center"
+                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                </Border>
+            </WrapPanel>
         </Border>
     </ControlTemplate>
 </ResourceDictionary>

@@ -17,7 +17,9 @@
       <CheckBox Content="Warn when selected game images are too large"
                 IsChecked="{Binding ShowImagePerformanceWarning, Mode=TwoWay}" />
 
-      <Border BorderBrush="#446A6A6A" BorderThickness="1" Padding="10" Margin="0,8,0,0">
+      <Border Background="{DynamicResource DesktopPanelBrush}"
+              BorderBrush="{DynamicResource DesktopBorderBrush}"
+              BorderThickness="1" Padding="10" Margin="0,8,0,0">
         <TextBlock Text="The old composition web-view renderer, partial-description loading, and global image-scaler mode were WPF-specific. Avalonia uses its native web-view lifecycle and Skia image sampling, so those switches do not apply."
                    TextWrapping="Wrap" Opacity="0.75" />
       </Border>

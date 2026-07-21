@@ -142,6 +142,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
                 settings.ViewMode = resolved;
                 OnPropertyChanged(nameof(IsGridView));
                 OnPropertyChanged(nameof(IsListView));
+                OnPropertyChanged(nameof(IsListViewSelected));
                 OnPropertyChanged(nameof(IsDetailsView));
                 OnPropertyChanged(nameof(FirstContentColumnWidth));
                 OnPropertyChanged(nameof(SecondContentColumnWidth));
@@ -235,6 +236,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public ObservableCollection<FilterPreset> FilterPresets { get; }
     public bool IsGridView => SelectedViewMode == "Grid";
     public bool IsListView => SelectedViewMode is "List" or "Details";
+    public bool IsListViewSelected => SelectedViewMode == "List";
     public bool IsDetailsView => SelectedViewMode == "Details";
     public double GridItemWidth => settings.GridItemWidth;
     public double GridItemHeight =>
@@ -440,6 +442,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public EmulatorConfigViewModel EmulatorConfig { get; }
     public EmulatedImportViewModel EmulatedImport { get; }
     public DatabaseFieldsViewModel DatabaseFields { get; }
+    public DesktopStatisticsViewModel Statistics { get; }
     public DesktopScriptService Scripts { get; }
     public AvaloniaSearchSession PluginSearch { get; }
     public bool IsPluginSearchVisible => PluginSearch.IsVisible;
@@ -775,6 +778,11 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
                 RaiseGameCommandStates();
             }
         };
+        Statistics = new DesktopStatisticsViewModel(
+            database,
+            settings,
+            GetLibraryName,
+            SelectGame);
         Settings.Updates.ConfigureAddonStore(OpenAddonStore);
 
         ActivateCommand = new AppRelayCommand(
@@ -1465,6 +1473,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         EmulatorConfig.Close();
         EmulatedImport.Close();
         DatabaseFields.Close();
+        Statistics.Close();
         CloseChromeParityOverlays();
         SelectedPluginMenuItem = null;
         ClosePluginSidebar();
@@ -1756,6 +1765,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         }
 
         ApplyFilters();
+        Statistics.RefreshIfVisible();
     }
 
     private IReadOnlyList<Game> ResolveMetadataGames(Playnite.Metadata.MetadataGamesSource source) => source switch

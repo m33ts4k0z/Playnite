@@ -1798,18 +1798,13 @@ public sealed partial class DesktopGameEditorViewModel : INotifyPropertyChanged
             return;
         }
 
-        var message = Playnite.SDK.ResourceProvider.GetString("LOCGameImageSizeWarning");
-        if (string.IsNullOrWhiteSpace(message))
-        {
-            message = "The selected image may be too large for optimal performance. " +
-                "Very large images can reduce UI responsiveness and increase memory usage.";
-        }
-
-        var caption = Playnite.SDK.ResourceProvider.GetString("LOCPerformanceWarningTitle");
-        if (string.IsNullOrWhiteSpace(caption))
-        {
-            caption = "Performance Warning";
-        }
+        var message = DesktopLocalization.Resolve(
+            "LOCGameImageSizeWarning",
+            "The selected image may be too large for optimal performance. " +
+            "Very large images can reduce UI responsiveness and increase memory usage.");
+        var caption = DesktopLocalization.Resolve(
+            "LOCPerformanceWarningTitle",
+            "Performance Warning");
 
         if (showImagePerformanceWarning(caption, message))
         {

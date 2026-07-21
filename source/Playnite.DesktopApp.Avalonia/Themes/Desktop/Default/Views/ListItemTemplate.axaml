@@ -12,30 +12,19 @@
             </Button>
             <Border Classes="desktopRow" Padding="10,8"
                     Background="Transparent"
-                    BorderBrush="#263140" BorderThickness="0,0,0,1"
+                    BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1"
                     IsVisible="{Binding IsGroupExpanded}">
-                <Grid ColumnDefinitions="Auto,2*,*,*,Auto" ColumnSpacing="12">
-                    <Border Width="{Binding ListIconWidth}" Height="{Binding ListIconHeight}" Background="#222B37"
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                    <Border Width="{Binding ListIconWidth}" Height="{Binding ListIconHeight}" Background="{DynamicResource DesktopSurfaceRaisedBrush}"
                             CornerRadius="4" ClipToBounds="True"
                             IsVisible="{Binding ShowListIcon}">
                         <foundation:GameCoverImage SourcePath="{Binding CoverPath}"
                                                    Stretch="{Binding CoverArtStretch}" />
                     </Border>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource DesktopTextBrush}" />
-                        <TextBlock Text="{Binding MetadataLine}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   Foreground="{DynamicResource DesktopMutedBrush}" />
-                    </StackPanel>
-                    <TextBlock Grid.Column="2" Text="{Binding StateText}"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Grid.Column="3" Text="{Binding PlaytimeText}"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Grid.Column="4" Text="{Binding LastPlayedText}"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                    <TextBlock Grid.Column="1" Name="PART_GameTitle"
+                               Text="{Binding Name}" FontWeight="SemiBold"
+                               TextWrapping="Wrap" VerticalAlignment="Center"
+                               Foreground="{DynamicResource DesktopTextBrush}" />
                 </Grid>
             </Border>
         </StackPanel>

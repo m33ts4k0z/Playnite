@@ -40,7 +40,9 @@
       <ItemsControl ItemsSource="{Binding Coordinator.AvailableAddonUpdates}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="services:DesktopAddonUpdate">
-            <Border BorderBrush="#446A6A6A" BorderThickness="1" Padding="10" Margin="0,0,0,8">
+            <Border Background="{DynamicResource DesktopPanelBrush}"
+                    BorderBrush="{DynamicResource DesktopBorderBrush}"
+                    BorderThickness="1" Padding="10" Margin="0,0,0,8">
               <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10">
                 <CheckBox Grid.RowSpan="3" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Top" />
                 <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" />
@@ -58,7 +60,9 @@
               HorizontalAlignment="Left" />
 
       <Border IsVisible="{Binding Coordinator.HasProgramUpdate}"
-              BorderBrush="#446A6A6A" BorderThickness="1" Padding="12">
+              Background="{DynamicResource DesktopPanelBrush}"
+              BorderBrush="{DynamicResource DesktopBorderBrush}"
+              BorderThickness="1" Padding="12">
         <StackPanel Spacing="8">
           <TextBlock Text="A Playnite update is ready" FontWeight="SemiBold" />
           <TextBlock Text="{Binding Coordinator.AvailableProgramUpdate.AvailableVersion, StringFormat='Version {0}'}" />

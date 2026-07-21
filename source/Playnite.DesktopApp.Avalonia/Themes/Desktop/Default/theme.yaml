@@ -18,6 +18,7 @@ Resources:
   - Views/EmulatorConfig.axaml
   - Views/EmulatedImport.axaml
   - Views/DatabaseFields.axaml
+  - Views/Statistics.axaml
   - Views/WebImageSearch.axaml
   - Views/ChromeParity.axaml
 Styles:

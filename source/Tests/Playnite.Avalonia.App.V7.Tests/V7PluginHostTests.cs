@@ -162,6 +162,41 @@ public class V7PluginHostTests
     }
 
     [Test]
+    public void PluginLocalizationKeepsEnglishFallbacksAndOverlaysSelectedLanguage()
+    {
+        var extensionDirectory = Path.Combine(testRoot, "LocalizedPlugin");
+        var localizationDirectory = Path.Combine(extensionDirectory, "Localization");
+        Directory.CreateDirectory(localizationDirectory);
+        const string dictionaryStart =
+            "<ResourceDictionary xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" " +
+            "xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" " +
+            "xmlns:sys=\"clr-namespace:System;assembly=mscorlib\">";
+        File.WriteAllText(
+            Path.Combine(localizationDirectory, "en_US.xaml"),
+            dictionaryStart +
+            "<sys:String x:Key=\"LOCPluginFallbackTest\">English fallback</sys:String>" +
+            "<sys:String x:Key=\"LOCPluginOverlayTest\">English value</sys:String>" +
+            "</ResourceDictionary>");
+        File.WriteAllText(
+            Path.Combine(localizationDirectory, "sv_SE.xaml"),
+            dictionaryStart +
+            "<sys:String x:Key=\"LOCPluginFallbackTest\"></sys:String>" +
+            "<sys:String x:Key=\"LOCPluginOverlayTest\">Svenskt värde</sys:String>" +
+            "</ResourceDictionary>");
+
+        var resources = PluginLocalizationCatalog.Load(extensionDirectory, "sv_SE");
+
+        Assert.That(resources["LOCPluginFallbackTest"], Is.EqualTo("English fallback"));
+        Assert.That(resources["LOCPluginOverlayTest"], Is.EqualTo("Svenskt värde"));
+        PluginResourceRegistry.Replace(resources);
+        Assert.That(
+            PluginResourceRegistry.TryGet("LOCPluginFallbackTest", out var registeredFallback),
+            Is.True);
+        Assert.That(registeredFallback, Is.EqualTo("English fallback"));
+        PluginResourceRegistry.Clear();
+    }
+
+    [Test]
     public void DiscoversAndLoadsSdkSevenPluginWithoutLoadingItAsSdkSix()
     {
         var fixtureRoot = Path.Combine(TestContext.CurrentContext.TestDirectory, "V7Fixture");

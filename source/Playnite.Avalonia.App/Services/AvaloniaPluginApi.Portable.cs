@@ -79,6 +79,11 @@ internal sealed class AvaloniaPluginApi : IPlayniteAPI
 
     internal static object GetNativeResource(string key)
     {
+        if (PluginResourceRegistry.TryGet(key, out var pluginResource))
+        {
+            return pluginResource;
+        }
+
         var application = global::Avalonia.Application.Current;
         return application?.TryGetResource(key, null, out var resource) == true
             ? resource

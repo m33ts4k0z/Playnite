@@ -22,8 +22,8 @@ internal sealed class WindowsPluginCompatibilityHost : IPluginCompatibilityHost
     public void RestoreResourceProvider(Playnite.SDK.IResourceProvider provider) =>
         Playnite.SDK.ResourceProvider.SetGlobalProvider(provider);
 
-    public void LoadPluginResources(string extensionDirectory) =>
-        WpfPluginSupportRuntime.LoadPluginResources(extensionDirectory);
+    public void LoadPluginResources(string extensionDirectory, string language) =>
+        WpfPluginSupportRuntime.LoadPluginResources(extensionDirectory, language);
 
     public void LoadLegacyPlugins(
         ExtensionFactory extensions,
