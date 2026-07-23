@@ -150,6 +150,8 @@ internal sealed class AvaloniaSdkWebView : IWebView
     private NativeWebView browser;
     private AvaloniaWindow window;
     private TaskCompletionSource<WebViewNavigationCompletedEventArgs> navigationCompletion;
+    private Uri navigationRequest;
+    private bool navigationRequestStarted;
     private DispatcherFrame dialogFrame;
     private bool initialized;
     private bool closed;
@@ -232,14 +234,34 @@ internal sealed class AvaloniaSdkWebView : IWebView
             TaskCreationOptions.RunContinuationsAsynchronously);
         lock (navigationLock)
         {
+            if (navigationCompletion != null)
+            {
+                throw new InvalidOperationException("A web-view navigation is already in progress.");
+            }
+
             navigationCompletion = completion;
+            navigationRequest = uri;
+            navigationRequestStarted = false;
         }
 
-        InvokeOnUi(() => browser.Navigate(uri));
-        var result = WaitForTask(completion.Task, $"navigation to {uri}");
-        if (!result.IsSuccess)
+        try
         {
-            throw new InvalidOperationException($"The web view could not navigate to {uri}.");
+            InvokeOnUi(() => browser.Navigate(uri));
+            var result = WaitForTask(completion.Task, $"navigation to {uri}");
+            if (!result.IsSuccess)
+            {
+                throw new InvalidOperationException($"The web view could not navigate to {uri}.");
+            }
+        }
+        finally
+        {
+            lock (navigationLock)
+            {
+                if (ReferenceEquals(navigationCompletion, completion))
+                {
+                    ClearPendingNavigation();
+                }
+            }
         }
     }
 
@@ -415,7 +437,7 @@ internal sealed class AvaloniaSdkWebView : IWebView
         lock (navigationLock)
         {
             navigationCompletion?.TrySetException(new ObjectDisposedException(nameof(AvaloniaSdkWebView)));
-            navigationCompletion = null;
+            ClearPendingNavigation();
         }
 
         InvokeOnUi(() =>
@@ -499,20 +521,60 @@ internal sealed class AvaloniaSdkWebView : IWebView
         }
     }
 
-    private void BrowserOnNavigationStarted(object sender, WebViewNavigationStartingEventArgs args) =>
+    private void BrowserOnNavigationStarted(object sender, WebViewNavigationStartingEventArgs args)
+    {
+        lock (navigationLock)
+        {
+            if (navigationCompletion != null &&
+                (args.Request == null || navigationRequest == null || args.Request.Equals(navigationRequest)))
+            {
+                navigationRequestStarted = true;
+            }
+        }
+
         LoadingChanged?.Invoke(this, new WebViewLoadingChangedEventArgs { IsLoading = true });
+    }
 
     private void BrowserOnNavigationCompleted(object sender, WebViewNavigationCompletedEventArgs args)
     {
-        TaskCompletionSource<WebViewNavigationCompletedEventArgs> completion;
+        TaskCompletionSource<WebViewNavigationCompletedEventArgs> completion = null;
         lock (navigationLock)
         {
-            completion = navigationCompletion;
-            navigationCompletion = null;
+            if (navigationCompletion != null &&
+                ShouldCompletePendingNavigation(navigationRequest, navigationRequestStarted, args.Request))
+            {
+                completion = navigationCompletion;
+                ClearPendingNavigation();
+            }
         }
 
         completion?.TrySetResult(args);
         LoadingChanged?.Invoke(this, new WebViewLoadingChangedEventArgs { IsLoading = false });
+    }
+
+    internal static bool ShouldCompletePendingNavigation(
+        Uri requested,
+        bool requestedNavigationStarted,
+        Uri completed)
+    {
+        if (requested == null || completed == null || completed.Equals(requested))
+        {
+            return requested == null || requestedNavigationStarted || completed?.Equals(requested) == true;
+        }
+
+        if (completed.Equals(new Uri("about:blank")) && !requested.Equals(new Uri("about:blank")))
+        {
+            return false;
+        }
+
+        return requestedNavigationStarted;
+    }
+
+    private void ClearPendingNavigation()
+    {
+        navigationCompletion = null;
+        navigationRequest = null;
+        navigationRequestStarted = false;
     }
 
     private void BrowserOnWebResourceRequested(object sender, WebResourceRequestedEventArgs args)

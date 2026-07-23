@@ -441,8 +441,8 @@ public sealed partial class DesktopGameEditorViewModel
                 return false;
             }
 
-            SetMediaValue(kind, downloaded.Path);
             CloseWebImageSearch();
+            SetMediaValue(kind, downloaded.Path);
             return true;
         }
         catch (Exception exception)
@@ -1320,6 +1320,8 @@ public sealed partial class DesktopGameEditorViewModel
                 Icon = value;
                 break;
         }
+
+        CheckImagePerformanceLimits();
     }
 
     private static EditorMediaKind ParseMediaKind(object value) =>

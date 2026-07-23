@@ -703,27 +703,6 @@
                         </Border>
                     </Grid>
 
-                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsDialogVisible}"
-                          Background="{DynamicResource DesktopModalOverlayBrush}">
-                        <Border Width="680" Padding="30" CornerRadius="14"
-                                Background="{DynamicResource DesktopPanelStrongBrush}"
-                                HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="{Binding DialogCaption}" FontSize="30" FontWeight="Bold"
-                                           TextWrapping="Wrap" Foreground="{DynamicResource DesktopTextBrush}" />
-                                <TextBlock Text="{Binding DialogMessage}" FontSize="18" LineHeight="26"
-                                           TextWrapping="Wrap" Foreground="{DynamicResource DesktopTextBrush}" />
-                                <ListBox ItemsSource="{Binding DialogOptions}"
-                                         SelectedItem="{Binding SelectedDialogOption, Mode=TwoWay}" />
-                                <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <Button Classes="primary" Command="{Binding ConfirmDialogCommand}"
-                                            Content="Confirm" />
-                                    <Button Command="{Binding CancelDialogCommand}" Content="Cancel" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-
                     <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding MetadataDownload.IsVisible}"
                           Background="{DynamicResource DesktopModalOverlayBrush}">
                         <Border Width="860" MaxHeight="790" Padding="30" CornerRadius="14"
@@ -940,16 +919,16 @@
                                                 </StackPanel>
                                                 <TextBox Text="{Binding Editor.GenresSearch, Mode=TwoWay}"
                                                          PlaceholderText="Search genres" />
-                                                <ListBox ItemsSource="{Binding Editor.Genres}" MaxHeight="110"
-                                                         IsEnabled="{Binding Editor.CanEditGenres}">
-                                                    <ListBox.ItemTemplate>
+                                                <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Genres}" MaxHeight="110"
+                                                                             IsEnabled="{Binding Editor.CanEditGenres}">
+                                                    <local:ExplicitScrollListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
-                                                    </ListBox.ItemTemplate>
-                                                </ListBox>
+                                                    </local:ExplicitScrollListBox.ItemTemplate>
+                                                </local:ExplicitScrollListBox>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -963,16 +942,16 @@
                                                 </StackPanel>
                                                 <TextBox Text="{Binding Editor.PlatformsSearch, Mode=TwoWay}"
                                                          PlaceholderText="Search platforms" />
-                                                <ListBox ItemsSource="{Binding Editor.Platforms}" MaxHeight="110"
-                                                         IsEnabled="{Binding Editor.CanEditPlatforms}">
-                                                    <ListBox.ItemTemplate>
+                                                <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Platforms}" MaxHeight="110"
+                                                                             IsEnabled="{Binding Editor.CanEditPlatforms}">
+                                                    <local:ExplicitScrollListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
-                                                    </ListBox.ItemTemplate>
-                                                </ListBox>
+                                                    </local:ExplicitScrollListBox.ItemTemplate>
+                                                </local:ExplicitScrollListBox>
                                             </StackPanel>
                                         </Grid>
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
@@ -988,16 +967,16 @@
                                                 </StackPanel>
                                                 <TextBox Text="{Binding Editor.CategoriesSearch, Mode=TwoWay}"
                                                          PlaceholderText="Search categories" />
-                                                <ListBox ItemsSource="{Binding Editor.Categories}" MaxHeight="110"
-                                                         IsEnabled="{Binding Editor.CanEditCategories}">
-                                                    <ListBox.ItemTemplate>
+                                                <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Categories}" MaxHeight="110"
+                                                                             IsEnabled="{Binding Editor.CanEditCategories}">
+                                                    <local:ExplicitScrollListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
-                                                    </ListBox.ItemTemplate>
-                                                </ListBox>
+                                                    </local:ExplicitScrollListBox.ItemTemplate>
+                                                </local:ExplicitScrollListBox>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -1011,16 +990,16 @@
                                                 </StackPanel>
                                                 <TextBox Text="{Binding Editor.TagsSearch, Mode=TwoWay}"
                                                          PlaceholderText="Search tags" />
-                                                <ListBox ItemsSource="{Binding Editor.Tags}" MaxHeight="110"
-                                                         IsEnabled="{Binding Editor.CanEditTags}">
-                                                    <ListBox.ItemTemplate>
+                                                <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Tags}" MaxHeight="110"
+                                                                             IsEnabled="{Binding Editor.CanEditTags}">
+                                                    <local:ExplicitScrollListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
-                                                    </ListBox.ItemTemplate>
-                                                </ListBox>
+                                                    </local:ExplicitScrollListBox.ItemTemplate>
+                                                </local:ExplicitScrollListBox>
                                             </StackPanel>
                                         </Grid>
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
@@ -1036,16 +1015,16 @@
                                                 </StackPanel>
                                                 <TextBox Text="{Binding Editor.DevelopersSearch, Mode=TwoWay}"
                                                          PlaceholderText="Search developers" />
-                                                <ListBox ItemsSource="{Binding Editor.Developers}" MaxHeight="110"
-                                                         IsEnabled="{Binding Editor.CanEditDevelopers}">
-                                                    <ListBox.ItemTemplate>
+                                                <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Developers}" MaxHeight="110"
+                                                                             IsEnabled="{Binding Editor.CanEditDevelopers}">
+                                                    <local:ExplicitScrollListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
-                                                    </ListBox.ItemTemplate>
-                                                </ListBox>
+                                                    </local:ExplicitScrollListBox.ItemTemplate>
+                                                </local:ExplicitScrollListBox>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -1059,16 +1038,16 @@
                                                 </StackPanel>
                                                 <TextBox Text="{Binding Editor.PublishersSearch, Mode=TwoWay}"
                                                          PlaceholderText="Search publishers" />
-                                                <ListBox ItemsSource="{Binding Editor.Publishers}" MaxHeight="110"
-                                                         IsEnabled="{Binding Editor.CanEditPublishers}">
-                                                    <ListBox.ItemTemplate>
+                                                <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Publishers}" MaxHeight="110"
+                                                                             IsEnabled="{Binding Editor.CanEditPublishers}">
+                                                    <local:ExplicitScrollListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
-                                                    </ListBox.ItemTemplate>
-                                                </ListBox>
+                                                    </local:ExplicitScrollListBox.ItemTemplate>
+                                                </local:ExplicitScrollListBox>
                                             </StackPanel>
                                         </Grid>
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
@@ -1084,16 +1063,16 @@
                                                 </StackPanel>
                                                 <TextBox Text="{Binding Editor.FeaturesSearch, Mode=TwoWay}"
                                                          PlaceholderText="Search features" />
-                                                <ListBox ItemsSource="{Binding Editor.Features}" MaxHeight="110"
-                                                         IsEnabled="{Binding Editor.CanEditFeatures}">
-                                                    <ListBox.ItemTemplate>
+                                                <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Features}" MaxHeight="110"
+                                                                             IsEnabled="{Binding Editor.CanEditFeatures}">
+                                                    <local:ExplicitScrollListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
-                                                    </ListBox.ItemTemplate>
-                                                </ListBox>
+                                                    </local:ExplicitScrollListBox.ItemTemplate>
+                                                </local:ExplicitScrollListBox>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -1107,16 +1086,16 @@
                                                 </StackPanel>
                                                 <TextBox Text="{Binding Editor.SeriesSearch, Mode=TwoWay}"
                                                          PlaceholderText="Search series" />
-                                                <ListBox ItemsSource="{Binding Editor.Series}" MaxHeight="110"
-                                                         IsEnabled="{Binding Editor.CanEditSeries}">
-                                                    <ListBox.ItemTemplate>
+                                                <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Series}" MaxHeight="110"
+                                                                             IsEnabled="{Binding Editor.CanEditSeries}">
+                                                    <local:ExplicitScrollListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
-                                                    </ListBox.ItemTemplate>
-                                                </ListBox>
+                                                    </local:ExplicitScrollListBox.ItemTemplate>
+                                                </local:ExplicitScrollListBox>
                                             </StackPanel>
                                         </Grid>
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
@@ -1132,16 +1111,16 @@
                                                 </StackPanel>
                                                 <TextBox Text="{Binding Editor.AgeRatingsSearch, Mode=TwoWay}"
                                                          PlaceholderText="Search age ratings" />
-                                                <ListBox ItemsSource="{Binding Editor.AgeRatings}" MaxHeight="110"
-                                                         IsEnabled="{Binding Editor.CanEditAgeRatings}">
-                                                    <ListBox.ItemTemplate>
+                                                <local:ExplicitScrollListBox ItemsSource="{Binding Editor.AgeRatings}" MaxHeight="110"
+                                                                             IsEnabled="{Binding Editor.CanEditAgeRatings}">
+                                                    <local:ExplicitScrollListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
-                                                    </ListBox.ItemTemplate>
-                                                </ListBox>
+                                                    </local:ExplicitScrollListBox.ItemTemplate>
+                                                </local:ExplicitScrollListBox>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Spacing="5">
                                                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -1155,16 +1134,16 @@
                                                 </StackPanel>
                                                 <TextBox Text="{Binding Editor.RegionsSearch, Mode=TwoWay}"
                                                          PlaceholderText="Search regions" />
-                                                <ListBox ItemsSource="{Binding Editor.Regions}" MaxHeight="110"
-                                                         IsEnabled="{Binding Editor.CanEditRegions}">
-                                                    <ListBox.ItemTemplate>
+                                                <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Regions}" MaxHeight="110"
+                                                                             IsEnabled="{Binding Editor.CanEditRegions}">
+                                                    <local:ExplicitScrollListBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <CheckBox Content="{Binding Name}" IsVisible="{Binding IsVisible}"
                                                                       IsThreeState="{Binding AllowIndeterminate}"
                                                                       IsChecked="{Binding IsSelected, Mode=TwoWay}" />
                                                         </DataTemplate>
-                                                    </ListBox.ItemTemplate>
-                                                </ListBox>
+                                                    </local:ExplicitScrollListBox.ItemTemplate>
+                                                </local:ExplicitScrollListBox>
                                             </StackPanel>
                                         </Grid>
                                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
@@ -1279,9 +1258,9 @@
                                                           IsChecked="{Binding Editor.ApplyLinks, Mode=TwoWay}"
                                                           Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                             </StackPanel>
-                                            <ListBox ItemsSource="{Binding Editor.Links}" MaxHeight="180"
-                                                     IsEnabled="{Binding Editor.CanEditLinks}">
-                                                <ListBox.ItemTemplate>
+                                            <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Links}" MaxHeight="180"
+                                                                         IsEnabled="{Binding Editor.CanEditLinks}">
+                                                <local:ExplicitScrollListBox.ItemTemplate>
                                                     <DataTemplate>
                                                         <Grid ColumnDefinitions="*,2*,Auto,Auto,Auto" ColumnSpacing="8" Margin="0,2">
                                                             <TextBox Text="{Binding Name, Mode=TwoWay}"
@@ -1293,8 +1272,8 @@
                                                             <Button Grid.Column="4" Command="{Binding RemoveCommand}" Content="×" />
                                                         </Grid>
                                                     </DataTemplate>
-                                                </ListBox.ItemTemplate>
-                                            </ListBox>
+                                                </local:ExplicitScrollListBox.ItemTemplate>
+                                            </local:ExplicitScrollListBox>
                                             <Button Command="{Binding Editor.AddLinkCommand}"
                                                     Content="{DynamicResource LOCDesktopAddLink}"
                                                     HorizontalAlignment="Left" />
@@ -1306,9 +1285,9 @@
                                                           IsChecked="{Binding Editor.ApplyRoms, Mode=TwoWay}"
                                                           Content="{DynamicResource LOCDesktopApplyInBulk}" />
                                             </StackPanel>
-                                            <ListBox ItemsSource="{Binding Editor.Roms}" MaxHeight="180"
-                                                     IsEnabled="{Binding Editor.CanEditRoms}">
-                                                <ListBox.ItemTemplate>
+                                            <local:ExplicitScrollListBox ItemsSource="{Binding Editor.Roms}" MaxHeight="180"
+                                                                         IsEnabled="{Binding Editor.CanEditRoms}">
+                                                <local:ExplicitScrollListBox.ItemTemplate>
                                                     <DataTemplate>
                                                         <Grid ColumnDefinitions="*,2*,Auto,Auto,Auto,Auto" ColumnSpacing="7" Margin="0,2">
                                                             <TextBox Text="{Binding Name, Mode=TwoWay}"
@@ -1322,8 +1301,8 @@
                                                             <Button Grid.Column="5" Command="{Binding RemoveCommand}" Content="×" />
                                                         </Grid>
                                                     </DataTemplate>
-                                                </ListBox.ItemTemplate>
-                                            </ListBox>
+                                                </local:ExplicitScrollListBox.ItemTemplate>
+                                            </local:ExplicitScrollListBox>
                                             <Button Command="{Binding Editor.AddRomCommand}"
                                                     Content="{DynamicResource LOCDesktopAddRom}"
                                                     HorizontalAlignment="Left" />
@@ -1343,9 +1322,9 @@
                                                           IsChecked="{Binding Editor.IncludeLibraryPluginAction, Mode=TwoWay}"
                                                           Content="{DynamicResource LOCDesktopIncludeLibraryAction}" />
                                             </StackPanel>
-                                            <ListBox ItemsSource="{Binding Editor.GameActions}" MaxHeight="480"
-                                                     IsEnabled="{Binding Editor.CanEditGameActions}">
-                                                <ListBox.ItemTemplate>
+                                            <local:ExplicitScrollListBox ItemsSource="{Binding Editor.GameActions}" MaxHeight="480"
+                                                                         IsEnabled="{Binding Editor.CanEditGameActions}">
+                                                <local:ExplicitScrollListBox.ItemTemplate>
                                                     <DataTemplate>
                                                         <Border BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="1" CornerRadius="7"
                                                                 Padding="10" Margin="0,3">
@@ -1462,8 +1441,8 @@
                                                             </StackPanel>
                                                         </Border>
                                                     </DataTemplate>
-                                                </ListBox.ItemTemplate>
-                                            </ListBox>
+                                                </local:ExplicitScrollListBox.ItemTemplate>
+                                            </local:ExplicitScrollListBox>
                                             <Button Command="{Binding Editor.AddGameActionCommand}"
                                                     Content="{DynamicResource LOCDesktopAddAction}"
                                                     HorizontalAlignment="Left" />
@@ -1730,6 +1709,32 @@
                         </Border>
                         <ContentControl Template="{DynamicResource DesktopWebImageSearchTemplate}" />
                         <ContentControl Template="{DynamicResource DesktopMetadataComparisonTemplate}" />
+                    </Grid>
+
+                    <Grid Grid.RowSpan="3" Classes="modalLayer" IsVisible="{Binding IsDialogVisible}"
+                          Background="{DynamicResource DesktopModalOverlayBrush}">
+                        <Border Width="720" Padding="30" CornerRadius="14"
+                                Background="{DynamicResource DesktopPanelStrongBrush}"
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Spacing="18">
+                                <TextBlock Text="{Binding DialogCaption}" FontSize="30" FontWeight="Bold"
+                                           TextWrapping="Wrap" Foreground="{DynamicResource DesktopTextBrush}" />
+                                <TextBlock Text="{Binding DialogMessage}" FontSize="18" LineHeight="26"
+                                           TextWrapping="Wrap" Foreground="{DynamicResource DesktopTextBrush}" />
+                                <ItemsControl ItemsSource="{Binding DialogButtons}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" Spacing="10" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Content="{Binding Title}" Command="{Binding SelectCommand}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </Border>
                     </Grid>
                 </Grid>
             </ControlTemplate>

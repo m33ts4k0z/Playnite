@@ -370,6 +370,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
     public int NotificationCount => Notifications.Count;
     public ObservableCollection<string> ActionChoices { get; } = new();
     public ObservableCollection<string> DialogOptions { get; } = new();
+    public ObservableCollection<DesktopDialogOption> DialogButtons { get; } = new();
     public ObservableCollection<PluginMenuAction> PluginMenuItems { get; } = new();
     public ObservableCollection<DesktopPluginSidebarItem> PluginSidebarItems { get; } = new();
     public ObservableCollection<DesktopPluginTopPanelItem> PluginTopPanelItems { get; } = new();
@@ -560,12 +561,19 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
             RefreshGames,
             SetStatusMessage,
             this.settings,
-            (caption, message) => dialogService?.ShowMessage(
-                message,
-                caption,
-                new[] { "OK", "Don't show again" },
-                0,
-                0) == "Don't show again",
+            (caption, message) =>
+            {
+                var ok = DesktopLocalization.Resolve("LOCOKLabel", "OK");
+                var dontShowAgain = DesktopLocalization.Resolve(
+                    "LOCDontShowAgainTitle",
+                    "Don't show again");
+                return dialogService?.ShowMessage(
+                    message,
+                    caption,
+                    new[] { ok, dontShowAgain },
+                    0,
+                    0) == dontShowAgain;
+            },
             () => SettingsChanged?.Invoke(this, EventArgs.Empty),
             () => dialogService);
         MetadataDownload = new DesktopMetadataDownloadViewModel(
@@ -1084,9 +1092,13 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         DialogCaption = caption;
         DialogMessage = message;
         DialogOptions.Clear();
+        DialogButtons.Clear();
         foreach (var option in options)
         {
             DialogOptions.Add(option);
+            DialogButtons.Add(new DesktopDialogOption(
+                option,
+                () => CompleteDialog(option)));
         }
 
         dialogCancelIndex = cancelIndex;
@@ -1850,4 +1862,16 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
 
     private void OnPropertyChanged([CallerMemberName] string propertyName = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+public sealed class DesktopDialogOption
+{
+    public string Title { get; }
+    public ICommand SelectCommand { get; }
+
+    public DesktopDialogOption(string title, Action select)
+    {
+        Title = title ?? string.Empty;
+        SelectCommand = new AppRelayCommand(select ?? (() => { }));
+    }
 }

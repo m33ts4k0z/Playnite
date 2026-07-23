@@ -20,6 +20,8 @@ public sealed partial class DesktopGameEditorViewModel : INotifyPropertyChanged
     private readonly Func<string, string, bool> showImagePerformanceWarning;
     private readonly Action settingsChanged;
     private readonly Func<DesktopDialogService> dialogs;
+    private readonly HashSet<string> acknowledgedImageWarnings = new(
+        OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
     private readonly Dictionary<Guid, (DatabaseFieldKind Kind, DatabaseObject Model)> pendingTaxonomy = new();
     private readonly Dictionary<string, string> taxonomySearch = new(StringComparer.Ordinal);
     private IReadOnlyList<Guid> editingGameIds = Array.Empty<Guid>();
@@ -620,6 +622,7 @@ public sealed partial class DesktopGameEditorViewModel : INotifyPropertyChanged
 
         editingGameIds = distinctIds;
         completed = onCompleted;
+        acknowledgedImageWarnings.Clear();
         pendingTaxonomy.Clear();
         ResetTaxonomySearch();
         ReloadTaxonomyOptions();
@@ -1798,10 +1801,20 @@ public sealed partial class DesktopGameEditorViewModel : INotifyPropertyChanged
             return;
         }
 
-        var message = DesktopLocalization.Resolve(
+        var messageTemplate = DesktopLocalization.Resolve(
             "LOCGameImageSizeWarning",
             "The selected image may be too large for optimal performance. " +
-            "Very large images can reduce UI responsiveness and increase memory usage.");
+            "Very large images can reduce UI responsiveness and increase memory usage.\n\n" +
+            "Maximum recommended resolutions:\n" +
+            "Icons: {0} megapixels\n" +
+            "Covers: {1} megapixels\n" +
+            "Backgrounds: {2} megapixels");
+        var message = string.Format(
+            CultureInfo.CurrentCulture,
+            messageTemplate,
+            GameDatabase.MaximumRecommendedIconSize,
+            GameDatabase.MaximumRecommendedCoverSize,
+            GameDatabase.MaximumRecommendedBackgroundSize);
         var caption = DesktopLocalization.Resolve(
             "LOCPerformanceWarningTitle",
             "Performance Warning");
@@ -1831,9 +1844,21 @@ public sealed partial class DesktopGameEditorViewModel : INotifyPropertyChanged
 
         try
         {
+            path = Path.GetFullPath(path);
+            if (acknowledgedImageWarnings.Contains(path))
+            {
+                return false;
+            }
+
             using var image = new global::Avalonia.Media.Imaging.Bitmap(path);
             var megapixels = image.PixelSize.Width * (double)image.PixelSize.Height / 1_000_000;
-            return megapixels > maximumMegapixels;
+            if (megapixels <= maximumMegapixels)
+            {
+                return false;
+            }
+
+            acknowledgedImageWarnings.Add(path);
+            return true;
         }
         catch (Exception exception) when (
             exception is ArgumentException or IOException or UnauthorizedAccessException)

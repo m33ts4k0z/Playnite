@@ -63,6 +63,8 @@ namespace Playnite
 
     public class GoogleImageDownloader : IDisposable
     {
+        private const int GoogleResultsReadAttempts = 50;
+        private static readonly TimeSpan GoogleResultsReadDelay = TimeSpan.FromMilliseconds(100);
         private static ILogger logger = LogManager.GetLogger();
 
         /// <summary>
@@ -233,33 +235,19 @@ namespace Playnite
 #endif
             }
 
-            var googleContent = await webView.GetPageSourceAsync();
-            if (googleContent.Contains(".rg_meta", StringComparison.Ordinal))
+            var googleContent = string.Empty;
+            for (var attempt = 0; attempt < GoogleResultsReadAttempts; attempt++)
             {
-                var document = parser.ParseDocument(googleContent);
-                foreach (var imageElem in document.QuerySelectorAll(".rg_meta"))
+                googleContent = await webView.GetPageSourceAsync();
+                images = ParseGoogleImages(googleContent, parser);
+                if (images.HasItems())
                 {
-                    images.Add(Serialization.FromJson<GoogleImage>(imageElem.InnerHtml));
+                    break;
                 }
-            }
-            else
-            {
-                var formatted = Regex.Replace(googleContent, @"\r\n?|\n", string.Empty);
-                var matches = Regex.Matches(formatted, @"\[""(https:\/\/encrypted-[^,]+?)"",\d+,\d+\],\[""(http.+?)"",(\d+),(\d+)\]");
-                foreach (Match match in matches)
-                {
-                    var data = Serialization.FromJson<List<List<object>>>($"[{match.Value}]");
-                    var imageUrl = data[1][0].ToString();
-                    if (images.Any(a => a.ImageUrl.Equals(imageUrl, StringComparison.OrdinalIgnoreCase)))
-                        continue;
 
-                    images.Add(new GoogleImage
-                    {
-                        ThumbUrl = data[0][0].ToString(),
-                        ImageUrl = imageUrl,
-                        Height = uint.Parse(data[1][1].ToString()),
-                        Width = uint.Parse(data[1][2].ToString())
-                    });
+                if (attempt + 1 < GoogleResultsReadAttempts)
+                {
+                    await Task.Delay(GoogleResultsReadDelay);
                 }
             }
 
@@ -267,6 +255,48 @@ namespace Playnite
             {
                 logger.Error("Failed to parse any Google image results.");
                 logger.Debug(googleContent);
+            }
+
+            return images;
+        }
+
+        private static List<GoogleImage> ParseGoogleImages(string googleContent, HtmlParser parser)
+        {
+            var images = new List<GoogleImage>();
+            if (string.IsNullOrWhiteSpace(googleContent))
+            {
+                return images;
+            }
+
+            if (googleContent.Contains(".rg_meta", StringComparison.Ordinal))
+            {
+                var document = parser.ParseDocument(googleContent);
+                foreach (var imageElem in document.QuerySelectorAll(".rg_meta"))
+                {
+                    images.Add(Serialization.FromJson<GoogleImage>(imageElem.InnerHtml));
+                }
+
+                return images;
+            }
+
+            var formatted = Regex.Replace(googleContent, @"\r\n?|\n", string.Empty);
+            var matches = Regex.Matches(
+                formatted,
+                @"\[""(https:\/\/encrypted-[^,]+?)"",\d+,\d+\],\[""(http.+?)"",(\d+),(\d+)\]");
+            foreach (Match match in matches)
+            {
+                var data = Serialization.FromJson<List<List<object>>>($"[{match.Value}]");
+                var imageUrl = data[1][0].ToString();
+                if (images.Any(a => a.ImageUrl.Equals(imageUrl, StringComparison.OrdinalIgnoreCase)))
+                    continue;
+
+                images.Add(new GoogleImage
+                {
+                    ThumbUrl = data[0][0].ToString(),
+                    ImageUrl = imageUrl,
+                    Height = uint.Parse(data[1][1].ToString()),
+                    Width = uint.Parse(data[1][2].ToString())
+                });
             }
 
             return images;

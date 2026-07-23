@@ -287,6 +287,7 @@ public sealed class MainWindow : Window
                 Key.Insert => TryExecute(viewModel.AddManualGameCommand),
                 Key.Delete => TryExecute(viewModel.RemoveSelectedGamesCommand),
                 Key.Enter => TryExecute(viewModel.ActivateCommand),
+                Key.Escape when viewModel.IsDialogVisible => TryExecute(viewModel.CancelDialogCommand),
                 Key.Escape => TryExecute(viewModel.CloseOverlayCommand),
                 _ => false
             },

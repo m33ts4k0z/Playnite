@@ -12,6 +12,7 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Playnite.Avalonia.Markup;
@@ -20,6 +21,8 @@ using Playnite.Avalonia.Services;
 using Playnite.Avalonia.Input;
 using Playnite.Avalonia.Theming;
 using Playnite.Controllers;
+using Playnite.Database;
+using Playnite.DesktopApp.Avalonia.Controls;
 using Playnite.DesktopApp.Avalonia.Services;
 using Playnite.DesktopApp.Avalonia.ViewModels;
 using Playnite.Plugins;
@@ -472,6 +475,19 @@ internal static class DesktopPilotSelfTest
             viewModel.Editor.IsVisible && viewModel.Editor.Name == originalEditorName
                 ? $"the editor loaded {originalEditorName} without mutating the database"
                 : throw new InvalidOperationException("The selected game was not loaded into the editor."));
+        await Dispatcher.UIThread.InvokeAsync(
+            () => { },
+            DispatcherPriority.Render);
+        await Task.Delay(50);
+        var explicitScrollLists = window.MainView.GetVisualDescendants()
+            .OfType<ExplicitScrollListBox>()
+            .ToList();
+        Record(results, "Editor lists require an explicit click before taking wheel input", () =>
+            explicitScrollLists.Count >= 13 &&
+            explicitScrollLists.All(list => !list.IsKeyboardFocusWithin)
+                ? $"{explicitScrollLists.Count} nested editor lists leave initial wheel input with the editor"
+                : throw new InvalidOperationException(
+                    $"Expected 13 unfocused editor lists, found {explicitScrollLists.Count}."));
 
         Record(results, "Multi-value Core metadata reaches the editor", () =>
             viewModel.Editor.Genres.Count == 2 &&
@@ -588,6 +604,33 @@ internal static class DesktopPilotSelfTest
         var editedName = originalEditorName + " — Edited";
         const string singleBackgroundUrl = "https://example.invalid/desktop-background.jpg";
         const string singleLinkUrl = "https://example.com/desktop-pilot";
+        var oversizedCoverPath = Path.Combine(
+            library.ActiveUserDataDirectory,
+            "oversized-pilot-cover.png");
+        using (var oversizedCover = new RenderTargetBitmap(new PixelSize(1100, 1100)))
+        {
+            oversizedCover.Save(oversizedCoverPath, PngBitmapEncoderOptions.Default);
+        }
+        Dispatcher.UIThread.Post(
+            () => viewModel.ConfirmDialogCommand.Execute(null),
+            DispatcherPriority.Background);
+        viewModel.Editor.MediaDropCommand.Execute(new DesktopMediaDropRequest(
+            nameof(EditorMediaKind.Cover),
+            oversizedCoverPath));
+        var imageWarningMessage = viewModel.DialogMessage;
+        Record(results, "Oversized web-style media warns before save with resolved limits", () =>
+            viewModel.Editor.IsVisible &&
+            !viewModel.IsDialogVisible &&
+            viewModel.Editor.CoverImage == oversizedCoverPath &&
+            imageWarningMessage.Contains(
+                GameDatabase.MaximumRecommendedCoverSize.ToString(CultureInfo.CurrentCulture),
+                StringComparison.CurrentCulture) &&
+            !imageWarningMessage.Contains("{0}", StringComparison.Ordinal) &&
+            !imageWarningMessage.Contains("{1}", StringComparison.Ordinal) &&
+            !imageWarningMessage.Contains("{2}", StringComparison.Ordinal)
+                ? "the foreground warning resolved all limits and returned to the live editor"
+                : throw new InvalidOperationException(
+                    $"The oversized-image warning was unresolved or blocked the editor: {imageWarningMessage}"));
         var singleInstallDirectory = Path.Combine(library.ActiveUserDataDirectory, "games", "desktop-pilot");
         var singleLastActivity = new DateTime(2025, 6, 7, 8, 9, 10, DateTimeKind.Unspecified);
         var singleAdded = new DateTime(2023, 4, 5, 6, 7, 8, DateTimeKind.Unspecified);
@@ -612,7 +655,6 @@ internal static class DesktopPilotSelfTest
         SelectOnly(viewModel.Editor.Series, "Pilot Saga");
         SelectOnly(viewModel.Editor.AgeRatings, "Mature");
         SelectOnly(viewModel.Editor.Regions, "Europe");
-        viewModel.Editor.CoverImage = library.SelfTestMediaPath;
         viewModel.Editor.BackgroundImage = singleBackgroundUrl;
         viewModel.Editor.Icon = library.SelfTestMediaPath;
         viewModel.Editor.InstallDirectory = singleInstallDirectory;
