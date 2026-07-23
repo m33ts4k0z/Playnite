@@ -65,6 +65,16 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         get => games;
         private set
         {
+            if (games != null && value != null && games.SequenceEqual(value))
+            {
+                // Preserve the bound collection when filtering and sorting produced
+                // the same ordered wrappers. Replacing it makes Avalonia rebuild the
+                // selection model and can feed a stale visual selection back into the
+                // view model while metadata refreshes are completing.
+                OnPropertyChanged(nameof(LibrarySummary));
+                return;
+            }
+
             games = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(LibrarySummary));

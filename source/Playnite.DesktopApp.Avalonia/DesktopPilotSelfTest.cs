@@ -1084,6 +1084,8 @@ internal static class DesktopPilotSelfTest
                     viewModel.GlobalProgressMaximum > 0;
             }
         };
+        var metadataSelectionBeforeDownload = viewModel.SelectedGame?.Game.Id;
+        var visibleGamesBeforeMetadataDownload = viewModel.Games;
         var metadataDownloaded = await viewModel.MetadataDownload.StartDownloadAsync();
         var downloadedGame = library.Database.Games[metadataGame.Id];
         var downloadedCoverPath = string.IsNullOrWhiteSpace(downloadedGame.CoverImage)
@@ -1115,6 +1117,9 @@ internal static class DesktopPilotSelfTest
                 metadataPlugin.ProviderDisposeCount == 1 &&
                 metadataPlugin.LastRequestWasBackground &&
                 metadataServer.RequestCount >= 2 &&
+                metadataSelectionBeforeDownload == metadataGame.Id &&
+                viewModel.SelectedGame?.Game.Id == metadataGame.Id &&
+                ReferenceEquals(visibleGamesBeforeMetadataDownload, viewModel.Games) &&
                 viewModel.SelectedGame?.DescriptionText?.Contains(
                     PilotMetadataPlugin.DownloadedDescription,
                     StringComparison.Ordinal) == true)
@@ -1129,6 +1134,8 @@ internal static class DesktopPilotSelfTest
                 $"icon={downloadedGame.Icon}/{File.Exists(downloadedIconPath)}, " +
                 $"providers={metadataPlugin.ProviderCreationCount}/{metadataPlugin.ProviderDisposeCount}, " +
                 $"background={metadataPlugin.LastRequestWasBackground}, requests={metadataServer.RequestCount}, " +
+                $"selection={metadataSelectionBeforeDownload}/{viewModel.SelectedGame?.Game.Id}/{metadataGame.Id}, " +
+                $"listReused={ReferenceEquals(visibleGamesBeforeMetadataDownload, viewModel.Games)}, " +
                 $"details={viewModel.SelectedGame?.DescriptionText}");
         });
 
