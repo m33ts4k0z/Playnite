@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="using:Playnite.DesktopApp.Avalonia.Controls">
     <ControlTemplate x:Key="DesktopTopPanelTemplate">
         <Border Background="{DynamicResource DesktopPanelStrongBrush}"
                 BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="0,0,0,1"
@@ -66,22 +67,11 @@
                                     <PathIcon Data="M7,6H17A5,5 0 0 1 22,11V14A3,3 0 0 1 19,17H17L15,15H9L7,17H5A3,3 0 0 1 2,14V11A5,5 0 0 1 7,6M7,9V11H5V13H7V15H9V13H11V11H9V9H7M17,10V12H19V10H17M15,13V15H17V13H15Z" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <MenuItem Header="{DynamicResource LOCExtensions}" Command="{Binding OpenPluginMainMenuCommand}">
-                                <MenuItem.Icon>
+                            <controls:DesktopExtensionsMenuItem Header="{DynamicResource LOCExtensions}">
+                                <controls:DesktopExtensionsMenuItem.Icon>
                                     <PathIcon Data="M8,3V7H5V11H9V21H15V11H19V7H16V3H14V7H10V3H8Z" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <Separator Classes="menuGroupSeparator" />
-                            <MenuItem Header="{DynamicResource LOCReloadScripts}" Command="{Binding ReloadScriptsCommand}" InputGesture="F12">
-                                <MenuItem.Icon>
-                                    <PathIcon Data="M17.7,6.3A8,8 0 1 0 20,12H18A6,6 0 1 1 16.3,7.7L13,11H21V3L17.7,6.3Z" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-                            <MenuItem Header="{DynamicResource LOCStartInteractivePowerShell}" Command="{Binding OpenInteractivePowerShellCommand}">
-                                <MenuItem.Icon>
-                                    <PathIcon Data="M3,5H21V19H3V5M5,7V17H19V7H5M7,9L10,12L7,15V13L8,12L7,11V9M11,14H16V16H11V14Z" />
-                                </MenuItem.Icon>
-                            </MenuItem>
+                                </controls:DesktopExtensionsMenuItem.Icon>
+                            </controls:DesktopExtensionsMenuItem>
                             <Separator Classes="menuGroupSeparator" />
                             <MenuItem Header="{DynamicResource LOCMenuPlayniteSettingsTitle}" Command="{Binding OpenSettingsCommand}" InputGesture="F4">
                                 <MenuItem.Icon>

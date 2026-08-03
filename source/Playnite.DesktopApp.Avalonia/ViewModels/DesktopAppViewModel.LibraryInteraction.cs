@@ -178,6 +178,9 @@ public sealed partial class DesktopAppViewModel
         return entries;
     }
 
+    public IReadOnlyList<DesktopGameContextMenuEntry> BuildExtensionMainMenu() =>
+        BuildPluginMenuEntries(runtimeHost?.GetMainMenuActions() ?? Array.Empty<PluginMenuAction>());
+
     private void AddSingleGameStartEntries(List<DesktopGameContextMenuEntry> entries, Game game)
     {
         entries.Add(DesktopGameContextMenuEntry.Command(
@@ -362,6 +365,12 @@ public sealed partial class DesktopAppViewModel
         }
 
         entries.Add(DesktopGameContextMenuEntry.Separator());
+        entries.AddRange(BuildPluginMenuEntries(pluginActions));
+    }
+
+    private IReadOnlyList<DesktopGameContextMenuEntry> BuildPluginMenuEntries(
+        IReadOnlyList<PluginMenuAction> pluginActions)
+    {
         var roots = new List<PluginMenuNode>();
         foreach (var action in pluginActions)
         {
@@ -384,7 +393,7 @@ public sealed partial class DesktopAppViewModel
             children.Add(new PluginMenuNode(action.Description, action));
         }
 
-        entries.AddRange(roots.Select(ConvertPluginMenuNode));
+        return roots.Select(ConvertPluginMenuNode).ToList();
     }
 
     private DesktopGameContextMenuEntry ConvertPluginMenuNode(PluginMenuNode node)

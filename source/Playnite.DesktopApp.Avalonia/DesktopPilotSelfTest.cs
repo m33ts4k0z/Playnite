@@ -3965,6 +3965,30 @@ internal static class DesktopPilotSelfTest
                 ? "the compact layout keeps the selected, filtered, or entire-library metadata workflow in Library"
                 : throw new InvalidOperationException("The existing-game metadata workflow is missing from the hamburger menu."));
 
+        var extensionsMenuScript = new PilotMenuScript(
+            Path.Combine(library.ActiveUserDataDirectory, "pilot-extensions-menu.psm1"));
+        window.RuntimeHost.Extensions.Scripts.Add(extensionsMenuScript);
+        var extensionsMenu = new DesktopExtensionsMenuItem { DataContext = viewModel };
+        extensionsMenu.RefreshItems();
+        var extensionsRoots = extensionsMenu.ItemsSource.OfType<MenuItem>().ToList();
+        var scriptGroup = extensionsRoots.Single(item => string.Equals(item.Header as string, "Scripts", StringComparison.Ordinal));
+        var toolsGroup = scriptGroup.ItemsSource.OfType<MenuItem>().Single(item =>
+            string.Equals(item.Header as string, "Tools", StringComparison.Ordinal));
+        var scriptCommand = toolsGroup.ItemsSource.OfType<MenuItem>().Single(item =>
+            string.Equals(item.Header as string, "Script main command", StringComparison.Ordinal));
+        scriptCommand.RaiseEvent(new global::Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Record(results, "Desktop Extensions entry opens a live hierarchical plugin submenu", () =>
+            extensionsRoots.Count >= 3 &&
+            extensionsRoots.Any(item => ReferenceEquals(item.Command, viewModel.ReloadScriptsCommand)) &&
+            extensionsRoots.Any(item => ReferenceEquals(item.Command, viewModel.OpenInteractivePowerShellCommand)) &&
+            extensionsMenu.ItemCount == extensionsRoots.Count + 1 &&
+            extensionsMenuScript.MainInvocationCount == 1 &&
+            extensionsMenuScript.LastMainSourceDescription == "Script main command"
+                ? "hover population exposes built-ins plus Scripts > Tools and dispatches the selected command"
+                : throw new InvalidOperationException("The Extensions submenu was flat, stale, or failed to invoke its action."));
+        window.RuntimeHost.Extensions.Scripts.Remove(extensionsMenuScript);
+        extensionsMenuScript.Dispose();
+
         viewModel.OpenStatisticsCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         var statistics = viewModel.Statistics;
