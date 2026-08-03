@@ -2,19 +2,47 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:foundation="using:Playnite.Avalonia.Controls">
     <ControlTemplate x:Key="DesktopDetailsPanelTemplate">
-        <!-- The details area shares the main canvas with the game list. This
-             lets the selected game's window background continue naturally
-             across the complete library instead of ending at a panel edge. -->
+        <!-- Match the legacy details presentation: background art belongs to
+             the page canvas behind the content instead of appearing as a
+             separate header card. -->
         <Border Background="Transparent"
-                BorderBrush="{DynamicResource DesktopBorderBrush}" BorderThickness="{Binding DetailsBorderThickness}">
-            <ScrollViewer>
-                <StackPanel Margin="{Binding DetailsContentMargin}" Spacing="15">
-                    <Border Name="PART_DetailsBackground" Height="230" CornerRadius="10" Background="{DynamicResource DesktopSurfaceRaisedBrush}"
-                            ClipToBounds="True" IsVisible="{Binding DetailsVisibility.BackgroundImage}">
-                        <foundation:GameCoverImage SourcePath="{Binding SelectedGame.BackgroundPath}"
-                                                   Stretch="UniformToFill" />
-                    </Border>
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="22">
+                BorderBrush="{DynamicResource DesktopBorderBrush}"
+                BorderThickness="{Binding DetailsBorderThickness}"
+                ClipToBounds="True">
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <Grid Height="520"
+                          IsVisible="{Binding DetailsVisibility.BackgroundImage}">
+                        <Border Name="PART_DetailsBackground"
+                                Height="520"
+                                Background="{DynamicResource DesktopBackgroundBrush}"
+                                ClipToBounds="True"
+                                IsHitTestVisible="False"
+                                IsVisible="{Binding DetailsVisibility.BackgroundImage}">
+                            <Grid>
+                                <foundation:GameCoverImage SourcePath="{Binding SelectedGame.BackgroundPath}"
+                                                           HorizontalAlignment="Stretch"
+                                                           VerticalAlignment="Stretch"
+                                                           Stretch="UniformToFill" />
+                                <!-- Keep the artwork undimmed. Only its lower edge blends
+                                     into the page canvas so the transition stays smooth. -->
+                                <Border Name="PART_DetailsBackgroundFade"
+                                        IsHitTestVisible="False">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
+                                            <GradientStop Color="Transparent" Offset="0" />
+                                            <GradientStop Color="Transparent" Offset="0.68" />
+                                            <GradientStop Color="#38081321" Offset="0.78" />
+                                            <GradientStop Color="#A8081321" Offset="0.91" />
+                                            <GradientStop Color="#FF081321" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    <Grid Margin="{Binding DetailsContentMargin}"
+                          ColumnDefinitions="*,Auto" ColumnSpacing="22">
                         <StackPanel Grid.Column="0" Spacing="15">
                     <Border Width="64" Height="64" CornerRadius="8" Background="{DynamicResource DesktopSurfaceRaisedBrush}"
                             HorizontalAlignment="Left" ClipToBounds="True"
@@ -156,7 +184,7 @@
                                 Width="{Binding GameDetailsCoverWidth}"
                                 Height="{Binding GameDetailsCoverHeight}"
                                 HorizontalAlignment="Right" VerticalAlignment="Top"
-                                CornerRadius="10" Background="{DynamicResource DesktopSurfaceRaisedBrush}"
+                                Background="Transparent" BorderThickness="0"
                                 ClipToBounds="True" IsVisible="{Binding DetailsVisibility.CoverImage}">
                             <foundation:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
                                                        Stretch="Uniform" />

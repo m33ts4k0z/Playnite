@@ -2373,13 +2373,38 @@ internal static class DesktopPilotSelfTest
         viewModel.Settings.SaveCommand.Execute(null);
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
         var detailsScroll = window.MainView.DetailsScrollViewer;
+        var detailsBackgroundImage = window.MainView.DetailsBackground
+            .GetVisualDescendants()
+            .OfType<Playnite.Avalonia.Controls.GameCoverImage>()
+            .SingleOrDefault();
+        var detailsBackgroundFade = window.MainView.DetailsBackground
+            .GetVisualDescendants()
+            .OfType<Border>()
+            .SingleOrDefault(border => border.Name == "PART_DetailsBackgroundFade");
+        var detailsFadeBrush = detailsBackgroundFade?.Background as LinearGradientBrush;
+        var detailsBackgroundBottom = window.MainView.DetailsBackground.TranslatePoint(
+            new Point(0, window.MainView.DetailsBackground.Bounds.Height),
+            window.MainView.DetailsPanel)?.Y;
+        var detailsCoverTop = window.MainView.DetailsCover.TranslatePoint(
+            default,
+            window.MainView.DetailsPanel)?.Y;
         var detailsApplied = !window.MainView.DetailsName.IsVisible &&
             window.MainView.DetailsCover.IsVisible &&
             Math.Abs(window.MainView.DetailsCover.Height - 360) < 0.01 &&
             Math.Abs(window.MainView.DetailsCover.Width - viewModel.GameDetailsCoverWidth) < 0.01 &&
             window.MainView.DetailsCover.HorizontalAlignment == global::Avalonia.Layout.HorizontalAlignment.Right &&
+            window.MainView.DetailsCover.Background is global::Avalonia.Media.ISolidColorBrush { Color.A: 0 } &&
+            window.MainView.DetailsCover.BorderThickness == default &&
+            window.MainView.DetailsCover.CornerRadius == default &&
             window.MainView.DetailsBackground.IsVisible &&
-            Math.Abs(window.MainView.DetailsBackground.Height - 230) < 0.01 &&
+            window.MainView.DetailsBackground.Background is global::Avalonia.Media.ISolidColorBrush { Color.A: byte.MaxValue } &&
+            Math.Abs(window.MainView.DetailsBackground.Height - 520) < 0.01 &&
+            detailsBackgroundImage?.OpacityMask is null &&
+            detailsFadeBrush?.GradientStops.Count == 5 &&
+            detailsFadeBrush.GradientStops[0].Color.A == 0 &&
+            detailsFadeBrush.GradientStops[^1].Color.A == byte.MaxValue &&
+            detailsBackgroundBottom.HasValue &&
+            detailsCoverTop >= detailsBackgroundBottom &&
             Grid.GetColumn(window.MainView.DetailsPanel) == 1 &&
             Math.Abs(viewModel.FirstContentColumnWidth.Value - 420) < 0.01 &&
             viewModel.DetailsBorderThickness == default &&
@@ -2390,10 +2415,11 @@ internal static class DesktopPilotSelfTest
             Math.Abs(Playnite.Avalonia.Controls.ScrollBehavior.GetWheelSensitivity(detailsScroll) - 3) < 0.01;
         Record(results, "Desktop details visibility and layout settings apply live", () =>
             detailsApplied
-                ? "header background, right-aligned portrait cover, field visibility, indent/icon geometry, left layout, width, separators, and scrolling updated"
+                ? "smooth page-background fade, below-art borderless cover, field visibility, indent/icon geometry, left layout, width, separators, and scrolling updated"
                 : throw new InvalidOperationException(
                     $"name={window.MainView.DetailsName.IsVisible}, cover={window.MainView.DetailsCover.IsVisible}/{window.MainView.DetailsCover.Width}x{window.MainView.DetailsCover.Height}/{window.MainView.DetailsCover.HorizontalAlignment}, " +
-                    $"background={window.MainView.DetailsBackground.IsVisible}/{window.MainView.DetailsBackground.Height}, " +
+                    $"background={window.MainView.DetailsBackground.IsVisible}/{window.MainView.DetailsBackground.Height}/fade={detailsFadeBrush?.GradientStops.Count}, " +
+                    $"vertical={detailsBackgroundBottom}->{detailsCoverTop}, " +
                     $"column={Grid.GetColumn(window.MainView.DetailsPanel)}, width={viewModel.FirstContentColumnWidth.Value}, " +
                     $"border={viewModel.DetailsBorderThickness}, margin={viewModel.DetailsContentMargin.Left}, " +
                     $"icon={viewModel.SelectedGame.ListIconHeight}, scroll={detailsScroll != null}/" +
