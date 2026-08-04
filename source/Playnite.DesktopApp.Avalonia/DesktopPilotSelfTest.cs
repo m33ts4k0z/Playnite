@@ -2377,11 +2377,14 @@ internal static class DesktopPilotSelfTest
             .GetVisualDescendants()
             .OfType<Playnite.Avalonia.Controls.GameCoverImage>()
             .SingleOrDefault();
-        var detailsBackgroundFade = window.MainView.DetailsBackground
+        var detailsSharpArtwork = window.MainView.DetailsBackground
             .GetVisualDescendants()
             .OfType<Border>()
-            .SingleOrDefault(border => border.Name == "PART_DetailsBackgroundFade");
-        var detailsFadeBrush = detailsBackgroundFade?.Background as LinearGradientBrush;
+            .SingleOrDefault(border => border.Name == "PART_DetailsSharpArtwork");
+        var detailsLinkGroups = window.MainView.DetailsPanel
+            .GetVisualDescendants()
+            .OfType<ItemsControl>()
+            .SingleOrDefault(control => control.Name == "PART_DetailsLinkGroups");
         var detailsBackgroundBottom = window.MainView.DetailsBackground.TranslatePoint(
             new Point(0, window.MainView.DetailsBackground.Bounds.Height),
             window.MainView.DetailsPanel)?.Y;
@@ -2397,14 +2400,17 @@ internal static class DesktopPilotSelfTest
             window.MainView.DetailsCover.BorderThickness == default &&
             window.MainView.DetailsCover.CornerRadius == default &&
             window.MainView.DetailsBackground.IsVisible &&
-            window.MainView.DetailsBackground.Background is global::Avalonia.Media.ISolidColorBrush { Color.A: byte.MaxValue } &&
-            Math.Abs(window.MainView.DetailsBackground.Height - 520) < 0.01 &&
-            detailsBackgroundImage?.OpacityMask is null &&
-            detailsFadeBrush?.GradientStops.Count == 5 &&
-            detailsFadeBrush.GradientStops[0].Color.A == 0 &&
-            detailsFadeBrush.GradientStops[^1].Color.A == byte.MaxValue &&
+            window.MainView.DetailsBackground.Background is global::Avalonia.Media.ISolidColorBrush { Color.A: 0 } &&
+            Math.Abs(window.MainView.DetailsBackground.Height - 456) < 0.01 &&
+            detailsBackgroundImage?.OpacityMask is LinearGradientBrush { GradientStops.Count: 7 } &&
+            Math.Abs(detailsBackgroundImage?.BottomFadeStart - 0.32 ?? double.MaxValue) < 0.01 &&
+            Math.Abs(detailsSharpArtwork?.Opacity - 0.82 ?? double.MaxValue) < 0.01 &&
+            detailsSharpArtwork?.OpacityMask is null &&
             detailsBackgroundBottom.HasValue &&
-            detailsCoverTop >= detailsBackgroundBottom &&
+            detailsCoverTop.HasValue &&
+            Math.Abs(detailsBackgroundBottom.Value - detailsCoverTop.Value) < 0.01 &&
+            detailsLinkGroups != null &&
+            window.MainView.DetailsMoreButton?.ContextMenu != null &&
             Grid.GetColumn(window.MainView.DetailsPanel) == 1 &&
             Math.Abs(viewModel.FirstContentColumnWidth.Value - 420) < 0.01 &&
             viewModel.DetailsBorderThickness == default &&
@@ -2415,11 +2421,12 @@ internal static class DesktopPilotSelfTest
             Math.Abs(Playnite.Avalonia.Controls.ScrollBehavior.GetWheelSensitivity(detailsScroll) - 3) < 0.01;
         Record(results, "Desktop details visibility and layout settings apply live", () =>
             detailsApplied
-                ? "smooth page-background fade, below-art borderless cover, field visibility, indent/icon geometry, left layout, width, separators, and scrolling updated"
+                ? "legacy-style transparent background fade, overlaid content, grouped text links, More menu, borderless cover, and scrolling updated"
                 : throw new InvalidOperationException(
                     $"name={window.MainView.DetailsName.IsVisible}, cover={window.MainView.DetailsCover.IsVisible}/{window.MainView.DetailsCover.Width}x{window.MainView.DetailsCover.Height}/{window.MainView.DetailsCover.HorizontalAlignment}, " +
-                    $"background={window.MainView.DetailsBackground.IsVisible}/{window.MainView.DetailsBackground.Height}/fade={detailsFadeBrush?.GradientStops.Count}, " +
+                    $"background={window.MainView.DetailsBackground.IsVisible}/{window.MainView.DetailsBackground.Height}/imageMask={detailsBackgroundImage?.OpacityMask?.GetType().Name}/imageFade={detailsBackgroundImage?.BottomFadeStart}/container={detailsSharpArtwork?.Opacity}/{detailsSharpArtwork?.OpacityMask?.GetType().Name}, " +
                     $"vertical={detailsBackgroundBottom}->{detailsCoverTop}, " +
+                    $"groups={detailsLinkGroups != null}, more={window.MainView.DetailsMoreButton?.ContextMenu != null}, " +
                     $"column={Grid.GetColumn(window.MainView.DetailsPanel)}, width={viewModel.FirstContentColumnWidth.Value}, " +
                     $"border={viewModel.DetailsBorderThickness}, margin={viewModel.DetailsContentMargin.Left}, " +
                     $"icon={viewModel.SelectedGame.ListIconHeight}, scroll={detailsScroll != null}/" +

@@ -101,6 +101,11 @@ public sealed partial class DesktopAppViewModel
         MetadataDownload.IsRunning || LibrarySync.IsRunning || InstalledGameImport.IsRunning;
     public bool HasProgramUpdate => Updates.HasProgramUpdate;
     public IReadOnlyList<DesktopDetailsFilterLink> DetailsFilterLinks => BuildDetailsFilterLinks();
+    public IReadOnlyList<DesktopDetailsFilterLinkGroup> DetailsFilterLinkGroups =>
+        BuildDetailsFilterLinkGroups();
+    public string PrimaryGameActionText => SelectedGame?.IsInstalled == true
+        ? Localize("LOCPlayGame", "Play")
+        : Localize("LOCInstallGame", "Install");
     internal IReadOnlyList<LibraryPlugin> LibraryClients =>
         runtimeHost?.LibraryPlugins ?? Array.Empty<LibraryPlugin>();
     internal IReadOnlyList<AppSoftware> SoftwareTools => database?.SoftwareApps
@@ -533,6 +538,30 @@ public sealed partial class DesktopAppViewModel
         return links;
     }
 
+    private IReadOnlyList<DesktopDetailsFilterLinkGroup> BuildDetailsFilterLinkGroups()
+    {
+        var links = BuildDetailsFilterLinks();
+        var definitions = new (string Field, string Label, bool IsVisible)[]
+        {
+            (nameof(FilterPresetSettings.Platform), Localize("LOCPlatformTitle", "Platform"), DetailsVisibility.Platform),
+            (nameof(FilterPresetSettings.Genre), Localize("LOCGenreLabel", "Genre"), DetailsVisibility.Genres),
+            (nameof(FilterPresetSettings.Category), Localize("LOCGameCategoriesTitle", "Categories"), DetailsVisibility.Categories),
+            (nameof(FilterPresetSettings.Tag), Localize("LOCTagsLabel", "Tags"), DetailsVisibility.Tags),
+            (nameof(FilterPresetSettings.Feature), Localize("LOCFeaturesLabel", "Features"), DetailsVisibility.Features),
+            (nameof(FilterPresetSettings.Series), Localize("LOCSeriesLabel", "Series"), DetailsVisibility.Series),
+            (nameof(FilterPresetSettings.Region), Localize("LOCRegionLabel", "Region"), DetailsVisibility.Region),
+            (nameof(FilterPresetSettings.AgeRating), Localize("LOCAgeRatingLabel", "Age rating"), DetailsVisibility.AgeRating)
+        };
+
+        return definitions
+            .Where(definition => definition.IsVisible)
+            .Select(definition => new DesktopDetailsFilterLinkGroup(
+                definition.Label,
+                links.Where(link => link.Field == definition.Field).ToList()))
+            .Where(group => group.Links.Count > 0)
+            .ToList();
+    }
+
     private void AddDetailsLinks(
         ICollection<DesktopDetailsFilterLink> target,
         string field,
@@ -641,5 +670,17 @@ public sealed class DesktopDetailsFilterLink
         Value = value;
         Name = name;
         Command = new AppRelayCommand(() => activate(this));
+    }
+}
+
+public sealed class DesktopDetailsFilterLinkGroup
+{
+    public string Name { get; }
+    public IReadOnlyList<DesktopDetailsFilterLink> Links { get; }
+
+    public DesktopDetailsFilterLinkGroup(string name, IReadOnlyList<DesktopDetailsFilterLink> links)
+    {
+        Name = name;
+        Links = links ?? Array.Empty<DesktopDetailsFilterLink>();
     }
 }

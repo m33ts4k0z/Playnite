@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -21,6 +22,8 @@ public sealed class GameCoverImage : Image
         AvaloniaProperty.Register<GameCoverImage, string>(nameof(SourcePath));
     public static readonly StyledProperty<TimeSpan> FadeDurationProperty =
         AvaloniaProperty.Register<GameCoverImage, TimeSpan>(nameof(FadeDuration));
+    public static readonly StyledProperty<double> BottomFadeStartProperty =
+        AvaloniaProperty.Register<GameCoverImage, double>(nameof(BottomFadeStart), -1);
 
     private static readonly HttpClient httpClient = new();
     private CancellationTokenSource loadCancellation;
@@ -46,12 +49,26 @@ public sealed class GameCoverImage : Image
         set => SetValue(FadeDurationProperty, value);
     }
 
+    /// <summary>
+    /// Relative vertical position where the image starts fading to transparent.
+    /// A negative value disables the fade.
+    /// </summary>
+    public double BottomFadeStart
+    {
+        get => GetValue(BottomFadeStartProperty);
+        set => SetValue(BottomFadeStartProperty, value);
+    }
+
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
         if (change.Property == SourcePathProperty)
         {
             BeginLoad(change.NewValue as string);
+        }
+        else if (change.Property == BottomFadeStartProperty)
+        {
+            UpdateBottomFadeMask();
         }
     }
 
@@ -214,5 +231,33 @@ public sealed class GameCoverImage : Image
                 }
             };
         }
+    }
+
+    private void UpdateBottomFadeMask()
+    {
+        var fadeStart = BottomFadeStart;
+        if (fadeStart < 0 || fadeStart >= 1)
+        {
+            OpacityMask = null;
+            return;
+        }
+
+        fadeStart = Math.Clamp(fadeStart, 0, 1);
+        var fadeLength = 1 - fadeStart;
+        OpacityMask = new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0.5, 0, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(0.5, 1, RelativeUnit.Relative),
+            GradientStops =
+            {
+                new GradientStop(Colors.White, 0),
+                new GradientStop(Colors.White, fadeStart),
+                new GradientStop(Color.FromArgb(0xE8, 0xFF, 0xFF, 0xFF), fadeStart + (fadeLength * 0.22)),
+                new GradientStop(Color.FromArgb(0xB8, 0xFF, 0xFF, 0xFF), fadeStart + (fadeLength * 0.42)),
+                new GradientStop(Color.FromArgb(0x78, 0xFF, 0xFF, 0xFF), fadeStart + (fadeLength * 0.62)),
+                new GradientStop(Color.FromArgb(0x38, 0xFF, 0xFF, 0xFF), fadeStart + (fadeLength * 0.82)),
+                new GradientStop(Colors.Transparent, 1)
+            }
+        };
     }
 }

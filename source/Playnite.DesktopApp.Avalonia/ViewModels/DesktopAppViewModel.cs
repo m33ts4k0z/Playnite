@@ -97,6 +97,8 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
             selectedGame = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(DetailsFilterLinks));
+            OnPropertyChanged(nameof(DetailsFilterLinkGroups));
+            OnPropertyChanged(nameof(PrimaryGameActionText));
             OnPropertyChanged(nameof(ShowWindowBackgroundImage));
             SynchronizeSelectedGamesWithPrimary(value);
             MetadataDownload?.RefreshTargetSummary();
@@ -1702,6 +1704,7 @@ public sealed partial class DesktopAppViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(ListViewScrollDuration));
         OnPropertyChanged(nameof(ListViewSmoothScrollEnabled));
         OnPropertyChanged(nameof(DetailsVisibility));
+        OnPropertyChanged(nameof(DetailsFilterLinkGroups));
         OnPropertyChanged(nameof(DetailsViewScrollSensitivity));
         OnPropertyChanged(nameof(DetailsViewScrollDuration));
         OnPropertyChanged(nameof(DetailsViewSmoothScrollEnabled));

@@ -17,6 +17,7 @@ public sealed class DesktopMainView : TemplatedControl
     private TextBox searchBox;
     private TextBox pluginSearchBox;
     private Control detailsPanel;
+    private Button detailsMoreButton;
     private DesktopAppViewModel observedViewModel;
     private bool synchronizingSelection;
 
@@ -38,6 +39,7 @@ public sealed class DesktopMainView : TemplatedControl
     public TextBlock DetailsName => FindVisualPart<TextBlock>("PART_DetailsName");
     public Border DetailsCover => FindVisualPart<Border>("PART_DetailsCover");
     public Border DetailsBackground => FindVisualPart<Border>("PART_DetailsBackground");
+    public Button DetailsMoreButton => detailsMoreButton ??= FindVisualPart<Button>("PART_DetailsMoreButton");
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
@@ -45,6 +47,8 @@ public sealed class DesktopMainView : TemplatedControl
         TemplateAppliedCount++;
         DetachGameList(gridGameList);
         DetachGameList(listGameList);
+        DetachDetailsMoreButton(detailsMoreButton);
+        detailsMoreButton = null;
         gridGameList = e.NameScope.Find<ListBox>("PART_GridGameList");
         listGameList = e.NameScope.Find<ListBox>("PART_ListGameList");
         searchBox = e.NameScope.Find<TextBox>("PART_SearchBox");
@@ -57,6 +61,8 @@ public sealed class DesktopMainView : TemplatedControl
         {
             searchBox ??= FindVisualPart<TextBox>("PART_SearchBox");
             pluginSearchBox ??= FindVisualPart<TextBox>("PART_PluginSearchBox");
+            detailsMoreButton = FindVisualPart<Button>("PART_DetailsMoreButton");
+            AttachDetailsMoreButton(detailsMoreButton);
             ApplyScrollSettings();
             SynchronizeGameSelection();
             FocusSelectedGame();
@@ -180,6 +186,38 @@ public sealed class DesktopMainView : TemplatedControl
         listBox.SelectionChanged -= GameList_SelectionChanged;
         listBox.PointerPressed -= GameList_PointerPressed;
         listBox.ContextMenu = null;
+    }
+
+    private void AttachDetailsMoreButton(Button button)
+    {
+        if (button == null || button.ContextMenu != null)
+        {
+            return;
+        }
+
+        var menu = new ContextMenu();
+        menu.Opened += (_, _) => PopulateContextMenu(menu);
+        button.ContextMenu = menu;
+        button.Click += DetailsMoreButton_Click;
+    }
+
+    private void DetachDetailsMoreButton(Button button)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        button.Click -= DetailsMoreButton_Click;
+        button.ContextMenu = null;
+    }
+
+    private static void DetailsMoreButton_Click(object sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (sender is Button { ContextMenu: { } menu } button)
+        {
+            menu.Open(button);
+        }
     }
 
     private void GameList_SelectionChanged(object sender, SelectionChangedEventArgs e)

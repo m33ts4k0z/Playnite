@@ -10,187 +10,229 @@
                 BorderThickness="{Binding DetailsBorderThickness}"
                 ClipToBounds="True">
             <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-                <StackPanel>
-                    <Grid Height="520"
-                          IsVisible="{Binding DetailsVisibility.BackgroundImage}">
-                        <Border Name="PART_DetailsBackground"
-                                Height="520"
-                                Background="{DynamicResource DesktopBackgroundBrush}"
-                                ClipToBounds="True"
-                                IsHitTestVisible="False"
-                                IsVisible="{Binding DetailsVisibility.BackgroundImage}">
-                            <Grid>
+                <Grid MinHeight="720">
+                    <!-- Keep the sharp header artwork above the details content. The
+                         430px lead-in plus the content's 26px top margin places its
+                         lower edge exactly at the title and cover row. -->
+                    <Border Name="PART_DetailsBackground"
+                            Height="456"
+                            VerticalAlignment="Top"
+                            Background="Transparent"
+                            ClipToBounds="True"
+                            IsHitTestVisible="False"
+                            IsVisible="{Binding DetailsVisibility.BackgroundImage}">
+                        <Grid>
+                            <!-- GameCoverImage owns Opacity while its source changes, so
+                                 visual transparency belongs to this plain container. -->
+                            <Border Name="PART_DetailsSharpArtwork" Opacity="0.82">
                                 <foundation:GameCoverImage SourcePath="{Binding SelectedGame.BackgroundPath}"
+                                                           BottomFadeStart="0.32"
                                                            HorizontalAlignment="Stretch"
                                                            VerticalAlignment="Stretch"
                                                            Stretch="UniformToFill" />
-                                <!-- Keep the artwork undimmed. Only its lower edge blends
-                                     into the page canvas so the transition stays smooth. -->
-                                <Border Name="PART_DetailsBackgroundFade"
-                                        IsHitTestVisible="False">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
-                                            <GradientStop Color="Transparent" Offset="0" />
-                                            <GradientStop Color="Transparent" Offset="0.68" />
-                                            <GradientStop Color="#38081321" Offset="0.78" />
-                                            <GradientStop Color="#A8081321" Offset="0.91" />
-                                            <GradientStop Color="#FF081321" Offset="1" />
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-                                </Border>
-                            </Grid>
-                        </Border>
-                    </Grid>
-                    <Grid Margin="{Binding DetailsContentMargin}"
-                          ColumnDefinitions="*,Auto" ColumnSpacing="22">
-                        <StackPanel Grid.Column="0" Spacing="15">
-                    <Border Width="64" Height="64" CornerRadius="8" Background="{DynamicResource DesktopSurfaceRaisedBrush}"
-                            HorizontalAlignment="Left" ClipToBounds="True"
-                            IsVisible="{Binding DetailsVisibility.Icon}">
-                        <foundation:GameCoverImage SourcePath="{Binding SelectedGame.IconPath}"
-                                                   Stretch="UniformToFill" />
+                            </Border>
+                        </Grid>
                     </Border>
-                    <TextBlock Name="PART_DetailsName" Text="{Binding SelectedGame.Name}" FontSize="{DynamicResource DesktopFontSizeLargest}"
-                               FontWeight="Bold" TextWrapping="Wrap"
-                               IsVisible="{Binding DetailsVisibility.Name}"
-                               Foreground="{DynamicResource DesktopTextBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.MetadataLine}"
-                               IsVisible="{Binding DetailsVisibility.Platform}"
-                               Foreground="{DynamicResource DesktopAccentBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.ReleaseDateText}"
-                               IsVisible="{Binding DetailsVisibility.ReleaseDate}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.LibraryText}"
-                               IsVisible="{Binding DetailsVisibility.Library}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.SourceName}"
-                               IsVisible="{Binding DetailsVisibility.Source}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <Button Content="{Binding SelectedGame.CompletionStatusName}"
-                            Command="{Binding SetCompletionStatusCommand}"
-                            IsVisible="{Binding DetailsVisibility.CompletionStatus}"
-                            HorizontalAlignment="Left" />
-                    <TextBlock Text="{Binding SelectedGame.UserScoreText}"
-                               IsVisible="{Binding DetailsVisibility.UserScore}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.CriticScoreText}"
-                               IsVisible="{Binding DetailsVisibility.CriticScore}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.CommunityScoreText}"
-                               IsVisible="{Binding DetailsVisibility.CommunityScore}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.VersionText}"
-                               IsVisible="{Binding DetailsVisibility.Version}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.InstallSizeText}"
-                               IsVisible="{Binding DetailsVisibility.InstallSize}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.InstallDirectoryText}"
-                               IsVisible="{Binding DetailsVisibility.InstallDirectory}"
-                               TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.AddedText}"
-                               IsVisible="{Binding DetailsVisibility.Added}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <StackPanel Spacing="3">
-                        <ItemsControl ItemsSource="{Binding DetailsFilterLinks}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Button Margin="0,0,6,6" Padding="7,3"
-                                            Content="{Binding Name}" Command="{Binding Command}" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <TextBlock Text="{Binding SelectedGame.GenresText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.Genres}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.PlatformsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.Platform}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.CategoriesText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.Categories}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.TagsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.Tags}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.DevelopersText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.Developers}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.PublishersText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.Publishers}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.FeaturesText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.Features}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.SeriesText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.Series}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.AgeRatingsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.AgeRating}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.RegionsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.Region}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.LinksText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   IsVisible="{Binding DetailsVisibility.Links}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.GameActionsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.RomsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.InstallationDetailsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.ScriptsText}" FontSize="{DynamicResource DesktopFontSizeSmall}"
-                                   TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
+
+                    <StackPanel>
+                        <Border Height="430" IsHitTestVisible="False" />
+                        <Grid Margin="{Binding DetailsContentMargin}"
+                              MaxWidth="1180"
+                              HorizontalAlignment="Center"
+                              ColumnDefinitions="320,*,Auto"
+                              ColumnSpacing="28">
+                            <StackPanel Grid.Column="0" Spacing="10">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                    <Border Width="48" Height="48"
+                                            CornerRadius="5"
+                                            Background="Transparent"
+                                            ClipToBounds="True"
+                                            IsVisible="{Binding DetailsVisibility.Icon}">
+                                        <foundation:GameCoverImage SourcePath="{Binding SelectedGame.IconPath}"
+                                                                   Stretch="UniformToFill" />
+                                    </Border>
+                                    <TextBlock Grid.Column="1"
+                                               Name="PART_DetailsName"
+                                               Text="{Binding SelectedGame.Name}"
+                                               FontSize="{DynamicResource DesktopFontSizeLargest}"
+                                               FontWeight="Bold"
+                                               TextWrapping="Wrap"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding DetailsVisibility.Name}"
+                                               Foreground="{DynamicResource DesktopTextBrush}" />
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5,0,4">
+                                    <Button Classes="primary"
+                                            Width="145" Height="40"
+                                            Command="{Binding ActivateCommand}"
+                                            Content="{Binding PrimaryGameActionText}" />
+                                    <Button Name="PART_DetailsMoreButton"
+                                            Width="145" Height="40"
+                                            Content="{DynamicResource LOCMoreAction}" />
+                                </StackPanel>
+
+                                <TextBlock Text="{DynamicResource LOCGameDetails}"
+                                           Margin="0,7,0,0"
+                                           Foreground="{DynamicResource DesktopTextBrush}" />
+                                <Border Height="1"
+                                        Background="{DynamicResource DesktopBorderBrush}"
+                                        Opacity="0.55" />
+
+                                <StackPanel Spacing="6" Margin="0,2,0,0">
+                                    <TextBlock Text="{Binding SelectedGame.AddedText}"
+                                               IsVisible="{Binding DetailsVisibility.Added}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.PlaytimeText}"
+                                               IsVisible="{Binding DetailsVisibility.PlayTime}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.LastPlayedText}"
+                                               IsVisible="{Binding DetailsVisibility.LastPlayed}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.RecentActivityText}"
+                                               IsVisible="{Binding DetailsVisibility.RecentActivity}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <Grid ColumnDefinitions="104,*"
+                                          IsVisible="{Binding DetailsVisibility.CompletionStatus}">
+                                        <TextBlock Text="{DynamicResource LOCCompletionStatus}"
+                                                   Foreground="{DynamicResource DesktopMutedBrush}" />
+                                        <Button Grid.Column="1"
+                                                Classes="detailsLink"
+                                                HorizontalAlignment="Left"
+                                                Content="{Binding SelectedGame.CompletionStatusName}"
+                                                Command="{Binding SetCompletionStatusCommand}" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding SelectedGame.InstallDirectoryText}"
+                                               IsVisible="{Binding DetailsVisibility.InstallDirectory}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.InstallSizeText}"
+                                               IsVisible="{Binding DetailsVisibility.InstallSize}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.LibraryText}"
+                                               IsVisible="{Binding DetailsVisibility.Library}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.SourceName}"
+                                               IsVisible="{Binding DetailsVisibility.Source}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.ReleaseDateText}"
+                                               IsVisible="{Binding DetailsVisibility.ReleaseDate}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.VersionText}"
+                                               IsVisible="{Binding DetailsVisibility.Version}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+
+                                    <ItemsControl Name="PART_DetailsLinkGroups"
+                                                  ItemsSource="{Binding DetailsFilterLinkGroups}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="104,*" Margin="0,1">
+                                                    <TextBlock Text="{Binding Name}"
+                                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                                    <ItemsControl Grid.Column="1" ItemsSource="{Binding Links}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <Button Classes="detailsLink"
+                                                                        Content="{Binding Name}"
+                                                                        Command="{Binding Command}" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <TextBlock Text="{Binding SelectedGame.DevelopersText}"
+                                               FontSize="{DynamicResource DesktopFontSizeSmall}"
+                                               IsVisible="{Binding DetailsVisibility.Developers}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.PublishersText}"
+                                               FontSize="{DynamicResource DesktopFontSizeSmall}"
+                                               IsVisible="{Binding DetailsVisibility.Publishers}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.UserScoreText}"
+                                               IsVisible="{Binding DetailsVisibility.UserScore}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.CriticScoreText}"
+                                               IsVisible="{Binding DetailsVisibility.CriticScore}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.CommunityScoreText}"
+                                               IsVisible="{Binding DetailsVisibility.CommunityScore}"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.LinksText}"
+                                               FontSize="{DynamicResource DesktopFontSizeSmall}"
+                                               IsVisible="{Binding DetailsVisibility.Links}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.GameActionsText}"
+                                               FontSize="{DynamicResource DesktopFontSizeSmall}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.RomsText}"
+                                               FontSize="{DynamicResource DesktopFontSizeSmall}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.InstallationDetailsText}"
+                                               FontSize="{DynamicResource DesktopFontSizeSmall}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                    <TextBlock Text="{Binding SelectedGame.ScriptsText}"
+                                               FontSize="{DynamicResource DesktopFontSizeSmall}"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Spacing="18">
+                                <StackPanel IsVisible="{Binding DetailsVisibility.Notes}">
+                                    <TextBlock Text="{DynamicResource LOCNotesLabel}"
+                                               Margin="0,7,0,5"
+                                               Foreground="{DynamicResource DesktopTextBrush}" />
+                                    <Border Height="1"
+                                            Background="{DynamicResource DesktopBorderBrush}"
+                                            Opacity="0.55" />
+                                    <TextBlock Text="{Binding SelectedGame.NotesText}"
+                                               Margin="0,8,0,0"
+                                               TextWrapping="Wrap"
+                                               Foreground="{DynamicResource DesktopMutedBrush}" />
+                                </StackPanel>
+                                <StackPanel IsVisible="{Binding DetailsVisibility.Description}">
+                                    <TextBlock Text="{DynamicResource LOCGameDescriptionTitle}"
+                                               Margin="0,7,0,5"
+                                               Foreground="{DynamicResource DesktopTextBrush}" />
+                                    <Border Height="1"
+                                            Background="{DynamicResource DesktopBorderBrush}"
+                                            Opacity="0.55" />
+                                    <foundation:HtmlTextView Html="{Binding SelectedGame.Game.Description}"
+                                                             Margin="0,8,0,0"
+                                                             Foreground="{DynamicResource DesktopTextBrush}" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Border Grid.Column="2"
+                                    Name="PART_DetailsCover"
+                                    Width="{Binding GameDetailsCoverWidth}"
+                                    Height="{Binding GameDetailsCoverHeight}"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    ClipToBounds="True"
+                                    IsVisible="{Binding DetailsVisibility.CoverImage}">
+                                <foundation:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
+                                                           Stretch="Uniform" />
+                            </Border>
+                        </Grid>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="16">
-                        <TextBlock Text="{Binding SelectedGame.PlaytimeText}"
-                                   IsVisible="{Binding DetailsVisibility.PlayTime}"
-                                   Foreground="{DynamicResource DesktopMutedBrush}" />
-                        <TextBlock Text="{Binding SelectedGame.LastPlayedText}"
-                                   IsVisible="{Binding DetailsVisibility.LastPlayed}"
-                                   Foreground="{DynamicResource DesktopMutedBrush}" />
-                    </StackPanel>
-                    <TextBlock Text="{Binding SelectedGame.RecentActivityText}"
-                               IsVisible="{Binding DetailsVisibility.RecentActivity}"
-                               Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <TextBlock Text="{Binding SelectedGame.NotesText}"
-                               IsVisible="{Binding DetailsVisibility.Notes}"
-                               TextWrapping="Wrap" Foreground="{DynamicResource DesktopMutedBrush}" />
-                    <foundation:HtmlTextView Html="{Binding SelectedGame.Game.Description}"
-                                             IsVisible="{Binding DetailsVisibility.Description}"
-                                             Foreground="{DynamicResource DesktopTextBrush}" />
-                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
-                        <Button Classes="primary" Command="{Binding ActivateCommand}"
-                                Content="{DynamicResource LOCDesktopPlay}" />
-                        <Button Command="{Binding InstallCommand}"
-                                Content="{DynamicResource LOCDesktopInstall}" />
-                        <Button Command="{Binding UninstallCommand}"
-                                Content="{DynamicResource LOCDesktopUninstall}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Button Content="{DynamicResource LOCDesktopEdit}" Command="{Binding EditCommand}" />
-                        <Button Content="{DynamicResource LOCDesktopDownloadMetadata}"
-                                Command="{Binding OpenMetadataDownloadCommand}" />
-                        <Button Content="{DynamicResource LOCDesktopPluginCommands}"
-                                Command="{Binding OpenPluginGameMenuCommand}" />
-                        <Button Content="Open install folder"
-                                Command="{Binding OpenInstallDirectoryCommand}" />
-                    </StackPanel>
-                        </StackPanel>
-                        <Border Grid.Column="1" Name="PART_DetailsCover"
-                                Width="{Binding GameDetailsCoverWidth}"
-                                Height="{Binding GameDetailsCoverHeight}"
-                                HorizontalAlignment="Right" VerticalAlignment="Top"
-                                Background="Transparent" BorderThickness="0"
-                                ClipToBounds="True" IsVisible="{Binding DetailsVisibility.CoverImage}">
-                            <foundation:GameCoverImage SourcePath="{Binding SelectedGame.CoverPath}"
-                                                       Stretch="Uniform" />
-                        </Border>
-                    </Grid>
-                </StackPanel>
+                </Grid>
             </ScrollViewer>
         </Border>
     </ControlTemplate>
